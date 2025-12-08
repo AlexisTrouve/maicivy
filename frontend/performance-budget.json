@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json.schemastore.org/performance-budget",
+  "budget": [
+    {
+      "resourceSizes": [
+        {
+          "resourceType": "script",
+          "budget": 200
+        },
+        {
+          "resourceType": "stylesheet",
+          "budget": 50
+        },
+        {
+          "resourceType": "image",
+          "budget": 500
+        },
+        {
+          "resourceType": "font",
+          "budget": 100
+        },
+        {
+          "resourceType": "document",
+          "budget": 30
+        },
+        {
+          "resourceType": "total",
+          "budget": 1000
+        }
+      ],
+      "resourceCounts": [
+        {
+          "resourceType": "script",
+          "budget": 10
+        },
+        {
+          "resourceType": "stylesheet",
+          "budget": 5
+        },
+        {
+          "resourceType": "image",
+          "budget": 20
+        },
+        {
+          "resourceType": "font",
+          "budget": 3
+        },
+        {
+          "resourceType": "third-party",
+          "budget": 5
+        }
+      ]
+    }
+  ],
+  "timings": [
+    {
+      "metric": "first-contentful-paint",
+      "budget": 1500,
+      "tolerance": 200
+    },
+    {
+      "metric": "largest-contentful-paint",
+      "budget": 2500,
+      "tolerance": 300
+    },
+    {
+      "metric": "first-input-delay",
+      "budget": 100,
+      "tolerance": 20
+    },
+    {
+      "metric": "cumulative-layout-shift",
+      "budget": 0.1,
+      "tolerance": 0.02
+    },
+    {
+      "metric": "time-to-interactive",
+      "budget": 3500,
+      "tolerance": 500
+    },
+    {
+      "metric": "total-blocking-time",
+      "budget": 300,
+      "tolerance": 50
+    },
+    {
+      "metric": "speed-index",
+      "budget": 3000,
+      "tolerance": 500
+    }
+  ],
+  "lighthouse": {
+    "performance": 90,
+    "accessibility": 90,
+    "best-practices": 90,
+    "seo": 90,
+    "pwa": 70
+  },
+  "notes": {
+    "first-load-js": "Target: < 200KB (gzipped)",
+    "total-page-weight": "Target: < 1MB (gzipped)",
+    "image-optimization": "All images should use WebP/AVIF with lazy loading",
+    "code-splitting": "Each route should be code-split automatically by Next.js",
+    "caching": "Static assets cached for 1 year, HTML for 1 hour",
+    "cdn": "All assets served via CDN (Cloudflare)",
+    "monitoring": "Track budgets with Lighthouse CI in CI/CD pipeline"
+  },
+  "breakdown": {
+    "homepage": {
+      "first-load-js": {
+        "budget": 180,
+        "unit": "KB"
+      },
+      "largest-contentful-paint": {
+        "budget": 2000,
+        "unit": "ms"
+      },
+      "cumulative-layout-shift": {
+        "budget": 0.05
+      }
+    },
+    "cv-page": {
+      "first-load-js": {
+        "budget": 200,
+        "unit": "KB"
+      },
+      "largest-contentful-paint": {
+        "budget": 2500,
+        "unit": "ms"
+      },
+      "total-blocking-time": {
+        "budget": 250,
+        "unit": "ms"
+      }
+    },
+    "letters-page": {
+      "first-load-js": {
+        "budget": 220,
+        "unit": "KB"
+      },
+      "largest-contentful-paint": {
+        "budget": 2500,
+        "unit": "ms"
+      },
+      "cumulative-layout-shift": {
+        "budget": 0.08
+      }
+    },
+    "analytics-page": {
+      "first-load-js": {
+        "budget": 250,
+        "unit": "KB"
+      },
+      "largest-contentful-paint": {
+        "budget": 3000,
+        "unit": "ms"
+      },
+      "total-blocking-time": {
+        "budget": 300,
+        "unit": "ms"
+      }
+    }
+  },
+  "validation": {
+    "enforcement": "warning",
+    "ci": true,
+    "failBuildOnBudgetOverrun": false,
+    "alertChannels": ["console", "github-pr-comment"]
+  }
+}

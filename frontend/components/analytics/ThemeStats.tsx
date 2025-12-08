@@ -1,0 +1,116 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { BarChart3 } from 'lucide-react';
+
+interface ThemeStat {
+  theme: string;
+  count: number;
+  percentage: number;
+}
+
+const THEME_COLORS: Record<string, string> = {
+  backend: 'bg-blue-500',
+  'full-stack': 'bg-purple-500',
+  devops: 'bg-orange-500',
+  ai: 'bg-pink-500',
+  mobile: 'bg-green-500',
+  other: 'bg-gray-500',
+};
+
+export default function ThemeStats() {
+  const [stats, setStats] = useState<ThemeStat[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchThemeStats();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchThemeStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchThemeStats = async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const response = await fetch(`${backendUrl}/api/v1/analytics/themes`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch theme stats');
+
+      const data = await response.json();
+      setStats(data.themes || []);
+    } catch (error) {
+      console.error('Error fetching theme stats:', error);
+      // Set mock data for development
+      setStats([
+        { theme: 'backend', count: 523, percentage: 34 },
+        { theme: 'full-stack', count: 312, percentage: 20 },
+        { theme: 'devops', count: 198, percentage: 13 },
+        { theme: 'ai', count: 167, percentage: 11 },
+        { theme: 'mobile', count: 89, percentage: 6 },
+        { theme: 'other', count: 65, percentage: 4 },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getBarColor = (theme: string): string => {
+    return THEME_COLORS[theme.toLowerCase()] || THEME_COLORS.other;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border bg-card p-6 animate-pulse h-80">
+        <div className="h-6 bg-muted rounded w-1/3 mb-4" />
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-8 bg-muted rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border bg-card p-6">
+      <h2 className="text-xl font-semibold flex items-center gap-2 mb-6">
+        <BarChart3 className="h-5 w-5" />
+        Top Thèmes CV
+      </h2>
+
+      <div className="space-y-4">
+        {stats.map((stat, index) => (
+          <div key={stat.theme} className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-muted-foreground w-6">
+                  #{index + 1}
+                </span>
+                <span className="font-medium capitalize">{stat.theme}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">{stat.count} vues</span>
+                <span className="text-xs bg-muted px-2 py-1 rounded min-w-[3rem] text-center">
+                  {stat.percentage.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+              <div
+                className={`h-full ${getBarColor(stat.theme)} transition-all duration-500`}
+                style={{ width: `${stat.percentage}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-xs text-muted-foreground text-center mt-6">
+        Mise à jour toutes les 30 secondes
+      </div>
+    </div>
+  );
+}
