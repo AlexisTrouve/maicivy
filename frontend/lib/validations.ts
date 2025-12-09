@@ -177,11 +177,11 @@ export function isValidURL(url: string): boolean {
  * Sanitizes a string by removing HTML tags
  */
 export function sanitizeString(input: string): string {
-  // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>/g, '');
+  // Remove script tags and content FIRST (before removing tags)
+  let sanitized = input.replace(/<script[\s\S]*?<\/script>/gi, '');
 
-  // Remove script tags and content
-  sanitized = sanitized.replace(/<script[\s\S]*?<\/script>/gi, '');
+  // Remove HTML tags
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
 
   // Trim whitespace
   sanitized = sanitized.trim();
@@ -223,7 +223,7 @@ export function containsSQLInjection(input: string): boolean {
     /'; delete from/i,
     /union select/i,
     /exec\(/i,
-    /execute\(/i,
+    /execute[\s(]/i,
   ];
 
   return sqlPatterns.some((pattern) => pattern.test(input));

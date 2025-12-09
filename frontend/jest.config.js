@@ -20,8 +20,6 @@ const customJestConfig = {
     '^.+\\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i': '<rootDir>/__mocks__/fileMocks.js',
     // Mock three.js
     '^three$': '<rootDir>/__mocks__/three.ts',
-    // Mock until-async to fix MSW issue
-    '^until-async$': '<rootDir>/__mocks__/until-async.js',
   },
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
@@ -29,7 +27,7 @@ const customJestConfig = {
     '<rootDir>/tests/e2e/',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(msw|@mswjs/|until-async|strict-event-emitter|@bundled-es-modules)/)',
+    'node_modules/(?!(@bundled-es-modules)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   collectCoverageFrom: [
@@ -50,6 +48,8 @@ const customJestConfig = {
       statements: 70,
     },
   },
+  maxWorkers: '50%',
+  workerIdleMemoryLimit: '512MB',
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
