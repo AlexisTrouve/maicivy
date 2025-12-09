@@ -2,44 +2,51 @@
 package testutil
 
 import (
+	"context"
 	"time"
 
-	"github.com/maicivy/internal/models"
+	"github.com/google/uuid"
+	"maicivy/internal/cache"
+	"maicivy/internal/models"
+	"gorm.io/gorm"
 )
 
 // Fixtures pré-définies pour tests
 var (
 	FixtureExperienceBackend = &models.Experience{
-		Title:       "Backend Developer",
-		Company:     "Tech Corp",
-		Description: "Developed APIs in Go with PostgreSQL and Redis",
-		StartDate:   time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-		EndDate:     nil, // Current
-		Tags:        []string{"go", "postgresql", "redis", "fiber", "docker"},
-		Category:    "backend",
-		Location:    "Remote",
+		Title:        "Backend Developer",
+		Company:      "Tech Corp",
+		Description:  "Developed APIs in Go with PostgreSQL and Redis",
+		StartDate:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:      nil, // Current
+		Technologies: []string{"go", "postgresql", "redis", "fiber", "docker"},
+		Tags:         []string{"backend", "api", "database"},
+		Category:     "backend",
+		Featured:     false,
 	}
 
 	FixtureExperienceFrontend = &models.Experience{
-		Title:       "Frontend Developer",
-		Company:     "Design Studio",
-		Description: "Built React applications with TypeScript and Next.js",
-		StartDate:   time.Date(2019, 6, 1, 0, 0, 0, 0, time.UTC),
-		EndDate:     &[]time.Time{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}[0],
-		Tags:        []string{"react", "typescript", "nextjs", "tailwind"},
-		Category:    "frontend",
-		Location:    "Paris, France",
+		Title:        "Frontend Developer",
+		Company:      "Design Studio",
+		Description:  "Built React applications with TypeScript and Next.js",
+		StartDate:    time.Date(2019, 6, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:      &[]time.Time{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}[0],
+		Technologies: []string{"react", "typescript", "nextjs", "tailwind"},
+		Tags:         []string{"frontend", "ui", "spa"},
+		Category:     "frontend",
+		Featured:     false,
 	}
 
 	FixtureExperienceFullStack = &models.Experience{
-		Title:       "Full-Stack Engineer",
-		Company:     "StartupCo",
-		Description: "Full-stack development with Go backend and React frontend",
-		StartDate:   time.Date(2021, 3, 1, 0, 0, 0, 0, time.UTC),
-		EndDate:     nil, // Current
-		Tags:        []string{"go", "react", "postgresql", "docker", "kubernetes"},
-		Category:    "fullstack",
-		Location:    "San Francisco, USA",
+		Title:        "Full-Stack Engineer",
+		Company:      "StartupCo",
+		Description:  "Full-stack development with Go backend and React frontend",
+		StartDate:    time.Date(2021, 3, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:      nil, // Current
+		Technologies: []string{"go", "react", "postgresql", "docker", "kubernetes"},
+		Tags:         []string{"fullstack", "api", "ui"},
+		Category:     "fullstack",
+		Featured:     true,
 	}
 
 	FixtureSkillGo = &models.Skill{
@@ -75,57 +82,36 @@ var (
 	}
 
 	FixtureProjectMaicivy = &models.Project{
-		Title:        "maicivy - AI-powered CV",
-		Description:  "Interactive CV with AI-generated motivation letters",
-		GithubURL:    "https://github.com/user/maicivy",
-		DemoURL:      "https://maicivy.example.com",
-		Technologies: []string{"go", "react", "postgresql", "redis", "claude-ai"},
-		Category:     "fullstack",
-		Featured:     true,
-		Stars:        42,
+		Title:          "maicivy - AI-powered CV",
+		Description:    "Interactive CV with AI-generated motivation letters",
+		GithubURL:      "https://github.com/user/maicivy",
+		DemoURL:        "https://maicivy.example.com",
+		Technologies:   []string{"go", "react", "postgresql", "redis", "claude-ai"},
+		Category:       "fullstack",
+		Featured:       true,
+		GithubStars:    42,
+		GithubForks:    10,
+		GithubLanguage: "Go",
+		InProgress:     false,
 	}
 
 	FixtureProjectEcommerce = &models.Project{
-		Title:        "E-commerce Platform",
-		Description:  "Scalable e-commerce backend with microservices",
-		GithubURL:    "https://github.com/user/ecommerce",
-		Technologies: []string{"go", "postgresql", "redis", "rabbitmq"},
-		Category:     "backend",
-		Featured:     false,
-		Stars:        15,
+		Title:          "E-commerce Platform",
+		Description:    "Scalable e-commerce backend with microservices",
+		GithubURL:      "https://github.com/user/ecommerce",
+		Technologies:   []string{"go", "postgresql", "redis", "rabbitmq"},
+		Category:       "backend",
+		Featured:       false,
+		GithubStars:    15,
+		GithubForks:    3,
+		GithubLanguage: "Go",
+		InProgress:     false,
 	}
 
-	FixtureThemeBackend = &models.Theme{
-		Name:        "backend",
-		Keywords:    []string{"go", "api", "database", "microservices", "postgresql", "redis"},
-		Description: "Backend development focus",
-		Weight:      1.0,
-	}
-
-	FixtureThemeFrontend = &models.Theme{
-		Name:        "frontend",
-		Keywords:    []string{"react", "typescript", "nextjs", "ui", "tailwind"},
-		Description: "Frontend development focus",
-		Weight:      1.0,
-	}
-
-	FixtureThemeFullStack = &models.Theme{
-		Name:        "fullstack",
-		Keywords:    []string{"go", "react", "postgresql", "api", "ui"},
-		Description: "Full-stack development",
-		Weight:      1.0,
-	}
-
-	FixtureThemeDevOps = &models.Theme{
-		Name:        "devops",
-		Keywords:    []string{"docker", "kubernetes", "ci-cd", "monitoring"},
-		Description: "DevOps and infrastructure",
-		Weight:      1.0,
-	}
 )
 
 // Helper pour créer dataset complet pour tests
-func CreateFullCVDataset(db *DB) error {
+func CreateFullCVDataset(db *gorm.DB) error {
 	experiences := []*models.Experience{
 		FixtureExperienceBackend,
 		FixtureExperienceFrontend,
@@ -142,13 +128,6 @@ func CreateFullCVDataset(db *DB) error {
 	projects := []*models.Project{
 		FixtureProjectMaicivy,
 		FixtureProjectEcommerce,
-	}
-
-	themes := []*models.Theme{
-		FixtureThemeBackend,
-		FixtureThemeFrontend,
-		FixtureThemeFullStack,
-		FixtureThemeDevOps,
 	}
 
 	// Insert experiences
@@ -172,18 +151,11 @@ func CreateFullCVDataset(db *DB) error {
 		}
 	}
 
-	// Insert themes
-	for _, theme := range themes {
-		if err := db.Create(theme).Error; err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 // Helper pour créer visiteur test
-func CreateTestVisitor(db *DB, sessionID string, visitCount int) (*models.Visitor, error) {
+func CreateTestVisitor(db *gorm.DB, sessionID string, visitCount int) (*models.Visitor, error) {
 	visitor := &models.Visitor{
 		SessionID:       sessionID,
 		IPHash:          "test-hash-" + sessionID,
@@ -202,14 +174,20 @@ func CreateTestVisitor(db *DB, sessionID string, visitCount int) (*models.Visito
 }
 
 // Helper pour créer lettre test
-func CreateTestLetter(db *DB, visitorID uint, companyName string) (*models.GeneratedLetter, error) {
+func CreateTestLetter(db *gorm.DB, visitorID string, companyName string) (*models.GeneratedLetter, error) {
+	vid, err := uuid.Parse(visitorID)
+	if err != nil {
+		return nil, err
+	}
+
 	letter := &models.GeneratedLetter{
-		VisitorID:            visitorID,
-		CompanyName:          companyName,
-		MotivationLetter:     "Test motivation letter for " + companyName,
-		AntiMotivationLetter: "Test anti-motivation letter for " + companyName,
-		Theme:                "backend",
-		CompanyInfo:          map[string]string{"industry": "tech"},
+		VisitorID:   vid,
+		CompanyName: companyName,
+		LetterType:  models.LetterTypeMotivation,
+		Content:     "Test motivation letter for " + companyName,
+		AIModel:     "test-model",
+		TokensUsed:  100,
+		CompanyInfo: `{"industry": "tech"}`,
 	}
 
 	if err := db.Create(letter).Error; err != nil {
@@ -220,7 +198,7 @@ func CreateTestLetter(db *DB, visitorID uint, companyName string) (*models.Gener
 }
 
 // Helper pour cleanup database
-func CleanupDatabase(db *DB) error {
+func CleanupDatabase(db *gorm.DB) error {
 	tables := []string{
 		"generated_letters",
 		"analytics_events",
@@ -228,7 +206,6 @@ func CleanupDatabase(db *DB) error {
 		"projects",
 		"skills",
 		"experiences",
-		"themes",
 	}
 
 	for _, table := range tables {
@@ -241,22 +218,20 @@ func CleanupDatabase(db *DB) error {
 }
 
 // Helper pour créer mock Redis data
-func SeedRedisCache(cache *Cache) error {
+func SeedRedisCache(redisCache *cache.RedisCache) error {
 	ctx := context.Background()
 
 	// Set visitor counts
-	cache.Set(ctx, "visitor:test-session-1:count", "1", 3600)
-	cache.Set(ctx, "visitor:test-session-2:count", "3", 3600)
-	cache.Set(ctx, "visitor:test-session-3:count", "5", 3600)
+	redisCache.Set(ctx, "visitor:test-session-1:count", "1", 3600*time.Second)
+	redisCache.Set(ctx, "visitor:test-session-2:count", "3", 3600*time.Second)
+	redisCache.Set(ctx, "visitor:test-session-3:count", "5", 3600*time.Second)
 
 	// Set rate limits
-	cache.Set(ctx, "ratelimit:ai:test-session-1", "0", 86400)
-	cache.Set(ctx, "ratelimit:ai:test-session-2", "2", 86400)
+	redisCache.Set(ctx, "ratelimit:ai:test-session-1", "0", 86400*time.Second)
+	redisCache.Set(ctx, "ratelimit:ai:test-session-2", "2", 86400*time.Second)
 
-	// Set analytics stats
-	cache.HSet(ctx, "analytics:stats:cv_themes", "backend", "150")
-	cache.HSet(ctx, "analytics:stats:cv_themes", "frontend", "89")
-	cache.HSet(ctx, "analytics:stats:cv_themes", "fullstack", "64")
+	// Note: HSet is not available in RedisCache wrapper
+	// Use redis client directly if needed for hash operations
 
 	return nil
 }

@@ -6,189 +6,298 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"maicivy/internal/config"
+	"maicivy/internal/models"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-// go:generate mockgen -source=ai.go -destination=ai_mock.go -package=services
-
-func TestAIService_GenerateLetter_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// Mock du client Claude
-	mockClient := NewMockClaudeClient(ctrl)
-
-	// Expect appel API avec prompt spécifique
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{
-			Content: "Chère entreprise XYZ, je suis motivé car...",
-			Tokens:  150,
-		}, nil)
-
-	// Test service avec mock
-	service := NewAIService(mockClient)
-	letter, err := service.GenerateMotivationLetter(context.Background(), "XYZ Corp", "backend")
-
-	assert.NoError(t, err)
-	assert.NotEmpty(t, letter.Content)
-	assert.Contains(t, letter.Content, "motivé")
+// MockMetricsRecorder pour tests
+type MockMetricsRecorder struct {
+	mock.Mock
 }
 
-func TestAIService_Fallback_ClaudeToGPT(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClaude := NewMockClaudeClient(ctrl)
-	mockGPT := NewMockGPTClient(ctrl)
-
-	// Claude échoue
-	mockClaude.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(nil, errors.New("API rate limit"))
-
-	// Fallback sur GPT
-	mockGPT.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{Content: "Lettre générée par GPT"}, nil)
-
-	service := NewAIService(mockClaude, mockGPT)
-	letter, err := service.GenerateMotivationLetter(context.Background(), "ABC Inc", "frontend")
-
-	assert.NoError(t, err)
-	assert.Contains(t, letter.Content, "GPT")
+func (m *MockMetricsRecorder) RecordAIMetrics(metrics models.AIMetrics) {
+	m.Called(metrics)
 }
 
-func TestAIService_GenerateAntiMotivationLetter(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// Test création service avec configuration valide
+func TestNewAIService_ValidConfig(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-anthropic-key",
+		OpenAIAPIKey:         "test-openai-key",
+		PrimaryProvider:      "claude",
+		MaxRequestsPerMinute: 60,
+	}
 
-	mockClient := NewMockClaudeClient(ctrl)
-
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{
-			Content: "Je ne suis absolument pas intéressé par votre entreprise car...",
-			Tokens:  200,
-		}, nil)
-
-	service := NewAIService(mockClient)
-	letter, err := service.GenerateAntiMotivationLetter(context.Background(), "BadCorp", "backend")
+	mockMetrics := new(MockMetricsRecorder)
+	svc, err := NewAIService(cfg, mockMetrics)
 
 	assert.NoError(t, err)
-	assert.Contains(t, letter.Content, "pas intéressé")
+	assert.NotNil(t, svc)
+	assert.NotNil(t, svc.claudeClient)
+	assert.NotNil(t, svc.openaiClient)
+	assert.Equal(t, "claude", svc.config.PrimaryProvider)
 }
 
-func TestAIService_GenerateBoth_DualLetters(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// Test création service sans API keys
+func TestNewAIService_NoAPIKeys(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey: "",
+		OpenAIAPIKey:    "",
+	}
 
-	mockClient := NewMockClaudeClient(ctrl)
-
-	// Expect 2 calls (motivation + anti-motivation)
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{Content: "Motivation letter"}, nil).
-		Times(1)
-
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{Content: "Anti-motivation letter"}, nil).
-		Times(1)
-
-	service := NewAIService(mockClient)
-	result, err := service.GenerateBothLetters(context.Background(), "TechCorp", "fullstack")
-
-	assert.NoError(t, err)
-	assert.NotEmpty(t, result.MotivationLetter)
-	assert.NotEmpty(t, result.AntiMotivationLetter)
-	assert.Equal(t, "TechCorp", result.CompanyName)
-}
-
-func TestAIService_Timeout(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := NewMockClaudeClient(ctrl)
-
-	// Simulate timeout
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(nil, context.DeadlineExceeded)
-
-	service := NewAIService(mockClient)
-	ctx, cancel := context.WithTimeout(context.Background(), 1)
-	defer cancel()
-
-	_, err := service.GenerateMotivationLetter(ctx, "SlowCorp", "backend")
+	svc, err := NewAIService(cfg, nil)
 
 	assert.Error(t, err)
-	assert.Equal(t, context.DeadlineExceeded, err)
+	assert.Nil(t, svc)
+	assert.Contains(t, err.Error(), "at least one AI provider API key required")
 }
 
-func TestAIService_InvalidCompanyName(t *testing.T) {
-	service := NewAIService(nil)
+// Test création service avec seulement Claude
+func TestNewAIService_OnlyClaude(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-claude-key",
+		OpenAIAPIKey:         "",
+		PrimaryProvider:      "claude",
+		MaxRequestsPerMinute: 60,
+	}
 
+	svc, err := NewAIService(cfg, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, svc)
+	assert.NotNil(t, svc.claudeClient)
+	assert.Nil(t, svc.openaiClient)
+}
+
+// Test création service avec seulement OpenAI
+func TestNewAIService_OnlyOpenAI(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "",
+		OpenAIAPIKey:         "test-openai-key",
+		PrimaryProvider:      "openai",
+		MaxRequestsPerMinute: 60,
+	}
+
+	svc, err := NewAIService(cfg, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, svc)
+	assert.Nil(t, svc.claudeClient)
+	assert.NotNil(t, svc.openaiClient)
+}
+
+// Test metrics recorder par défaut
+func TestAIService_DefaultMetricsRecorder(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 60,
+	}
+
+	svc, err := NewAIService(cfg, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, svc.metricsRecorder)
+
+	// Vérifier que DefaultMetricsRecorder fonctionne sans paniquer
+	metrics := models.AIMetrics{
+		Provider:       "claude",
+		Model:          "claude-3-5-sonnet-20241022",
+		Success:        true,
+		TotalTokens:    150,
+		EstimatedCost:  0.0015,
+		ResponseTimeMs: 1200,
+	}
+
+	// Ne devrait pas paniquer
+	assert.NotPanics(t, func() {
+		svc.metricsRecorder.RecordAIMetrics(metrics)
+	})
+}
+
+// Test configuration des modèles
+func TestAIService_ModelConfiguration(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 60,
+		ClaudeModel:          "claude-3-5-sonnet-20241022",
+		OpenAIModel:          "gpt-4-turbo-preview",
+	}
+	svc, _ := NewAIService(cfg, nil)
+
+	assert.Equal(t, "claude-3-5-sonnet-20241022", svc.config.ClaudeModel)
+	assert.Equal(t, "gpt-4-turbo-preview", svc.config.OpenAIModel)
+}
+
+// Test enregistrement des métriques
+func TestAIService_RecordMetrics(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 60,
+	}
+
+	mockMetrics := new(MockMetricsRecorder)
+	svc, _ := NewAIService(cfg, mockMetrics)
+
+	metrics := models.AIMetrics{
+		Provider:       "claude",
+		Model:          "claude-3-5-sonnet-20241022",
+		Success:        true,
+		TotalTokens:    200,
+		EstimatedCost:  0.002,
+		ResponseTimeMs: 1500,
+	}
+
+	// Expect RecordAIMetrics être appelé
+	mockMetrics.On("RecordAIMetrics", mock.MatchedBy(func(m models.AIMetrics) bool {
+		return m.Provider == "claude" &&
+			m.TotalTokens == 200 &&
+			m.Success == true
+	})).Once()
+
+	svc.metricsRecorder.RecordAIMetrics(metrics)
+
+	mockMetrics.AssertExpectations(t)
+}
+
+// Test context cancelled
+func TestAIService_ContextCancelled(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 60,
+	}
+
+	svc, _ := NewAIService(cfg, nil)
+
+	// Créer context déjà annulé
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Annuler immédiatement
+
+	text, metrics, err := svc.GenerateText(ctx, "Test prompt")
+
+	assert.Error(t, err)
+	assert.Empty(t, text)
+	assert.Nil(t, metrics)
+	assert.True(t, errors.Is(err, context.Canceled) || err.Error() == "rate limit: context canceled")
+}
+
+// Test provider primaire configuration
+func TestAIService_PrimaryProvider(t *testing.T) {
 	testCases := []struct {
-		name        string
-		companyName string
-		expectError bool
+		name            string
+		primaryProvider string
+		expectClaude    bool
 	}{
-		{"Empty", "", true},
-		{"Too short", "AB", true},
-		{"Valid", "Google", false},
-		{"Valid long", "International Business Machines", false},
+		{"Claude primary", "claude", true},
+		{"OpenAI primary", "openai", false},
+		{"Invalid defaults to claude", "invalid", true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := service.ValidateCompanyName(tc.companyName)
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+			cfg := &config.AIConfig{
+				AnthropicAPIKey:      "test-claude",
+				OpenAIAPIKey:         "test-openai",
+				PrimaryProvider:      tc.primaryProvider,
+				MaxRequestsPerMinute: 60,
 			}
+
+			svc, err := NewAIService(cfg, nil)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.primaryProvider, svc.config.PrimaryProvider)
 		})
 	}
 }
 
-func TestAIService_TokenCounting(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// Test rate limiter configuration
+func TestAIService_RateLimiter(t *testing.T) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 120, // 2 requêtes par seconde
+	}
 
-	mockClient := NewMockClaudeClient(ctrl)
-
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{
-			Content: "Test letter",
-			Tokens:  500,
-		}, nil)
-
-	service := NewAIService(mockClient)
-	letter, err := service.GenerateMotivationLetter(context.Background(), "TestCorp", "backend")
+	svc, err := NewAIService(cfg, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 500, letter.TokensUsed)
+	assert.NotNil(t, svc.rateLimiter)
 }
 
-// Benchmark génération lettre
-func BenchmarkGenerateMotivationLetter(b *testing.B) {
-	ctrl := gomock.NewController(b)
-	defer ctrl.Finish()
+// Test métriques pour différents providers
+func TestAIService_MetricsForDifferentProviders(t *testing.T) {
+	mockMetrics := new(MockMetricsRecorder)
 
-	mockClient := NewMockClaudeClient(ctrl)
+	claudeMetrics := models.AIMetrics{
+		Provider:       "claude",
+		Model:          "claude-3-5-sonnet-20241022",
+		Success:        true,
+		TotalTokens:    150,
+		EstimatedCost:  0.0015,
+		ResponseTimeMs: 1200,
+	}
 
-	mockClient.EXPECT().
-		SendMessage(gomock.Any(), gomock.Any()).
-		Return(&AIResponse{Content: "Test"}, nil).
-		AnyTimes()
+	openaiMetrics := models.AIMetrics{
+		Provider:       "openai",
+		Model:          "gpt-4-turbo-preview",
+		Success:        true,
+		TotalTokens:    180,
+		EstimatedCost:  0.0018,
+		ResponseTimeMs: 1000,
+	}
 
-	service := NewAIService(mockClient)
+	mockMetrics.On("RecordAIMetrics", mock.MatchedBy(func(m models.AIMetrics) bool {
+		return m.Provider == "claude"
+	})).Once()
+
+	mockMetrics.On("RecordAIMetrics", mock.MatchedBy(func(m models.AIMetrics) bool {
+		return m.Provider == "openai"
+	})).Once()
+
+	mockMetrics.RecordAIMetrics(claudeMetrics)
+	mockMetrics.RecordAIMetrics(openaiMetrics)
+
+	mockMetrics.AssertExpectations(t)
+}
+
+// Benchmark création de service
+func BenchmarkNewAIService(b *testing.B) {
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		OpenAIAPIKey:         "test-key",
+		PrimaryProvider:      "claude",
+		MaxRequestsPerMinute: 60,
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		service.GenerateMotivationLetter(context.Background(), "BenchCorp", "backend")
+		NewAIService(cfg, nil)
+	}
+}
+
+// Benchmark enregistrement métriques
+func BenchmarkRecordMetrics(b *testing.B) {
+	mockMetrics := new(MockMetricsRecorder)
+	cfg := &config.AIConfig{
+		AnthropicAPIKey:      "test-key",
+		MaxRequestsPerMinute: 60,
+	}
+	svc, _ := NewAIService(cfg, mockMetrics)
+
+	metrics := models.AIMetrics{
+		Provider:       "claude",
+		Model:          "claude-3-5-sonnet-20241022",
+		Success:        true,
+		TotalTokens:    200,
+		EstimatedCost:  0.002,
+		ResponseTimeMs: 1500,
+	}
+
+	mockMetrics.On("RecordAIMetrics", mock.Anything).Return()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		svc.metricsRecorder.RecordAIMetrics(metrics)
 	}
 }

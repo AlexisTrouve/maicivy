@@ -7,211 +7,119 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"maicivy/internal/api/dto"
+	"maicivy/internal/services"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-// Mock AI Service
-type MockAIService struct {
+// Mock de LetterQueueService
+type MockLetterQueueService struct {
 	mock.Mock
 }
 
-func (m *MockAIService) GenerateLetters(companyName, theme string) (*LettersResponse, error) {
-	args := m.Called(companyName, theme)
-	return args.Get(0).(*LettersResponse), args.Error(1)
+func (m *MockLetterQueueService) EnqueueJob(sessionID, companyName, jobTitle, theme string) (string, error) {
+	args := m.Called(sessionID, companyName, jobTitle, theme)
+	return args.String(0), args.Error(1)
 }
 
-// Mock Visitor Service
-type MockVisitorService struct {
-	mock.Mock
+func (m *MockLetterQueueService) GetJobStatus(jobID string) (*services.JobStatus, error) {
+	args := m.Called(jobID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*services.JobStatus), args.Error(1)
 }
 
-func (m *MockVisitorService) GetVisitorCount(sessionID string) (int, error) {
-	args := m.Called(sessionID)
-	return args.Int(0), args.Error(1)
-}
-
-func (m *MockVisitorService) HasAIAccess(sessionID string) (bool, error) {
-	args := m.Called(sessionID)
-	return args.Bool(0), args.Error(1)
-}
-
-// Test POST /api/letters/generate - Success
+// Test POST /api/v1/letters/generate - Success
 func TestGenerateLetters_Success(t *testing.T) {
 	// Setup
 	app := fiber.New()
-	mockAI := new(MockAIService)
-	mockVisitor := new(MockVisitorService)
-	handler := NewLettersHandler(mockAI, mockVisitor)
+	mockQueue := new(MockLetterQueueService)
 
-	app.Post("/api/letters/generate", handler.GenerateLetters)
-
-	// Mock visitor avec accès IA (>= 3 visites)
-	mockVisitor.On("GetVisitorCount", mock.Anything).Return(5, nil)
-	mockVisitor.On("HasAIAccess", mock.Anything).Return(true, nil)
-
-	// Mock AI response
-	aiResp := &LettersResponse{
-		MotivationLetter:     "Je suis très motivé...",
-		AntiMotivationLetter: "Je ne suis pas du tout intéressé...",
-		CompanyName:          "Google",
-		CompanyInfo:          map[string]string{"industry": "tech"},
+	// Handler simplifié pour test (sans Redis/DB)
+	handler := &LettersHandler{
+		queueService: mockQueue,
 	}
-	mockAI.On("GenerateLetters", "Google", "backend").Return(aiResp, nil)
+
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		// Simuler middleware AccessGate
+		c.Locals("session_id", "test-session-123")
+		c.Locals("has_access", true)
+		c.Locals("rate_limit_remaining", 4)
+		return handler.GenerateLetter(c)
+	})
+
+	// Mock queue success
+	mockQueue.On("EnqueueJob", "test-session-123", "Google", "", "backend").
+		Return("job-abc-123", nil)
 
 	// Request body
-	reqBody := map[string]string{
-		"company_name": "Google",
-		"theme":        "backend",
+	reqBody := dto.GenerateLetterRequest{
+		CompanyName: "Google",
+		Theme:       "backend",
 	}
 	jsonBody, _ := json.Marshal(reqBody)
 
 	// Request
-	req := httptest.NewRequest("POST", "/api/letters/generate", bytes.NewReader(jsonBody))
+	req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cookie", "session_id=test-session")
 
 	resp, err := app.Test(req)
 
 	// Assertions
 	assert.NoError(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 202, resp.StatusCode) // 202 Accepted
 
-	var lettersResp LettersResponse
-	json.NewDecoder(resp.Body).Decode(&lettersResp)
+	var result dto.LetterGenerationResponse
+	json.NewDecoder(resp.Body).Decode(&result)
 
-	assert.Contains(t, lettersResp.MotivationLetter, "motivé")
-	assert.Contains(t, lettersResp.AntiMotivationLetter, "pas du tout")
-	assert.Equal(t, "Google", lettersResp.CompanyName)
+	assert.Equal(t, "job-abc-123", result.JobID)
+	assert.Equal(t, "queued", result.Status)
+	assert.Contains(t, result.Message, "Génération en cours")
 
-	mockVisitor.AssertExpectations(t)
-	mockAI.AssertExpectations(t)
+	mockQueue.AssertExpectations(t)
 }
 
-// Test POST /api/letters/generate - Access Denied (< 3 visites)
-func TestGenerateLetters_AccessDenied(t *testing.T) {
-	// Setup
-	app := fiber.New()
-	mockAI := new(MockAIService)
-	mockVisitor := new(MockVisitorService)
-	handler := NewLettersHandler(mockAI, mockVisitor)
-
-	app.Post("/api/letters/generate", handler.GenerateLetters)
-
-	// Mock visitor SANS accès (< 3 visites)
-	mockVisitor.On("GetVisitorCount", mock.Anything).Return(2, nil)
-	mockVisitor.On("HasAIAccess", mock.Anything).Return(false, nil)
-
-	// Request body
-	reqBody := map[string]string{
-		"company_name": "Google",
-		"theme":        "backend",
-	}
-	jsonBody, _ := json.Marshal(reqBody)
-
-	// Request
-	req := httptest.NewRequest("POST", "/api/letters/generate", bytes.NewReader(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cookie", "session_id=test-session")
-
-	resp, err := app.Test(req)
-
-	// Assertions
-	assert.NoError(t, err)
-	assert.Equal(t, 403, resp.StatusCode)
-
-	var errorResp map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&errorResp)
-
-	assert.Contains(t, errorResp["error"], "3 visits required")
-	assert.Equal(t, 2, int(errorResp["visit_count"].(float64)))
-
-	mockVisitor.AssertExpectations(t)
-	// AI NE DEVRAIT PAS être appelé
-	mockAI.AssertNotCalled(t, "GenerateLetters")
-}
-
-// Test POST /api/letters/generate - Rate Limiting
-func TestGenerateLetters_RateLimited(t *testing.T) {
-	// Setup
-	app := fiber.New()
-	mockAI := new(MockAIService)
-	mockVisitor := new(MockVisitorService)
-	mockRateLimit := new(MockRateLimitService)
-	handler := NewLettersHandler(mockAI, mockVisitor).WithRateLimit(mockRateLimit)
-
-	app.Post("/api/letters/generate", handler.GenerateLetters)
-
-	// Mock accès autorisé
-	mockVisitor.On("GetVisitorCount", mock.Anything).Return(5, nil)
-	mockVisitor.On("HasAIAccess", mock.Anything).Return(true, nil)
-
-	// Mock rate limit dépassé
-	mockRateLimit.On("CheckLimit", "ai:test-session").Return(false, nil)
-
-	// Request
-	reqBody := map[string]string{"company_name": "Google", "theme": "backend"}
-	jsonBody, _ := json.Marshal(reqBody)
-
-	req := httptest.NewRequest("POST", "/api/letters/generate", bytes.NewReader(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cookie", "session_id=test-session")
-
-	resp, err := app.Test(req)
-
-	// Assertions
-	assert.NoError(t, err)
-	assert.Equal(t, 429, resp.StatusCode)
-
-	var errorResp map[string]string
-	json.NewDecoder(resp.Body).Decode(&errorResp)
-
-	assert.Contains(t, errorResp["error"], "rate limit")
-
-	mockRateLimit.AssertExpectations(t)
-	// AI NE DEVRAIT PAS être appelé
-	mockAI.AssertNotCalled(t, "GenerateLetters")
-}
-
-// Test POST /api/letters/generate - Validation Errors
+// Test POST /api/v1/letters/generate - Validation Errors
 func TestGenerateLetters_ValidationErrors(t *testing.T) {
 	app := fiber.New()
-	handler := NewLettersHandler(nil, nil)
+	handler := &LettersHandler{}
 
-	app.Post("/api/letters/generate", handler.GenerateLetters)
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "test-session")
+		c.Locals("has_access", true)
+		return handler.GenerateLetter(c)
+	})
 
 	testCases := []struct {
 		name     string
-		body     map[string]string
+		body     dto.GenerateLetterRequest
 		expected string
 	}{
 		{
-			name:     "Missing company_name",
-			body:     map[string]string{"theme": "backend"},
-			expected: "company_name is required",
-		},
-		{
 			name:     "Empty company_name",
-			body:     map[string]string{"company_name": "", "theme": "backend"},
-			expected: "company_name cannot be empty",
+			body:     dto.GenerateLetterRequest{CompanyName: "", Theme: "backend"},
+			expected: "company_name",
 		},
 		{
 			name:     "Company name too short",
-			body:     map[string]string{"company_name": "AB", "theme": "backend"},
-			expected: "company_name must be at least 3 characters",
+			body:     dto.GenerateLetterRequest{CompanyName: "A", Theme: "backend"},
+			expected: "min",
 		},
 		{
 			name:     "Invalid theme",
-			body:     map[string]string{"company_name": "Google", "theme": "invalid123"},
-			expected: "invalid theme",
+			body:     dto.GenerateLetterRequest{CompanyName: "Google", Theme: "invalid123"},
+			expected: "oneof",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			jsonBody, _ := json.Marshal(tc.body)
-			req := httptest.NewRequest("POST", "/api/letters/generate", bytes.NewReader(jsonBody))
+			req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			resp, err := app.Test(req)
@@ -219,38 +127,74 @@ func TestGenerateLetters_ValidationErrors(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, 400, resp.StatusCode)
 
-			var errorResp map[string]string
+			var errorResp map[string]interface{}
 			json.NewDecoder(resp.Body).Decode(&errorResp)
 
-			assert.Contains(t, errorResp["error"], tc.expected)
+			// Vérifier que l'erreur contient le champ attendu
+			details, ok := errorResp["details"].(string)
+			assert.True(t, ok)
+			assert.Contains(t, details, tc.expected)
 		})
 	}
 }
 
-// Test POST /api/letters/generate - AI Service Error
-func TestGenerateLetters_AIServiceError(t *testing.T) {
+// Test POST /api/v1/letters/generate - Missing Session
+func TestGenerateLetters_MissingSession(t *testing.T) {
 	// Setup
 	app := fiber.New()
-	mockAI := new(MockAIService)
-	mockVisitor := new(MockVisitorService)
-	handler := NewLettersHandler(mockAI, mockVisitor)
+	handler := &LettersHandler{}
 
-	app.Post("/api/letters/generate", handler.GenerateLetters)
+	app.Post("/api/v1/letters/generate", handler.GenerateLetter)
 
-	// Mock accès autorisé
-	mockVisitor.On("GetVisitorCount", mock.Anything).Return(5, nil)
-	mockVisitor.On("HasAIAccess", mock.Anything).Return(true, nil)
-
-	// Mock AI error
-	mockAI.On("GenerateLetters", "Google", "backend").Return((*LettersResponse)(nil), assert.AnError)
-
-	// Request
-	reqBody := map[string]string{"company_name": "Google", "theme": "backend"}
+	// Request body valide mais sans session
+	reqBody := dto.GenerateLetterRequest{
+		CompanyName: "Google",
+		Theme:       "backend",
+	}
 	jsonBody, _ := json.Marshal(reqBody)
 
-	req := httptest.NewRequest("POST", "/api/letters/generate", bytes.NewReader(jsonBody))
+	req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cookie", "session_id=test-session")
+
+	resp, err := app.Test(req)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, 401, resp.StatusCode)
+
+	var errorResp map[string]string
+	json.NewDecoder(resp.Body).Decode(&errorResp)
+
+	assert.Contains(t, errorResp["error"], "Session")
+	assert.Equal(t, "SESSION_REQUIRED", errorResp["code"])
+}
+
+// Test POST /api/v1/letters/generate - Queue Error
+func TestGenerateLetters_QueueError(t *testing.T) {
+	// Setup
+	app := fiber.New()
+	mockQueue := new(MockLetterQueueService)
+
+	handler := &LettersHandler{
+		queueService: mockQueue,
+	}
+
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "test-session")
+		c.Locals("has_access", true)
+		return handler.GenerateLetter(c)
+	})
+
+	// Mock queue error
+	mockQueue.On("EnqueueJob", "test-session", "Google", "", "backend").
+		Return("", assert.AnError)
+
+	// Request
+	reqBody := dto.GenerateLetterRequest{CompanyName: "Google", Theme: "backend"}
+	jsonBody, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := app.Test(req)
 
@@ -261,43 +205,154 @@ func TestGenerateLetters_AIServiceError(t *testing.T) {
 	var errorResp map[string]string
 	json.NewDecoder(resp.Body).Decode(&errorResp)
 
-	assert.Contains(t, errorResp["error"], "AI service")
+	assert.Contains(t, errorResp["error"], "Failed to enqueue")
+	assert.Equal(t, "QUEUE_ERROR", errorResp["code"])
 
-	mockAI.AssertExpectations(t)
+	mockQueue.AssertExpectations(t)
 }
 
-// Test GET /api/letters/history
-func TestGetLettersHistory(t *testing.T) {
+// Test avec job_title optionnel
+func TestGenerateLetters_WithJobTitle(t *testing.T) {
 	// Setup
 	app := fiber.New()
-	mockRepo := new(MockLettersRepository)
-	handler := NewLettersHandler(nil, nil).WithRepository(mockRepo)
+	mockQueue := new(MockLetterQueueService)
 
-	app.Get("/api/letters/history", handler.GetHistory)
-
-	// Mock data
-	history := []*GeneratedLetter{
-		{ID: 1, CompanyName: "Google", CreatedAt: "2025-12-08"},
-		{ID: 2, CompanyName: "Microsoft", CreatedAt: "2025-12-07"},
+	handler := &LettersHandler{
+		queueService: mockQueue,
 	}
 
-	mockRepo.On("GetLettersBySession", "test-session").Return(history, nil)
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "test-session")
+		c.Locals("has_access", true)
+		c.Locals("rate_limit_remaining", 3)
+		return handler.GenerateLetter(c)
+	})
 
-	// Request
-	req := httptest.NewRequest("GET", "/api/letters/history", nil)
-	req.Header.Set("Cookie", "session_id=test-session")
+	// Mock avec job title
+	mockQueue.On("EnqueueJob", "test-session", "Microsoft", "Senior Backend Engineer", "backend").
+		Return("job-xyz-456", nil)
+
+	// Request avec job_title
+	reqBody := dto.GenerateLetterRequest{
+		CompanyName: "Microsoft",
+		JobTitle:    "Senior Backend Engineer",
+		Theme:       "backend",
+	}
+	jsonBody, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := app.Test(req)
 
 	// Assertions
 	assert.NoError(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 202, resp.StatusCode)
 
-	var historyResp []GeneratedLetter
-	json.NewDecoder(resp.Body).Decode(&historyResp)
+	var result dto.LetterGenerationResponse
+	json.NewDecoder(resp.Body).Decode(&result)
 
-	assert.Len(t, historyResp, 2)
-	assert.Equal(t, "Google", historyResp[0].CompanyName)
+	assert.Equal(t, "job-xyz-456", result.JobID)
 
-	mockRepo.AssertExpectations(t)
+	mockQueue.AssertExpectations(t)
+}
+
+// Test validation job_title trop court
+func TestGenerateLetters_JobTitleTooShort(t *testing.T) {
+	app := fiber.New()
+	handler := &LettersHandler{}
+
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "test-session")
+		return handler.GenerateLetter(c)
+	})
+
+	reqBody := dto.GenerateLetterRequest{
+		CompanyName: "Google",
+		JobTitle:    "A", // Trop court (< 2 caractères)
+		Theme:       "backend",
+	}
+	jsonBody, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errorResp map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&errorResp)
+
+	assert.Contains(t, errorResp["details"], "min")
+}
+
+// Test tous les thèmes valides
+func TestGenerateLetters_ValidThemes(t *testing.T) {
+	validThemes := []string{"backend", "frontend", "fullstack", "devops", "data", "ai"}
+
+	app := fiber.New()
+	mockQueue := new(MockLetterQueueService)
+	handler := &LettersHandler{queueService: mockQueue}
+
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "test-session")
+		c.Locals("has_access", true)
+		c.Locals("rate_limit_remaining", 5)
+		return handler.GenerateLetter(c)
+	})
+
+	for _, theme := range validThemes {
+		t.Run(theme, func(t *testing.T) {
+			mockQueue.On("EnqueueJob", "test-session", "TestCorp", "", theme).
+				Return("job-123", nil).Once()
+
+			reqBody := dto.GenerateLetterRequest{
+				CompanyName: "TestCorp",
+				Theme:       theme,
+			}
+			jsonBody, _ := json.Marshal(reqBody)
+
+			req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, err := app.Test(req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, 202, resp.StatusCode)
+		})
+	}
+
+	mockQueue.AssertExpectations(t)
+}
+
+// Benchmark génération de lettre
+func BenchmarkGenerateLetters(b *testing.B) {
+	app := fiber.New()
+	mockQueue := new(MockLetterQueueService)
+	handler := &LettersHandler{queueService: mockQueue}
+
+	app.Post("/api/v1/letters/generate", func(c *fiber.Ctx) error {
+		c.Locals("session_id", "bench-session")
+		c.Locals("has_access", true)
+		c.Locals("rate_limit_remaining", 100)
+		return handler.GenerateLetter(c)
+	})
+
+	mockQueue.On("EnqueueJob", "bench-session", "BenchCorp", "", "backend").
+		Return("job-bench", nil)
+
+	reqBody := dto.GenerateLetterRequest{
+		CompanyName: "BenchCorp",
+		Theme:       "backend",
+	}
+	jsonBody, _ := json.Marshal(reqBody)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("POST", "/api/v1/letters/generate", bytes.NewReader(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		app.Test(req)
+	}
 }
