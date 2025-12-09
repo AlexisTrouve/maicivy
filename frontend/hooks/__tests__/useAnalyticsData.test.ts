@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { useAnalyticsData } from '../useAnalyticsData'
 import { server } from '@/__mocks__/server'
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 describe('useAnalyticsData', () => {
   beforeAll(() => server.listen())
@@ -22,12 +22,12 @@ describe('useAnalyticsData', () => {
 
   it('should fetch data from endpoint on mount', async () => {
     server.use(
-      http.get('http://localhost:8080/api/analytics/stats', () => {
-        return HttpResponse.json({
+      rest.get('http://localhost:8080/api/analytics/stats', (req, res, ctx) => {
+        return res(ctx.json({
           totalVisits: 100,
           uniqueVisitors: 50,
           avgSessionDuration: 180,
-        })
+        }))
       })
     )
 
@@ -76,11 +76,10 @@ describe('useAnalyticsData', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('http://localhost:8080/api/analytics/error', () => {
-        return HttpResponse.json(
-          { message: 'Internal server error' },
-          { status: 500 }
-        )
+      rest.get('http://localhost:8080/api/analytics/error', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Internal server error' }
+        ))
       })
     )
 
@@ -105,12 +104,12 @@ describe('useAnalyticsData', () => {
   it('should poll data at specified interval', async () => {
     let callCount = 0
     server.use(
-      http.get('http://localhost:8080/api/analytics/polling', () => {
+      rest.get('http://localhost:8080/api/analytics/polling', (req, res, ctx) => {
         callCount++
-        return HttpResponse.json({
+        return res(ctx.json({
           count: callCount,
           timestamp: Date.now(),
-        })
+        }))
       })
     )
 
@@ -144,11 +143,11 @@ describe('useAnalyticsData', () => {
   it('should refetch data when refetch is called', async () => {
     let callCount = 0
     server.use(
-      http.get('http://localhost:8080/api/analytics/refetch', () => {
+      rest.get('http://localhost:8080/api/analytics/refetch', (req, res, ctx) => {
         callCount++
-        return HttpResponse.json({
+        return res(ctx.json({
           count: callCount,
-        })
+        }))
       })
     )
 
@@ -176,14 +175,13 @@ describe('useAnalyticsData', () => {
     let shouldFail = true
 
     server.use(
-      http.get('http://localhost:8080/api/analytics/retry', () => {
+      rest.get('http://localhost:8080/api/analytics/retry', (req, res, ctx) => {
         if (shouldFail) {
-          return HttpResponse.json(
-            { message: 'Temporary error' },
-            { status: 500 }
-          )
+          return res(ctx.status(500), ctx.json(
+            { message: 'Temporary error' }
+          ))
         }
-        return HttpResponse.json({ success: true })
+        return res(ctx.json({ success: true }))
       })
     )
 
@@ -215,8 +213,8 @@ describe('useAnalyticsData', () => {
     const fetchSpy = jest.spyOn(global, 'fetch')
 
     server.use(
-      http.get('http://localhost:8080/api/analytics/credentials', () => {
-        return HttpResponse.json({ authenticated: true })
+      rest.get('http://localhost:8080/api/analytics/credentials', (req, res, ctx) => {
+        return res(ctx.json({ authenticated: true }))
       })
     )
 

@@ -1,10 +1,11 @@
-// +build testing
+//go:build testing
 
 package middleware
 
 import (
 	"testing"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,44 +15,55 @@ import (
 
 // setupTestDB initialise une base de données SQLite en mémoire pour les tests
 func setupTestDB(t *testing.T) (*gorm.DB, *redis.Client) {
+	t.Helper()
+
 	// SQLite en mémoire pour tests
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
 
-	// Auto-migrate les models
+	// Auto-migrate les models (CORRECTED: utiliser les vrais noms de models)
 	err = db.AutoMigrate(
 		&models.Visitor{},
-		&models.CVTheme{},
-		&models.CVExperience{},
-		&models.CVProject{},
-		&models.CVSkill{},
+		&models.Experience{},
+		&models.Skill{},
+		&models.Project{},
 		&models.GeneratedLetter{},
 		&models.AnalyticsEvent{},
+		&models.GitHubToken{},
+		&models.GitHubProfile{},
+		&models.GitHubRepository{},
 	)
 	if err != nil {
 		t.Fatalf("Failed to migrate test database: %v", err)
 	}
 
-	// Redis client pour tests (utilise miniredis ou Redis test)
-	redisClient := setupTestRedis(t)
+	// Redis client pour tests (utilise miniredis - Redis mock en mémoire)
+	redisClient := setupMiniredis(t)
 
 	return db, redisClient
 }
 
-// setupTestRedis initialise un client Redis pour les tests
-func setupTestRedis(t *testing.T) *redis.Client {
-	// Option 1: Utiliser miniredis (mock Redis en mémoire)
-	// Pour les tests d'intégration réels, utiliser un vrai Redis
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // Adapter selon env test
-		Password: "",
-		DB:       15, // Utiliser DB 15 pour tests
+// setupMiniredis initialise un miniredis (Redis mock en mémoire) pour les tests
+func setupMiniredis(t *testing.T) *redis.Client {
+	t.Helper()
+
+	// Démarrer miniredis
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("Failed to start miniredis: %v", err)
+	}
+
+	// Cleanup automatique quand le test se termine
+	t.Cleanup(func() {
+		mr.Close()
 	})
 
-	// Flush la DB de test avant chaque test
-	client.FlushDB(nil)
+	// Créer client Redis pointant vers miniredis
+	client := redis.NewClient(&redis.Options{
+		Addr: mr.Addr(),
+	})
 
 	return client
 }

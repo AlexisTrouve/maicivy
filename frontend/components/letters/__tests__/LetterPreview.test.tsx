@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LetterPreview } from '../LetterPreview';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Mock framer-motion
 jest.mock('framer-motion', () => ({

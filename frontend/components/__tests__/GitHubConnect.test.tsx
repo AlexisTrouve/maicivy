@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { GitHubConnect } from '../github/GitHubConnect';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Setup MSW handlers
 beforeAll(() => server.listen());
@@ -43,10 +43,10 @@ describe('GitHubConnect', () => {
     const mockAuthUrl = 'https://github.com/login/oauth/authorize?client_id=test';
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: mockAuthUrl,
-        });
+        }));
       })
     );
 
@@ -66,11 +66,11 @@ describe('GitHubConnect', () => {
 
   it('should show loading state during connection', async () => {
     server.use(
-      http.get('*/api/v1/github/auth-url', async () => {
+      rest.get('*/api/v1/github/auth-url', async (req, res, ctx) => {
         await new Promise(resolve => setTimeout(resolve, 100));
-        return HttpResponse.json({
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        });
+        }));
       })
     );
 
@@ -95,11 +95,10 @@ describe('GitHubConnect', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json(
-          { error: 'Failed to get auth URL' },
-          { status: 500 }
-        );
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { error: 'Failed to get auth URL' }
+        ));
       })
     );
 
@@ -122,10 +121,10 @@ describe('GitHubConnect', () => {
     const mockUsername = 'testuser';
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        });
+        }));
       })
     );
 
@@ -158,11 +157,10 @@ describe('GitHubConnect', () => {
     const onConnectError = jest.fn();
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json(
-          { error: 'Auth failed' },
-          { status: 500 }
-        );
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { error: 'Auth failed' }
+        ));
       })
     );
 
@@ -178,10 +176,10 @@ describe('GitHubConnect', () => {
 
   it('should open popup with correct dimensions and position', async () => {
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        });
+        }));
       })
     );
 
@@ -212,10 +210,10 @@ describe('GitHubConnect', () => {
     global.window.open = jest.fn().mockReturnValue(null);
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        });
+        }));
       })
     );
 
@@ -236,10 +234,10 @@ describe('GitHubConnect', () => {
     jest.useFakeTimers();
 
     server.use(
-      http.get('*/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        });
+        }));
       })
     );
 

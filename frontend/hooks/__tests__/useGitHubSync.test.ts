@@ -1,7 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useGitHubSync } from '../useGitHubSync'
 import { server } from '@/__mocks__/server'
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 describe('useGitHubSync', () => {
   beforeAll(() => server.listen())
@@ -23,19 +23,19 @@ describe('useGitHubSync', () => {
 
   it('should fetch status on mount when username is provided', async () => {
     server.use(
-      http.get('http://localhost:8080/api/v1/github/status', ({ request }) => {
-        const url = new URL(request.url)
+      rest.get('http://localhost:8080/api/v1/github/status', (req, res, ctx) => {
+        const url = new URL(req.url)
         const username = url.searchParams.get('username')
 
         if (username === 'testuser') {
-          return HttpResponse.json({
+          return res(ctx.json({
             connected: true,
             username: 'testuser',
             last_sync: Date.now(),
             repo_count: 15,
-          })
+          }))
         }
-        return HttpResponse.json({ connected: false, repo_count: 0 })
+        return res(ctx.json({ connected: false, repo_count: 0 }))
       })
     )
 
@@ -65,8 +65,8 @@ describe('useGitHubSync', () => {
 
   it('should handle status fetch errors', async () => {
     server.use(
-      http.get('http://localhost:8080/api/v1/github/status', () => {
-        return HttpResponse.json({ message: 'Server error' }, { status: 500 })
+      rest.get('http://localhost:8080/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json({ message: 'Server error' }))
       })
     )
 
@@ -82,12 +82,12 @@ describe('useGitHubSync', () => {
 
   it('should fetch repos when fetchRepos is called', async () => {
     server.use(
-      http.get('http://localhost:8080/api/v1/github/repos', ({ request }) => {
-        const url = new URL(request.url)
+      rest.get('http://localhost:8080/api/v1/github/repos', (req, res, ctx) => {
+        const url = new URL(req.url)
         const username = url.searchParams.get('username')
 
         if (username === 'testuser') {
-          return HttpResponse.json({
+          return res(ctx.json({
             repositories: [
               {
                 id: 1,
@@ -102,9 +102,9 @@ describe('useGitHubSync', () => {
                 pushed_at: '2024-01-01T00:00:00Z',
               },
             ],
-          })
+          }))
         }
-        return HttpResponse.json({ repositories: [] })
+        return res(ctx.json({ repositories: [] }))
       })
     )
 
@@ -121,11 +121,10 @@ describe('useGitHubSync', () => {
 
   it('should handle repos fetch errors', async () => {
     server.use(
-      http.get('http://localhost:8080/api/v1/github/repos', () => {
-        return HttpResponse.json(
-          { message: 'Failed to fetch repos' },
-          { status: 500 }
-        )
+      rest.get('http://localhost:8080/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Failed to fetch repos' }
+        ))
       })
     )
 
@@ -148,10 +147,10 @@ describe('useGitHubSync', () => {
     window.open = jest.fn(() => mockPopup as any)
 
     server.use(
-      http.get('http://localhost:8080/api/v1/github/auth-url', () => {
-        return HttpResponse.json({
+      rest.get('http://localhost:8080/api/v1/github/auth-url', (req, res, ctx) => {
+        return res(ctx.json({
           auth_url: 'https://github.com/login/oauth/authorize?client_id=test',
-        })
+        }))
       })
     )
 
@@ -171,23 +170,23 @@ describe('useGitHubSync', () => {
 
   it('should sync GitHub repositories', async () => {
     server.use(
-      http.post('http://localhost:8080/api/v1/github/sync', async ({ request }) => {
-        const body = await request.json()
-        return HttpResponse.json({
+      rest.post('http://localhost:8080/api/v1/github/sync', async (req, res, ctx) => {
+        const body = await req.json()
+        return res(ctx.json({
           status: 'success',
           username: body.username,
-        })
+        }))
       }),
-      http.get('http://localhost:8080/api/v1/github/status', () => {
-        return HttpResponse.json({
+      rest.get('http://localhost:8080/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json({
           connected: true,
           username: 'testuser',
           last_sync: Date.now(),
           repo_count: 20,
-        })
+        }))
       }),
-      http.get('http://localhost:8080/api/v1/github/repos', () => {
-        return HttpResponse.json({ repositories: [] })
+      rest.get('http://localhost:8080/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({ repositories: [] }))
       })
     )
 
@@ -211,8 +210,8 @@ describe('useGitHubSync', () => {
 
   it('should handle sync errors', async () => {
     server.use(
-      http.post('http://localhost:8080/api/v1/github/sync', () => {
-        return HttpResponse.json({ message: 'Sync failed' }, { status: 500 })
+      rest.post('http://localhost:8080/api/v1/github/sync', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json({ message: 'Sync failed' }))
       })
     )
 
@@ -228,11 +227,11 @@ describe('useGitHubSync', () => {
 
   it('should disconnect GitHub account', async () => {
     server.use(
-      http.delete('http://localhost:8080/api/v1/github/disconnect', () => {
-        return HttpResponse.json({
+      rest.delete('http://localhost:8080/api/v1/github/disconnect', (req, res, ctx) => {
+        return res(ctx.json({
           success: true,
           message: 'Disconnected successfully',
-        })
+        }))
       })
     )
 

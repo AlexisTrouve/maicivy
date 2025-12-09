@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CVThemeSelector from '../CVThemeSelector';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Mock Next.js navigation hooks
 jest.mock('next/navigation', () => ({
@@ -57,8 +57,8 @@ describe('CVThemeSelector', () => {
 
   it('should fetch and display themes from API', async () => {
     server.use(
-      http.get('*/api/cv/themes', () => {
-        return HttpResponse.json(mockThemes);
+      rest.get('*/api/cv/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemes));
       })
     );
 
@@ -75,8 +75,8 @@ describe('CVThemeSelector', () => {
 
   it('should call router.push when theme is changed', async () => {
     server.use(
-      http.get('*/api/cv/themes', () => {
-        return HttpResponse.json(mockThemes);
+      rest.get('*/api/cv/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemes));
       })
     );
 
@@ -104,11 +104,10 @@ describe('CVThemeSelector', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      http.get('*/api/cv/themes', () => {
-        return HttpResponse.json(
-          { error: 'Failed to fetch themes' },
-          { status: 500 }
-        );
+      rest.get('*/api/cv/themes', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { error: 'Failed to fetch themes' }
+        ));
       })
     );
 
@@ -125,8 +124,8 @@ describe('CVThemeSelector', () => {
 
   it('should display current theme value', async () => {
     server.use(
-      http.get('*/api/cv/themes', () => {
-        return HttpResponse.json(mockThemes);
+      rest.get('*/api/cv/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemes));
       })
     );
 
@@ -144,8 +143,8 @@ describe('CVThemeSelector', () => {
 
   it('should show Sparkles icon', async () => {
     server.use(
-      http.get('*/api/cv/themes', () => {
-        return HttpResponse.json(mockThemes);
+      rest.get('*/api/cv/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemes));
       })
     );
 

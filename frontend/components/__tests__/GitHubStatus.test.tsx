@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { GitHubStatus } from '../github/GitHubStatus';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Setup MSW handlers
 beforeAll(() => server.listen());
@@ -28,8 +28,8 @@ describe('GitHubStatus', () => {
 
   it('should fetch and display status', async () => {
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       })
     );
 
@@ -45,10 +45,10 @@ describe('GitHubStatus', () => {
 
   it('should display "not connected" when status is disconnected', async () => {
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json({
           connected: false,
-        });
+        }));
       })
     );
 
@@ -63,11 +63,11 @@ describe('GitHubStatus', () => {
     const now = Math.floor(Date.now() / 1000);
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json({
           ...mockStatus,
           last_sync: now - 120, // 2 minutes ago
-        });
+        }));
       })
     );
 
@@ -82,11 +82,11 @@ describe('GitHubStatus', () => {
     const now = Math.floor(Date.now() / 1000);
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json({
           ...mockStatus,
           last_sync: now - 30, // 30 seconds ago
-        });
+        }));
       })
     );
 
@@ -101,11 +101,11 @@ describe('GitHubStatus', () => {
     const onSync = jest.fn();
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       }),
-      http.post('*/api/v1/github/sync', () => {
-        return HttpResponse.json({ status: 'success' });
+      rest.post('*/api/v1/github/sync', (req, res, ctx) => {
+        return res(ctx.json({ status: 'success' }));
       })
     );
 
@@ -141,14 +141,13 @@ describe('GitHubStatus', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       }),
-      http.post('*/api/v1/github/sync', () => {
-        return HttpResponse.json(
-          { error: 'Sync failed' },
-          { status: 500 }
-        );
+      rest.post('*/api/v1/github/sync', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { error: 'Sync failed' }
+        ));
       })
     );
 
@@ -174,11 +173,11 @@ describe('GitHubStatus', () => {
     global.confirm = jest.fn().mockReturnValue(true);
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       }),
-      http.delete('*/api/v1/github/disconnect', () => {
-        return HttpResponse.json({ success: true });
+      rest.delete('*/api/v1/github/disconnect', (req, res, ctx) => {
+        return res(ctx.json({ success: true }));
       })
     );
 
@@ -205,8 +204,8 @@ describe('GitHubStatus', () => {
     global.confirm = jest.fn().mockReturnValue(false);
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       })
     );
 
@@ -225,12 +224,12 @@ describe('GitHubStatus', () => {
 
   it('should show loading spinner during sync', async () => {
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       }),
-      http.post('*/api/v1/github/sync', async () => {
+      rest.post('*/api/v1/github/sync', async (req, res, ctx) => {
         await new Promise(resolve => setTimeout(resolve, 100));
-        return HttpResponse.json({ status: 'success' });
+        return res(ctx.json({ status: 'success' }));
       })
     );
 
@@ -251,11 +250,11 @@ describe('GitHubStatus', () => {
 
   it('should display repo count correctly', async () => {
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json({
           ...mockStatus,
           repo_count: 42,
-        });
+        }));
       })
     );
 
@@ -269,8 +268,8 @@ describe('GitHubStatus', () => {
 
   it('should show green pulse indicator when connected', async () => {
     server.use(
-      http.get('*/api/v1/github/status', () => {
-        return HttpResponse.json(mockStatus);
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
+        return res(ctx.json(mockStatus));
       })
     );
 
@@ -286,12 +285,12 @@ describe('GitHubStatus', () => {
     let fetchCount = 0;
 
     server.use(
-      http.get('*/api/v1/github/status', () => {
+      rest.get('*/api/v1/github/status', (req, res, ctx) => {
         fetchCount++;
-        return HttpResponse.json(mockStatus);
+        return res(ctx.json(mockStatus));
       }),
-      http.post('*/api/v1/github/sync', () => {
-        return HttpResponse.json({ status: 'success' });
+      rest.post('*/api/v1/github/sync', (req, res, ctx) => {
+        return res(ctx.json({ status: 'success' }));
       })
     );
 

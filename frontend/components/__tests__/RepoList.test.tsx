@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { RepoList } from '../github/RepoList';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Setup MSW handlers
 beforeAll(() => server.listen());
@@ -60,10 +60,10 @@ describe('RepoList', () => {
 
   it('should fetch and display repositories', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -79,10 +79,10 @@ describe('RepoList', () => {
 
   it('should display repository descriptions', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -98,10 +98,10 @@ describe('RepoList', () => {
 
   it('should show star counts', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -117,10 +117,10 @@ describe('RepoList', () => {
 
   it('should display language badges with correct colors', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -141,10 +141,10 @@ describe('RepoList', () => {
 
   it('should show private badge for private repos', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -157,10 +157,10 @@ describe('RepoList', () => {
 
   it('should display topics as badges', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -178,10 +178,10 @@ describe('RepoList', () => {
 
   it('should format dates correctly', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -196,10 +196,10 @@ describe('RepoList', () => {
 
   it('should render repository links with correct hrefs', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -217,11 +217,10 @@ describe('RepoList', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json(
-          { message: 'Failed to fetch repos' },
-          { status: 500 }
-        );
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Failed to fetch repos' }
+        ));
       })
     );
 
@@ -238,10 +237,10 @@ describe('RepoList', () => {
 
   it('should show empty state when no repos found', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: [],
-        });
+        }));
       })
     );
 
@@ -254,15 +253,15 @@ describe('RepoList', () => {
 
   it('should filter private repos when showPrivate is false', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', ({ request }) => {
-        const url = new URL(request.url);
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        const url = new URL(req.url);
         const includePrivate = url.searchParams.get('include_private');
 
         expect(includePrivate).toBe('false');
 
-        return HttpResponse.json({
+        return res(ctx.json({
           repositories: mockRepos.filter(r => !r.is_private),
-        });
+        }));
       })
     );
 
@@ -277,15 +276,15 @@ describe('RepoList', () => {
 
   it('should include private repos when showPrivate is true', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', ({ request }) => {
-        const url = new URL(request.url);
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        const url = new URL(req.url);
         const includePrivate = url.searchParams.get('include_private');
 
         expect(includePrivate).toBe('true');
 
-        return HttpResponse.json({
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -300,10 +299,10 @@ describe('RepoList', () => {
 
   it('should display full_name for each repo', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -319,10 +318,10 @@ describe('RepoList', () => {
 
   it('should show GitHub badge on each repo card', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -336,10 +335,10 @@ describe('RepoList', () => {
 
   it('should apply hover shadow effect on cards', async () => {
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: mockRepos,
-        });
+        }));
       })
     );
 
@@ -360,10 +359,10 @@ describe('RepoList', () => {
     ];
 
     server.use(
-      http.get('*/api/v1/github/repos', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
+        return res(ctx.json({
           repositories: reposWithoutDescription,
-        });
+        }));
       })
     );
 
@@ -381,14 +380,14 @@ describe('RepoList', () => {
     let requestCount = 0;
 
     server.use(
-      http.get('*/api/v1/github/repos', ({ request }) => {
+      rest.get('*/api/v1/github/repos', (req, res, ctx) => {
         requestCount++;
-        const url = new URL(request.url);
+        const url = new URL(req.url);
         const username = url.searchParams.get('username');
 
-        return HttpResponse.json({
+        return res(ctx.json({
           repositories: username === 'user1' ? [mockRepos[0]] : [mockRepos[1]],
-        });
+        }));
       })
     );
 

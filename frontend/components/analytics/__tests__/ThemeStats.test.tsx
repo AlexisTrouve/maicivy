@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import ThemeStats from '../ThemeStats';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 // Setup MSW
 beforeAll(() => server.listen());
@@ -32,9 +32,9 @@ describe('ThemeStats', () => {
 
   it('should render loading state initially', () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', async () => {
+      rest.get('*/api/v1/analytics/themes', async (req, res, ctx) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        return HttpResponse.json(mockThemeStats);
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -46,8 +46,8 @@ describe('ThemeStats', () => {
 
   it('should fetch and display theme statistics', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -65,8 +65,8 @@ describe('ThemeStats', () => {
 
   it('should display view counts for each theme', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -84,8 +84,8 @@ describe('ThemeStats', () => {
 
   it('should display percentages for each theme', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -103,8 +103,8 @@ describe('ThemeStats', () => {
 
   it('should render progress bars for each theme', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -118,8 +118,8 @@ describe('ThemeStats', () => {
 
   it('should apply correct color class for backend theme', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -133,8 +133,8 @@ describe('ThemeStats', () => {
 
   it('should display ranking numbers', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -152,8 +152,8 @@ describe('ThemeStats', () => {
 
   it('should render BarChart icon', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -167,8 +167,8 @@ describe('ThemeStats', () => {
 
   it('should display update frequency message', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 
@@ -185,11 +185,10 @@ describe('ThemeStats', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(
-          { error: 'Internal server error' },
-          { status: 500 }
-        );
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { error: 'Internal server error' }
+        ));
       })
     );
 
@@ -205,10 +204,10 @@ describe('ThemeStats', () => {
 
   it('should capitalize theme names', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json({
           themes: [{ theme: 'backend', count: 100, percentage: 50 }],
-        });
+        }));
       })
     );
 
@@ -222,10 +221,10 @@ describe('ThemeStats', () => {
 
   it('should set correct width for progress bars based on percentage', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json({
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json({
           themes: [{ theme: 'backend', count: 100, percentage: 75 }],
-        });
+        }));
       })
     );
 
@@ -239,8 +238,8 @@ describe('ThemeStats', () => {
 
   it('should apply transition classes to progress bars', async () => {
     server.use(
-      http.get('*/api/v1/analytics/themes', () => {
-        return HttpResponse.json(mockThemeStats);
+      rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
+        return res(ctx.json(mockThemeStats));
       })
     );
 

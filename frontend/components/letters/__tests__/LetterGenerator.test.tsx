@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LetterGenerator } from '../LetterGenerator';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 import { mockLetterResponse } from '@/lib/testutil/fixtures';
 
 // Mock framer-motion
@@ -80,10 +80,10 @@ describe('LetterGenerator', () => {
 
   it('should submit form with valid data and show loading state', async () => {
     server.use(
-      http.post('*/api/letters/generate', async () => {
+      rest.post('*/api/letters/generate', async () => {
         // Simulate delay
         await new Promise((resolve) => setTimeout(resolve, 100));
-        return HttpResponse.json(mockLetterResponse);
+        return res(ctx.json(mockLetterResponse));
       })
     );
 
@@ -106,9 +106,9 @@ describe('LetterGenerator', () => {
 
   it('should display progress bar during generation', async () => {
     server.use(
-      http.post('*/api/letters/generate', async () => {
+      rest.post('*/api/letters/generate', async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
-        return HttpResponse.json(mockLetterResponse);
+        return res(ctx.json(mockLetterResponse);
       })
     );
 
@@ -130,8 +130,8 @@ describe('LetterGenerator', () => {
 
   it('should handle successful generation and show preview', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(mockLetterResponse);
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(mockLetterResponse);
       })
     );
 
@@ -156,8 +156,8 @@ describe('LetterGenerator', () => {
 
   it('should handle 403 error (access denied)', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(
           { message: 'Access denied' },
           { status: 403 }
         );
@@ -181,8 +181,8 @@ describe('LetterGenerator', () => {
 
   it('should handle 429 error (rate limit)', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(
           { message: 'Rate limit exceeded' },
           { status: 429 }
         );
@@ -206,8 +206,8 @@ describe('LetterGenerator', () => {
 
   it('should handle 500 error (server error)', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(
           { message: 'Internal server error' },
           { status: 500 }
         );
@@ -231,8 +231,8 @@ describe('LetterGenerator', () => {
 
   it('should save generation to localStorage history', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(mockLetterResponse);
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(mockLetterResponse);
       })
     );
 
@@ -256,8 +256,8 @@ describe('LetterGenerator', () => {
 
   it('should reset form when onReset is called from preview', async () => {
     server.use(
-      http.post('*/api/letters/generate', () => {
-        return HttpResponse.json(mockLetterResponse);
+      rest.post('*/api/letters/generate', () => {
+        return res(ctx.json(mockLetterResponse);
       })
     );
 

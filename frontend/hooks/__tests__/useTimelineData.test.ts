@@ -1,7 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useTimelineData } from '../useTimelineData'
 import { server } from '@/__mocks__/server'
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 const mockTimelineData = {
   success: true,
@@ -73,9 +73,9 @@ describe('useTimelineData', () => {
 
   it('should fetch timeline data on mount when autoFetch is true', async () => {
     server.use(
-      http.get('/api/v1/timeline', () => HttpResponse.json(mockTimelineData)),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline', () => res(ctx.json(mockTimelineData)),
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() => useTimelineData({ autoFetch: true }))
@@ -105,9 +105,9 @@ describe('useTimelineData', () => {
 
   it('should filter events by type locally', async () => {
     server.use(
-      http.get('/api/v1/timeline', () => HttpResponse.json(mockTimelineData)),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline', () => res(ctx.json(mockTimelineData)),
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() =>
@@ -125,12 +125,12 @@ describe('useTimelineData', () => {
 
   it('should filter events by category', async () => {
     server.use(
-      http.get('/api/v1/timeline', ({ request }) => {
+      rest.get('/api/v1/timeline', ({ request }) => {
         const url = new URL(request.url)
         const category = url.searchParams.get('category')
 
         if (category === 'backend') {
-          return HttpResponse.json({
+          return res(ctx.json({
             ...mockTimelineData,
             data: {
               ...mockTimelineData.data,
@@ -139,10 +139,10 @@ describe('useTimelineData', () => {
             },
           })
         }
-        return HttpResponse.json(mockTimelineData)
+        return res(ctx.json(mockTimelineData)
       }),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() =>
@@ -159,9 +159,9 @@ describe('useTimelineData', () => {
 
   it('should apply filters dynamically using filter function', async () => {
     server.use(
-      http.get('/api/v1/timeline', () => HttpResponse.json(mockTimelineData)),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline', () => res(ctx.json(mockTimelineData)),
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() => useTimelineData({ autoFetch: true }))
@@ -183,9 +183,9 @@ describe('useTimelineData', () => {
 
   it('should reset filters using reset function', async () => {
     server.use(
-      http.get('/api/v1/timeline', () => HttpResponse.json(mockTimelineData)),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline', () => res(ctx.json(mockTimelineData)),
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() => useTimelineData({ autoFetch: true }))
@@ -212,12 +212,12 @@ describe('useTimelineData', () => {
   it('should refetch data when refetch is called', async () => {
     let callCount = 0
     server.use(
-      http.get('/api/v1/timeline', () => {
+      rest.get('/api/v1/timeline', () => {
         callCount++
-        return HttpResponse.json(mockTimelineData)
+        return res(ctx.json(mockTimelineData)
       }),
-      http.get('/api/v1/timeline/categories', () => HttpResponse.json(mockCategories)),
-      http.get('/api/v1/timeline/milestones', () => HttpResponse.json(mockMilestones))
+      rest.get('/api/v1/timeline/categories', () => res(ctx.json(mockCategories)),
+      rest.get('/api/v1/timeline/milestones', () => res(ctx.json(mockMilestones))
     )
 
     const { result } = renderHook(() => useTimelineData({ autoFetch: true }))
@@ -239,8 +239,8 @@ describe('useTimelineData', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('/api/v1/timeline', () => {
-        return HttpResponse.json({ message: 'Server error' }, { status: 500 })
+      rest.get('/api/v1/timeline', () => {
+        return res(ctx.json({ message: 'Server error' }, { status: 500 })
       })
     )
 

@@ -6,7 +6,7 @@ import {
   useProfileStats,
 } from '../useProfileDetection'
 import { server } from '@/__mocks__/server'
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 describe('useProfileDetection', () => {
   beforeAll(() => server.listen())
@@ -15,8 +15,8 @@ describe('useProfileDetection', () => {
 
   it('should fetch profile detection on mount', async () => {
     server.use(
-      http.get('/api/v1/profile/current', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+        return res(ctx.json({
           profile_type: 'recruiter',
           confidence: 85,
           enrichment_data: {
@@ -31,7 +31,7 @@ describe('useProfileDetection', () => {
           },
           detection_sources: ['linkedin', 'clearbit'],
           bypass_enabled: false,
-        })
+        }))
       })
     )
 
@@ -55,11 +55,10 @@ describe('useProfileDetection', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('/api/v1/profile/current', () => {
-        return HttpResponse.json(
-          { message: 'Detection failed' },
-          { status: 500 }
-        )
+      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Detection failed' }
+        ))
       })
     )
 
@@ -78,12 +77,12 @@ describe('useProfileDetection', () => {
 
   it('should correctly detect when profile is "other" with low confidence', async () => {
     server.use(
-      http.get('/api/v1/profile/current', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+        return res(ctx.json({
           profile_type: 'other',
           confidence: 10,
           bypass_enabled: false,
-        })
+        }))
       })
     )
 
@@ -99,12 +98,12 @@ describe('useProfileDetection', () => {
 
   it('should handle bypass enabled status', async () => {
     server.use(
-      http.get('/api/v1/profile/current', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+        return res(ctx.json({
           profile_type: 'developer',
           confidence: 75,
           bypass_enabled: true,
-        })
+        }))
       })
     )
 
@@ -125,13 +124,13 @@ describe('useProfileDetectionManual', () => {
 
   it('should manually detect profile when detect is called', async () => {
     server.use(
-      http.get('/api/v1/profile/detect', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/detect', (req, res, ctx) => {
+        return res(ctx.json({
           profile_type: 'cto',
           confidence: 90,
           enrichment_data: { company_name: 'Startup Inc' },
           bypass_enabled: false,
-        })
+        }))
       })
     )
 
@@ -154,11 +153,10 @@ describe('useProfileDetectionManual', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('/api/v1/profile/detect', () => {
-        return HttpResponse.json(
-          { message: 'Detection error' },
-          { status: 500 }
-        )
+      rest.get('/api/v1/profile/detect', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Detection error' }
+        ))
       })
     )
 
@@ -183,11 +181,11 @@ describe('useBypassStatus', () => {
 
   it('should fetch bypass status on mount', async () => {
     server.use(
-      http.get('/api/v1/profile/bypass', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+        return res(ctx.json({
           success: true,
           bypass: true,
-        })
+        }))
       })
     )
 
@@ -206,11 +204,11 @@ describe('useBypassStatus', () => {
     let bypassValue = false
 
     server.use(
-      http.get('/api/v1/profile/bypass', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+        return res(ctx.json({
           success: true,
           bypass: bypassValue,
-        })
+        }))
       })
     )
 
@@ -236,11 +234,10 @@ describe('useBypassStatus', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('/api/v1/profile/bypass', () => {
-        return HttpResponse.json(
-          { message: 'Error checking bypass' },
-          { status: 500 }
-        )
+      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Error checking bypass' }
+        ))
       })
     )
 
@@ -264,8 +261,8 @@ describe('useProfileStats', () => {
 
   it('should fetch profile stats on mount', async () => {
     server.use(
-      http.get('/api/v1/profile/stats', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/profile/stats', (req, res, ctx) => {
+        return res(ctx.json({
           stats_by_type: [
             { profile_type: 'recruiter', count: 50, avg_confidence: 80 },
             { profile_type: 'developer', count: 30, avg_confidence: 75 },
@@ -273,7 +270,7 @@ describe('useProfileStats', () => {
           total_detected: 80,
           total_visitors: 100,
           detection_rate: 0.8,
-        })
+        }))
       })
     )
 
@@ -295,11 +292,10 @@ describe('useProfileStats', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      http.get('/api/v1/profile/stats', () => {
-        return HttpResponse.json(
-          { message: 'Stats unavailable' },
-          { status: 500 }
-        )
+      rest.get('/api/v1/profile/stats', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json(
+          { message: 'Stats unavailable' }
+        ))
       })
     )
 

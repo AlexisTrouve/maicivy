@@ -7,7 +7,7 @@ import {
   exportAnalyticsCSV
 } from '../analytics-api';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -21,10 +21,10 @@ describe('Analytics API', () => {
       let capturedPeriod: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
           const url = new URL(request.url);
           capturedPeriod = url.searchParams.get('period');
-          return HttpResponse.json({
+          return res(ctx.json({
             totalVisitors: 100,
             uniqueVisitors: 75,
             pageViews: 500,
@@ -44,10 +44,10 @@ describe('Analytics API', () => {
       let capturedPeriod: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
           const url = new URL(request.url);
           capturedPeriod = url.searchParams.get('period');
-          return HttpResponse.json({
+          return res(ctx.json({
             totalVisitors: 500,
             uniqueVisitors: 300
           });
@@ -60,8 +60,8 @@ describe('Analytics API', () => {
 
     it('should handle fetch errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json(
             { error: 'Internal error' },
             { status: 500 }
           );
@@ -73,8 +73,8 @@ describe('Analytics API', () => {
 
     it('should include credentials in request', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
-          return HttpResponse.json({
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({
             totalVisitors: 100,
             uniqueVisitors: 75
           });
@@ -89,8 +89,8 @@ describe('Analytics API', () => {
   describe('fetchThemeStats', () => {
     it('should fetch theme statistics', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
-          return HttpResponse.json({
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({
             themes: [
               { theme: 'backend', count: 50, percentage: 40 },
               { theme: 'frontend', count: 40, percentage: 32 },
@@ -109,8 +109,8 @@ describe('Analytics API', () => {
 
     it('should handle errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json(
             { error: 'Not found' },
             { status: 404 }
           );
@@ -122,8 +122,8 @@ describe('Analytics API', () => {
 
     it('should return empty array for no data', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
-          return HttpResponse.json({
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({
             themes: []
           });
         })
@@ -139,10 +139,10 @@ describe('Analytics API', () => {
       let capturedPeriod: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
           const url = new URL(request.url);
           capturedPeriod = url.searchParams.get('period');
-          return HttpResponse.json({
+          return res(ctx.json({
             totalLetters: 150,
             successRate: 95,
             avgGenerationTime: 2.5
@@ -161,10 +161,10 @@ describe('Analytics API', () => {
       let capturedPeriod: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
           const url = new URL(request.url);
           capturedPeriod = url.searchParams.get('period');
-          return HttpResponse.json({
+          return res(ctx.json({
             totalLetters: 800
           });
         })
@@ -176,8 +176,8 @@ describe('Analytics API', () => {
 
     it('should handle errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/letters`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, () => {
+          return res(ctx.json(
             { error: 'Server error' },
             { status: 500 }
           );
@@ -191,11 +191,11 @@ describe('Analytics API', () => {
   describe('fetchHeatmapData', () => {
     it('should fetch heatmap data without page filter', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
           const url = new URL(request.url);
           const page = url.searchParams.get('page');
 
-          return HttpResponse.json({
+          return res(ctx.json({
             clicks: [
               { x: 100, y: 200, count: 15 },
               { x: 300, y: 150, count: 23 }
@@ -218,11 +218,11 @@ describe('Analytics API', () => {
       let capturedPage: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
           const url = new URL(request.url);
           capturedPage = url.searchParams.get('page');
 
-          return HttpResponse.json({
+          return res(ctx.json({
             clicks: [],
             scrollDepth: []
           });
@@ -235,8 +235,8 @@ describe('Analytics API', () => {
 
     it('should handle errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, () => {
+          return res(ctx.json(
             { error: 'Not authorized' },
             { status: 403 }
           );
@@ -375,7 +375,7 @@ describe('Analytics API', () => {
       let capturedParams: { type: string; period: string | null; format: string | null } | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, ({ request }) => {
           const url = new URL(request.url);
           capturedParams = {
             type: 'visitors',
@@ -400,7 +400,7 @@ describe('Analytics API', () => {
       let capturedPeriod: string | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/export/themes`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/themes`, ({ request }) => {
           const url = new URL(request.url);
           capturedPeriod = url.searchParams.get('period');
 
@@ -418,7 +418,7 @@ describe('Analytics API', () => {
 
     it('should export letters CSV', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/export/letters`, () => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/letters`, () => {
           return HttpResponse.arrayBuffer(
             new TextEncoder().encode('company,date\nGoogle,2024-01-01').buffer
           );
@@ -431,8 +431,8 @@ describe('Analytics API', () => {
 
     it('should handle export errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, () => {
+          return res(ctx.json(
             { error: 'Export failed' },
             { status: 500 }
           );
@@ -446,9 +446,9 @@ describe('Analytics API', () => {
   describe('Edge cases', () => {
     it('should handle network timeout', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, async () => {
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, async () => {
           await new Promise(resolve => setTimeout(resolve, 35000));
-          return HttpResponse.json({});
+          return res(ctx.json({});
         })
       );
 
@@ -458,11 +458,11 @@ describe('Analytics API', () => {
 
     it('should handle concurrent requests', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
-          return HttpResponse.json({ totalVisitors: 100 });
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({ totalVisitors: 100 });
         }),
-        http.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
-          return HttpResponse.json({ themes: [] });
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({ themes: [] });
         })
       );
 
@@ -477,8 +477,8 @@ describe('Analytics API', () => {
 
     it('should handle empty responses', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
-          return HttpResponse.json({});
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({});
         })
       );
 

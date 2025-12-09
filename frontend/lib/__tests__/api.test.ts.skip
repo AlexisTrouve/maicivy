@@ -1,6 +1,6 @@
 import { api, cvApi, healthApi, lettersApi, visitorsApi, analyticsApi, ApiClient } from '../api';
 import { server } from '@/__mocks__/server';
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -12,8 +12,8 @@ describe('API Client', () => {
   describe('GET requests', () => {
     it('should fetch data successfully', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/cv`, () => {
-          return HttpResponse.json({
+        rest.get(`${API_BASE_URL}/api/cv`, () => {
+          return res(ctx.json({
             theme: 'backend',
             experiences: [
               { id: '1', title: 'Developer', company: 'Test Corp', description: 'Test', startDate: '2020-01-01', technologies: [], tags: [] }
@@ -37,10 +37,10 @@ describe('API Client', () => {
       let capturedParams: URLSearchParams | null = null;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/cv`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/cv`, ({ request }) => {
           const url = new URL(request.url);
           capturedParams = url.searchParams;
-          return HttpResponse.json({ theme: url.searchParams.get('theme') });
+          return res(ctx.json({ theme: url.searchParams.get('theme') });
         })
       );
 
@@ -51,8 +51,8 @@ describe('API Client', () => {
 
     it('should handle 404 errors', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/api/cv`, () => {
-          return HttpResponse.json(
+        rest.get(`${API_BASE_URL}/api/cv`, () => {
+          return res(ctx.json(
             { message: 'CV not found' },
             { status: 404 }
           );
@@ -69,15 +69,15 @@ describe('API Client', () => {
       let attempts = 0;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/cv`, () => {
+        rest.get(`${API_BASE_URL}/api/cv`, () => {
           attempts++;
           if (attempts < 3) {
-            return HttpResponse.json(
+            return res(ctx.json(
               { message: 'Internal Server Error' },
               { status: 500 }
             );
           }
-          return HttpResponse.json({ data: 'success' });
+          return res(ctx.json({ data: 'success' });
         })
       );
 
@@ -90,9 +90,9 @@ describe('API Client', () => {
       let attempts = 0;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/cv`, () => {
+        rest.get(`${API_BASE_URL}/api/cv`, () => {
           attempts++;
-          return HttpResponse.json(
+          return res(ctx.json(
             { message: 'Bad Request' },
             { status: 400 }
           );
@@ -113,9 +113,9 @@ describe('API Client', () => {
       let capturedBody: any = null;
 
       server.use(
-        http.post(`${API_BASE_URL}/api/v1/letters/generate`, async ({ request }) => {
+        rest.post(`${API_BASE_URL}/api/v1/letters/generate`, async ({ request }) => {
           capturedBody = await request.json();
-          return HttpResponse.json({
+          return res(ctx.json({
             id: 'test-letter-id',
             companyName: capturedBody.companyName,
             motivationLetter: 'Test letter',
@@ -137,9 +137,9 @@ describe('API Client', () => {
       let capturedHeaders: Headers | null = null;
 
       server.use(
-        http.post(`${API_BASE_URL}/api/test`, ({ request }) => {
+        rest.post(`${API_BASE_URL}/api/test`, ({ request }) => {
           capturedHeaders = request.headers;
-          return HttpResponse.json({ success: true });
+          return res(ctx.json({ success: true });
         })
       );
 
@@ -150,8 +150,8 @@ describe('API Client', () => {
 
     it('should handle POST errors', async () => {
       server.use(
-        http.post(`${API_BASE_URL}/api/test`, () => {
-          return HttpResponse.json(
+        rest.post(`${API_BASE_URL}/api/test`, () => {
+          return res(ctx.json(
             { message: 'Validation failed', code: 'VALIDATION_ERROR' },
             { status: 422 }
           );
@@ -171,9 +171,9 @@ describe('API Client', () => {
       let capturedBody: any = null;
 
       server.use(
-        http.put(`${API_BASE_URL}/api/cv/1`, async ({ request }) => {
+        rest.put(`${API_BASE_URL}/api/cv/1`, async ({ request }) => {
           capturedBody = await request.json();
-          return HttpResponse.json({
+          return res(ctx.json({
             id: '1',
             ...capturedBody
           });
@@ -194,9 +194,9 @@ describe('API Client', () => {
       let deleted = false;
 
       server.use(
-        http.delete(`${API_BASE_URL}/api/cv/1`, () => {
+        rest.delete(`${API_BASE_URL}/api/cv/1`, () => {
           deleted = true;
-          return HttpResponse.json({ success: true });
+          return res(ctx.json({ success: true });
         })
       );
 
@@ -213,16 +213,16 @@ describe('API Client', () => {
       let attempts = 0;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/test`, () => {
+        rest.get(`${API_BASE_URL}/api/test`, () => {
           attempts++;
           timestamps.push(Date.now());
           if (attempts < 3) {
-            return HttpResponse.json(
+            return res(ctx.json(
               { message: 'Server Error' },
               { status: 500 }
             );
           }
-          return HttpResponse.json({ success: true });
+          return res(ctx.json({ success: true });
         })
       );
 
@@ -243,10 +243,10 @@ describe('API Client', () => {
       jest.setTimeout(35000);
 
       server.use(
-        http.get(`${API_BASE_URL}/api/slow`, async () => {
+        rest.get(`${API_BASE_URL}/api/slow`, async () => {
           // Simulate a slow request
           await new Promise(resolve => setTimeout(resolve, 31000));
-          return HttpResponse.json({ data: 'slow' });
+          return res(ctx.json({ data: 'slow' });
         })
       );
 
@@ -262,9 +262,9 @@ describe('API Client', () => {
       let capturedCredentials: RequestCredentials | undefined;
 
       server.use(
-        http.get(`${API_BASE_URL}/api/test`, ({ request }) => {
+        rest.get(`${API_BASE_URL}/api/test`, ({ request }) => {
           capturedCredentials = (request as any).credentials;
-          return HttpResponse.json({ success: true });
+          return res(ctx.json({ success: true });
         })
       );
 
@@ -283,8 +283,8 @@ describe('CV API', () => {
 
   it('should fetch CV data', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/cv`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/cv`, () => {
+        return res(ctx.json({
           theme: 'backend',
           experiences: [],
           skills: [],
@@ -302,10 +302,10 @@ describe('CV API', () => {
     let capturedTheme: string | null = null;
 
     server.use(
-      http.get(`${API_BASE_URL}/api/cv`, ({ request }) => {
+      rest.get(`${API_BASE_URL}/api/cv`, ({ request }) => {
         const url = new URL(request.url);
         capturedTheme = url.searchParams.get('theme');
-        return HttpResponse.json({
+        return res(ctx.json({
           theme: capturedTheme,
           experiences: [],
           skills: [],
@@ -320,8 +320,8 @@ describe('CV API', () => {
 
   it('should fetch themes', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/cv/themes`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/cv/themes`, () => {
+        return res(ctx.json({
           themes: [
             { id: 'backend', name: 'Backend', description: 'Backend focused' },
             { id: 'frontend', name: 'Frontend', description: 'Frontend focused' }
@@ -344,8 +344,8 @@ describe('Health API', () => {
     const now = new Date().toISOString();
 
     server.use(
-      http.get(`${API_BASE_URL}/health`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/health`, () => {
+        return res(ctx.json({
           status: 'ok',
           timestamp: now
         });
@@ -365,8 +365,8 @@ describe('Letters API', () => {
 
   it('should generate letters', async () => {
     server.use(
-      http.post(`${API_BASE_URL}/api/v1/letters/generate`, () => {
-        return HttpResponse.json({
+      rest.post(`${API_BASE_URL}/api/v1/letters/generate`, () => {
+        return res(ctx.json({
           id: 'letter-123',
           companyName: 'Test Corp',
           motivationLetter: 'Great company!',
@@ -383,8 +383,8 @@ describe('Letters API', () => {
 
   it('should get letter by ID', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/letters/123`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/v1/letters/123`, () => {
+        return res(ctx.json({
           id: '123',
           companyName: 'Test Corp',
           motivationLetter: 'Letter content',
@@ -402,7 +402,7 @@ describe('Letters API', () => {
     const mockPdfBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/letters/123/pdf`, () => {
+      rest.get(`${API_BASE_URL}/api/v1/letters/123/pdf`, () => {
         return HttpResponse.arrayBuffer(
           new Uint8Array([0x25, 0x50, 0x44, 0x46]).buffer // PDF magic number
         );
@@ -421,8 +421,8 @@ describe('Visitors API', () => {
 
   it('should check visitor status', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/visitors/check`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/v1/visitors/check`, () => {
+        return res(ctx.json({
           visitorId: 'visitor-123',
           visits: 2,
           canAccessLetters: true
@@ -443,8 +443,8 @@ describe('Analytics API', () => {
 
   it('should fetch stats with default period', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+        return res(ctx.json({
           totalVisits: 100,
           uniqueVisitors: 50
         });
@@ -459,10 +459,10 @@ describe('Analytics API', () => {
     let capturedPeriod: string | null = null;
 
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
+      rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
         const url = new URL(request.url);
         capturedPeriod = url.searchParams.get('period');
-        return HttpResponse.json({
+        return res(ctx.json({
           totalVisits: 200,
           uniqueVisitors: 100
         });
@@ -475,8 +475,8 @@ describe('Analytics API', () => {
 
   it('should fetch theme stats', async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
-        return HttpResponse.json({
+      rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+        return res(ctx.json({
           themes: [
             { theme: 'backend', count: 50 },
             { theme: 'frontend', count: 30 }

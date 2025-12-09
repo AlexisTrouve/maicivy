@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { useVisitCount } from '../useVisitCount'
 import { server } from '@/__mocks__/server'
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 describe('useVisitCount', () => {
   beforeAll(() => server.listen())
@@ -10,8 +10,8 @@ describe('useVisitCount', () => {
 
   it('should fetch visit status from API on mount', async () => {
     server.use(
-      http.get('/api/v1/visitors/check', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/visitors/check', () => {
+        return res(ctx.json({
           visitCount: 2,
           hasAccess: true,
           remainingVisits: 1,
@@ -41,8 +41,8 @@ describe('useVisitCount', () => {
 
   it('should indicate no access when visit count >= 3', async () => {
     server.use(
-      http.get('/api/v1/visitors/check', () => {
-        return HttpResponse.json({
+      rest.get('/api/v1/visitors/check', () => {
+        return res(ctx.json({
           visitCount: 3,
           hasAccess: false,
           remainingVisits: 0,
@@ -64,8 +64,8 @@ describe('useVisitCount', () => {
 
   it('should handle API error gracefully with fallback access', async () => {
     server.use(
-      http.get('/api/v1/visitors/check', () => {
-        return HttpResponse.json(
+      rest.get('/api/v1/visitors/check', () => {
+        return res(ctx.json(
           { message: 'Server error' },
           { status: 500 }
         )
@@ -92,7 +92,7 @@ describe('useVisitCount', () => {
 
   it('should handle network error gracefully', async () => {
     server.use(
-      http.get('/api/v1/visitors/check', () => {
+      rest.get('/api/v1/visitors/check', () => {
         return HttpResponse.error()
       })
     )
@@ -110,9 +110,9 @@ describe('useVisitCount', () => {
   it('should refresh visit status when refresh is called', async () => {
     let callCount = 0
     server.use(
-      http.get('/api/v1/visitors/check', () => {
+      rest.get('/api/v1/visitors/check', () => {
         callCount++
-        return HttpResponse.json({
+        return res(ctx.json({
           visitCount: callCount,
           hasAccess: callCount < 3,
           remainingVisits: Math.max(0, 3 - callCount),
@@ -156,14 +156,14 @@ describe('useVisitCount', () => {
   it('should clear error on successful retry after error', async () => {
     let shouldFail = true
     server.use(
-      http.get('/api/v1/visitors/check', () => {
+      rest.get('/api/v1/visitors/check', () => {
         if (shouldFail) {
-          return HttpResponse.json(
+          return res(ctx.json(
             { message: 'Temporary error' },
             { status: 500 }
           )
         }
-        return HttpResponse.json({
+        return res(ctx.json({
           visitCount: 1,
           hasAccess: true,
           remainingVisits: 2,
