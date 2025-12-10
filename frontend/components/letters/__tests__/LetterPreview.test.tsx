@@ -65,13 +65,15 @@ describe('LetterPreview', () => {
     render(<LetterPreview letters={mockLetters} onReset={mockOnReset} />);
 
     // Motivation letter
-    expect(screen.getByText(/Lettre de Motivation/i)).toBeInTheDocument();
+    const motivationHeadings = screen.getAllByText(/Lettre de Motivation/i);
+    expect(motivationHeadings.length).toBeGreaterThan(0);
     expect(
       screen.getByText(/I am very interested in this position/i)
     ).toBeInTheDocument();
 
     // Anti-motivation letter
-    expect(screen.getByText(/Lettre d'Anti-Motivation/i)).toBeInTheDocument();
+    const antiMotivationHeadings = screen.getAllByText(/Lettre d'Anti-Motivation/i);
+    expect(antiMotivationHeadings.length).toBeGreaterThan(0);
     expect(
       screen.getByText(/I reluctantly submit this application/i)
     ).toBeInTheDocument();

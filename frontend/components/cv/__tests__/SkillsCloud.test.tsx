@@ -83,9 +83,9 @@ describe('SkillsCloud', () => {
     expect(screen.getByText('React')).toBeInTheDocument();
     expect(screen.getByText('TypeScript')).toBeInTheDocument();
 
-    // Should not show backend skills
-    expect(screen.queryByText('Go')).toBeInTheDocument(); // Still in DOM but filtered
-    expect(screen.queryByText('Docker')).toBeInTheDocument(); // Still in DOM but filtered
+    // Should not show backend skills (filtered out, not in DOM)
+    expect(screen.queryByText('Go')).not.toBeInTheDocument();
+    expect(screen.queryByText('Docker')).not.toBeInTheDocument();
   });
 
   it('should show all skills when "Toutes" is clicked', () => {
@@ -127,11 +127,12 @@ describe('SkillsCloud', () => {
   });
 
   it('should apply correct color classes per category', () => {
-    render(<SkillsCloud skills={mockSkills} />);
+    const { container } = render(<SkillsCloud skills={mockSkills} />);
 
-    const goSkill = screen.getByText('Go').parentElement;
-    const reactSkill = screen.getByText('React').parentElement;
-    const dockerSkill = screen.getByText('Docker').parentElement;
+    // Find the motion.div elements directly (not parentElement)
+    const goSkill = screen.getByText('Go').closest('[title*="Go"]');
+    const reactSkill = screen.getByText('React').closest('[title*="React"]');
+    const dockerSkill = screen.getByText('Docker').closest('[title*="Docker"]');
 
     // Backend should be blue
     expect(goSkill).toHaveClass('bg-blue-100');
@@ -146,7 +147,8 @@ describe('SkillsCloud', () => {
   it('should display tooltip with skill details', () => {
     render(<SkillsCloud skills={mockSkills} />);
 
-    const goSkill = screen.getByText('Go').parentElement;
+    // The title attribute is on the motion.div itself, not parentElement
+    const goSkill = screen.getByText('Go').closest('[title]');
 
     expect(goSkill).toHaveAttribute('title');
     expect(goSkill?.getAttribute('title')).toContain('Go');

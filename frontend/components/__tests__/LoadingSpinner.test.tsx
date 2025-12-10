@@ -181,7 +181,7 @@ describe('LoadingSpinner', () => {
     const { container } = render(<LoadingSpinner />);
 
     const circle = container.querySelector('circle');
-    expect(circle).toHaveAttribute('strokeWidth', '4');
+    expect(circle).toHaveAttribute('stroke-width', '4');
   });
 
   it('should render consistently across different sizes', () => {

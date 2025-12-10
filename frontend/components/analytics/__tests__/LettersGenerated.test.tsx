@@ -246,11 +246,9 @@ describe('LettersGenerated', () => {
 
     render(<LettersGenerated />);
 
-    await waitFor(() => {
-      // French month abbreviations
-      const dateText = screen.getByText(/\d{2}\s\w+/);
-      expect(dateText).toBeInTheDocument();
-    });
+    // Wait for data to load and check for French formatted date
+    const dateText = await screen.findByText(/d{2}sw+/);
+    expect(dateText).toBeInTheDocument();
   });
 
   it('should display period description', async () => {
@@ -417,8 +415,9 @@ describe('LettersGenerated', () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    // Change period
-    fireEvent.click(screen.getByText('Mois'));
+    // Change period - wait for button to appear
+    const monthButton = await screen.findByText('Mois');
+    fireEvent.click(monthButton);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(

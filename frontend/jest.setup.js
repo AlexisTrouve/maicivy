@@ -57,16 +57,8 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return []
-  }
-  unobserve() {}
-}
+// Import WebAPIs mocks (WebSocket, IntersectionObserver, WebGL, etc.)
+require('./__mocks__/webAPIs')
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {

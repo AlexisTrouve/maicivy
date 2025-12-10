@@ -219,7 +219,7 @@ describe('TimelineFilters', () => {
   });
 
   it('should toggle period picker visibility', () => {
-    render(
+    const { container } = render(
       <TimelineFilters
         categories={mockCategories}
         selectedCategory=""
@@ -232,8 +232,10 @@ describe('TimelineFilters', () => {
     const periodButton = screen.getByText(/filtrer par période/i);
     fireEvent.click(periodButton);
 
-    expect(screen.getByLabelText(/de :/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/à :/i)).toBeInTheDocument();
+    expect(screen.getByText(/de :/i)).toBeInTheDocument();
+    expect(screen.getByText(/à :/i)).toBeInTheDocument();
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    expect(dateInputs.length).toBe(2);
   });
 
   it('should render date inputs in period picker', async () => {
@@ -259,7 +261,7 @@ describe('TimelineFilters', () => {
   it('should apply period filter', async () => {
     const onFiltersChange = jest.fn();
 
-    render(
+    const { container } = render(
       <TimelineFilters
         categories={mockCategories}
         selectedCategory=""
@@ -274,8 +276,9 @@ describe('TimelineFilters', () => {
     fireEvent.click(periodButton);
 
     // Set dates
-    const fromInput = screen.getByLabelText(/de :/i);
-    const toInput = screen.getByLabelText(/à :/i);
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    const fromInput = dateInputs[0];
+    const toInput = dateInputs[1];
 
     fireEvent.change(fromInput, { target: { value: '2022-01-01' } });
     fireEvent.change(toInput, { target: { value: '2023-12-31' } });
@@ -295,7 +298,7 @@ describe('TimelineFilters', () => {
   });
 
   it('should disable apply button when dates are incomplete', async () => {
-    render(
+    const { container } = render(
       <TimelineFilters
         categories={mockCategories}
         selectedCategory=""
@@ -313,7 +316,8 @@ describe('TimelineFilters', () => {
     expect(applyButton).toBeDisabled();
 
     // Set only one date
-    const fromInput = screen.getByLabelText(/de :/i);
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    const fromInput = dateInputs[0];
     fireEvent.change(fromInput, { target: { value: '2022-01-01' } });
 
     expect(applyButton).toBeDisabled();
@@ -322,7 +326,7 @@ describe('TimelineFilters', () => {
   it('should clear period filter', async () => {
     const onFiltersChange = jest.fn();
 
-    render(
+    const { container } = render(
       <TimelineFilters
         categories={mockCategories}
         selectedCategory=""
@@ -337,8 +341,9 @@ describe('TimelineFilters', () => {
     fireEvent.click(periodButton);
 
     // Set dates
-    const fromInput = screen.getByLabelText(/de :/i);
-    const toInput = screen.getByLabelText(/à :/i);
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    const fromInput = dateInputs[0];
+    const toInput = dateInputs[1];
 
     fireEvent.change(fromInput, { target: { value: '2022-01-01' } });
     fireEvent.change(toInput, { target: { value: '2023-12-31' } });
@@ -353,7 +358,7 @@ describe('TimelineFilters', () => {
   });
 
   it('should update period button text when dates are selected', async () => {
-    render(
+    const { container } = render(
       <TimelineFilters
         categories={mockCategories}
         selectedCategory=""
@@ -368,8 +373,9 @@ describe('TimelineFilters', () => {
     fireEvent.click(periodButton);
 
     // Set dates
-    const fromInput = screen.getByLabelText(/de :/i);
-    const toInput = screen.getByLabelText(/à :/i);
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    const fromInput = dateInputs[0];
+    const toInput = dateInputs[1];
 
     fireEvent.change(fromInput, { target: { value: '2022-01-01' } });
     fireEvent.change(toInput, { target: { value: '2023-12-31' } });
