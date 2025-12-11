@@ -104,7 +104,7 @@ describe('useTimelineScroll', () => {
     })
 
     expect(window.scrollTo).toHaveBeenCalledWith({
-      top: 500, // 500 (element top) + 0 (window.scrollY) - 100 (offset) = 400, but getBoundingClientRect.top is relative
+      top: 400, // 500 (element top) + 0 (window.scrollY) - 100 (offset) = 400
       behavior: 'smooth',
     })
   })
@@ -140,15 +140,37 @@ describe('useTimelineScroll', () => {
   })
 
   it('should setup IntersectionObserver for sections', () => {
+    // Create mock DOM sections
+    const section1 = document.createElement('div')
+    section1.setAttribute('data-timeline-section', 'true')
+    const section2 = document.createElement('div')
+    section2.setAttribute('data-timeline-section', 'true')
+
+    document.body.appendChild(section1)
+    document.body.appendChild(section2)
+
     renderHook(() => useTimelineScroll({ threshold: 0.5 }))
 
     expect(IntersectionObserver).toHaveBeenCalled()
 
     const observerInstance = (IntersectionObserver as jest.Mock).mock.results[0].value
     expect(observerInstance.observe).toHaveBeenCalled()
+
+    // Cleanup
+    document.body.removeChild(section1)
+    document.body.removeChild(section2)
   })
 
   it('should cleanup on unmount', () => {
+    // Create mock DOM sections
+    const section1 = document.createElement('div')
+    section1.setAttribute('data-timeline-section', 'true')
+    const section2 = document.createElement('div')
+    section2.setAttribute('data-timeline-section', 'true')
+
+    document.body.appendChild(section1)
+    document.body.appendChild(section2)
+
     const { unmount } = renderHook(() => useTimelineScroll())
 
     const observerInstance = (IntersectionObserver as jest.Mock).mock.results[0].value
@@ -156,6 +178,10 @@ describe('useTimelineScroll', () => {
     unmount()
 
     expect(observerInstance.disconnect).toHaveBeenCalled()
+
+    // Cleanup
+    document.body.removeChild(section1)
+    document.body.removeChild(section2)
   })
 })
 
@@ -186,6 +212,12 @@ describe('useScrollDirection', () => {
 
     const { result } = renderHook(() => useScrollDirection())
 
+    // First scroll event to set lastScrollY = 100
+    act(() => {
+      window.dispatchEvent(new Event('scroll'))
+    })
+
+    // Now scroll up
     Object.defineProperty(window, 'scrollY', { writable: true, value: 50 })
     act(() => {
       window.dispatchEvent(new Event('scroll'))

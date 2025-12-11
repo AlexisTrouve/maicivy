@@ -4,14 +4,14 @@ import { server } from '@/__mocks__/server'
 import { rest } from 'msw'
 
 describe('useVisitCount', () => {
-  beforeAll(() => server.listen())
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
   afterEach(() => server.resetHandlers())
   afterAll(() => server.close())
 
   it('should fetch visit status from API on mount', async () => {
     server.use(
       rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
-        return res(ctx.status(500), ctx.json({
+        return res(ctx.json({
           visitCount: 2,
           hasAccess: true,
           remainingVisits: 1,
@@ -22,7 +22,6 @@ describe('useVisitCount', () => {
 
     const { result } = renderHook(() => useVisitCount())
 
-    // Initially loading
     expect(result.current.loading).toBe(true)
     expect(result.current.status).toBeNull()
 
@@ -63,23 +62,25 @@ describe('useVisitCount', () => {
   })
 
   it('should handle API error gracefully with fallback access', async () => {
+    let requestCount = 0
     server.use(
       rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
-        return res(ctx.json(
-          { message: 'Server error' }))
+        requestCount++
+        return res(ctx.status(500), ctx.json({ message: 'Server error' }))
       })
     )
 
     const { result } = renderHook(() => useVisitCount())
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
+    // Wait for retries to complete (3 retries with exponential backoff)
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false)
+      },
+      { timeout: 10000 }
+    )
 
-    // Should have error
     expect(result.current.error).toBeTruthy()
-
-    // Should fallback to allowing access (server will verify)
     expect(result.current.status).toEqual({
       visitCount: 0,
       hasAccess: true,
@@ -90,32 +91,39 @@ describe('useVisitCount', () => {
 
   it('should handle network error gracefully', async () => {
     server.use(
-      rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
-        return res.networkError("Network error")
+      rest.get('*/api/v1/visitors/check', (req, res) => {
+        return res.networkError('Network error')
       })
     )
 
     const { result } = renderHook(() => useVisitCount())
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
+    // Wait for retries to complete
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false)
+      },
+      { timeout: 10000 }
+    )
 
     expect(result.current.error).toBeTruthy()
-    expect(result.current.status?.hasAccess).toBe(true) // Fallback allows access
+    expect(result.current.status?.hasAccess).toBe(true)
   })
 
   it('should refresh visit status when refresh is called', async () => {
-    let callCount = 0
+    let successfulCalls = 0
     server.use(
       rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
-        callCount++
-        return res(ctx.status(500), ctx.json({
-          visitCount: callCount,
-          hasAccess: callCount < 3,
-          remainingVisits: Math.max(0, 3 - callCount)),
-          sessionId: `session-${callCount}`,
-        })
+        // Only increment on successful response (not on retries)
+        successfulCalls++
+        return res(
+          ctx.json({
+            visitCount: successfulCalls,
+            hasAccess: successfulCalls < 3,
+            remainingVisits: Math.max(0, 3 - successfulCalls),
+            sessionId: `session-${successfulCalls}`,
+          })
+        )
       })
     )
 
@@ -126,28 +134,29 @@ describe('useVisitCount', () => {
     })
 
     expect(result.current.status?.visitCount).toBe(1)
+    expect(result.current.status?.sessionId).toBe('session-1')
 
     // Call refresh
     result.current.refresh()
 
+    // Wait for loading to start and finish
     await waitFor(() => {
       expect(result.current.status?.visitCount).toBe(2)
     })
 
     expect(result.current.status?.sessionId).toBe('session-2')
+    expect(result.current.loading).toBe(false)
   })
 
   it('should set loading state correctly during fetch', async () => {
     const { result } = renderHook(() => useVisitCount())
 
-    // Should start loading
     expect(result.current.loading).toBe(true)
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
 
-    // Should not be loading after fetch completes
     expect(result.current.loading).toBe(false)
   })
 
@@ -156,28 +165,32 @@ describe('useVisitCount', () => {
     server.use(
       rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
         if (shouldFail) {
-          return res(ctx.json(
-            { message: 'Temporary error' }))
+          return res(ctx.status(500), ctx.json({ message: 'Temporary error' }))
         }
-        return res(ctx.json({
-          visitCount: 1,
-          hasAccess: true,
-          remainingVisits: 2,
-          sessionId: 'success-session',
-        }))
+        return res(
+          ctx.json({
+            visitCount: 1,
+            hasAccess: true,
+            remainingVisits: 2,
+            sessionId: 'success-session',
+          })
+        )
       })
     )
 
     const { result } = renderHook(() => useVisitCount())
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
+    // Wait for retries to complete
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false)
+      },
+      { timeout: 10000 }
+    )
 
-    // Should have error initially
     expect(result.current.error).toBeTruthy()
 
-    // Fix the error and refresh
+    // Now make it succeed
     shouldFail = false
     result.current.refresh()
 
@@ -187,5 +200,6 @@ describe('useVisitCount', () => {
 
     expect(result.current.status?.visitCount).toBe(1)
     expect(result.current.status?.hasAccess).toBe(true)
+    expect(result.current.loading).toBe(false)
   })
 })

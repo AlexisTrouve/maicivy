@@ -5,8 +5,11 @@ import { TimelineEvent } from '@/lib/types';
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, onClick, initial, animate, exit, ...props }: any) => (
-      <div onClick={onClick} {...props}>{children}</div>
+    div: ({ children, onClick, initial, animate, exit, className, ...props }: any) => (
+      <div onClick={onClick} className={className} {...props}>{children}</div>
+    ),
+    span: ({ children, whileHover, className, ...props }: any) => (
+      <span className={className} {...props}>{children}</span>
     ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,

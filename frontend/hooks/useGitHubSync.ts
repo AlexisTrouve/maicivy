@@ -54,12 +54,12 @@ export function useGitHubSync(username?: string): UseGitHubSyncReturn {
     }
   }, [username]);
 
-  // Déterminer l'état basé sur le status
+  // Déterminer l'état basé sur le status (sauf si déjà en erreur)
   useEffect(() => {
-    if (status) {
+    if (status && state !== 'error') {
       setState(status.connected ? 'connected' : 'idle');
     }
-  }, [status]);
+  }, [status, state]);
 
   const fetchStatus = useCallback(async () => {
     if (!username) return;
@@ -69,6 +69,11 @@ export function useGitHubSync(username?: string): UseGitHubSyncReturn {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/github/status?username=${username}`
       );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch status');
+      }
+
       const data = await response.json();
       setStatus(data);
       setError(null);
@@ -177,8 +182,10 @@ export function useGitHubSync(username?: string): UseGitHubSyncReturn {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Sync failed');
+        throw new Error(data.message || 'Sync failed');
       }
 
       // Attendre 2 secondes pour que la sync se termine
@@ -198,7 +205,6 @@ export function useGitHubSync(username?: string): UseGitHubSyncReturn {
     if (!username) return;
 
     try {
-      setState('idle');
       setError(null);
 
       const response = await fetch(

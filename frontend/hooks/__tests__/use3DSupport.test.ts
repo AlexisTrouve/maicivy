@@ -2,32 +2,35 @@ import { renderHook } from '@testing-library/react'
 import { use3DSupport, useHas3DSupport, use3DQualitySettings } from '../use3DSupport'
 
 describe('use3DSupport', () => {
-  let mockCanvas: any
-  let mockGLContext: any
+  let mockGetContext: jest.SpyInstance
+  let mockGetExtension: jest.SpyInstance
+  let mockGetParameter: jest.SpyInstance
 
   beforeEach(() => {
-    mockGLContext = {
-      getExtension: jest.fn(),
-      getParameter: jest.fn(),
-    }
+    // Spy on HTMLCanvasElement.prototype.getContext instead of mocking createElement
+    mockGetContext = jest.spyOn(HTMLCanvasElement.prototype, 'getContext')
 
-    mockCanvas = {
-      getContext: jest.fn((type) => {
-        if (type === 'webgl2' || type === 'experimental-webgl2') {
-          return mockGLContext
-        }
-        if (type === 'webgl' || type === 'experimental-webgl') {
-          return mockGLContext
-        }
-        return null
-      }),
-    }
+    // Create mock functions for GL context methods
+    mockGetExtension = jest.fn()
+    mockGetParameter = jest.fn()
 
-    document.createElement = jest.fn((tag) => {
-      if (tag === 'canvas') {
-        return mockCanvas
+    // Configure getContext to return our mocked GL context
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
+      if (type === 'webgl2' || type === 'experimental-webgl2') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
       }
-      return {} as any
+      if (type === 'webgl' || type === 'experimental-webgl') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
+      }
+      return null
     })
 
     // Mock navigator.userAgent
@@ -38,11 +41,15 @@ describe('use3DSupport', () => {
     })
   })
 
+  afterEach(() => {
+    mockGetContext.mockRestore()
+  })
+
   it('should detect WebGL 2.0 support on desktop', () => {
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
+    mockGetParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -53,20 +60,24 @@ describe('use3DSupport', () => {
   })
 
   it('should detect WebGL 1.0 support when WebGL 2.0 is unavailable', () => {
-    mockCanvas.getContext = jest.fn((type) => {
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
       if (type === 'webgl2' || type === 'experimental-webgl2') {
         return null
       }
       if (type === 'webgl' || type === 'experimental-webgl') {
-        return mockGLContext
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
       }
       return null
     })
 
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('Intel HD Graphics')
+    mockGetParameter.mockReturnValue('Intel HD Graphics')
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -81,10 +92,10 @@ describe('use3DSupport', () => {
       value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
     })
 
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('Apple A14 GPU')
+    mockGetParameter.mockReturnValue('Apple M1 GPU')
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -98,10 +109,10 @@ describe('use3DSupport', () => {
       value: 'Mozilla/5.0 (Linux; Android 9; SM-G960F)',
     })
 
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('Mali-G72')
+    mockGetParameter.mockReturnValue('Mali-G72')
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -112,7 +123,7 @@ describe('use3DSupport', () => {
   })
 
   it('should handle WebGL not available', () => {
-    mockCanvas.getContext = jest.fn(() => null)
+    mockGetContext.mockReturnValue(null)
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -122,7 +133,7 @@ describe('use3DSupport', () => {
   })
 
   it('should handle WebGL context creation errors', () => {
-    mockCanvas.getContext = jest.fn(() => {
+    mockGetContext.mockImplementation(() => {
       throw new Error('WebGL not supported')
     })
 
@@ -139,10 +150,10 @@ describe('use3DSupport', () => {
       value: 2, // 2GB RAM
     })
 
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
+    mockGetParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
 
     const { result } = renderHook(() => use3DSupport())
 
@@ -152,22 +163,34 @@ describe('use3DSupport', () => {
 })
 
 describe('useHas3DSupport', () => {
+  let mockGetContext: jest.SpyInstance
+  let mockGetExtension: jest.SpyInstance
+  let mockGetParameter: jest.SpyInstance
+
   beforeEach(() => {
-    const mockGLContext = {
-      getExtension: jest.fn(),
-      getParameter: jest.fn(),
-    }
+    mockGetContext = jest.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    mockGetExtension = jest.fn()
+    mockGetParameter = jest.fn()
 
-    const mockCanvas = {
-      getContext: jest.fn(() => mockGLContext),
-    }
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
+      if (type === 'webgl2' || type === 'experimental-webgl2' || type === 'webgl' || type === 'experimental-webgl') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
+      }
+      return null
+    })
 
-    document.createElement = jest.fn(() => mockCanvas as any)
-
-    mockGLContext.getExtension.mockReturnValue({
+    mockGetExtension.mockReturnValue({
       UNMASKED_RENDERER_WEBGL: 37446,
     })
-    mockGLContext.getParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
+    mockGetParameter.mockReturnValue('NVIDIA GeForce GTX 1080')
+  })
+
+  afterEach(() => {
+    mockGetContext.mockRestore()
   })
 
   it('should return boolean support status', () => {
@@ -179,40 +202,52 @@ describe('useHas3DSupport', () => {
 })
 
 describe('use3DQualitySettings', () => {
+  let mockGetContext: jest.SpyInstance
+
   beforeEach(() => {
-    const mockGLContext = {
-      getExtension: jest.fn().mockReturnValue({
-        UNMASKED_RENDERER_WEBGL: 37446,
-      }),
-      getParameter: jest.fn(),
-    }
-
-    const mockCanvas = {
-      getContext: jest.fn(() => mockGLContext),
-    }
-
-    document.createElement = jest.fn(() => mockCanvas as any)
+    mockGetContext = jest.spyOn(HTMLCanvasElement.prototype, 'getContext')
 
     Object.defineProperty(window, 'devicePixelRatio', {
       writable: true,
       configurable: true,
       value: 2,
     })
+
+    // Set desktop user agent by default
+    Object.defineProperty(navigator, 'userAgent', {
+      writable: true,
+      configurable: true,
+      value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    })
+
+    // Set device memory high enough to not limit performance
+    Object.defineProperty(navigator, 'deviceMemory', {
+      writable: true,
+      configurable: true,
+      value: 8,
+    })
+  })
+
+  afterEach(() => {
+    mockGetContext.mockRestore()
   })
 
   it('should return high quality settings for high performance', () => {
-    const mockGLContext = {
-      getExtension: jest.fn().mockReturnValue({
-        UNMASKED_RENDERER_WEBGL: 37446,
-      }),
-      getParameter: jest.fn(() => 'NVIDIA GeForce RTX 3080'),
-    }
+    const mockGetExtension = jest.fn().mockReturnValue({
+      UNMASKED_RENDERER_WEBGL: 37446,
+    })
+    const mockGetParameter = jest.fn(() => 'NVIDIA GeForce RTX 3080')
 
-    const mockCanvas = {
-      getContext: jest.fn(() => mockGLContext),
-    }
-
-    document.createElement = jest.fn(() => mockCanvas as any)
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
+      if (type === 'webgl2' || type === 'experimental-webgl2' || type === 'webgl' || type === 'experimental-webgl') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
+      }
+      return null
+    })
 
     const { result } = renderHook(() => use3DQualitySettings())
 
@@ -224,18 +259,21 @@ describe('use3DQualitySettings', () => {
   })
 
   it('should return medium quality settings for medium performance', () => {
-    const mockGLContext = {
-      getExtension: jest.fn().mockReturnValue({
-        UNMASKED_RENDERER_WEBGL: 37446,
-      }),
-      getParameter: jest.fn(() => 'Intel UHD Graphics'),
-    }
+    const mockGetExtension = jest.fn().mockReturnValue({
+      UNMASKED_RENDERER_WEBGL: 37446,
+    })
+    const mockGetParameter = jest.fn(() => 'Intel UHD Graphics')
 
-    const mockCanvas = {
-      getContext: jest.fn(() => mockGLContext),
-    }
-
-    document.createElement = jest.fn(() => mockCanvas as any)
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
+      if (type === 'webgl2' || type === 'experimental-webgl2' || type === 'webgl' || type === 'experimental-webgl') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
+      }
+      return null
+    })
 
     const { result } = renderHook(() => use3DQualitySettings())
 
@@ -247,18 +285,21 @@ describe('use3DQualitySettings', () => {
   })
 
   it('should return low quality settings for low performance', () => {
-    const mockGLContext = {
-      getExtension: jest.fn().mockReturnValue({
-        UNMASKED_RENDERER_WEBGL: 37446,
-      }),
-      getParameter: jest.fn(() => 'Intel HD Graphics 4000'),
-    }
+    const mockGetExtension = jest.fn().mockReturnValue({
+      UNMASKED_RENDERER_WEBGL: 37446,
+    })
+    const mockGetParameter = jest.fn(() => 'Intel HD Graphics 4000')
 
-    const mockCanvas = {
-      getContext: jest.fn(() => mockGLContext),
-    }
-
-    document.createElement = jest.fn(() => mockCanvas as any)
+    mockGetContext.mockImplementation(function(this: HTMLCanvasElement, type: string) {
+      if (type === 'webgl2' || type === 'experimental-webgl2' || type === 'webgl' || type === 'experimental-webgl') {
+        return {
+          canvas: this,
+          getExtension: mockGetExtension,
+          getParameter: mockGetParameter,
+        }
+      }
+      return null
+    })
 
     Object.defineProperty(navigator, 'userAgent', {
       writable: true,

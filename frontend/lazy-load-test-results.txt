@@ -1,0 +1,125 @@
+
+> maicivy-frontend@0.1.0 test
+> jest lazy-load.test.ts --no-coverage
+
+FAIL lib/__tests__/lazy-load.test.ts
+  Lazy Load Utils
+    DefaultLoader
+      √ should render a loading spinner (7 ms)
+      √ should have animate-spin class (1 ms)
+    CardSkeleton
+      √ should render a card skeleton (1 ms)
+      √ should have correct height (1 ms)
+    TextSkeleton
+      √ should render text skeleton with multiple lines (1 ms)
+      √ should have varying widths
+    lazyLoad
+      √ should create a lazy loaded component
+      √ should use custom loading component (1 ms)
+      √ should respect SSR option (1 ms)
+    lazyLoadClientOnly
+      √ should create client-only lazy component
+      √ should use custom loading component
+    preloadComponent
+      √ should call import function (1 ms)
+      √ should handle promise rejection
+    useLazyLoadOnScroll
+      √ should return ref and inView
+      √ should accept threshold parameter (1 ms)
+      √ should accept rootMargin parameter
+    LazyImageLoader
+      √ should create IntersectionObserver (1 ms)
+      √ should observe elements (2 ms)
+      √ should disconnect observer (1 ms)
+      √ should load image when intersecting (11 ms)
+      √ should unobserve after loading (1 ms)
+      √ should accept custom threshold (1 ms)
+    prefetchRoute
+      √ should create link element (2 ms)
+      √ should handle multiple prefetches (1 ms)
+    preconnect
+      × should create preconnect link (4 ms)
+      √ should handle multiple domains (1 ms)
+    shouldLazyLoad
+      √ should return false for 4g connection
+      √ should return false for wifi connection (1 ms)
+      √ should return true for slow connections
+      √ should return true when connection API unavailable
+    getOptimalImageSize
+      √ should return size based on screen width
+      √ should account for device pixel ratio
+      √ should adjust quality for 2g connection
+      √ should adjust quality for 3g connection
+      √ should adjust quality for 4g connection
+      √ should use default quality when connection unknown
+    deferScript
+      × should create script element (55 ms)
+      √ should call onLoad callback (59 ms)
+      √ should use setTimeout fallback when requestIdleCallback unavailable (1101 ms)
+    Edge Cases
+      √ should handle SSR (no window) (1 ms)
+      √ should handle no navigator.connection
+      × should handle LazyImageLoader with no IntersectionObserver (1 ms)
+      √ should handle empty image src (1 ms)
+      √ should handle very high DPR
+      √ should handle very small screen
+    Performance
+      √ should not create multiple observers for same LazyImageLoader (1 ms)
+      √ should handle multiple prefetchRoute calls efficiently (1 ms)
+
+  ● Lazy Load Utils › preconnect › should create preconnect link
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "https://api.example.com"
+    Received: "https://api.example.com/"
+
+    [0m [90m 304 |[39m       [36mconst[39m link [33m=[39m appendChildSpy[33m.[39mmock[33m.[39mcalls[[35m0[39m][[35m0[39m] [36mas[39m [33mHTMLLinkElement[39m[33m;[39m
+     [90m 305 |[39m       expect(link[33m.[39mrel)[33m.[39mtoBe([32m'preconnect'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 306 |[39m       expect(link[33m.[39mhref)[33m.[39mtoBe([32m'https://api.example.com'[39m)[33m;[39m
+     [90m     |[39m                         [31m[1m^[22m[39m
+     [90m 307 |[39m       expect(link[33m.[39mcrossOrigin)[33m.[39mtoBe([32m'anonymous'[39m)[33m;[39m
+     [90m 308 |[39m
+     [90m 309 |[39m       appendChildSpy[33m.[39mmockRestore()[33m;[39m[0m
+
+      at Object.toBe (lib/__tests__/lazy-load.test.ts:306:25)
+
+  ● Lazy Load Utils › deferScript › should create script element
+
+    Load failed
+
+    [0m [90m 147 |[39m
+     [90m 148 |[39m     it([32m'should handle promise rejection'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 149 |[39m       [36mconst[39m importFn [33m=[39m jest[33m.[39mfn(() [33m=>[39m [33mPromise[39m[33m.[39mreject([36mnew[39m [33mError[39m([32m'Load failed'[39m)))[33m;[39m
+     [90m     |[39m                                                     [31m[1m^[22m[39m
+     [90m 150 |[39m
+     [90m 151 |[39m       [90m// Should not throw[39m
+     [90m 152 |[39m       expect(() [33m=>[39m preloadComponent(importFn))[33m.[39mnot[33m.[39mtoThrow()[33m;[39m[0m
+
+      at lib/__tests__/lazy-load.test.ts:149:53
+      at importFn (lib/lazy-load.tsx:72:3)
+      at lib/__tests__/lazy-load.test.ts:152:36
+      at Object.<anonymous> (node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (lib/__tests__/lazy-load.test.ts:152:52)
+
+  ● Lazy Load Utils › Edge Cases › should handle LazyImageLoader with no IntersectionObserver
+
+    TypeError: IntersectionObserver is not a constructor
+
+    [0m [90m 100 |[39m   constructor(threshold[33m:[39m number [33m=[39m [35m0.1[39m) {
+     [90m 101 |[39m     [36mif[39m ([36mtypeof[39m window [33m!==[39m [32m'undefined'[39m) {
+    [31m[1m>[22m[39m[90m 102 |[39m       [36mthis[39m[33m.[39mobserver [33m=[39m [36mnew[39m [33mIntersectionObserver[39m(
+     [90m     |[39m                       [31m[1m^[22m[39m
+     [90m 103 |[39m         (entries) [33m=>[39m {
+     [90m 104 |[39m           entries[33m.[39mforEach((entry) [33m=>[39m {
+     [90m 105 |[39m             [36mif[39m (entry[33m.[39misIntersecting) {[0m
+
+      at new LazyImageLoader (lib/lazy-load.tsx:102:23)
+      at Object.<anonymous> (lib/__tests__/lazy-load.test.ts:507:22)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 44 passed, 47 total
+Snapshots:   0 total
+Time:        3.29 s
+Ran all test suites matching lazy-load.test.ts.

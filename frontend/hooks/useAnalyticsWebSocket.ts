@@ -18,7 +18,7 @@ export function useAnalyticsWebSocket(): UseAnalyticsWebSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const [shouldConnect, setShouldConnect] = useState(true);
+  const [reconnectTrigger, setReconnectTrigger] = useState(0);
 
   const connect = useCallback(() => {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -54,9 +54,11 @@ export function useAnalyticsWebSocket(): UseAnalyticsWebSocketReturn {
       };
 
       setWs(socket);
+      return socket;
     } catch (err) {
       console.error('[useAnalyticsWebSocket] Connection failed:', err);
       setError(err as Error);
+      return null;
     }
   }, []);
 
@@ -64,21 +66,18 @@ export function useAnalyticsWebSocket(): UseAnalyticsWebSocketReturn {
     if (ws) {
       ws.close();
     }
-    setShouldConnect(true);
+    setReconnectTrigger(prev => prev + 1);
   }, [ws]);
 
   useEffect(() => {
-    if (!shouldConnect) return;
-
-    connect();
-    setShouldConnect(false);
+    const socket = connect();
 
     return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      if (socket) {
+        socket.close();
       }
     };
-  }, [shouldConnect, connect, ws]);
+  }, [reconnectTrigger, connect]);
 
   return {
     data,

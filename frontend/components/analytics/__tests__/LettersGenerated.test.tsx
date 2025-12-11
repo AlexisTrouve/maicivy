@@ -162,7 +162,7 @@ describe('LettersGenerated', () => {
 
     await waitFor(() => {
       // Select the chart SVG specifically (not the icon SVG)
-      const svg = container.querySelector('.h-48 svg, svg[viewBox="0 0 400 150"]');
+      const svg = container.querySelector('.h-48 svg');
       expect(svg).toBeInTheDocument();
       expect(svg).toHaveAttribute('viewBox', '0 0 400 150');
     });
@@ -415,11 +415,12 @@ describe('LettersGenerated', () => {
 
     render(<LettersGenerated />);
 
+    // Wait for initial load to complete - buttons should be visible
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-    });
+      expect(screen.getByText('Semaine')).toBeInTheDocument();
+    }, { timeout: 5000 });
 
-    // Change period - wait for button to appear
+    // Now find and click the month button
     const monthButton = await screen.findByText('Mois');
     fireEvent.click(monthButton);
 

@@ -58,6 +58,9 @@ export function GitHubStatus({ username, onSync, onDisconnect }: GitHubStatusPro
           setSyncing(false);
           if (onSync) onSync();
         }, 2000);
+      } else {
+        // Reset syncing state on error response
+        setSyncing(false);
       }
     } catch (error) {
       console.error('Sync failed:', error);

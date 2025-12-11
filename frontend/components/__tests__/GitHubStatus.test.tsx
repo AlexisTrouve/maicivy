@@ -127,14 +127,9 @@ describe('GitHubStatus', () => {
     expect(syncButton).toBeDisabled();
 
     // After 2 seconds, should call onSync callback
-    jest.useFakeTimers();
-    jest.advanceTimersByTime(2000);
-
     await waitFor(() => {
       expect(onSync).toHaveBeenCalled();
-    });
-
-    jest.useRealTimers();
+    }, { timeout: 3000 });
   });
 
   it('should handle sync error gracefully', async () => {
@@ -303,13 +298,8 @@ describe('GitHubStatus', () => {
     const syncButton = screen.getByRole('button', { name: /synchroniser/i });
     fireEvent.click(syncButton);
 
-    jest.useFakeTimers();
-    jest.advanceTimersByTime(2000);
-
     await waitFor(() => {
       expect(fetchCount).toBeGreaterThan(1);
-    });
-
-    jest.useRealTimers();
+    }, { timeout: 3000 });
   });
 });

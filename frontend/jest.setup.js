@@ -27,14 +27,37 @@ require('@testing-library/jest-dom')
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8080'
 process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:8080'
 
-// Polyfill for fetch using undici (for Node < 18 or when not available)
-if (typeof global.fetch === 'undefined') {
-  const { fetch, Request, Response, Headers, FormData } = require('undici')
-  global.fetch = fetch
-  global.Request = Request
-  global.Response = Response
-  global.Headers = Headers
-  global.FormData = FormData
+// Polyfill fetch using undici for jsdom environment
+// Even though Node.js 18+ has native fetch, jsdom doesn't have it
+const { fetch, Request, Response, Headers, FormData } = require('undici')
+global.fetch = fetch
+global.Request = Request
+global.Response = Response
+global.Headers = Headers
+global.FormData = FormData
+
+// Polyfill for clearImmediate (needed by undici)
+if (typeof global.clearImmediate === 'undefined') {
+  global.clearImmediate = (id) => clearTimeout(id)
+}
+if (typeof window !== 'undefined' && typeof window.clearImmediate === 'undefined') {
+  window.clearImmediate = (id) => clearTimeout(id)
+}
+
+// Polyfill for setImmediate (needed by undici)
+if (typeof global.setImmediate === 'undefined') {
+  global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args)
+}
+if (typeof window !== 'undefined' && typeof window.setImmediate === 'undefined') {
+  window.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args)
+}
+
+// Mock performance.markResourceTiming for undici (JSDOM doesn't have it)
+if (typeof global.performance !== 'undefined' && typeof global.performance.markResourceTiming === 'undefined') {
+  global.performance.markResourceTiming = () => {}
+}
+if (typeof window !== 'undefined' && typeof window.performance !== 'undefined' && typeof window.performance.markResourceTiming === 'undefined') {
+  window.performance.markResourceTiming = () => {}
 }
 
 // Mock Service Worker setup
@@ -45,6 +68,29 @@ if (typeof global.fetch === 'undefined') {
 //   beforeAll(() => server.listen())
 //   afterEach(() => server.resetHandlers())
 //   afterAll(() => server.close())
+
+// Patch JSDOM timers to support .unref() method (needed by undici)
+// JSDOM's setTimeout/setInterval don't have .unref() which is Node.js specific
+const originalSetTimeout = global.setTimeout
+const originalSetInterval = global.setInterval
+
+global.setTimeout = function(...args) {
+  const timer = originalSetTimeout.apply(this, args)
+  if (timer && typeof timer === 'object') {
+    timer.unref = timer.unref || function() { return this }
+    timer.ref = timer.ref || function() { return this }
+  }
+  return timer
+}
+
+global.setInterval = function(...args) {
+  const timer = originalSetInterval.apply(this, args)
+  if (timer && typeof timer === 'object') {
+    timer.unref = timer.unref || function() { return this }
+    timer.ref = timer.ref || function() { return this }
+  }
+  return timer
+}
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

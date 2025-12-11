@@ -101,7 +101,10 @@ export const useTimelineData = (
         setMilestones(milestonesData);
       }
     } catch (err) {
-      setError(err as Error);
+      const error = err as Error;
+      setError(error);
+      setEvents([]);
+      setAllEvents([]);
       console.error('Error fetching timeline data:', err);
     } finally {
       setIsLoading(false);

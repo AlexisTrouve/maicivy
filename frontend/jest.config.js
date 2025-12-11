@@ -13,13 +13,17 @@ const customJestConfig = {
     // Handle module aliases (this will be automatically configured for you soon)
     '^@/(.*)$': '<rootDir>/$1',
     // Handle CSS imports (with CSS modules)
-    '^.+\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
+    '^.+\.module\.(css|sass|scss)$': 'identity-obj-proxy',
     // Handle CSS imports (without CSS modules)
-    '^.+\\.(css|sass|scss)$': '<rootDir>/__mocks__/styleMocks.js',
+    '^.+\.(css|sass|scss)$': '<rootDir>/__mocks__/styleMocks.js',
     // Handle image imports
-    '^.+\\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i': '<rootDir>/__mocks__/fileMocks.js',
+    '^.+\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i': '<rootDir>/__mocks__/fileMocks.js',
     // Mock three.js
     '^three$': '<rootDir>/__mocks__/three.ts',
+    // Mock @radix-ui/react-slot
+    '^@radix-ui/react-slot$': '<rootDir>/__mocks__/@radix-ui/react-slot.js',
+    // Mock lucide-react icons
+    '^lucide-react$': '<rootDir>/__mocks__/lucide-react.tsx',
   },
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
@@ -28,7 +32,7 @@ const customJestConfig = {
   ],
   transformIgnorePatterns: [
     'node_modules/(?!(@bundled-es-modules)/)',
-    '^.+\\.module\\.(css|sass|scss)$',
+    '^.+\.module\.(css|sass|scss)$',
     '/dist/',
     '/coverage/',
     '/build/',
@@ -60,7 +64,7 @@ const customJestConfig = {
   testTimeout: 120000, // 120s timeout per test (allow time for GC)
 
   // Bail early on first test failure to save memory
-  bail: 1,
+  // bail: 1, // DISABLED for full test run
 
   // Clear mocks between tests to prevent accumulation
   clearMocks: true,

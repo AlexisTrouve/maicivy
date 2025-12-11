@@ -142,7 +142,7 @@ export const handlers = [
   }),
 
   // Visitor API handlers
-  rest.get('/api/v1/visitors/check', (req, res, ctx) => {
+  rest.get('*/api/v1/visitors/check', (req, res, ctx) => {
     return res(
       ctx.json({
         visitCount: 1,
@@ -154,7 +154,7 @@ export const handlers = [
   }),
 
   // Profile Detection API handlers
-  rest.get('/api/v1/profile/current', (req, res, ctx) => {
+  rest.get('*/api/v1/profile/current', (req, res, ctx) => {
     return res(
       ctx.json({
         profile_type: 'developer',
@@ -164,7 +164,7 @@ export const handlers = [
     )
   }),
 
-  rest.get('/api/v1/profile/detect', (req, res, ctx) => {
+  rest.get('*/api/v1/profile/detect', (req, res, ctx) => {
     return res(
       ctx.json({
         profile_type: 'developer',
@@ -174,7 +174,7 @@ export const handlers = [
     )
   }),
 
-  rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+  rest.get('*/api/v1/profile/bypass', (req, res, ctx) => {
     return res(
       ctx.json({
         success: true,
@@ -183,13 +183,98 @@ export const handlers = [
     )
   }),
 
-  rest.get('/api/v1/profile/stats', (req, res, ctx) => {
+  rest.get('*/api/v1/profile/stats', (req, res, ctx) => {
     return res(
       ctx.json({
         stats_by_type: [],
         total_detected: 0,
         total_visitors: 0,
         detection_rate: 0,
+      })
+    )
+  }),
+
+  // Timeline API handlers
+  rest.get('*/api/v1/timeline', (req, res, ctx) => {
+    const category = req.url.searchParams.get('category')
+
+    const allEvents = [
+      {
+        id: '1',
+        type: 'experience',
+        title: 'Senior Developer',
+        subtitle: 'Tech Corp',
+        content: 'Led development team',
+        startDate: '2020-01-01',
+        endDate: '2023-12-31',
+        tags: ['React', 'Node.js'],
+        category: 'backend',
+        isCurrent: false,
+      },
+      {
+        id: '2',
+        type: 'project',
+        title: 'E-commerce Platform',
+        subtitle: 'Personal Project',
+        content: 'Built scalable platform',
+        startDate: '2022-06-01',
+        tags: ['Go', 'PostgreSQL'],
+        category: 'fullstack',
+        isCurrent: true,
+      },
+    ]
+
+    let filteredEvents = allEvents
+    if (category && category !== 'all') {
+      filteredEvents = allEvents.filter(event => event.category === category)
+    }
+
+    return res(
+      ctx.json({
+        success: true,
+        data: {
+          events: filteredEvents,
+          total: filteredEvents.length,
+          stats: {
+            totalExperiences: filteredEvents.filter(e => e.type === 'experience').length,
+            totalProjects: filteredEvents.filter(e => e.type === 'project').length,
+            categoriesBreakdown: { backend: 1, fullstack: 1 },
+            yearsOfExperience: 4,
+            topTechnologies: [
+              { name: 'React', count: 5 },
+              { name: 'Node.js', count: 4 },
+            ],
+          },
+        },
+      })
+    )
+  }),
+
+  rest.get('*/api/v1/timeline/categories', (req, res, ctx) => {
+    return res(
+      ctx.json({
+        success: true,
+        categories: ['backend', 'frontend', 'fullstack'],
+        total: 3,
+      })
+    )
+  }),
+
+  rest.get('*/api/v1/timeline/milestones', (req, res, ctx) => {
+    return res(
+      ctx.json({
+        success: true,
+        milestones: [
+          {
+            id: '1',
+            title: 'Started Career',
+            description: 'First job as developer',
+            date: '2019-01-01',
+            icon: 'briefcase',
+            type: 'career',
+          },
+        ],
+        total: 1,
       })
     )
   }),

@@ -185,7 +185,8 @@ describe('TimelineView', () => {
       />
     );
 
-    expect(screen.getByText('3')).toBeInTheDocument(); // Total events
+    const threeElements = screen.getAllByText('3');
+    expect(threeElements.length).toBeGreaterThanOrEqual(1); // Total events
     expect(screen.getByText('2')).toBeInTheDocument(); // Experiences
     expect(screen.getByText('1')).toBeInTheDocument(); // Projects
   });

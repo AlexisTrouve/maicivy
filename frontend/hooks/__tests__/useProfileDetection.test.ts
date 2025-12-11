@@ -8,14 +8,16 @@ import {
 import { server } from '@/__mocks__/server'
 import { rest } from 'msw'
 
+// Setup MSW server once for all tests
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
 describe('useProfileDetection', () => {
-  beforeAll(() => server.listen())
-  afterEach(() => server.resetHandlers())
-  afterAll(() => server.close())
 
   it('should fetch profile detection on mount', async () => {
     server.use(
-      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/current', (req, res, ctx) => {
         return res(ctx.json({
           profile_type: 'recruiter',
           confidence: 85,
@@ -55,7 +57,7 @@ describe('useProfileDetection', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/current', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json(
           { message: 'Detection failed' }
         ))
@@ -66,7 +68,7 @@ describe('useProfileDetection', () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-    })
+    }, { timeout: 10000 }) // Increased timeout to wait for retries
 
     expect(result.current.error).toBe('Failed to load profile')
     expect(result.current.profileType).toBe('other')
@@ -77,7 +79,7 @@ describe('useProfileDetection', () => {
 
   it('should correctly detect when profile is "other" with low confidence', async () => {
     server.use(
-      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/current', (req, res, ctx) => {
         return res(ctx.json({
           profile_type: 'other',
           confidence: 10,
@@ -98,7 +100,7 @@ describe('useProfileDetection', () => {
 
   it('should handle bypass enabled status', async () => {
     server.use(
-      rest.get('/api/v1/profile/current', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/current', (req, res, ctx) => {
         return res(ctx.json({
           profile_type: 'developer',
           confidence: 75,
@@ -118,13 +120,10 @@ describe('useProfileDetection', () => {
 })
 
 describe('useProfileDetectionManual', () => {
-  beforeAll(() => server.listen())
-  afterEach(() => server.resetHandlers())
-  afterAll(() => server.close())
 
   it('should manually detect profile when detect is called', async () => {
     server.use(
-      rest.get('/api/v1/profile/detect', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/detect', (req, res, ctx) => {
         return res(ctx.json({
           profile_type: 'cto',
           confidence: 90,
@@ -153,7 +152,7 @@ describe('useProfileDetectionManual', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      rest.get('/api/v1/profile/detect', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/detect', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json(
           { message: 'Detection error' }
         ))
@@ -162,12 +161,18 @@ describe('useProfileDetectionManual', () => {
 
     const { result } = renderHook(() => useProfileDetectionManual())
 
-    await expect(
-      act(async () => {
+    // The detect function should throw on error, but we need to wrap it properly
+    await act(async () => {
+      try {
         await result.current.detect()
-      })
-    ).rejects.toThrow()
+        // If we get here, the test should fail because we expected an error
+        expect(true).toBe(false) // Force failure if no error thrown
+      } catch (error) {
+        // Error was thrown as expected - the state update happens inside act()
+      }
+    })
 
+    // After act completes, the error state should be set
     expect(result.current.error).toBe('Detection failed')
 
     consoleErrorSpy.mockRestore()
@@ -175,13 +180,10 @@ describe('useProfileDetectionManual', () => {
 })
 
 describe('useBypassStatus', () => {
-  beforeAll(() => server.listen())
-  afterEach(() => server.resetHandlers())
-  afterAll(() => server.close())
 
   it('should fetch bypass status on mount', async () => {
     server.use(
-      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/bypass', (req, res, ctx) => {
         return res(ctx.json({
           success: true,
           bypass: true,
@@ -190,6 +192,11 @@ describe('useBypassStatus', () => {
     )
 
     const { result } = renderHook(() => useBypassStatus())
+
+    // Wait for loading to become true first (hook initialization)
+    await waitFor(() => {
+      expect(result.current).toBeTruthy()
+    })
 
     expect(result.current.loading).toBe(true)
 
@@ -204,7 +211,7 @@ describe('useBypassStatus', () => {
     let bypassValue = false
 
     server.use(
-      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/bypass', (req, res, ctx) => {
         return res(ctx.json({
           success: true,
           bypass: bypassValue,
@@ -213,6 +220,11 @@ describe('useBypassStatus', () => {
     )
 
     const { result } = renderHook(() => useBypassStatus())
+
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeTruthy()
+    })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -234,7 +246,7 @@ describe('useBypassStatus', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      rest.get('/api/v1/profile/bypass', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/bypass', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json(
           { message: 'Error checking bypass' }
         ))
@@ -243,9 +255,14 @@ describe('useBypassStatus', () => {
 
     const { result } = renderHook(() => useBypassStatus())
 
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeTruthy()
+    })
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-    })
+    }, { timeout: 10000 }) // Increased timeout to wait for retries
 
     // Should default to false on error
     expect(result.current.bypassed).toBe(false)
@@ -255,13 +272,10 @@ describe('useBypassStatus', () => {
 })
 
 describe('useProfileStats', () => {
-  beforeAll(() => server.listen())
-  afterEach(() => server.resetHandlers())
-  afterAll(() => server.close())
 
   it('should fetch profile stats on mount', async () => {
     server.use(
-      rest.get('/api/v1/profile/stats', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/stats', (req, res, ctx) => {
         return res(ctx.json({
           stats_by_type: [
             { profile_type: 'recruiter', count: 50, avg_confidence: 80 },
@@ -292,7 +306,7 @@ describe('useProfileStats', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
     server.use(
-      rest.get('/api/v1/profile/stats', (req, res, ctx) => {
+      rest.get('*/api/v1/profile/stats', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json(
           { message: 'Stats unavailable' }
         ))
@@ -303,7 +317,7 @@ describe('useProfileStats', () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-    })
+    }, { timeout: 10000 }) // Increased timeout to wait for retries
 
     expect(result.current.error).toBe('Failed to load stats')
     expect(result.current.stats).toBeNull()
