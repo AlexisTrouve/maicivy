@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ExportPDFButton from '../ExportPDFButton';
 
@@ -5,41 +6,59 @@ import ExportPDFButton from '../ExportPDFButton';
 const mockApiUrl = 'http://localhost:8080';
 process.env.NEXT_PUBLIC_API_URL = mockApiUrl;
 
-// TODO: Fix complex module mocking issues
-// ISSUE: The shadcn/ui Button component uses @radix-ui/react-slot which has complex mocking requirements
-// Global mocks (global.fetch, global.URL.createObjectURL) at module level interfere with component rendering
-// When jest.restoreAllMocks() is called in afterEach, it conflicts with module-level mocks
-// SOLUTION NEEDED: Refactor to use per-test mocks or beforeAll/afterAll without global state
-// STATUS: Tests skipped temporarily to unblock other work
-// The component DOES render correctly (verified with debug test), but test setup is incompatible
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Download: () => <svg data-testid="download-icon" />,
+  Loader2: ({ className }: any) => <svg data-testid="loader-icon" className={className} />,
+}));
 
-// Mock global fetch
-global.fetch = jest.fn();
+// Mock UI components
+jest.mock('@/components/ui/button', () => ({
+  Button: ({ children, onClick, disabled, className, ...props }: any) => (
+    <button onClick={onClick} disabled={disabled} className={className} {...props}>
+      {children}
+    </button>
+  ),
+}));
 
-// Mock window.URL methods
-global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-global.URL.revokeObjectURL = jest.fn();
-
-describe.skip('ExportPDFButton', () => {
+describe('ExportPDFButton', () => {
   let mockAnchor: any;
+  let mockFetch: jest.Mock;
+  let mockCreateObjectURL: jest.Mock;
+  let mockRevokeObjectURL: jest.Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (global.fetch as jest.Mock).mockClear();
+    // Mock fetch
+    mockFetch = jest.fn();
+    global.fetch = mockFetch;
 
-    // Mock anchor element
+    // Mock URL methods
+    mockCreateObjectURL = jest.fn(() => 'blob:mock-url');
+    mockRevokeObjectURL = jest.fn();
+    global.URL.createObjectURL = mockCreateObjectURL;
+    global.URL.revokeObjectURL = mockRevokeObjectURL;
+
+    // Mock anchor element - create fresh instance for each test
     mockAnchor = {
       click: jest.fn(),
       setAttribute: jest.fn(),
       href: '',
       download: '',
+      style: {},
     };
 
     // Mock document.createElement
     const originalCreateElement = document.createElement.bind(document);
     jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'a') {
-        return mockAnchor;
+        // Return a fresh anchor each time
+        return {
+          click: jest.fn(),
+          setAttribute: jest.fn(),
+          href: '',
+          download: '',
+          style: {},
+        } as any;
       }
       return originalCreateElement(tagName);
     });
@@ -50,26 +69,35 @@ describe.skip('ExportPDFButton', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Only clear mock calls, don't restore to avoid breaking component rendering
+    jest.clearAllMocks();
   });
 
-  it('should render button with correct text', () => {
-    render(<ExportPDFButton theme="technical" />);
-
-    expect(screen.getByText('Télécharger PDF')).toBeInTheDocument();
-  });
-
-  it('should render Download icon when not loading', () => {
+  it('should render button with correct text', async () => {
     const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const downloadIcon = container.querySelector('svg');
-    expect(downloadIcon).toBeInTheDocument();
+    // Wait for component to render
+    await waitFor(() => {
+      const button = container.querySelector('button');
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveTextContent('Télécharger PDF');
+    });
+  });
+
+  it('should render Download icon when not loading', async () => {
+    const { container } = render(<ExportPDFButton theme="technical" />);
+
+    // Wait for component to render
+    await waitFor(() => {
+      const downloadIcon = container.querySelector('[data-testid="download-icon"]');
+      expect(downloadIcon).toBeInTheDocument();
+    });
   });
 
   it('should trigger PDF export on button click', async () => {
     const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: {
         get: (name: string) => {
@@ -82,20 +110,20 @@ describe.skip('ExportPDFButton', () => {
       blob: async () => mockBlob,
     });
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button', { name: /Télécharger PDF/i });
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         `${mockApiUrl}/api/cv/export?theme=technical&format=pdf`
       );
     });
   });
 
   it('should show loading state during export', async () => {
-    (global.fetch as jest.Mock).mockImplementation(
+    mockFetch.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -110,14 +138,14 @@ describe.skip('ExportPDFButton', () => {
         )
     );
 
-    render(<ExportPDFButton theme="creative" />);
+    const { container } = render(<ExportPDFButton theme="creative" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     // Should show loading text and spinner
     await waitFor(() => {
-      expect(screen.getByText('Export en cours...')).toBeInTheDocument();
+      expect(container.textContent).toContain('Export en cours...');
     });
 
     // Button should be disabled during loading
@@ -127,8 +155,9 @@ describe.skip('ExportPDFButton', () => {
   it('should use custom filename from Content-Disposition header', async () => {
     const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
     const customFilename = 'MonCV_2024.pdf';
+    let capturedAnchor: any;
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: {
         get: () => `attachment; filename="${customFilename}"`,
@@ -136,21 +165,28 @@ describe.skip('ExportPDFButton', () => {
       blob: async () => mockBlob,
     });
 
-    render(<ExportPDFButton theme="technical" />);
+    // Override appendChild to capture the anchor element
+    const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => {
+      capturedAnchor = node;
+      return node;
+    });
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const { container } = render(<ExportPDFButton theme="technical" />);
+
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(mockAnchor.download).toBe(customFilename);
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(capturedAnchor.download).toBe(customFilename);
     });
   });
 
   it('should use fallback filename if Content-Disposition missing', async () => {
     const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
+    let capturedAnchor: any;
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: {
         get: () => null,
@@ -158,127 +194,140 @@ describe.skip('ExportPDFButton', () => {
       blob: async () => mockBlob,
     });
 
-    render(<ExportPDFButton theme="business" />);
+    // Override appendChild to capture the anchor element
+    const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => {
+      capturedAnchor = node;
+      return node;
+    });
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const { container } = render(<ExportPDFButton theme="business" />);
+
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(mockAnchor.download).toBe('CV_business.pdf');
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(capturedAnchor.download).toBe('CV_business.pdf');
     });
   });
 
   it('should handle API error gracefully', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
     });
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Échec de l'export PDF/i)).toBeInTheDocument();
+      expect(container.textContent).toContain('Échec de l\'export PDF');
     });
 
-    // Error message should be displayed
-    const errorMessage = screen.getByText(/Échec de l'export PDF/i);
-    expect(errorMessage).toHaveClass('text-red-600');
+    // Error message should be displayed - check for the paragraph with error text
+    const errorElements = container.querySelectorAll('p');
+    const errorElement = Array.from(errorElements).find(el =>
+      el.textContent?.includes('Échec de l\'export PDF')
+    );
+    expect(errorElement).toBeInTheDocument();
+    expect(errorElement).toHaveClass('text-red-600');
   });
 
   it('should handle network error', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Network error')).toBeInTheDocument();
+      expect(container.textContent).toContain('Network error');
     });
   });
 
   it('should handle unknown error types', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce('Unknown error');
+    mockFetch.mockRejectedValueOnce('Unknown error');
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Une erreur est survenue')).toBeInTheDocument();
+      expect(container.textContent).toContain('Une erreur est survenue');
     });
   });
 
   it('should create and trigger download link correctly', async () => {
     const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: { get: () => 'attachment; filename="test.pdf"' },
       blob: async () => mockBlob,
     });
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
       expect(document.createElement).toHaveBeenCalledWith('a');
       expect(mockAnchor.click).toHaveBeenCalled();
       expect(document.body.appendChild).toHaveBeenCalled();
       expect(document.body.removeChild).toHaveBeenCalled();
-      expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-      expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+      expect(mockCreateObjectURL).toHaveBeenCalledWith(mockBlob);
+      expect(mockRevokeObjectURL).toHaveBeenCalled();
     });
   });
 
   it('should clear error on new export attempt', async () => {
     // First attempt - error
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
     });
 
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Échec de l'export PDF/i)).toBeInTheDocument();
+      expect(container.textContent).toContain('Échec de l\'export PDF');
     });
 
     // Second attempt - success
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: { get: () => null },
       blob: async () => new Blob(['PDF']),
     });
 
-    fireEvent.click(button);
+    if (button) fireEvent.click(button);
 
     // Error should be cleared
     await waitFor(() => {
-      expect(screen.queryByText(/Échec de l'export PDF/i)).not.toBeInTheDocument();
+      expect(container.textContent).not.toContain('Échec de l\'export PDF');
     });
   });
 
-  it('should render with gradient styling', () => {
+  it('should render with gradient styling', async () => {
     const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = container.querySelector('.bg-gradient-to-r.from-blue-600.to-purple-600');
-    expect(button).toBeInTheDocument();
+    await waitFor(() => {
+      const button = container.querySelector('button');
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveClass('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
+    });
   });
 
   it('should show Loader2 icon when loading', async () => {
-    (global.fetch as jest.Mock).mockImplementation(
+    mockFetch.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -295,25 +344,26 @@ describe.skip('ExportPDFButton', () => {
 
     const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    const button = container.querySelector('button');
+    if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      const spinner = container.querySelector('.animate-spin');
+      const spinner = container.querySelector('[data-testid="loader-icon"]');
       expect(spinner).toBeInTheDocument();
+      expect(spinner).toHaveClass('animate-spin');
     });
   });
 
   it('should disable button only when loading', async () => {
-    render(<ExportPDFButton theme="technical" />);
+    const { container } = render(<ExportPDFButton theme="technical" />);
 
-    const button = screen.getByRole('button');
+    const button = container.querySelector('button');
 
     // Initially enabled
     expect(button).not.toBeDisabled();
 
     // Mock delayed response
-    (global.fetch as jest.Mock).mockImplementation(
+    mockFetch.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -328,7 +378,7 @@ describe.skip('ExportPDFButton', () => {
         )
     );
 
-    fireEvent.click(button);
+    if (button) fireEvent.click(button);
 
     // Disabled during loading
     await waitFor(() => {

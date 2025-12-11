@@ -39,6 +39,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@next/swc-linux-x64-gnu": "^16.0.8",
     "@playwright/test": "^1.57.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

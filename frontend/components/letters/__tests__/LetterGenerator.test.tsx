@@ -1,8 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LetterGenerator } from '../LetterGenerator';
-import { server } from '@/__mocks__/server';
-import { rest } from 'msw';
 import { mockLetterResponse } from '@/lib/testutil/fixtures';
+import { lettersApi } from '@/lib/api';
+
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Loader2: ({ className }: any) => <div data-testid="loader-icon" className={className} />,
+  Sparkles: ({ className }: any) => <div data-testid="sparkles-icon" className={className} />,
+}));
 
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
@@ -21,16 +26,27 @@ jest.mock('../LetterPreview', () => ({
   ),
 }));
 
-// Setup MSW
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  jest.clearAllMocks();
-  localStorage.clear();
-});
-afterAll(() => server.close());
+// Mock the API
+jest.mock('@/lib/api', () => ({
+  lettersApi: {
+    generate: jest.fn(),
+  },
+}));
+
+const mockGenerate = lettersApi.generate as jest.MockedFunction<typeof lettersApi.generate>;
 
 describe('LetterGenerator', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
   it('should render form with company name input', () => {
     render(<LetterGenerator />);
 
@@ -79,13 +95,11 @@ describe('LetterGenerator', () => {
   });
 
   it('should submit form with valid data and show loading state', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', async () => {
-        // Simulate delay
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        return res(ctx.json(mockLetterResponse));
-      })
-    );
+    mockGenerate.mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockLetterResponse), 100);
+      });
+    });
 
     render(<LetterGenerator />);
 
@@ -102,15 +116,20 @@ describe('LetterGenerator', () => {
 
     // Button should be disabled
     expect(submitButton).toBeDisabled();
+
+    // Fast-forward timers and resolve promise
+    jest.advanceTimersByTime(100);
+    await waitFor(() => {
+      expect(mockGenerate).toHaveBeenCalledWith({ companyName: 'Tech Innovations Inc' });
+    });
   });
 
   it('should display progress bar during generation', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        return res(ctx.json(mockLetterResponse);
-      })
-    );
+    mockGenerate.mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockLetterResponse), 100);
+      });
+    });
 
     render(<LetterGenerator />);
 
@@ -120,20 +139,20 @@ describe('LetterGenerator', () => {
     fireEvent.change(input, { target: { value: 'Google' } });
     fireEvent.click(submitButton);
 
+    // Progress should show
     await waitFor(() => {
       expect(screen.getByText(/Analyse de l'entreprise/i)).toBeInTheDocument();
     });
 
     // Progress percentage should be visible
     expect(screen.getByText(/\d+%/)).toBeInTheDocument();
+
+    // Fast-forward timers
+    jest.advanceTimersByTime(100);
   });
 
   it('should handle successful generation and show preview', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(mockLetterResponse);
-      })
-    );
+    mockGenerate.mockResolvedValue(mockLetterResponse);
 
     render(<LetterGenerator />);
 
@@ -142,6 +161,9 @@ describe('LetterGenerator', () => {
 
     fireEvent.change(input, { target: { value: 'Tech Innovations Inc' } });
     fireEvent.click(submitButton);
+
+    // Fast-forward all timers
+    jest.runAllTimers();
 
     await waitFor(() => {
       expect(screen.getByTestId('letter-preview')).toBeInTheDocument();
@@ -155,14 +177,10 @@ describe('LetterGenerator', () => {
   });
 
   it('should handle 403 error (access denied)', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(
-          { message: 'Access denied' },
-          { status: 403 }
-        );
-      })
-    );
+    mockGenerate.mockRejectedValue({
+      statusCode: 403,
+      message: 'Access denied',
+    });
 
     render(<LetterGenerator />);
 
@@ -171,6 +189,9 @@ describe('LetterGenerator', () => {
 
     fireEvent.change(input, { target: { value: 'Google' } });
     fireEvent.click(submitButton);
+
+    // Fast-forward all timers
+    jest.runAllTimers();
 
     await waitFor(() => {
       expect(
@@ -180,14 +201,10 @@ describe('LetterGenerator', () => {
   });
 
   it('should handle 429 error (rate limit)', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(
-          { message: 'Rate limit exceeded' },
-          { status: 429 }
-        );
-      })
-    );
+    mockGenerate.mockRejectedValue({
+      statusCode: 429,
+      message: 'Rate limit exceeded',
+    });
 
     render(<LetterGenerator />);
 
@@ -196,6 +213,9 @@ describe('LetterGenerator', () => {
 
     fireEvent.change(input, { target: { value: 'Google' } });
     fireEvent.click(submitButton);
+
+    // Fast-forward all timers
+    jest.runAllTimers();
 
     await waitFor(() => {
       expect(
@@ -205,14 +225,10 @@ describe('LetterGenerator', () => {
   });
 
   it('should handle 500 error (server error)', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(
-          { message: 'Internal server error' },
-          { status: 500 }
-        );
-      })
-    );
+    mockGenerate.mockRejectedValue({
+      statusCode: 500,
+      message: 'Internal server error',
+    });
 
     render(<LetterGenerator />);
 
@@ -222,6 +238,9 @@ describe('LetterGenerator', () => {
     fireEvent.change(input, { target: { value: 'Google' } });
     fireEvent.click(submitButton);
 
+    // Fast-forward all timers
+    jest.runAllTimers();
+
     await waitFor(() => {
       expect(
         screen.getByText(/Erreur serveur. Nos IA prennent une pause café/i)
@@ -230,11 +249,7 @@ describe('LetterGenerator', () => {
   });
 
   it('should save generation to localStorage history', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(mockLetterResponse);
-      })
-    );
+    mockGenerate.mockResolvedValue(mockLetterResponse);
 
     render(<LetterGenerator />);
 
@@ -243,6 +258,9 @@ describe('LetterGenerator', () => {
 
     fireEvent.change(input, { target: { value: 'Tech Innovations Inc' } });
     fireEvent.click(submitButton);
+
+    // Fast-forward all timers
+    jest.runAllTimers();
 
     await waitFor(() => {
       expect(screen.getByTestId('letter-preview')).toBeInTheDocument();
@@ -255,11 +273,7 @@ describe('LetterGenerator', () => {
   });
 
   it('should reset form when onReset is called from preview', async () => {
-    server.use(
-      rest.post('*/api/letters/generate', () => {
-        return res(ctx.json(mockLetterResponse);
-      })
-    );
+    mockGenerate.mockResolvedValue(mockLetterResponse);
 
     render(<LetterGenerator />);
 
@@ -268,6 +282,9 @@ describe('LetterGenerator', () => {
 
     fireEvent.change(input, { target: { value: 'Google' } });
     fireEvent.click(submitButton);
+
+    // Fast-forward all timers
+    jest.runAllTimers();
 
     await waitFor(() => {
       expect(screen.getByTestId('letter-preview')).toBeInTheDocument();

@@ -76,10 +76,15 @@ export const mockLetterRequest = {
 export const mockLetterResponse = {
   id: 'letter-123',
   companyName: 'Tech Innovations Inc',
-  jobTitle: 'Senior Full Stack Developer',
-  content: 'Dear Hiring Manager,\n\nI am writing to express my strong interest...',
-  generatedAt: '2024-01-15T10:00:00Z',
-  aiModel: 'claude',
+  motivationLetter: 'Dear Hiring Manager,\n\nI am writing to express my strong interest in joining Tech Innovations Inc...',
+  antiMotivationLetter: 'Dear Hiring Manager,\n\nI am writing to explain why I absolutely should NOT work at Tech Innovations Inc...',
+  companyInfo: {
+    name: 'Tech Innovations Inc',
+    industry: 'Technology',
+    description: 'A leading tech company',
+  },
+  createdAt: '2024-01-15T10:00:00Z',
+  updatedAt: '2024-01-15T10:00:00Z',
 }
 
 // Mock Analytics Data
