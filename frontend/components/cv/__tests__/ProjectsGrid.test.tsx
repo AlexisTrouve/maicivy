@@ -2,6 +2,13 @@ import { render, screen } from '@testing-library/react';
 import ProjectsGrid from '../ProjectsGrid';
 import { Project } from '@/lib/types';
 
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  ExternalLink: ({ className }: any) => <svg data-testid="external-link-icon" className={className} />,
+  Github: ({ className }: any) => <svg data-testid="github-icon" className={className} />,
+  Star: ({ className }: any) => <svg data-testid="star-icon" className={className} />,
+}));
+
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
@@ -10,6 +17,13 @@ jest.mock('framer-motion', () => ({
     ),
   },
 }));
+
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href, ...props }: any) => {
+    return <a href={href} {...props}>{children}</a>;
+  };
+});
 
 describe('ProjectsGrid', () => {
   const mockProjects: Project[] = [

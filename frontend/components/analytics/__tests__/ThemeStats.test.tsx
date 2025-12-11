@@ -3,6 +3,11 @@ import ThemeStats from '../ThemeStats';
 import { server } from '@/__mocks__/server';
 import { rest } from 'msw';
 
+// Mock lucide-react
+jest.mock('lucide-react', () => ({
+  BarChart3: () => <svg data-testid="barchart-icon">BarChart Icon</svg>,
+}));
+
 // Setup MSW
 beforeAll(() => server.listen());
 afterEach(() => {

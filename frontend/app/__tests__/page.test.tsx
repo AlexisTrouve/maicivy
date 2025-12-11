@@ -8,6 +8,31 @@ jest.mock('next/link', () => {
   };
 });
 
+// Mock shadcn/ui components
+jest.mock('@/components/ui/button', () => ({
+  Button: ({ children, asChild, ...props }: any) => {
+    if (asChild) {
+      return <div {...props}>{children}</div>;
+    }
+    return <button {...props}>{children}</button>;
+  },
+}));
+
+jest.mock('@/components/ui/card', () => ({
+  Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  CardHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  CardTitle: ({ children, ...props }: any) => <h3 {...props}>{children}</h3>,
+  CardDescription: ({ children, ...props }: any) => <p {...props}>{children}</p>,
+  CardContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+}));
+
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  FileText: () => <svg data-testid="file-text-icon" />,
+  Sparkles: () => <svg data-testid="sparkles-icon" />,
+  BarChart3: () => <svg data-testid="bar-chart-icon" />,
+}));
+
 describe('HomePage', () => {
   it('should render main heading', () => {
     render(<HomePage />);

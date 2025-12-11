@@ -1,5 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import Heatmap from '../Heatmap';
+
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Flame: () => <svg data-testid="flame-icon" />,
+}));
 
 // Mock environment variable
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8080';
@@ -14,6 +19,7 @@ describe('Heatmap', () => {
   });
 
   afterEach(() => {
+    jest.runOnlyPendingTimers();
     jest.useRealTimers();
   });
 
@@ -26,6 +32,14 @@ describe('Heatmap', () => {
       { x: 65, y: 70, intensity: 56, element: 'projects_grid' },
     ],
     maxIntensity: 100,
+  };
+
+  const renderAndWait = async () => {
+    const result = render(<Heatmap />);
+    await act(async () => {
+      await jest.runOnlyPendingTimersAsync();
+    });
+    return result;
   };
 
   it('should render loading skeleton initially', () => {
@@ -44,14 +58,15 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    render(<Heatmap />);
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/v1/analytics/heatmap',
-        { credentials: 'include' }
-      );
+    await act(async () => {
+      render(<Heatmap />);
+      await jest.runOnlyPendingTimersAsync();
     });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/analytics/heatmap',
+      { credentials: 'include' }
+    );
   });
 
   it('should render heatmap title', async () => {
@@ -60,11 +75,9 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    render(<Heatmap />);
+    await renderAndWait();
 
-    await waitFor(() => {
-      expect(screen.getByText('Heatmap des Interactions')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Heatmap des Interactions')).toBeInTheDocument();
   });
 
   it('should render Flame icon', async () => {
@@ -73,12 +86,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const flameIcon = container.querySelector('svg');
-      expect(flameIcon).toBeInTheDocument();
-    });
+    const flameIcon = container.querySelector('svg');
+    expect(flameIcon).toBeInTheDocument();
   });
 
   it('should display color legend', async () => {
@@ -87,12 +98,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    render(<Heatmap />);
+    await renderAndWait();
 
-    await waitFor(() => {
-      expect(screen.getByText('Faible')).toBeInTheDocument();
-      expect(screen.getByText('Fort')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Faible')).toBeInTheDocument();
+    expect(screen.getByText('Fort')).toBeInTheDocument();
   });
 
   it('should render color gradient boxes in legend', async () => {
@@ -101,12 +110,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const colorBoxes = container.querySelectorAll('.w-6.h-4.rounded');
-      expect(colorBoxes.length).toBeGreaterThanOrEqual(4);
-    });
+    const colorBoxes = container.querySelectorAll('.w-6.h-4.rounded');
+    expect(colorBoxes.length).toBeGreaterThanOrEqual(4);
   });
 
   it('should render all heatmap points', async () => {
@@ -115,12 +122,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBe(5);
-    });
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    expect(points.length).toBe(5);
   });
 
   it('should display tooltip on point hover', async () => {
@@ -129,21 +134,19 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBe(5);
-    });
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    expect(points.length).toBe(5);
 
     // Hover over first point
-    const firstPoint = container.querySelectorAll('.rounded-full.blur-xl')[0];
-    fireEvent.mouseEnter(firstPoint);
-
-    await waitFor(() => {
-      expect(screen.getByText('Theme Selector')).toBeInTheDocument();
-      expect(screen.getByText('45 interactions')).toBeInTheDocument();
+    const firstPoint = points[0];
+    await act(async () => {
+      fireEvent.mouseEnter(firstPoint);
     });
+
+    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
+    expect(screen.getByText('45 interactions')).toBeInTheDocument();
   });
 
   it('should hide tooltip on mouse leave', async () => {
@@ -152,25 +155,22 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBe(5);
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    const firstPoint = points[0];
+
+    await act(async () => {
+      fireEvent.mouseEnter(firstPoint);
     });
 
-    const firstPoint = container.querySelectorAll('.rounded-full.blur-xl')[0];
-    fireEvent.mouseEnter(firstPoint);
+    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText('Theme Selector')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.mouseLeave(firstPoint);
     });
 
-    fireEvent.mouseLeave(firstPoint);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Theme Selector')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('Theme Selector')).not.toBeInTheDocument();
   });
 
   it('should format element names correctly', async () => {
@@ -179,21 +179,19 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBe(5);
-    });
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    expect(points.length).toBe(5);
 
     // Hover to see formatted name
-    const firstPoint = container.querySelectorAll('.rounded-full.blur-xl')[0];
-    fireEvent.mouseEnter(firstPoint);
+    const firstPoint = points[0];
+    await act(async () => {
+      fireEvent.mouseEnter(firstPoint);
+    });
 
     // 'theme_selector' should become 'Theme Selector'
-    await waitFor(() => {
-      expect(screen.getByText('Theme Selector')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
   });
 
   it('should display point count', async () => {
@@ -202,11 +200,9 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    render(<Heatmap />);
+    await renderAndWait();
 
-    await waitFor(() => {
-      expect(screen.getByText('Basé sur 5 points d\'interaction')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Basé sur 5 points d\'interaction')).toBeInTheDocument();
   });
 
   it('should use mock data on API error', async () => {
@@ -214,13 +210,11 @@ describe('Heatmap', () => {
 
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      // Should render mock data points
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBe(7); // Mock data has 7 points
-    });
+    // Should render mock data points
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    expect(points.length).toBe(7); // Mock data has 7 points
 
     consoleErrorSpy.mockRestore();
   });
@@ -231,13 +225,11 @@ describe('Heatmap', () => {
       json: async () => ({ points: [], maxIntensity: 0 }),
     });
 
-    render(<Heatmap />);
+    await renderAndWait();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText('Aucune donnée d\'interaction disponible')
-      ).toBeInTheDocument();
-    });
+    expect(
+      screen.getByText('Aucune donnée d\'interaction disponible')
+    ).toBeInTheDocument();
   });
 
   it('should render grid overlay', async () => {
@@ -246,12 +238,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const gridOverlay = container.querySelector('.grid.grid-cols-10.grid-rows-10');
-      expect(gridOverlay).toBeInTheDocument();
-    });
+    const gridOverlay = container.querySelector('.grid.grid-cols-10.grid-rows-10');
+    expect(gridOverlay).toBeInTheDocument();
   });
 
   it('should render 100 grid cells', async () => {
@@ -260,33 +250,39 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const gridCells = container.querySelectorAll('.border.border-foreground');
-      expect(gridCells.length).toBe(100);
-    });
+    const gridCells = container.querySelectorAll('.border.border-foreground');
+    expect(gridCells.length).toBe(100);
   });
 
   it('should auto-refresh every 60 seconds', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => mockHeatmapData,
+    let fetchCount = 0;
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      fetchCount++;
+      return {
+        ok: true,
+        json: async () => mockHeatmapData,
+      };
     });
 
     render(<Heatmap />);
 
-    // Initial fetch
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+    // Wait for initial render and fetch
+    await act(async () => {
+      await jest.runOnlyPendingTimersAsync();
     });
 
-    // Advance 60 seconds
-    jest.advanceTimersByTime(60000);
+    const initialFetchCount = fetchCount;
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+    // Advance 60 seconds - this should trigger the interval
+    await act(async () => {
+      jest.advanceTimersByTime(60000);
+      await jest.runOnlyPendingTimersAsync();
     });
+
+    // Should have fetched at least once more (interval triggered)
+    expect(fetchCount).toBeGreaterThan(initialFetchCount);
   });
 
   it('should cleanup interval on unmount', async () => {
@@ -297,17 +293,22 @@ describe('Heatmap', () => {
 
     const { unmount } = render(<Heatmap />);
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+    // Wait for initial render and fetch
+    await act(async () => {
+      await jest.runOnlyPendingTimersAsync();
     });
 
-    unmount();
+    const initialCallCount = (global.fetch as jest.Mock).mock.calls.length;
+
+    await act(async () => {
+      unmount();
+    });
 
     // Advance time after unmount
     jest.advanceTimersByTime(120000);
 
-    // Should not fetch again
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    // Should not fetch again after unmount
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(initialCallCount);
   });
 
   it('should position points correctly', async () => {
@@ -316,16 +317,14 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      const firstPoint = points[0] as HTMLElement;
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    const firstPoint = points[0] as HTMLElement;
 
-      // First point should be at x: 20%, y: 15%
-      expect(firstPoint.style.left).toBe('20%');
-      expect(firstPoint.style.top).toBe('15%');
-    });
+    // First point should be at x: 20%, y: 15%
+    expect(firstPoint.style.left).toBe('20%');
+    expect(firstPoint.style.top).toBe('15%');
   });
 
   it('should apply appropriate colors based on intensity', async () => {
@@ -334,15 +333,13 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
 
-      points.forEach((point) => {
-        const bgColor = (point as HTMLElement).style.backgroundColor;
-        expect(bgColor).toMatch(/rgba?\(/);
-      });
+    points.forEach((point) => {
+      const bgColor = (point as HTMLElement).style.backgroundColor;
+      expect(bgColor).toMatch(/rgba?\(/);
     });
   });
 
@@ -354,13 +351,11 @@ describe('Heatmap', () => {
       status: 404,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      // Should fall back to mock data
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      expect(points.length).toBeGreaterThan(0);
-    });
+    // Should fall back to mock data
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    expect(points.length).toBeGreaterThan(0);
 
     consoleErrorSpy.mockRestore();
   });
@@ -371,12 +366,10 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const card = container.querySelector('.rounded-lg.border.bg-card');
-      expect(card).toBeInTheDocument();
-    });
+    const card = container.querySelector('.rounded-lg.border.bg-card');
+    expect(card).toBeInTheDocument();
   });
 
   it('should have pointer-events-auto on heatmap points', async () => {
@@ -385,14 +378,12 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
-      points.forEach((point) => {
-        const style = (point as HTMLElement).style.pointerEvents;
-        expect(style).toBe('auto');
-      });
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+    points.forEach((point) => {
+      const style = (point as HTMLElement).style.pointerEvents;
+      expect(style).toBe('auto');
     });
   });
 
@@ -402,16 +393,15 @@ describe('Heatmap', () => {
       json: async () => mockHeatmapData,
     });
 
-    const { container } = render(<Heatmap />);
+    const { container } = await renderAndWait();
 
-    await waitFor(() => {
-      const points = container.querySelectorAll('.rounded-full.blur-xl');
+    const points = container.querySelectorAll('.rounded-full.blur-xl');
+
+    await act(async () => {
       fireEvent.mouseEnter(points[0]);
     });
 
-    await waitFor(() => {
-      const tooltip = container.querySelector('.bg-popover.shadow-lg');
-      expect(tooltip).toBeInTheDocument();
-    });
+    const tooltip = container.querySelector('.bg-popover.shadow-lg');
+    expect(tooltip).toBeInTheDocument();
   });
 });

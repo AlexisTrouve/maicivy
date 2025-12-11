@@ -5,7 +5,9 @@ import { mockCVData } from '@/lib/testutil/fixtures';
 // Mock framer-motion to avoid animation issues in tests
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, variants, initial, animate, whileInView, whileHover, viewport, transition, ...props }: any) => (
+      <div {...props}>{children}</div>
+    ),
   },
 }));
 

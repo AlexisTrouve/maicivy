@@ -3,6 +3,14 @@ import { LetterPreview } from '../LetterPreview';
 import { server } from '@/__mocks__/server';
 import { rest } from 'msw';
 
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Download: ({ className }: any) => <div data-testid="download-icon" className={className} />,
+  RotateCcw: ({ className }: any) => <div data-testid="rotate-icon" className={className} />,
+  Copy: ({ className }: any) => <div data-testid="copy-icon" className={className} />,
+  Check: ({ className }: any) => <div data-testid="check-icon" className={className} />,
+}));
+
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
