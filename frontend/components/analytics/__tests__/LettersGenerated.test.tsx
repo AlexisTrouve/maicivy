@@ -161,7 +161,8 @@ describe('LettersGenerated', () => {
     const { container } = render(<LettersGenerated />);
 
     await waitFor(() => {
-      const svg = container.querySelector('svg');
+      // Select the chart SVG specifically (not the icon SVG)
+      const svg = container.querySelector('.h-48 svg, svg[viewBox="0 0 400 150"]');
       expect(svg).toBeInTheDocument();
       expect(svg).toHaveAttribute('viewBox', '0 0 400 150');
     });
@@ -176,8 +177,10 @@ describe('LettersGenerated', () => {
     const { container } = render(<LettersGenerated />);
 
     await waitFor(() => {
-      const lines = container.querySelectorAll('line');
-      expect(lines.length).toBe(5); // 5 horizontal grid lines
+      // Select lines from the chart SVG only (not from the icon)
+      const chartSvg = container.querySelector('.h-48 svg');
+      const lines = chartSvg?.querySelectorAll('line');
+      expect(lines?.length).toBe(5); // 5 horizontal grid lines
     });
   });
 
@@ -246,9 +249,10 @@ describe('LettersGenerated', () => {
 
     render(<LettersGenerated />);
 
-    // Wait for data to load and check for French formatted date
-    const dateText = await screen.findByText(/d{2}sw+/);
-    expect(dateText).toBeInTheDocument();
+    // Wait for data to load and check for French formatted date (multiple dates shown)
+    const dateTexts = await screen.findAllByText(/\d{2}\s\w+/);
+    expect(dateTexts.length).toBeGreaterThanOrEqual(2);
+    expect(dateTexts[0]).toBeInTheDocument();
   });
 
   it('should display period description', async () => {

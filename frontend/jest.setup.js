@@ -23,6 +23,10 @@ if (typeof global.MessageChannel === 'undefined') {
 // Learn more: https://github.com/testing-library/jest-dom
 require('@testing-library/jest-dom')
 
+// Setup environment variables for tests
+process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8080'
+process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:8080'
+
 // Polyfill for fetch using undici (for Node < 18 or when not available)
 if (typeof global.fetch === 'undefined') {
   const { fetch, Request, Response, Headers, FormData } = require('undici')
@@ -74,3 +78,19 @@ global.ResizeObserver = class ResizeObserver {
 //   error: jest.fn(),
 //   warn: jest.fn(),
 // }
+
+// Memory optimization: Aggressive garbage collection hints
+if (global.gc) {
+  // Run GC after each test
+  afterEach(() => {
+    global.gc()
+  })
+}
+
+// Increase default timeout for async tests
+jest.setTimeout(30000)
+
+// Prevent memory leaks from unresolved promises
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection at:', reason)
+})

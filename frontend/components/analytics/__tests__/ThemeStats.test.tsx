@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import ThemeStats from '../ThemeStats';
 import { server } from '@/__mocks__/server';
 import { rest } from 'msw';
@@ -8,6 +8,8 @@ beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
   jest.clearAllTimers();
+  cleanup(); // Clean up rendered components
+  jest.useRealTimers(); // Always reset timers
 });
 afterAll(() => server.close());
 
@@ -21,14 +23,6 @@ describe('ThemeStats', () => {
       { theme: 'mobile', count: 89, percentage: 6 },
     ],
   };
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
 
   it('should render loading state initially', () => {
     server.use(

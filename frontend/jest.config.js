@@ -29,6 +29,9 @@ const customJestConfig = {
   transformIgnorePatterns: [
     'node_modules/(?!(@bundled-es-modules)/)',
     '^.+\\.module\\.(css|sass|scss)$',
+    '/dist/',
+    '/coverage/',
+    '/build/',
   ],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
@@ -39,6 +42,8 @@ const customJestConfig = {
     '!**/.next/**',
     '!**/coverage/**',
     '!**/jest.config.js',
+    '!**/__tests__/**', // Exclude test files
+    '!**/__mocks__/**', // Exclude mock files
   ],
   coverageThreshold: {
     global: {
@@ -48,8 +53,18 @@ const customJestConfig = {
       statements: 70,
     },
   },
-  maxWorkers: '50%',
-  workerIdleMemoryLimit: '512MB',
+  // Memory and performance optimizations
+  // Run tests serially to prevent worker memory issues
+  maxWorkers: 1,
+  workerIdleMemoryLimit: '4096MB', // Massive limit for high-memory tests
+  testTimeout: 120000, // 120s timeout per test (allow time for GC)
+
+  // Bail early on first test failure to save memory
+  bail: 1,
+
+  // Clear mocks between tests to prevent accumulation
+  clearMocks: true,
+  restoreMocks: true,
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
