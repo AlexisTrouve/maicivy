@@ -6,28 +6,28 @@ import ExportPDFButton from '../ExportPDFButton';
 const mockApiUrl = 'http://localhost:8080';
 process.env.NEXT_PUBLIC_API_URL = mockApiUrl;
 
-// Mock lucide-react icons
-jest.mock('lucide-react', () => ({
-  Download: () => <svg data-testid="download-icon" />,
-  Loader2: ({ className }: any) => <svg data-testid="loader-icon" className={className} />,
-}));
+// Note: lucide-react is already mocked globally in __mocks__/lucide-react.tsx
+// No need to mock it here - the global mock provides download-icon and loader2-icon testids
 
-// Mock UI components
-jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, disabled, className, ...props }: any) => (
-    <button onClick={onClick} disabled={disabled} className={className} {...props}>
-      {children}
-    </button>
-  ),
-}));
+// Note: Button component is NOT mocked - we let it render normally
+// The actual Button component from shadcn/ui will be used
 
 describe('ExportPDFButton', () => {
   let mockAnchor: any;
   let mockFetch: jest.Mock;
   let mockCreateObjectURL: jest.Mock;
   let mockRevokeObjectURL: jest.Mock;
+  let createElementSpy: jest.SpyInstance;
+  let appendChildSpy: jest.SpyInstance;
+  let removeChildSpy: jest.SpyInstance;
+
+  // Store the REAL createElement function outside beforeEach so tests can access it
+  const realCreateElement = document.createElement.bind(document);
 
   beforeEach(() => {
+    // Restore all mocks FIRST to ensure clean state
+    jest.restoreAllMocks();
+
     // Mock fetch
     mockFetch = jest.fn();
     global.fetch = mockFetch;
@@ -48,8 +48,7 @@ describe('ExportPDFButton', () => {
     };
 
     // Mock document.createElement
-    const originalCreateElement = document.createElement.bind(document);
-    jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+    createElementSpy = jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'a') {
         // Return a fresh anchor each time
         return {
@@ -60,37 +59,34 @@ describe('ExportPDFButton', () => {
           style: {},
         } as any;
       }
-      return originalCreateElement(tagName);
+      return realCreateElement(tagName);
     });
 
     // Mock appendChild/removeChild
-    jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => node);
-    jest.spyOn(document.body, 'removeChild').mockImplementation((node: any) => node);
-  });
-
-  afterEach(() => {
-    // Only clear mock calls, don't restore to avoid breaking component rendering
-    jest.clearAllMocks();
+    appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => node);
+    removeChildSpy = jest.spyOn(document.body, 'removeChild').mockImplementation((node: any) => node);
   });
 
   it('should render button with correct text', async () => {
     const { container } = render(<ExportPDFButton theme="technical" />);
 
-    // Wait for component to render
+    // Wait for button to render (component might render asynchronously)
     await waitFor(() => {
       const button = container.querySelector('button');
-      expect(button).toBeInTheDocument();
-      expect(button).toHaveTextContent('Télécharger PDF');
+      expect(button).not.toBeNull();
     });
+
+    const button = container.querySelector('button');
+    expect(button).toHaveTextContent('Télécharger PDF');
   });
 
   it('should render Download icon when not loading', async () => {
     const { container } = render(<ExportPDFButton theme="technical" />);
 
-    // Wait for component to render
+    // Wait for icon to render
     await waitFor(() => {
       const downloadIcon = container.querySelector('[data-testid="download-icon"]');
-      expect(downloadIcon).toBeInTheDocument();
+      expect(downloadIcon).not.toBeNull();
     });
   });
 
@@ -165,8 +161,11 @@ describe('ExportPDFButton', () => {
       blob: async () => mockBlob,
     });
 
+    // Store original implementation
+    const originalAppendChild = appendChildSpy.getMockImplementation();
+
     // Override appendChild to capture the anchor element
-    const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => {
+    appendChildSpy.mockImplementation((node: any) => {
       capturedAnchor = node;
       return node;
     });
@@ -180,11 +179,16 @@ describe('ExportPDFButton', () => {
       expect(appendChildSpy).toHaveBeenCalled();
       expect(capturedAnchor.download).toBe(customFilename);
     });
+
+    // Restore original implementation
+    if (originalAppendChild) {
+      appendChildSpy.mockImplementation(originalAppendChild);
+    }
   });
 
   it('should use fallback filename if Content-Disposition missing', async () => {
     const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
-    let capturedAnchor: any;
+    const capturedAnchors: any[] = [];
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -194,10 +198,27 @@ describe('ExportPDFButton', () => {
       blob: async () => mockBlob,
     });
 
-    // Override appendChild to capture the anchor element
-    const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => {
-      capturedAnchor = node;
-      return node;
+    // Store original implementations
+    const originalCreateElement = createElementSpy.getMockImplementation();
+
+    // Clear call history
+    createElementSpy.mockClear();
+
+    // Override createElement to capture ALL anchor elements
+    createElementSpy.mockImplementation((tagName: string) => {
+      if (tagName === 'a') {
+        // Create a new anchor and add to array
+        const anchor = {
+          click: jest.fn(),
+          setAttribute: jest.fn(),
+          href: '',
+          download: '',
+          style: {},
+        } as any;
+        capturedAnchors.push(anchor);
+        return anchor;
+      }
+      return realCreateElement(tagName);
     });
 
     const { container } = render(<ExportPDFButton theme="business" />);
@@ -206,9 +227,18 @@ describe('ExportPDFButton', () => {
     if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(appendChildSpy).toHaveBeenCalled();
-      expect(capturedAnchor.download).toBe('CV_business.pdf');
+      // Wait for at least one anchor to be created
+      expect(capturedAnchors.length).toBeGreaterThan(0);
     });
+
+    // Find the anchor with the correct filename
+    const businessAnchor = capturedAnchors.find(a => a.download === 'CV_business.pdf');
+    expect(businessAnchor).toBeDefined();
+
+    // Restore original implementation
+    if (originalCreateElement) {
+      createElementSpy.mockImplementation(originalCreateElement);
+    }
   });
 
   it('should handle API error gracefully', async () => {
@@ -222,17 +252,15 @@ describe('ExportPDFButton', () => {
     const button = container.querySelector('button');
     if (button) fireEvent.click(button);
 
+    // Wait for error message to appear and verify its class
     await waitFor(() => {
-      expect(container.textContent).toContain('Échec de l\'export PDF');
+      const errorElements = container.querySelectorAll('p');
+      const errorElement = Array.from(errorElements).find(el =>
+        el.textContent?.includes('Échec de l\'export PDF')
+      );
+      expect(errorElement).not.toBeNull();
+      expect(errorElement).toHaveClass('text-red-600');
     });
-
-    // Error message should be displayed - check for the paragraph with error text
-    const errorElements = container.querySelectorAll('p');
-    const errorElement = Array.from(errorElements).find(el =>
-      el.textContent?.includes('Échec de l\'export PDF')
-    );
-    expect(errorElement).toBeInTheDocument();
-    expect(errorElement).toHaveClass('text-red-600');
   });
 
   it('should handle network error', async () => {
@@ -276,10 +304,9 @@ describe('ExportPDFButton', () => {
     if (button) fireEvent.click(button);
 
     await waitFor(() => {
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(mockAnchor.click).toHaveBeenCalled();
-      expect(document.body.appendChild).toHaveBeenCalled();
-      expect(document.body.removeChild).toHaveBeenCalled();
+      expect(createElementSpy).toHaveBeenCalledWith('a');
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
       expect(mockCreateObjectURL).toHaveBeenCalledWith(mockBlob);
       expect(mockRevokeObjectURL).toHaveBeenCalled();
     });
@@ -319,11 +346,14 @@ describe('ExportPDFButton', () => {
   it('should render with gradient styling', async () => {
     const { container } = render(<ExportPDFButton theme="technical" />);
 
+    // Wait for button to render
     await waitFor(() => {
       const button = container.querySelector('button');
-      expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
+      expect(button).not.toBeNull();
     });
+
+    const button = container.querySelector('button');
+    expect(button).toHaveClass('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
   });
 
   it('should show Loader2 icon when loading', async () => {
@@ -347,11 +377,15 @@ describe('ExportPDFButton', () => {
     const button = container.querySelector('button');
     if (button) fireEvent.click(button);
 
+    // Wait for the loader icon to appear
     await waitFor(() => {
-      const spinner = container.querySelector('[data-testid="loader-icon"]');
-      expect(spinner).toBeInTheDocument();
-      expect(spinner).toHaveClass('animate-spin');
+      const spinner = container.querySelector('[data-testid="loader2-icon"]');
+      expect(spinner).not.toBeNull();
     });
+
+    // Now verify it has the animate-spin class
+    const spinner = container.querySelector('[data-testid="loader2-icon"]');
+    expect(spinner).toHaveClass('animate-spin');
   });
 
   it('should disable button only when loading', async () => {

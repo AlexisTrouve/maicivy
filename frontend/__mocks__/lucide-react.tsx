@@ -7,6 +7,7 @@ export const X = (props: any) => <svg data-testid="x-icon" {...props} />;
 export const Calendar = (props: any) => <svg data-testid="calendar-icon" {...props} />;
 export const FileText = (props: any) => <svg data-testid="file-text-icon" {...props} />;
 export const ChevronDown = (props: any) => <svg data-testid="chevron-down-icon" {...props} />;
+export const ChevronUp = (props: any) => <svg data-testid="chevron-up-icon" {...props} />;
 export const Check = (props: any) => <svg data-testid="check-icon" {...props} />;
 export const AlertCircle = (props: any) => <svg data-testid="alert-circle-icon" {...props} />;
 export const MoreHorizontal = (props: any) => <svg data-testid="more-horizontal-icon" {...props} />;
@@ -21,3 +22,4 @@ export const MapPin = (props: any) => <svg data-testid="map-pin-icon" {...props}
 export const Linkedin = (props: any) => <svg data-testid="linkedin-icon" {...props} />;
 export const Github = (props: any) => <svg data-testid="github-icon" {...props} />;
 export const ExternalLink = (props: any) => <svg data-testid="external-link-icon" {...props} />;
+export const Sparkles = (props: any) => <svg data-testid="sparkles-icon" {...props} />;

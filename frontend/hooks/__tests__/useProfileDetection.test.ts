@@ -180,6 +180,9 @@ describe('useBypassStatus', () => {
 
     const { result } = renderHook(() => useBypassStatus())
 
+    // Initially loading should be true
+    expect(result.current.loading).toBe(true)
+
     // Wait for the hook to finish loading
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
