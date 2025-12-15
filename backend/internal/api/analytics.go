@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -238,7 +240,7 @@ func (h *AnalyticsHandler) TrackEvent(c *fiber.Ctx) error {
 	// Convertir event_data en JSON string
 	eventDataJSON := "{}"
 	if req.EventData != nil {
-		if data, err := fiber.Marshal(req.EventData); err == nil {
+		if data, err := json.Marshal(req.EventData); err == nil {
 			eventDataJSON = string(data)
 		}
 	}

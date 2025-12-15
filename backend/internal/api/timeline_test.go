@@ -12,7 +12,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
+	"maicivy/internal/models"
 )
 
 // setupTimelineTestDB initialise une base de données de test

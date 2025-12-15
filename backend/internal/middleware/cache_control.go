@@ -12,7 +12,7 @@ func CacheControlMiddleware(c *fiber.Ctx) error {
 
 	// Static assets: long-term caching (1 year)
 	// Next.js hashes assets, so safe with long expires
-	if isStaticAsset(path) {
+	if isStaticAssetPath(path) {
 		c.Set("Cache-Control", "public, max-age=31536000, immutable")
 		return c.Next()
 	}
@@ -52,8 +52,8 @@ func CacheControlMiddleware(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// isStaticAsset checks if path is a static asset
-func isStaticAsset(path string) bool {
+// isStaticAssetPath checks if path is a static asset
+func isStaticAssetPath(path string) bool {
 	staticExts := []string{
 		".js", ".css", ".woff", ".woff2", ".ttf",
 		".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif",

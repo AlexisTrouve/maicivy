@@ -8,24 +8,24 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/redis/go-redis/v9"
+	goredis "github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"backend/internal/models"
-	"backend/internal/services"
+	"maicivy/internal/models"
+	"maicivy/internal/services"
 )
 
 // ProfileEnrichmentMiddleware enrichit automatiquement les visiteurs avec détection de profil
 type ProfileEnrichmentMiddleware struct {
 	db                *gorm.DB
-	redis             *redis.Client
+	redis             *goredis.Client
 	profileDetector   *services.ProfileDetectorService
 }
 
 // NewProfileEnrichmentMiddleware crée une nouvelle instance du middleware
 func NewProfileEnrichmentMiddleware(
 	db *gorm.DB,
-	redis *redis.Client,
+	redis *goredis.Client,
 	profileDetector *services.ProfileDetectorService,
 ) *ProfileEnrichmentMiddleware {
 	return &ProfileEnrichmentMiddleware{
@@ -55,7 +55,7 @@ func (m *ProfileEnrichmentMiddleware) Handle() fiber.Handler {
 
 		var detectedProfile *services.DetectedProfile
 
-		if err == redis.Nil {
+		if err == goredis.Nil {
 			// Profil pas en cache, détecter maintenant
 			detectedProfile, err = m.profileDetector.DetectProfile(c.Context(), ip, userAgent, referer)
 			if err != nil {
@@ -140,7 +140,7 @@ func GetDetectedProfile(c *fiber.Ctx) *services.DetectedProfile {
 }
 
 // CheckAccessGateBypass vérifie si la session a un bypass actif
-func CheckAccessGateBypass(c *fiber.Ctx, redis *redis.Client) (bool, error) {
+func CheckAccessGateBypass(c *fiber.Ctx, redis *goredis.Client) (bool, error) {
 	sessionID := c.Cookies("session_id", "")
 	if sessionID == "" {
 		return false, nil
@@ -148,7 +148,7 @@ func CheckAccessGateBypass(c *fiber.Ctx, redis *redis.Client) (bool, error) {
 
 	key := fmt.Sprintf("access:bypass:%s", sessionID)
 	val, err := redis.Get(c.Context(), key).Result()
-	if err == redis.Nil {
+	if err == goredis.Nil {
 		return false, nil
 	}
 	if err != nil {

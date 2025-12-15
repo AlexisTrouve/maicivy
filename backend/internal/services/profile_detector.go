@@ -42,16 +42,26 @@ type DeviceInfo struct {
 	IsBot      bool   `json:"is_bot"`
 }
 
+// ClearbitClientInterface defines the interface for Clearbit enrichment
+type ClearbitClientInterface interface {
+	EnrichByIP(ctx context.Context, hashedIP, realIP string) (map[string]interface{}, error)
+}
+
+// UserAgentParserInterface defines the interface for User-Agent parsing
+type UserAgentParserInterface interface {
+	Parse(userAgent string) (DeviceInfo, bool)
+}
+
 // ProfileDetectorService gère la détection de profils visiteurs
 type ProfileDetectorService struct {
 	db             *gorm.DB
 	redis          *redis.Client
-	clearbitClient *ClearbitClient
-	uaParser       *UserAgentParser
+	clearbitClient ClearbitClientInterface
+	uaParser       UserAgentParserInterface
 }
 
 // NewProfileDetectorService crée une nouvelle instance du service
-func NewProfileDetectorService(db *gorm.DB, redis *redis.Client, clearbitClient *ClearbitClient, uaParser *UserAgentParser) *ProfileDetectorService {
+func NewProfileDetectorService(db *gorm.DB, redis *redis.Client, clearbitClient ClearbitClientInterface, uaParser UserAgentParserInterface) *ProfileDetectorService {
 	return &ProfileDetectorService{
 		db:             db,
 		redis:          redis,

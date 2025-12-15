@@ -23,6 +23,9 @@ func RunAutoMigrations(db *gorm.DB) error {
 		&models.Visitor{},
 		&models.GeneratedLetter{},
 		&models.AnalyticsEvent{},
+		&models.GitHubProfile{},
+		&models.GitHubToken{},
+		&models.GitHubRepository{},
 	}
 
 	log.Info().Msg("Starting database auto-migration...")

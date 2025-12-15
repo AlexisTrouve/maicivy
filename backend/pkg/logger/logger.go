@@ -44,3 +44,16 @@ func Debug() *zerolog.Event {
 func Warn() *zerolog.Event {
 	return log.Warn()
 }
+
+// LogSecurityEvent logs a security-related event
+func LogSecurityEvent(eventType, message string, details map[string]interface{}) {
+	event := log.Warn().
+		Str("event_type", eventType).
+		Str("message", message)
+
+	for key, value := range details {
+		event = event.Interface(key, value)
+	}
+
+	event.Msg("Security event detected")
+}

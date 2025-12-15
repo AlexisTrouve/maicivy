@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	// VisitorsTotal compte le nombre total de visiteurs uniques
-	VisitorsTotal = promauto.NewCounter(prometheus.CounterOpts{
+	// UniqueVisitorsTotal compte le nombre total de visiteurs uniques
+	UniqueVisitorsTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "maicivy_visitors_total",
 		Help: "Total number of unique visitors",
 	})

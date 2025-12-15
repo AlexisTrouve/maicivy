@@ -8,8 +8,8 @@ import (
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
-	"maicivy/backend/internal/services"
+	"maicivy/internal/models"
+	"maicivy/internal/services"
 )
 
 // GitHubAutoSyncJob gère la synchronisation automatique quotidienne

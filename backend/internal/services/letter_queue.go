@@ -31,8 +31,8 @@ type LetterJob struct {
 	Progress    int       `json:"progress"` // 0-100
 
 	// Résultats (si completed)
-	LetterMotivationID     *uint `json:"letter_motivation_id,omitempty"`
-	LetterAntiMotivationID *uint `json:"letter_anti_motivation_id,omitempty"`
+	LetterMotivationID     *uuid.UUID `json:"letter_motivation_id,omitempty"`
+	LetterAntiMotivationID *uuid.UUID `json:"letter_anti_motivation_id,omitempty"`
 
 	// Erreur (si failed)
 	Error *string `json:"error,omitempty"`
@@ -137,7 +137,7 @@ func (s *LetterQueueService) UpdateJobStatus(jobID string, status JobStatus, pro
 }
 
 // CompleteJob marque un job comme complété
-func (s *LetterQueueService) CompleteJob(jobID string, motivationID, antiMotivationID uint) error {
+func (s *LetterQueueService) CompleteJob(jobID string, motivationID, antiMotivationID uuid.UUID) error {
 	job, err := s.GetJobStatus(jobID)
 	if err != nil {
 		return err

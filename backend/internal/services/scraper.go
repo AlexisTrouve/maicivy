@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/redis/go-redis/v9"

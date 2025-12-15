@@ -2,9 +2,9 @@ package services
 
 import (
 	"testing"
-	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
@@ -83,7 +83,9 @@ func TestLetterQueueService_CompleteJob(t *testing.T) {
 
 	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
 
-	err := service.CompleteJob(jobID, 1, 2)
+	uuid1 := uuid.New()
+	uuid2 := uuid.New()
+	err := service.CompleteJob(jobID, uuid1, uuid2)
 	assert.NoError(t, err)
 
 	job, _ := service.GetJobStatus(jobID)
@@ -91,8 +93,8 @@ func TestLetterQueueService_CompleteJob(t *testing.T) {
 	assert.Equal(t, 100, job.Progress)
 	assert.NotNil(t, job.LetterMotivationID)
 	assert.NotNil(t, job.LetterAntiMotivationID)
-	assert.Equal(t, uint(1), *job.LetterMotivationID)
-	assert.Equal(t, uint(2), *job.LetterAntiMotivationID)
+	assert.Equal(t, uuid1, *job.LetterMotivationID)
+	assert.Equal(t, uuid2, *job.LetterAntiMotivationID)
 }
 
 func TestLetterQueueService_FailJob(t *testing.T) {

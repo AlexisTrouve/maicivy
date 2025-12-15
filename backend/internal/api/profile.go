@@ -8,8 +8,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"backend/internal/middleware"
-	"backend/internal/services"
+	"maicivy/internal/middleware"
+	"maicivy/internal/services"
 )
 
 // ProfileHandler gère les endpoints liés à la détection de profil

@@ -38,8 +38,8 @@ type LetterJobStatus struct {
 	Progress int   `json:"progress"` // 0-100
 
 	// Si completed
-	LetterMotivationID     *uint `json:"letter_motivation_id,omitempty"`
-	LetterAntiMotivationID *uint `json:"letter_anti_motivation_id,omitempty"`
+	LetterMotivationID     *string `json:"letter_motivation_id,omitempty"` // UUID as string
+	LetterAntiMotivationID *string `json:"letter_anti_motivation_id,omitempty"` // UUID as string
 
 	// Si failed
 	Error *string `json:"error,omitempty"`
@@ -50,7 +50,7 @@ type LetterJobStatus struct {
 
 // LetterDetailResponse détails d'une lettre générée
 type LetterDetailResponse struct {
-	ID          uint   `json:"id"`
+	ID          string `json:"id"` // UUID as string
 	CompanyName string `json:"company_name"`
 	LetterType  string `json:"letter_type"` // "motivation" ou "anti_motivation"
 	Content     string `json:"content"`
@@ -84,7 +84,7 @@ type LetterHistoryResponse struct {
 
 // LetterHistoryItem item d'historique de lettre
 type LetterHistoryItem struct {
-	ID          uint   `json:"id"`
+	ID          string `json:"id"` // UUID as string
 	CompanyName string `json:"company_name"`
 	LetterType  string `json:"letter_type"`
 	CreatedAt   string `json:"created_at"`

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 )
 
@@ -59,21 +60,12 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse) ([]byte, error) {
 				document.write(html);
 				document.close();
 			`, encoded)
-			_, err := chromedp.Evaluate(script, nil).Do(ctx)
-			return err
+			return chromedp.Evaluate(script, nil).Do(ctx)
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			// Générer PDF
 			var err error
-			pdfBuffer, _, err = chromedp.PrintToPDF().
-				WithPrintBackground(true).
-				WithPaperWidth(8.27).  // A4 width in inches
-				WithPaperHeight(11.7). // A4 height in inches
-				WithMarginTop(0.4).
-				WithMarginBottom(0.4).
-				WithMarginLeft(0.4).
-				WithMarginRight(0.4).
-				Do(ctx)
+			pdfBuffer, _, err = page.PrintToPDF().Do(ctx)
 			return err
 		}),
 	); err != nil {

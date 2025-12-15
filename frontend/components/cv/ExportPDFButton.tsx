@@ -18,7 +18,7 @@ export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/cv/export?theme=${theme}&format=pdf`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv/export?theme=${theme}&format=pdf`
       );
 
       if (!response.ok) {

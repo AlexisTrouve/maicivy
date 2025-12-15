@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"maicivy/internal/config"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 	log.Println("✅ Database seeding completed!")
 }
 
-func seedExperiences(db interface{ Create(interface{}) error }) {
+func seedExperiences(db *gorm.DB) {
 	experiences := []models.Experience{
 		{
 			Title:        "Senior Backend Developer",
@@ -81,7 +81,7 @@ func seedExperiences(db interface{ Create(interface{}) error }) {
 	}
 
 	for _, exp := range experiences {
-		if err := db.Create(&exp); err != nil {
+		if err := db.Create(&exp).Error; err != nil {
 			log.Printf("⚠️  Failed to seed experience %s: %v", exp.Title, err)
 		} else {
 			log.Printf("✅ Seeded experience: %s at %s", exp.Title, exp.Company)
@@ -89,7 +89,7 @@ func seedExperiences(db interface{ Create(interface{}) error }) {
 	}
 }
 
-func seedSkills(db interface{ Create(interface{}) error }) {
+func seedSkills(db *gorm.DB) {
 	skills := []models.Skill{
 		{Name: "Go", Level: models.SkillLevelExpert, Category: "Languages", Tags: pq.StringArray{"backend", "performance"}, YearsExperience: 5, Icon: "golang", Featured: true},
 		{Name: "PostgreSQL", Level: models.SkillLevelAdvanced, Category: "Databases", Tags: pq.StringArray{"backend", "sql"}, YearsExperience: 6, Icon: "postgresql", Featured: true},
@@ -104,7 +104,7 @@ func seedSkills(db interface{ Create(interface{}) error }) {
 	}
 
 	for _, skill := range skills {
-		if err := db.Create(&skill); err != nil {
+		if err := db.Create(&skill).Error; err != nil {
 			log.Printf("⚠️  Failed to seed skill %s: %v", skill.Name, err)
 		} else {
 			log.Printf("✅ Seeded skill: %s (%s)", skill.Name, skill.Level)
@@ -112,7 +112,7 @@ func seedSkills(db interface{ Create(interface{}) error }) {
 	}
 }
 
-func seedProjects(db interface{ Create(interface{}) error }) {
+func seedProjects(db *gorm.DB) {
 	projects := []models.Project{
 		{
 			Title:          "maicivy - AI-Powered CV",
@@ -152,7 +152,7 @@ func seedProjects(db interface{ Create(interface{}) error }) {
 	}
 
 	for _, project := range projects {
-		if err := db.Create(&project); err != nil {
+		if err := db.Create(&project).Error; err != nil {
 			log.Printf("⚠️  Failed to seed project %s: %v", project.Title, err)
 		} else {
 			log.Printf("✅ Seeded project: %s", project.Title)

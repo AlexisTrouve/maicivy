@@ -14,7 +14,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
+	"maicivy/internal/models"
 )
 
 // setupTestDB crée une base de données SQLite en mémoire pour les tests

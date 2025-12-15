@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
+	"maicivy/internal/models"
 )
 
 // TimelineEvent représente un événement dans la timeline (experience ou project)

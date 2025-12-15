@@ -14,7 +14,7 @@ import { Theme } from '@/lib/types';
 
 // Fetch available themes from API
 async function fetchThemes(): Promise<Theme[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cv/themes`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv/themes`);
   if (!res.ok) throw new Error('Failed to fetch themes');
   return res.json();
 }

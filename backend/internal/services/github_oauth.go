@@ -13,7 +13,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
+	"maicivy/internal/models"
 )
 
 // GitHubOAuthService gère l'authentification OAuth GitHub

@@ -7,9 +7,18 @@ import (
 
 // CORS configure la politique CORS de l'application
 func CORS(allowedOrigins []string) fiber.Handler {
+	// Convert []string to comma-separated string
+	originsStr := ""
+	for i, origin := range allowedOrigins {
+		if i > 0 {
+			originsStr += ","
+		}
+		originsStr += origin
+	}
+
 	return cors.New(cors.Config{
 		// Origins autorisées (depuis config)
-		AllowOrigins: allowedOrigins, // Ex: "http://localhost:3000,https://maicivy.com"
+		AllowOrigins: originsStr, // Ex: "http://localhost:3000,https://maicivy.com"
 
 		// Méthodes autorisées
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",

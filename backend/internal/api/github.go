@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"maicivy/backend/internal/services"
+	"maicivy/internal/services"
 )
 
 // GitHubHandler gère les endpoints API GitHub
@@ -111,11 +111,8 @@ func (h *GitHubHandler) TriggerSync(c *fiber.Ctx) error {
 	}
 
 	// Récupérer le profil pour obtenir le token
-	var profile struct {
-		Token struct {
-			AccessToken string
-		}
-	}
+	// TODO: Implement profile/token retrieval
+	_ = req.Username // Temporarily unused until authentication is implemented
 
 	// Note: Dans une vraie implémentation, récupérer depuis session/JWT
 	// Pour l'instant, on récupère depuis DB

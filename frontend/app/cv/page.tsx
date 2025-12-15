@@ -17,7 +17,7 @@ interface CVPageProps {
 // Fetch CV data
 async function getCVData(theme: string = 'fullstack'): Promise<CVData> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/cv?theme=${theme}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv?theme=${theme}`,
     {
       next: { revalidate: 3600 }, // Cache 1 hour
     }

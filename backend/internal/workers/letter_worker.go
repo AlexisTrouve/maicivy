@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"
@@ -15,10 +16,12 @@ import (
 
 // LetterWorker worker pour traiter les jobs de génération de lettres
 type LetterWorker struct {
-	db           *gorm.DB
-	queueService *services.LetterQueueService
-	// aiService, scraperService, pdfService seront implémentés dans Doc 08
-	// Pour l'instant on les mock dans les commentaires
+	db              *gorm.DB
+	queueService    *services.LetterQueueService
+	aiService       *services.AIService
+	scraper         *services.CompanyScraper
+	letterGenerator *services.LetterGenerator
+	profileBuilder  *services.ProfileBuilder
 
 	stopChan chan bool
 	running  bool
@@ -28,12 +31,20 @@ type LetterWorker struct {
 func NewLetterWorker(
 	db *gorm.DB,
 	queueService *services.LetterQueueService,
+	aiService *services.AIService,
+	scraper *services.CompanyScraper,
+	letterGenerator *services.LetterGenerator,
+	profileBuilder *services.ProfileBuilder,
 ) *LetterWorker {
 	return &LetterWorker{
-		db:           db,
-		queueService: queueService,
-		stopChan:     make(chan bool),
-		running:      false,
+		db:              db,
+		queueService:    queueService,
+		aiService:       aiService,
+		scraper:         scraper,
+		letterGenerator: letterGenerator,
+		profileBuilder:  profileBuilder,
+		stopChan:        make(chan bool),
+		running:         false,
 	}
 }
 
@@ -127,156 +138,82 @@ func (w *LetterWorker) processNextJob() {
 		return
 	}
 
-	log.Printf("[LetterWorker] Job %s completed. Letters: %d, %d", jobID, motivationID, antiMotivationID)
+	log.Printf("[LetterWorker] Job %s completed. Letters: %s, %s", jobID, motivationID, antiMotivationID)
 }
 
 // generateLetters génère les deux lettres (motivation + anti-motivation)
-func (w *LetterWorker) generateLetters(job *services.LetterJob) (uint, uint, error) {
-	ctx := context.Background()
+func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid.UUID, error) {
 	startTime := time.Now()
+	ctx := context.Background()
 
-	// NOTE: Les services AI, Scraper et PDF seront implémentés dans Doc 08
-	// Pour l'instant, on crée un mock/placeholder
-
-	// 1. Scraper infos entreprise (20% progress)
+	// 1. Générer les deux lettres en parallèle (20-80% progress)
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 20)
 
-	companyInfo := mockCompanyInfo(job.CompanyName)
+	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to generate letters: %w", err)
+	}
 
-	// 2. Génération lettre motivation (40% progress)
-	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 40)
+	// 2. Sauvegarder en DB (80% progress)
+	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 80)
 
-	motivationContent := mockGenerateMotivationLetter(job.CompanyName, job.JobTitle)
-	motivationTokens := 500
-
-	// 3. Génération lettre anti-motivation (60% progress)
-	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 60)
-
-	antiMotivationContent := mockGenerateAntiMotivationLetter(job.CompanyName, job.JobTitle)
-	antiMotivationTokens := 500
-
-	// 4. Sauvegarder en DB (70% progress)
-	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 70)
-
-	// Convertir VisitorID string en UUID
-	var visitorUUID models.BaseModel
+	// Récupérer le visitor
 	var visitor models.Visitor
 	result := w.db.Where("session_id = ?", job.VisitorID).First(&visitor)
 	if result.Error != nil {
-		return 0, 0, fmt.Errorf("visitor not found: %w", result.Error)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("visitor not found: %w", result.Error)
 	}
-	visitorUUID.ID = visitor.ID
 
-	// Lettre de motivation
-	motivationLetter := models.GeneratedLetter{
+	// Marshaller CompanyInfo en JSON
+	companyInfoJSON, err := json.Marshal(motivationLetter.CompanyInfo)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to marshal company info: %w", err)
+	}
+
+	// Sauvegarder lettre de motivation
+	motivationDB := models.GeneratedLetter{
 		VisitorID:    visitor.ID,
 		CompanyName:  job.CompanyName,
 		LetterType:   models.LetterTypeMotivation,
-		Content:      motivationContent,
-		AIModel:      "claude-3-sonnet",
-		TokensUsed:   motivationTokens,
+		Content:      motivationLetter.Content,
+		AIModel:      motivationLetter.Provider,
+		TokensUsed:   motivationLetter.TokensUsed,
 		GenerationMS: int(time.Since(startTime).Milliseconds()),
-		CompanyInfo:  companyInfo,
+		CompanyInfo:  string(companyInfoJSON),
 	}
 
-	result = w.db.Create(&motivationLetter)
+	result = w.db.Create(&motivationDB)
 	if result.Error != nil {
-		return 0, 0, fmt.Errorf("failed to save motivation letter: %w", result.Error)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to save motivation letter: %w", result.Error)
 	}
 
-	// 5. Lettre anti-motivation (85% progress)
-	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 85)
+	// 3. Sauvegarder lettre anti-motivation (90% progress)
+	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 90)
 
-	antiMotivationLetter := models.GeneratedLetter{
+	antiMotivationDB := models.GeneratedLetter{
 		VisitorID:    visitor.ID,
 		CompanyName:  job.CompanyName,
 		LetterType:   models.LetterTypeAntiMotivation,
-		Content:      antiMotivationContent,
-		AIModel:      "claude-3-sonnet",
-		TokensUsed:   antiMotivationTokens,
+		Content:      antiMotivationLetter.Content,
+		AIModel:      antiMotivationLetter.Provider,
+		TokensUsed:   antiMotivationLetter.TokensUsed,
 		GenerationMS: int(time.Since(startTime).Milliseconds()),
-		CompanyInfo:  companyInfo,
+		CompanyInfo:  string(companyInfoJSON),
 	}
 
-	result = w.db.Create(&antiMotivationLetter)
+	result = w.db.Create(&antiMotivationDB)
 	if result.Error != nil {
-		return 0, 0, fmt.Errorf("failed to save anti-motivation letter: %w", result.Error)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to save anti-motivation letter: %w", result.Error)
 	}
 
-	// 6. Générer PDFs (90-100% progress) - Optionnel pour MVP
-	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 90)
-
-	// TODO: Implémenter génération PDF (Doc 08)
-	// Pour l'instant on skip cette étape
-
+	// 4. Terminé (100% progress)
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 100)
 
-	log.Printf("[LetterWorker] Letters generated in %dms (total tokens: %d)",
+	log.Printf("[LetterWorker] Letters generated in %dms (total tokens: %d, total cost: $%.4f)",
 		time.Since(startTime).Milliseconds(),
-		motivationTokens+antiMotivationTokens,
+		motivationLetter.TokensUsed+antiMotivationLetter.TokensUsed,
+		motivationLetter.EstimatedCost+antiMotivationLetter.EstimatedCost,
 	)
 
-	return uint(motivationLetter.ID), uint(antiMotivationLetter.ID), nil
-}
-
-// --- MOCK FUNCTIONS (à remplacer par les vrais services du Doc 08) ---
-
-// mockCompanyInfo mock du scraper d'infos entreprise
-func mockCompanyInfo(companyName string) string {
-	info := map[string]interface{}{
-		"name":        companyName,
-		"industry":    "Technology",
-		"size":        "1000-5000",
-		"description": fmt.Sprintf("%s est une entreprise innovante dans le secteur technologique.", companyName),
-		"source":      "mock",
-	}
-
-	jsonData, _ := json.Marshal(info)
-	return string(jsonData)
-}
-
-// mockGenerateMotivationLetter mock de génération lettre motivation
-func mockGenerateMotivationLetter(companyName, jobTitle string) string {
-	if jobTitle == "" {
-		jobTitle = "Développeur"
-	}
-
-	return fmt.Sprintf(`Madame, Monsieur,
-
-C'est avec un grand intérêt que je vous soumets ma candidature pour un poste de %s au sein de %s.
-
-Fort d'une expérience significative en développement logiciel et d'une passion pour l'innovation technologique, je suis convaincu que je pourrais apporter une contribution précieuse à votre équipe.
-
-Mes compétences en backend (Go, Node.js), frontend (React, Next.js) et DevOps (Docker, Kubernetes) me permettent d'aborder des projets complexes avec une vision complète du cycle de développement.
-
-Je serais honoré de pouvoir discuter de cette opportunité avec vous et de vous démontrer comment mon expertise pourrait bénéficier à %s.
-
-Cordialement,
-Alexi`, jobTitle, companyName, companyName)
-}
-
-// mockGenerateAntiMotivationLetter mock de génération lettre anti-motivation
-func mockGenerateAntiMotivationLetter(companyName, jobTitle string) string {
-	if jobTitle == "" {
-		jobTitle = "Développeur"
-	}
-
-	return fmt.Sprintf(`Cher %s,
-
-Après mûre réflexion, je dois avouer que je ne suis probablement PAS le candidat idéal pour votre poste de %s.
-
-Voici pourquoi vous ne devriez pas m'embaucher :
-
-1. Je préfère coder avec les pieds qu'avec les mains (c'est plus original)
-2. Mon café préféré est le décaféiné (une hérésie dans le milieu tech)
-3. Je considère que "ça marche sur ma machine" est une réponse acceptable
-4. Je pense que les tests unitaires sont optionnels (comme les légumes dans un burger)
-5. Mon style de code préféré ? Le "spaghetti code" bien sûr !
-
-Plus sérieusement, je serais ravi de démontrer que derrière l'humour se cache un développeur passionné et compétent.
-
-Avec humour (et sérieux en même temps),
-Alexi
-
-P.S. : Cette lettre d'anti-motivation est générée par IA. Si elle vous a fait sourire, imaginez ce que nous pourrions créer ensemble !`, companyName, jobTitle)
+	return motivationDB.ID, antiMotivationDB.ID, nil
 }

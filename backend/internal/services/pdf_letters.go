@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/rs/zerolog/log"
 
@@ -92,8 +93,7 @@ func (s *PDFLetterService) htmlToPDF(ctx context.Context, html string, writer io
 				document.close();
 			`, escapeJSString(html))
 
-			var result interface{}
-			return chromedp.Evaluate(script, &result).Do(ctx)
+			return chromedp.Evaluate(script, nil).Do(ctx)
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			// Wait for page load
@@ -103,18 +103,7 @@ func (s *PDFLetterService) htmlToPDF(ctx context.Context, html string, writer io
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			// Print to PDF
 			var err error
-			pdfBuf, err = chromedp.PrintToPDF().
-				WithPrintBackground(true).
-				WithScale(1.0).
-				WithPaperWidth(8.27).  // A4 width in inches
-				WithPaperHeight(11.69). // A4 height in inches
-				WithMarginTop(0.4).
-				WithMarginBottom(0.4).
-				WithMarginLeft(0.4).
-				WithMarginRight(0.4).
-				WithPreferCSSPageSize(false).
-				WithDisplayHeaderFooter(false).
-				Do(ctx)
+			pdfBuf, _, err = page.PrintToPDF().Do(ctx)
 			return err
 		}),
 	)

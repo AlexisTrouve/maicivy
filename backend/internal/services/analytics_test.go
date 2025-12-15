@@ -177,9 +177,10 @@ func TestAnalyticsService_CleanupOldEvents(t *testing.T) {
 		VisitorID: visitor.ID,
 		EventType: models.EventTypePageView,
 		EventData: "{}",
-		CreatedAt: time.Now().AddDate(0, 0, -95),
 	}
 	require.NoError(t, db.Create(oldEvent).Error)
+	// Update CreatedAt to make it old (95 jours)
+	db.Model(oldEvent).Update("created_at", time.Now().AddDate(0, 0, -95))
 
 	// Créer événement récent
 	recentEvent := &models.AnalyticsEvent{

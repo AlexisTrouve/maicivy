@@ -2,11 +2,8 @@ package api
 
 import (
 	"embed"
-	"io/fs"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
 // SwaggerHandler gère les endpoints de documentation Swagger
@@ -34,8 +31,8 @@ func (h *SwaggerHandler) RegisterRoutes(app *fiber.App) {
 
 // ServeOpenAPISpec sert le fichier OpenAPI YAML
 func (h *SwaggerHandler) ServeOpenAPISpec(c *fiber.Ctx) error {
-	// Path to OpenAPI spec in project root
-	specPath := "../../docs/api/openapi.yaml"
+	// Path to OpenAPI spec relative to backend directory
+	specPath := "docs/api/openapi.yaml"
 
 	c.Set("Content-Type", "application/yaml")
 	return c.SendFile(specPath)

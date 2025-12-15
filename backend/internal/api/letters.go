@@ -123,12 +123,23 @@ func (h *LettersHandler) GetJobStatus(c *fiber.Ctx) error {
 		estimatedTime = &remaining
 	}
 
+	// Convert uint IDs to string if present
+	var motivationIDStr, antiMotivationIDStr *string
+	if job.LetterMotivationID != nil {
+		idStr := fmt.Sprintf("%d", *job.LetterMotivationID)
+		motivationIDStr = &idStr
+	}
+	if job.LetterAntiMotivationID != nil {
+		idStr := fmt.Sprintf("%d", *job.LetterAntiMotivationID)
+		antiMotivationIDStr = &idStr
+	}
+
 	return c.JSON(dto.LetterJobStatus{
 		JobID:                  job.JobID,
 		Status:                 string(job.Status),
 		Progress:               job.Progress,
-		LetterMotivationID:     job.LetterMotivationID,
-		LetterAntiMotivationID: job.LetterAntiMotivationID,
+		LetterMotivationID:     motivationIDStr,
+		LetterAntiMotivationID: antiMotivationIDStr,
 		Error:                  job.Error,
 		EstimatedTime:          estimatedTime,
 	})
@@ -184,10 +195,10 @@ func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
 
 	// Construire URL de téléchargement PDF
 	baseURL := c.BaseURL()
-	pdfURL := fmt.Sprintf("%s/api/v1/letters/%d/pdf", baseURL, letter.ID)
+	pdfURL := fmt.Sprintf("%s/api/v1/letters/%s/pdf", baseURL, letter.ID.String())
 
 	return c.JSON(dto.LetterDetailResponse{
-		ID:           uint(letter.ID),
+		ID:           letter.ID.String(),
 		CompanyName:  letter.CompanyName,
 		LetterType:   string(letter.LetterType),
 		Content:      letter.Content,
@@ -255,10 +266,10 @@ func (h *LettersHandler) GetLetterPair(c *fiber.Ctx) error {
 
 	for _, letter := range letters {
 		baseURL := c.BaseURL()
-		pdfURL := fmt.Sprintf("%s/api/v1/letters/%d/pdf", baseURL, letter.ID)
+		pdfURL := fmt.Sprintf("%s/api/v1/letters/%s/pdf", baseURL, letter.ID.String())
 
 		letterDetail := &dto.LetterDetailResponse{
-			ID:           uint(letter.ID),
+			ID:           letter.ID.String(),
 			CompanyName:  letter.CompanyName,
 			LetterType:   string(letter.LetterType),
 			Content:      letter.Content,
@@ -340,7 +351,7 @@ func (h *LettersHandler) GetHistory(c *fiber.Ctx) error {
 	items := make([]dto.LetterHistoryItem, len(letters))
 	for i, letter := range letters {
 		items[i] = dto.LetterHistoryItem{
-			ID:          uint(letter.ID),
+			ID:          letter.ID.String(),
 			CompanyName: letter.CompanyName,
 			LetterType:  string(letter.LetterType),
 			CreatedAt:   letter.CreatedAt.Format("2006-01-02 15:04:05"),

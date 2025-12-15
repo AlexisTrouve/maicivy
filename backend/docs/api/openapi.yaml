@@ -1,0 +1,1952 @@
+openapi: 3.0.3
+
+info:
+  title: maicivy API
+  version: 1.0.0
+  description: |
+    Interactive CV platform with AI-powered cover letter generation.
+
+    This API provides endpoints for:
+    - Adaptive CV generation based on themes
+    - AI-powered dual cover letter generation (motivation + anti-motivation)
+    - Real-time analytics and visitor tracking
+    - GitHub integration for automated CV enrichment
+    - Professional timeline and profile detection
+
+    ## Rate Limiting
+    - AI letter generation: 5 requests/day with 2-minute cooldown between requests
+    - Access gate: Requires 3 visits or detected recruiter/tech profile
+
+    ## Authentication
+    Session-based authentication using cookies (session_id).
+  contact:
+    name: Alexi
+    email: contact@maicivy.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.maicivy.com
+    description: Production server (if deployed)
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: CV
+    description: Adaptive CV endpoints
+  - name: Letters
+    description: AI-powered cover letter generation
+  - name: Analytics
+    description: Real-time analytics and statistics
+  - name: GitHub
+    description: GitHub OAuth and synchronization
+  - name: Timeline
+    description: Professional timeline and milestones
+  - name: Profile
+    description: Profile detection and access control
+
+paths:
+  # ====================
+  # HEALTH ENDPOINTS
+  # ====================
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Basic health check
+      description: Returns API status without checking dependencies
+      operationId: getHealth
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+                services:
+                  api: up
+
+  /health/deep:
+    get:
+      tags:
+        - Health
+      summary: Deep health check
+      description: Checks API, PostgreSQL, and Redis connectivity
+      operationId: getHealthDeep
+      responses:
+        '200':
+          description: All services are healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+                services:
+                  api: up
+                  postgres: up
+                  redis: up
+        '503':
+          description: One or more services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: degraded
+                services:
+                  api: up
+                  postgres: down
+                  redis: up
+
+  # ====================
+  # CV ENDPOINTS
+  # ====================
+  /api/v1/cv:
+    get:
+      tags:
+        - CV
+      summary: Get adaptive CV
+      description: Returns CV adapted to the specified theme with scored experiences and skills
+      operationId: getAdaptiveCV
+      parameters:
+        - name: theme
+          in: query
+          description: Theme ID to adapt the CV (backend, frontend, fullstack, devops, cpp, artistique)
+          required: false
+          schema:
+            type: string
+            enum: [backend, frontend, fullstack, devops, cpp, artistique]
+            default: fullstack
+      responses:
+        '200':
+          description: Adaptive CV data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdaptiveCVResponse'
+        '400':
+          description: Invalid theme
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cv/themes:
+    get:
+      tags:
+        - CV
+      summary: Get available themes
+      description: Returns list of all available CV themes with their configurations
+      operationId: getCVThemes
+      responses:
+        '200':
+          description: List of themes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  themes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CVTheme'
+                  count:
+                    type: integer
+              example:
+                themes:
+                  - id: backend
+                    name: Backend Developer
+                    description: Specialized in server-side development
+                  - id: frontend
+                    name: Frontend Developer
+                    description: Specialized in UI/UX development
+                count: 6
+
+  /api/v1/experiences:
+    get:
+      tags:
+        - CV
+      summary: Get all experiences
+      description: Returns all professional experiences
+      operationId: getAllExperiences
+      responses:
+        '200':
+          description: List of experiences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experience'
+                  count:
+                    type: integer
+        '500':
+          description: Failed to fetch experiences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/skills:
+    get:
+      tags:
+        - CV
+      summary: Get all skills
+      description: Returns all skills with categories and proficiency levels
+      operationId: getAllSkills
+      responses:
+        '200':
+          description: List of skills
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Skill'
+                  count:
+                    type: integer
+        '500':
+          description: Failed to fetch skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects:
+    get:
+      tags:
+        - CV
+      summary: Get all projects
+      description: Returns all projects
+      operationId: getAllProjects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  count:
+                    type: integer
+        '500':
+          description: Failed to fetch projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cv/export:
+    get:
+      tags:
+        - CV
+      summary: Export CV as PDF
+      description: Generates and downloads CV as PDF for the specified theme
+      operationId: exportCVPDF
+      parameters:
+        - name: theme
+          in: query
+          description: Theme ID
+          required: false
+          schema:
+            type: string
+            default: fullstack
+        - name: format
+          in: query
+          description: Export format (only PDF supported)
+          required: false
+          schema:
+            type: string
+            enum: [pdf]
+            default: pdf
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid theme or format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to generate PDF
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ====================
+  # LETTERS ENDPOINTS
+  # ====================
+  /api/v1/letters/generate:
+    post:
+      tags:
+        - Letters
+      summary: Generate cover letter pair
+      description: |
+        Generates a dual cover letter (motivation + anti-motivation) asynchronously.
+
+        **Rate Limits:**
+        - 5 generations per day
+        - 2-minute cooldown between requests
+
+        **Access Requirements:**
+        - 3 visits to the site OR
+        - Detected as recruiter/tech profile
+      operationId: generateLetter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLetterRequest'
+            example:
+              company_name: Google
+              job_title: Senior Backend Engineer
+              theme: backend
+      responses:
+        '202':
+          description: Generation job queued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterGenerationResponse'
+              example:
+                job_id: 550e8400-e29b-41d4-a716-446655440000
+                status: queued
+                message: "Génération en cours. Encore 4 génération(s) disponible(s) aujourd'hui."
+                rate_limit_remaining: 4
+        '400':
+          description: Invalid request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to enqueue job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/jobs/{jobId}:
+    get:
+      tags:
+        - Letters
+      summary: Get job status
+      description: Retrieves the status of a letter generation job (for polling)
+      operationId: getJobStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: UUID of the generation job
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterJobStatus'
+              examples:
+                queued:
+                  value:
+                    job_id: 550e8400-e29b-41d4-a716-446655440000
+                    status: queued
+                    progress: 0
+                    estimated_time: 45
+                processing:
+                  value:
+                    job_id: 550e8400-e29b-41d4-a716-446655440000
+                    status: processing
+                    progress: 50
+                    estimated_time: 20
+                completed:
+                  value:
+                    job_id: 550e8400-e29b-41d4-a716-446655440000
+                    status: completed
+                    progress: 100
+                    letter_motivation_id: "1"
+                    letter_anti_motivation_id: "2"
+                failed:
+                  value:
+                    job_id: 550e8400-e29b-41d4-a716-446655440000
+                    status: failed
+                    progress: 0
+                    error: AI service timeout
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/{id}:
+    get:
+      tags:
+        - Letters
+      summary: Get letter by ID
+      description: Retrieves a single generated letter by its ID
+      operationId: getLetterById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Letter ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Letter details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterDetailResponse'
+        '400':
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Letter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/pair:
+    get:
+      tags:
+        - Letters
+      summary: Get letter pair by company
+      description: Retrieves both motivation and anti-motivation letters for a company
+      operationId: getLetterPair
+      parameters:
+        - name: company
+          in: query
+          required: true
+          description: Company name
+          schema:
+            type: string
+            example: Google
+      responses:
+        '200':
+          description: Letter pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterPairResponse'
+        '400':
+          description: Company name required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No letters found for this company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/history:
+    get:
+      tags:
+        - Letters
+      summary: Get letter generation history
+      description: Retrieves paginated history of all generated letters for the current session
+      operationId: getLetterHistory
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: Letter history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterHistoryResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/{id}/pdf:
+    get:
+      tags:
+        - Letters
+      summary: Download letter PDF
+      description: Downloads the PDF version of a generated letter
+      operationId: downloadLetterPDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Letter ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+                description: Temporary plain text response until PDF generation is implemented
+        '400':
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Letter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/access-status:
+    get:
+      tags:
+        - Letters
+      summary: Check AI access status
+      description: Checks if the current session has access to AI features
+      operationId: getAccessStatus
+      responses:
+        '200':
+          description: Access status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessStatusResponse'
+              examples:
+                no_access:
+                  value:
+                    has_access: false
+                    current_visits: 1
+                    required_visits: 3
+                    visits_remaining: 2
+                    access_granted_by: ""
+                    message: "Encore 2 visite(s) nécessaire(s) pour débloquer l'IA"
+                access_by_visits:
+                  value:
+                    has_access: true
+                    current_visits: 3
+                    required_visits: 3
+                    visits_remaining: 0
+                    access_granted_by: visits
+                    message: "Accès aux fonctionnalités IA accordé"
+                access_by_profile:
+                  value:
+                    has_access: true
+                    current_visits: 1
+                    required_visits: 3
+                    visits_remaining: 2
+                    profile_detected: recruiter
+                    access_granted_by: profile
+                    message: "Accès aux fonctionnalités IA accordé"
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/rate-limit-status:
+    get:
+      tags:
+        - Letters
+      summary: Check rate limit status
+      description: Checks the current AI generation rate limit status
+      operationId: getRateLimitStatus
+      responses:
+        '200':
+          description: Rate limit status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitStatusResponse'
+              example:
+                daily_limit: 5
+                daily_used: 2
+                daily_remaining: 3
+                reset_at: "2025-12-14 00:00:00"
+                cooldown_active: false
+                cooldown_remaining: 0
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ====================
+  # ANALYTICS ENDPOINTS
+  # ====================
+  /api/v1/analytics/realtime:
+    get:
+      tags:
+        - Analytics
+      summary: Get real-time statistics
+      description: Returns real-time analytics metrics from Redis
+      operationId: getRealtimeStats
+      responses:
+        '200':
+          description: Real-time statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    description: Real-time metrics (structure varies)
+              example:
+                success: true
+                data:
+                  active_visitors: 5
+                  total_page_views: 127
+                  cv_views: 42
+        '500':
+          description: Failed to retrieve stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get aggregated statistics
+      description: Returns aggregated analytics for a specified period
+      operationId: getStats
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Aggregated statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    description: Statistics for the period
+              example:
+                success: true
+                data:
+                  total_visitors: 156
+                  unique_visitors: 89
+                  total_cv_views: 234
+                  total_letters: 42
+        '400':
+          description: Invalid period parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to retrieve stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/themes:
+    get:
+      tags:
+        - Analytics
+      summary: Get top CV themes
+      description: Returns the most consulted CV themes
+      operationId: getTopThemes
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+      responses:
+        '200':
+          description: Top themes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        theme:
+                          type: string
+                        count:
+                          type: integer
+              example:
+                success: true
+                data:
+                  - theme: backend
+                    count: 45
+                  - theme: fullstack
+                    count: 32
+        '500':
+          description: Failed to retrieve themes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/letters:
+    get:
+      tags:
+        - Analytics
+      summary: Get letter generation statistics
+      description: Returns statistics about generated letters for a period
+      operationId: getLettersStats
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Letter statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    description: Letter generation statistics
+              example:
+                success: true
+                data:
+                  total_generated: 42
+                  avg_tokens: 856
+                  total_cost: 0.42
+        '400':
+          description: Invalid period parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to retrieve stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/timeline:
+    get:
+      tags:
+        - Analytics
+      summary: Get recent events timeline
+      description: Returns recent analytics events (page views, generations, etc.)
+      operationId: getAnalyticsTimeline
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                      count:
+                        type: integer
+        '500':
+          description: Failed to retrieve timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/heatmap:
+    get:
+      tags:
+        - Analytics
+      summary: Get interaction heatmap data
+      description: Returns heatmap data for user interactions
+      operationId: getHeatmap
+      parameters:
+        - name: page_url
+          in: query
+          required: false
+          schema:
+            type: string
+            example: /cv
+        - name: hours
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 168
+            default: 24
+      responses:
+        '200':
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        x:
+                          type: integer
+                        y:
+                          type: integer
+                        count:
+                          type: integer
+                  meta:
+                    type: object
+                    properties:
+                      page_url:
+                        type: string
+                      hours:
+                        type: integer
+                      count:
+                        type: integer
+        '500':
+          description: Failed to retrieve heatmap data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/event:
+    post:
+      tags:
+        - Analytics
+      summary: Track custom event
+      description: Tracks a custom analytics event
+      operationId: trackEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_type
+              properties:
+                event_type:
+                  type: string
+                  example: button_click
+                event_data:
+                  type: object
+                  additionalProperties: true
+                  example:
+                    button: cta
+                    x: 450
+                    y: 200
+                page_url:
+                  type: string
+                  example: /cv
+      responses:
+        '201':
+          description: Event tracked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: Event tracked successfully
+        '400':
+          description: Invalid request or missing visitor session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to track event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ====================
+  # GITHUB ENDPOINTS
+  # ====================
+  /api/v1/github/auth-url:
+    get:
+      tags:
+        - GitHub
+      summary: Get OAuth authorization URL
+      description: Generates GitHub OAuth authorization URL
+      operationId: getGitHubAuthURL
+      responses:
+        '200':
+          description: OAuth URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_url:
+                    type: string
+                    format: uri
+              example:
+                auth_url: https://github.com/login/oauth/authorize?client_id=xxx&state=yyy
+        '500':
+          description: Failed to generate auth URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/callback:
+    get:
+      tags:
+        - GitHub
+      summary: Handle OAuth callback
+      description: Handles GitHub OAuth callback and initiates background sync
+      operationId: handleGitHubCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OAuth successful, sync initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  username:
+                    type: string
+                  connected_at:
+                    type: string
+                    format: date-time
+              example:
+                success: true
+                username: octocat
+                connected_at: "2025-12-13T10:30:00Z"
+        '400':
+          description: Missing code/state or callback failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/sync:
+    post:
+      tags:
+        - GitHub
+      summary: Trigger manual sync
+      description: Triggers a manual GitHub repository synchronization
+      operationId: triggerGitHubSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+            example:
+              username: octocat
+      responses:
+        '200':
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  username:
+                    type: string
+              example:
+                status: sync_started
+                username: octocat
+        '400':
+          description: Invalid request or username required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/status:
+    get:
+      tags:
+        - GitHub
+      summary: Get sync status
+      description: Returns the GitHub synchronization status for a user
+      operationId: getGitHubStatus
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sync status
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Sync status object
+        '400':
+          description: Username required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to get status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/repos:
+    get:
+      tags:
+        - GitHub
+      summary: Get repositories
+      description: Returns GitHub repositories for a user
+      operationId: getGitHubRepos
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: include_private
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Repository list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repositories:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Username required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to fetch repositories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/disconnect:
+    delete:
+      tags:
+        - GitHub
+      summary: Disconnect GitHub account
+      description: Disconnects the GitHub account and removes sync data
+      operationId: disconnectGitHub
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully disconnected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: GitHub account octocat disconnected
+        '400':
+          description: Username required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to disconnect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ====================
+  # TIMELINE ENDPOINTS
+  # ====================
+  /api/v1/timeline:
+    get:
+      tags:
+        - Timeline
+      summary: Get combined timeline
+      description: Returns combined timeline of experiences and projects
+      operationId: getTimeline
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            example: backend
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2020-01-01"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+      responses:
+        '200':
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TimelineEvent'
+                      total:
+                        type: integer
+                      stats:
+                        $ref: '#/components/schemas/TimelineStats'
+
+  /api/v1/timeline/categories:
+    get:
+      tags:
+        - Timeline
+      summary: Get timeline categories
+      description: Returns all unique categories from experiences and projects
+      operationId: getTimelineCategories
+      responses:
+        '200':
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                  total:
+                    type: integer
+              example:
+                success: true
+                categories:
+                  - backend
+                  - frontend
+                  - fullstack
+                total: 3
+
+  /api/v1/timeline/milestones:
+    get:
+      tags:
+        - Timeline
+      summary: Get key milestones
+      description: Returns important career milestones automatically generated from timeline data
+      operationId: getTimelineMilestones
+      responses:
+        '200':
+          description: Milestones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  milestones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimelineMilestone'
+                  total:
+                    type: integer
+
+  # ====================
+  # PROFILE ENDPOINTS
+  # ====================
+  /api/v1/profile/detect:
+    get:
+      tags:
+        - Profile
+      summary: Manual profile detection
+      description: Manually detects visitor profile (debug endpoint)
+      operationId: detectProfile
+      responses:
+        '200':
+          description: Detected profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectProfileResponse'
+        '500':
+          description: Profile detection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profile/current:
+    get:
+      tags:
+        - Profile
+      summary: Get current profile
+      description: Returns the profile detected by middleware
+      operationId: getCurrentProfile
+      responses:
+        '200':
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectProfileResponse'
+
+  /api/v1/profile/bypass:
+    get:
+      tags:
+        - Profile
+      summary: Check bypass status
+      description: Checks if the session has an active access gate bypass
+      operationId: getBypassStatus
+      responses:
+        '200':
+          description: Bypass status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bypass:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                bypass: true
+        '500':
+          description: Failed to check bypass
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profile/bypass/enable:
+    post:
+      tags:
+        - Profile
+      summary: Enable bypass (admin only)
+      description: Manually enables access gate bypass for a session
+      operationId: enableBypass
+      responses:
+        '200':
+          description: Bypass enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: bypass enabled
+        '400':
+          description: No session ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to enable bypass
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profile/stats:
+    get:
+      tags:
+        - Profile
+      summary: Get profile statistics
+      description: Returns statistics about detected profiles
+      operationId: getProfileStats
+      responses:
+        '200':
+          description: Profile statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats_by_type:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        profile_type:
+                          type: string
+                        count:
+                          type: integer
+                        avg_confidence:
+                          type: number
+                  total_detected:
+                    type: integer
+                  total_visitors:
+                    type: integer
+                  detection_rate:
+                    type: number
+              example:
+                success: true
+                stats_by_type:
+                  - profile_type: recruiter
+                    count: 12
+                    avg_confidence: 85.5
+                  - profile_type: tech_professional
+                    count: 34
+                    avg_confidence: 78.2
+                total_detected: 46
+                total_visitors: 156
+                detection_rate: 29.49
+
+# ====================
+# COMPONENTS
+# ====================
+components:
+  schemas:
+    # Health
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        services:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [up, down]
+
+    # Error
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: string
+
+    # CV
+    AdaptiveCVResponse:
+      type: object
+      properties:
+        theme:
+          $ref: '#/components/schemas/CVTheme'
+        experiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoredExperience'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoredSkill'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        summary:
+          type: string
+
+    CVTheme:
+      type: object
+      properties:
+        id:
+          type: string
+          example: backend
+        name:
+          type: string
+          example: Backend Developer
+        description:
+          type: string
+
+    Experience:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          example: Senior Backend Engineer
+        company:
+          type: string
+          example: Google
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        technologies:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+          example: backend
+
+    ScoredExperience:
+      allOf:
+        - $ref: '#/components/schemas/Experience'
+        - type: object
+          properties:
+            relevance_score:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: Go
+        category:
+          type: string
+          example: Backend
+        proficiency:
+          type: integer
+          minimum: 1
+          maximum: 5
+        years_experience:
+          type: integer
+
+    ScoredSkill:
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          properties:
+            relevance_score:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          example: maicivy
+        description:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        github_url:
+          type: string
+          format: uri
+        demo_url:
+          type: string
+          format: uri
+        in_progress:
+          type: boolean
+
+    # Letters
+    GenerateLetterRequest:
+      type: object
+      required:
+        - company_name
+      properties:
+        company_name:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: Google
+        job_title:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: Senior Backend Engineer
+        theme:
+          type: string
+          enum: [backend, frontend, fullstack, devops, data, ai]
+          example: backend
+
+    LetterGenerationResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued]
+        message:
+          type: string
+        rate_limit_remaining:
+          type: integer
+
+    LetterJobStatus:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        letter_motivation_id:
+          type: string
+          nullable: true
+        letter_anti_motivation_id:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        estimated_time:
+          type: integer
+          description: Estimated remaining time in seconds
+          nullable: true
+
+    LetterDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        company_name:
+          type: string
+        letter_type:
+          type: string
+          enum: [motivation, anti_motivation]
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        ai_model:
+          type: string
+          example: claude-3-5-sonnet-20241022
+        tokens_used:
+          type: integer
+        generation_ms:
+          type: integer
+        cost:
+          type: number
+          format: float
+          description: Estimated cost in USD
+        pdf_url:
+          type: string
+          format: uri
+
+    LetterPairResponse:
+      type: object
+      properties:
+        motivation_letter:
+          $ref: '#/components/schemas/LetterDetailResponse'
+          nullable: true
+        anti_motivation_letter:
+          $ref: '#/components/schemas/LetterDetailResponse'
+          nullable: true
+        company_name:
+          type: string
+        company_info:
+          type: object
+          nullable: true
+
+    LetterHistoryResponse:
+      type: object
+      properties:
+        letters:
+          type: array
+          items:
+            $ref: '#/components/schemas/LetterHistoryItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    LetterHistoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+        company_name:
+          type: string
+        letter_type:
+          type: string
+          enum: [motivation, anti_motivation]
+        created_at:
+          type: string
+          format: date-time
+        downloaded:
+          type: boolean
+
+    AccessStatusResponse:
+      type: object
+      properties:
+        has_access:
+          type: boolean
+        current_visits:
+          type: integer
+        required_visits:
+          type: integer
+        visits_remaining:
+          type: integer
+        profile_detected:
+          type: string
+        access_granted_by:
+          type: string
+          enum: [visits, profile, ""]
+        message:
+          type: string
+
+    RateLimitStatusResponse:
+      type: object
+      properties:
+        daily_limit:
+          type: integer
+        daily_used:
+          type: integer
+        daily_remaining:
+          type: integer
+        reset_at:
+          type: string
+          format: date-time
+        cooldown_active:
+          type: boolean
+        cooldown_remaining:
+          type: integer
+          description: Cooldown remaining in seconds
+
+    # Timeline
+    TimelineEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [experience, project]
+        title:
+          type: string
+        subtitle:
+          type: string
+        content:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        image:
+          type: string
+          nullable: true
+        is_current:
+          type: boolean
+
+    TimelineMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+        icon:
+          type: string
+        type:
+          type: string
+          enum: [achievement, career, education, project]
+
+    TimelineStats:
+      type: object
+      properties:
+        total_experiences:
+          type: integer
+        total_projects:
+          type: integer
+        categories_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        years_of_experience:
+          type: number
+          format: float
+        top_technologies:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+
+    # Profile
+    DetectProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        profile_type:
+          type: string
+          enum: [recruiter, tech_professional, student, other]
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+        enrichment_data:
+          type: object
+          additionalProperties: true
+        device_info:
+          type: object
+          properties:
+            device_type:
+              type: string
+            os:
+              type: string
+            browser:
+              type: string
+        detection_sources:
+          type: array
+          items:
+            type: string
+        bypass_enabled:
+          type: boolean
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session_id
+      description: Session-based authentication using cookies
+
+security:
+  - sessionCookie: []

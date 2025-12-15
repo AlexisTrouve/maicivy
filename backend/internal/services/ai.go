@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
 	"github.com/sashabaranov/go-openai"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
@@ -59,9 +60,10 @@ func NewAIService(cfg *config.AIConfig, metrics MetricsRecorder) (*AIService, er
 
 	// Initialize Claude client
 	if cfg.AnthropicAPIKey != "" {
-		svc.claudeClient = anthropic.NewClient(
-			anthropic.WithAPIKey(cfg.AnthropicAPIKey),
+		client := anthropic.NewClient(
+			option.WithAPIKey(cfg.AnthropicAPIKey),
 		)
+		svc.claudeClient = &client
 	}
 
 	// Initialize OpenAI client
@@ -118,7 +120,7 @@ func (s *AIService) generateWithClaude(ctx context.Context, prompt string) (stri
 	defer cancel()
 
 	// Appel API avec retry
-	var resp *anthropic.MessagesResponse
+	var resp *anthropic.Message
 	var err error
 
 	for attempt := 0; attempt <= s.config.MaxRetries; attempt++ {
@@ -129,11 +131,11 @@ func (s *AIService) generateWithClaude(ctx context.Context, prompt string) (stri
 		}
 
 		resp, err = s.claudeClient.Messages.New(ctx, anthropic.MessageNewParams{
-			Model: anthropic.F(s.config.ClaudeModel),
-			Messages: anthropic.F([]anthropic.MessageParam{
+			Model:     anthropic.Model(s.config.ClaudeModel),
+			MaxTokens: int64(s.config.MaxTokensPerRequest),
+			Messages: []anthropic.MessageParam{
 				anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
-			}),
-			MaxTokens: anthropic.Int(s.config.MaxTokensPerRequest),
+			},
 		})
 
 		if err == nil {

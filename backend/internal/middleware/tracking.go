@@ -93,7 +93,7 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 // detectProfile analyse User-Agent et IP pour détecter recruteurs/profils cibles
 func (tm *TrackingMiddleware) detectProfile(c *fiber.Ctx) string {
 	userAgentStr := c.Get("User-Agent")
-	ip := c.IP()
+	_ = c.IP() // IP could be used for geo-targeting in the future
 
 	// Parse User-Agent
 	ua := useragent.Parse(userAgentStr)

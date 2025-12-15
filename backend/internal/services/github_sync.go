@@ -12,7 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 
-	"maicivy/backend/internal/models"
+	"maicivy/internal/models"
 )
 
 // GitHubSyncService gère la synchronisation des repos GitHub

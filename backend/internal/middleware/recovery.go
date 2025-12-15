@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"runtime/debug"
 
 	"github.com/gofiber/fiber/v2"
