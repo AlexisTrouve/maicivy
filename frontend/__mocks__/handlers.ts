@@ -27,6 +27,57 @@ export const handlers = [
     )
   }),
 
+  // Mock GET /api/cv/themes and /api/v1/cv/themes
+  rest.get('*/api/cv/themes', (req, res, ctx) => {
+    return res(
+      ctx.json([
+        {
+          id: 'technical',
+          name: 'Technique',
+          description: 'Focus backend et DevOps',
+          icon: '⚙️',
+        },
+        {
+          id: 'creative',
+          name: 'Créatif',
+          description: 'Frontend et design',
+          icon: '🎨',
+        },
+        {
+          id: 'business',
+          name: 'Business',
+          description: 'Gestion de projet',
+          icon: '💼',
+        },
+      ])
+    )
+  }),
+
+  rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
+    return res(
+      ctx.json([
+        {
+          id: 'technical',
+          name: 'Technique',
+          description: 'Focus backend et DevOps',
+          icon: '⚙️',
+        },
+        {
+          id: 'creative',
+          name: 'Créatif',
+          description: 'Frontend et design',
+          icon: '🎨',
+        },
+        {
+          id: 'business',
+          name: 'Business',
+          description: 'Gestion de projet',
+          icon: '💼',
+        },
+      ])
+    )
+  }),
+
   // Mock POST /api/letters/generate
   rest.post('/api/letters/generate', (req, res, ctx) => {
     const body = req.body as any

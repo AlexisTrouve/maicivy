@@ -22,6 +22,8 @@ const customJestConfig = {
     '^three$': '<rootDir>/__mocks__/three.ts',
     // Mock @radix-ui/react-slot
     '^@radix-ui/react-slot$': '<rootDir>/__mocks__/@radix-ui/react-slot.js',
+    // Mock @radix-ui/react-select
+    '^@radix-ui/react-select$': '<rootDir>/__mocks__/@radix-ui/react-select.tsx',
     // Mock lucide-react icons
     '^lucide-react$': '<rootDir>/__mocks__/lucide-react.tsx',
   },
