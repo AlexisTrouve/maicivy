@@ -403,6 +403,9 @@ describe('ExportPDFButton', () => {
     // Now verify it has the animate-spin class
     const spinner = container.querySelector('[data-testid="loader2-icon"]');
     expect(spinner).toHaveClass('animate-spin');
+
+    // Advance timers to complete the setTimeout
+    jest.advanceTimersByTime(100);
   });
 
   it('should disable button only when loading', async () => {
@@ -435,6 +438,9 @@ describe('ExportPDFButton', () => {
     await waitFor(() => {
       expect(button).toBeDisabled();
     });
+
+    // Advance timers to complete the setTimeout
+    jest.advanceTimersByTime(50);
 
     // Re-enabled after completion
     await waitFor(() => {

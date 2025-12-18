@@ -2,6 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { CVSkeleton } from '../CVSkeleton';
 
 describe('CVSkeleton', () => {
+  afterEach(() => {
+    // Clear all timers to prevent memory leaks
+    jest.clearAllTimers();
+  });
   it('should render skeleton component', () => {
     const { container } = render(<CVSkeleton />);
 

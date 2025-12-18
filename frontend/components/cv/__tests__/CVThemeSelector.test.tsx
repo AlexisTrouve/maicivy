@@ -39,6 +39,8 @@ beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
   jest.clearAllMocks();
+  // Clear all timers to prevent memory leaks
+  jest.clearAllTimers();
 });
 afterAll(() => server.close());
 
@@ -57,7 +59,7 @@ describe('CVThemeSelector', () => {
 
   it('should fetch and display themes from API', async () => {
     server.use(
-      rest.get('*/api/cv/themes', (req, res, ctx) => {
+      rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
         return res(ctx.json(mockThemes));
       })
     );
@@ -75,7 +77,7 @@ describe('CVThemeSelector', () => {
 
   it('should call router.push when theme is changed', async () => {
     server.use(
-      rest.get('*/api/cv/themes', (req, res, ctx) => {
+      rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
         return res(ctx.json(mockThemes));
       })
     );
@@ -104,7 +106,7 @@ describe('CVThemeSelector', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
-      rest.get('*/api/cv/themes', (req, res, ctx) => {
+      rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json(
           { error: 'Failed to fetch themes' }
         ));
@@ -124,7 +126,7 @@ describe('CVThemeSelector', () => {
 
   it('should display current theme value', async () => {
     server.use(
-      rest.get('*/api/cv/themes', (req, res, ctx) => {
+      rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
         return res(ctx.json(mockThemes));
       })
     );
@@ -143,7 +145,7 @@ describe('CVThemeSelector', () => {
 
   it('should show Sparkles icon', async () => {
     server.use(
-      rest.get('*/api/cv/themes', (req, res, ctx) => {
+      rest.get('*/api/v1/cv/themes', (req, res, ctx) => {
         return res(ctx.json(mockThemes));
       })
     );

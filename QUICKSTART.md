@@ -1,213 +1,86 @@
-# 🚀 maicivy - Quick Start Guide
+# 🚀 QuickStart - maicivy
 
-## Prerequisites
+## Démarrage rapide
 
-- WSL2 (Ubuntu/Debian)
-- Go 1.22+ (✅ Already installed)
-- Docker (needs installation)
+### 1️⃣ Démarrer l'application complète
+
+```bash
+cd /mnt/c/Users/alexi/Documents/projects/maicivy
+bash START.sh
+```
+
+**Le script va automatiquement :**
+- ✅ Démarrer PostgreSQL (si pas déjà actif)
+- ✅ Démarrer Redis (si pas déjà actif)
+- ✅ Lancer le backend Go sur port 8080
+- ✅ Lancer le frontend Next.js sur port 3000
+
+**Temps de démarrage :** ~25 secondes
 
 ---
 
-## Step 1: Install Docker
+### 2️⃣ Accéder à l'application
 
-**Run this command in your WSL terminal:**
+Ouvre ton navigateur sur : **http://localhost:3000**
 
-```bash
-./install-docker.sh
-```
-
-**Then apply group changes:**
-```bash
-newgrp docker
-```
-
-**Verify installation:**
-```bash
-docker --version
-docker-compose --version
-```
+**Pages disponibles :**
+- 🏠 Accueil : http://localhost:3000/
+- 📄 CV Dynamique : http://localhost:3000/cv
+- ✉️ Générateur de Lettres IA : http://localhost:3000/letters
+- 📊 Analytics : http://localhost:3000/analytics
 
 ---
 
-## Step 2: Start Infrastructure
-
-**Run this command:**
+### 3️⃣ Arrêter l'application
 
 ```bash
-./start-project.sh
+bash STOP.sh
 ```
 
-This will:
-- Start Docker service
-- Launch PostgreSQL + Redis
-- Load seed data (7 experiences, 20 skills, 8 projects)
+Arrête proprement le backend et le frontend (PostgreSQL et Redis restent actifs).
 
 ---
 
-## Step 3: Start Backend
+## 🧪 Tester les fonctionnalités
 
-```bash
-cd backend
-go run cmd/main.go
-```
+### ✅ CV Dynamique
+1. Va sur http://localhost:3000/cv
+2. Tu verras tes **7 expériences** professionnelles
+3. Tes **20 compétences** (React, TypeScript, Go, PostgreSQL, etc.)
+4. Tes **8 projets**
 
-**Backend will be running on:** `http://localhost:8080`
-
----
-
-## 🧪 Test the API
-
-### Health Check
-```bash
-curl http://localhost:8080/health
-```
-
-### Get CV (Backend Theme)
-```bash
-curl "http://localhost:8080/api/v1/cv?theme=backend"
-```
-
-### Get All Skills
-```bash
-curl http://localhost:8080/api/v1/skills
-```
-
-### Get All Projects
-```bash
-curl http://localhost:8080/api/v1/projects
-```
-
-### Swagger UI (API Documentation)
-Open in browser: `http://localhost:8080/api/docs`
+### ✅ Générateur de Lettres IA
+1. Va sur http://localhost:3000/letters
+2. Entre un nom d'entreprise (ex: "Google", "Microsoft", "OpenAI")
+3. Clique sur "Générer"
+4. Le système va :
+   - 🔍 Scraper les infos de l'entreprise (Clearbit API)
+   - 🤖 Utiliser ton vrai profil (AI Integration Developer, 8 ans d'exp)
+   - ✨ Générer 2 lettres avec Claude AI :
+     - Lettre de motivation professionnelle
+     - Lettre "anti-motivation" humoristique
+5. Compare les deux lettres côte à côte !
 
 ---
 
-## 📊 Available Endpoints
+## 📊 Données chargées
 
-### CV API (6 endpoints)
-- `GET /api/v1/cv?theme=backend` - Adaptive CV
-- `GET /api/v1/cv/themes` - Available themes
-- `GET /api/v1/experiences` - All experiences
-- `GET /api/v1/skills` - All skills
-- `GET /api/v1/projects` - All projects
-- `GET /api/v1/cv/export` - Export PDF
+**Profil actuel :**
+- 👤 Nom : Alexi
+- 💼 Poste : AI Integration Developer
+- 🎯 Skills : React, TypeScript, Go, PostgreSQL, Docker, Redis, Next.js, Fiber
+- 📅 Expérience : 8 ans (2016-2024)
 
-### Letters AI (8 endpoints)
-- `POST /api/v1/letters/generate` - Generate motivation + anti-motivation letters
-- `GET /api/v1/letters/jobs/:id` - Job status
-- `GET /api/v1/letters/:id` - Get letter
-- `GET /api/v1/letters/pair` - Get letter pair
-- And more...
-
-### Analytics (7 endpoints)
-- `GET /api/v1/analytics/realtime` - Real-time stats
-- `GET /api/v1/analytics/stats` - Aggregated stats
-- And more...
-
-### GitHub (6 endpoints)
-- OAuth integration for repository import
-
-### Timeline (3 endpoints)
-- Combined experiences + projects
-
-### Profile (5 endpoints)
-- Visitor profile detection
+**En base de données :**
+- 7 expériences professionnelles
+- 20 compétences techniques
+- 8 projets portfolio
 
 ---
 
-## 🛠️ Manual Commands
+## 🔑 API Keys configurées
 
-### Start Docker Service
-```bash
-sudo service docker start
-```
+✅ `ANTHROPIC_API_KEY` (Claude 3.5 Sonnet)
+✅ `OPENAI_API_KEY` (GPT-4 Turbo)
 
-### Start PostgreSQL + Redis
-```bash
-docker-compose up -d postgres redis
-```
-
-### Stop Services
-```bash
-docker-compose down
-```
-
-### View Logs
-```bash
-docker logs maicivy-postgres
-docker logs maicivy-redis
-```
-
-### Access PostgreSQL
-```bash
-docker exec -it maicivy-postgres psql -U maicivy -d maicivy_db
-```
-
-### Load Seed Data Manually
-```bash
-docker exec -i maicivy-postgres psql -U maicivy -d maicivy_db < backend/migrations/seed_data.sql
-```
-
----
-
-## 🔑 API Keys (Optional)
-
-To enable AI letter generation, edit `backend/.env`:
-
-```env
-# Get from https://console.anthropic.com/
-ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-# Get from https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-your-key-here
-```
-
----
-
-## 📦 Project Structure
-
-```
-maicivy/
-├── backend/              # Go API
-│   ├── cmd/main.go      # Entry point (248 lines, fully wired)
-│   ├── internal/
-│   │   ├── api/         # 8 handlers (CV, Letters, Analytics, etc.)
-│   │   ├── services/    # 10 services
-│   │   ├── middleware/  # 17 middleware
-│   │   └── models/      # 9 database models
-│   ├── migrations/      # Database schema + seed data
-│   └── docs/api/        # OpenAPI spec (Swagger)
-├── frontend/            # Next.js (TODO)
-├── docker-compose.yml   # Infrastructure setup
-└── install-docker.sh    # Docker installation script
-```
-
----
-
-## ✅ What's Working
-
-- ✅ Backend 100% coded and integrated
-- ✅ All services initialized (10/10)
-- ✅ All handlers registered (8/8)
-- ✅ 37+ API endpoints
-- ✅ Swagger documentation
-- ✅ Database migrations
-- ✅ Seed data (realistic CV)
-- ✅ Background jobs (cleanup, GitHub sync)
-- ✅ Tests ~75% passing
-- ✅ Zero compilation errors
-
----
-
-## 🎯 Next Steps
-
-1. Install Docker (run `./install-docker.sh`)
-2. Start infrastructure (run `./start-project.sh`)
-3. Start backend (run `cd backend && go run cmd/main.go`)
-4. Test APIs (visit `http://localhost:8080/api/docs`)
-5. Add AI API keys to enable letter generation (optional)
-6. Build the frontend (Phase 2+)
-
----
-
-**Made with ❤️ by Claude & Alexi**
+**La génération de lettres IA fonctionne !** 🎉

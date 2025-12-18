@@ -146,6 +146,7 @@ func main() {
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	swaggerHandler := api.NewSwaggerHandler()
+	visitorHandler := api.NewVisitorHandler(db, redisClient)
 
 	// 9. Routes
 	app.Get("/health", healthHandler.Health)
@@ -189,6 +190,10 @@ func main() {
 	// Routes Profile (Phase 5 - IMPLEMENTED)
 	apiV1.Get("/profile/detect", profileHandler.GetDetect)
 	apiV1.Get("/profile/current", profileHandler.GetCurrentProfile)
+
+	// Routes Visitor (Tracking & Access Gate)
+	apiV1.Get("/visitors/check", visitorHandler.CheckVisitorStatus)
+	apiV1.Get("/visitor/status", visitorHandler.GetVisitorStatus)
 
 	// Routes Swagger (Documentation API)
 	swaggerHandler.RegisterRoutes(app)

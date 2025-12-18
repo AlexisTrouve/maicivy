@@ -11,6 +11,7 @@ import (
 	"maicivy/internal/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -20,17 +21,52 @@ type MockLetterQueueService struct {
 	mock.Mock
 }
 
-func (m *MockLetterQueueService) EnqueueJob(sessionID, companyName, jobTitle, theme string) (string, error) {
-	args := m.Called(sessionID, companyName, jobTitle, theme)
+func (m *MockLetterQueueService) EnqueueJob(visitorID, companyName, jobTitle, theme string) (string, error) {
+	args := m.Called(visitorID, companyName, jobTitle, theme)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockLetterQueueService) GetJobStatus(jobID string) (*services.JobStatus, error) {
+func (m *MockLetterQueueService) GetJobStatus(jobID string) (*services.LetterJob, error) {
 	args := m.Called(jobID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.JobStatus), args.Error(1)
+	return args.Get(0).(*services.LetterJob), args.Error(1)
+}
+
+func (m *MockLetterQueueService) UpdateJobStatus(jobID string, status services.JobStatus, progress int) error {
+	args := m.Called(jobID, status, progress)
+	return args.Error(0)
+}
+
+func (m *MockLetterQueueService) CompleteJob(jobID string, motivationID, antiMotivationID uuid.UUID) error {
+	args := m.Called(jobID, motivationID, antiMotivationID)
+	return args.Error(0)
+}
+
+func (m *MockLetterQueueService) FailJob(jobID string, errorMsg string) error {
+	args := m.Called(jobID, errorMsg)
+	return args.Error(0)
+}
+
+func (m *MockLetterQueueService) RetryJob(jobID string) error {
+	args := m.Called(jobID)
+	return args.Error(0)
+}
+
+func (m *MockLetterQueueService) PopJob() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockLetterQueueService) GetQueueLength() (int64, error) {
+	args := m.Called()
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockLetterQueueService) CleanupOldJobs() error {
+	args := m.Called()
+	return args.Error(0)
 }
 
 // Test POST /api/v1/letters/generate - Success
@@ -102,7 +138,7 @@ func TestGenerateLetters_ValidationErrors(t *testing.T) {
 		{
 			name:     "Empty company_name",
 			body:     dto.GenerateLetterRequest{CompanyName: "", Theme: "backend"},
-			expected: "company_name",
+			expected: "CompanyName",
 		},
 		{
 			name:     "Company name too short",

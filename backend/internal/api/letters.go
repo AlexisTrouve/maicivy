@@ -20,11 +20,11 @@ import (
 type LettersHandler struct {
 	db           *gorm.DB
 	redis        *redis.Client
-	queueService *services.LetterQueueService
+	queueService services.LetterQueueServiceInterface
 }
 
 // NewLettersHandler crée une nouvelle instance du handler
-func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService *services.LetterQueueService) *LettersHandler {
+func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService services.LetterQueueServiceInterface) *LettersHandler {
 	return &LettersHandler{
 		db:           db,
 		redis:        redis,

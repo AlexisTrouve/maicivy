@@ -4,11 +4,15 @@ import SkillsCloud from '../SkillsCloud';
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, layout, whileHover, variants, initial, animate, transition, ...props }: any) => <div {...props}>{children}</div>,
   },
 }));
 
 describe('SkillsCloud', () => {
+  afterEach(() => {
+    // Clear all timers to prevent memory leaks
+    jest.clearAllTimers();
+  });
   const mockSkills = [
     {
       id: '1',

@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +23,7 @@ type MockCVService struct {
 	mock.Mock
 }
 
-func (m *MockCVService) GetAdaptiveCV(ctx interface{}, themeID string) (*services.AdaptiveCVResponse, error) {
+func (m *MockCVService) GetAdaptiveCV(ctx context.Context, themeID string) (*services.AdaptiveCVResponse, error) {
 	args := m.Called(ctx, themeID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -30,22 +31,27 @@ func (m *MockCVService) GetAdaptiveCV(ctx interface{}, themeID string) (*service
 	return args.Get(0).(*services.AdaptiveCVResponse), args.Error(1)
 }
 
-func (m *MockCVService) GetAvailableThemes() map[string]config.CVTheme {
+func (m *MockCVService) GetAvailableThemes() []config.CVTheme {
 	args := m.Called()
-	return args.Get(0).(map[string]config.CVTheme)
+	return args.Get(0).([]config.CVTheme)
 }
 
-func (m *MockCVService) GetAllExperiences(ctx interface{}) ([]models.Experience, error) {
+func (m *MockCVService) InvalidateCache(ctx context.Context, themeID string) error {
+	args := m.Called(ctx, themeID)
+	return args.Error(0)
+}
+
+func (m *MockCVService) GetAllExperiences(ctx context.Context) ([]models.Experience, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]models.Experience), args.Error(1)
 }
 
-func (m *MockCVService) GetAllSkills(ctx interface{}) ([]models.Skill, error) {
+func (m *MockCVService) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]models.Skill), args.Error(1)
 }
 
-func (m *MockCVService) GetAllProjects(ctx interface{}) ([]models.Project, error) {
+func (m *MockCVService) GetAllProjects(ctx context.Context) ([]models.Project, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]models.Project), args.Error(1)
 }
@@ -176,8 +182,8 @@ func TestGetThemes(t *testing.T) {
 	app.Get("/api/v1/cv/themes", handler.GetThemes)
 
 	// Mock data
-	themes := map[string]config.CVTheme{
-		"backend": {
+	themes := []config.CVTheme{
+		{
 			ID:          "backend",
 			Name:        "Backend Developer",
 			Description: "Backend development",
@@ -186,7 +192,7 @@ func TestGetThemes(t *testing.T) {
 				"postgresql": 0.9,
 			},
 		},
-		"frontend": {
+		{
 			ID:          "frontend",
 			Name:        "Frontend Developer",
 			Description: "Frontend development",

@@ -26,6 +26,10 @@ jest.mock('next/link', () => {
 });
 
 describe('ProjectsGrid', () => {
+  afterEach(() => {
+    // Clear all timers to prevent memory leaks
+    jest.clearAllTimers();
+  });
   const mockProjects: Project[] = [
     {
       id: '1',

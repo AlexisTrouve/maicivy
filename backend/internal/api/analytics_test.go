@@ -2,10 +2,10 @@ package api_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gofiber/fiber/v2"
@@ -134,7 +134,7 @@ func TestAnalyticsAPI_GetTopThemes(t *testing.T) {
 	defer cleanup()
 
 	// Insérer données test
-	service.GetTopThemes(fiber.NewDefaultCtx(app).Context(), 5) // Initialiser Redis
+	service.GetTopThemes(context.Background(), 5) // Initialiser Redis
 
 	req := httptest.NewRequest("GET", "/api/v1/analytics/themes?limit=5", nil)
 	resp, err := app.Test(req)

@@ -8,11 +8,11 @@ import (
 
 // CVHandler gère les endpoints liés au CV
 type CVHandler struct {
-	cvService *services.CVService
+	cvService services.CVServiceInterface
 }
 
 // NewCVHandler crée un nouveau handler
-func NewCVHandler(cvService *services.CVService) *CVHandler {
+func NewCVHandler(cvService services.CVServiceInterface) *CVHandler {
 	return &CVHandler{
 		cvService: cvService,
 	}

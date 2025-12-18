@@ -12,6 +12,10 @@ jest.mock('framer-motion', () => ({
 }));
 
 describe('ExperienceTimeline', () => {
+  afterEach(() => {
+    // Clear all timers to prevent memory leaks
+    jest.clearAllTimers();
+  });
   const mockExperiences = [
     {
       id: '1',
