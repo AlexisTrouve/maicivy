@@ -25,6 +25,9 @@ describe('ExportPDFButton', () => {
   const realCreateElement = document.createElement.bind(document);
 
   beforeEach(() => {
+    // Use fake timers to control setTimeout
+    jest.useFakeTimers();
+
     // Restore all mocks FIRST to ensure clean state
     jest.restoreAllMocks();
 
@@ -65,6 +68,14 @@ describe('ExportPDFButton', () => {
     // Mock appendChild/removeChild
     appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node: any) => node);
     removeChildSpy = jest.spyOn(document.body, 'removeChild').mockImplementation((node: any) => node);
+  });
+
+  afterEach(() => {
+    // Run all pending timers before cleanup
+    jest.runOnlyPendingTimers();
+    // Clear all timers and restore real timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   it('should render button with correct text', async () => {
@@ -113,7 +124,7 @@ describe('ExportPDFButton', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/cv/export?theme=technical&format=pdf`
+        `${mockApiUrl}/api/v1/cv/export?theme=technical&format=pdf`
       );
     });
   });
@@ -146,6 +157,12 @@ describe('ExportPDFButton', () => {
 
     // Button should be disabled during loading
     expect(button).toBeDisabled();
+
+    // Advance timers to complete the setTimeout
+    jest.advanceTimersByTime(100);
+    await waitFor(() => {
+      expect(button).not.toBeDisabled();
+    });
   });
 
   it('should use custom filename from Content-Disposition header', async () => {
