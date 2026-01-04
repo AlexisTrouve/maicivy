@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Users, Eye, FileText, TrendingUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface AnalyticsStats {
   totalVisitors: number;
@@ -12,6 +13,7 @@ interface AnalyticsStats {
 }
 
 export default function StatsOverview() {
+  const t = useTranslations('analytics.widgets.stats');
   const [stats, setStats] = useState<AnalyticsStats>({
     totalVisitors: 0,
     totalPageViews: 0,
@@ -57,28 +59,28 @@ export default function StatsOverview() {
 
   const statCards = [
     {
-      title: 'Visiteurs',
+      title: t('visitors'),
       value: stats.totalVisitors,
       icon: Users,
       subtitle: `+${stats.activeVisitors || 0} actifs`,
       color: 'text-blue-500',
     },
     {
-      title: 'Pages Vues',
+      title: t('pageViews'),
       value: stats.totalPageViews,
       icon: Eye,
       subtitle: '+234 aujourd\'hui',
       color: 'text-purple-500',
     },
     {
-      title: 'Lettres',
+      title: t('letters'),
       value: stats.totalLetters,
       icon: FileText,
       subtitle: '+12 aujourd\'hui',
       color: 'text-green-500',
     },
     {
-      title: 'Conversion',
+      title: t('conversion'),
       value: `${stats.conversionRate}%`,
       icon: TrendingUp,
       subtitle: '+2.3% vs hier',

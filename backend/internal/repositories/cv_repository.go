@@ -23,13 +23,13 @@ type Experience struct {
 	Title        string   `json:"title"`
 	Company      string   `json:"company"`
 	Description  string   `json:"description"`
-	StartDate    string   `json:"start_date"`
-	EndDate      *string  `json:"end_date"`
+	StartDate    string   `json:"startDate"`
+	EndDate      *string  `json:"endDate"`
 	Technologies []string `gorm:"type:text[]" json:"technologies"`
 	Tags         []string `gorm:"type:text[]" json:"tags"`
 	Category     string   `json:"category"`
-	CreatedAt    string   `json:"created_at"`
-	UpdatedAt    string   `json:"updated_at"`
+	CreatedAt    string   `json:"createdAt"`
+	UpdatedAt    string   `json:"updatedAt"`
 }
 
 // Skill represents the skills table model
@@ -39,9 +39,9 @@ type Skill struct {
 	Level           int      `json:"level"`
 	Category        string   `json:"category"`
 	Tags            []string `gorm:"type:text[]" json:"tags"`
-	YearsExperience int      `json:"years_experience"`
-	CreatedAt       string   `json:"created_at"`
-	UpdatedAt       string   `json:"updated_at"`
+	YearsExperience int      `json:"yearsExperience"`
+	CreatedAt       string   `json:"createdAt"`
+	UpdatedAt       string   `json:"updatedAt"`
 }
 
 // Project represents the projects table model
@@ -49,15 +49,15 @@ type Project struct {
 	ID           uint     `gorm:"primaryKey" json:"id"`
 	Title        string   `json:"title"`
 	Description  string   `json:"description"`
-	GithubURL    *string  `json:"github_url"`
-	DemoURL      *string  `json:"demo_url"`
+	GithubURL    *string  `json:"githubUrl"`
+	DemoURL      *string  `json:"demoUrl"`
 	Technologies []string `gorm:"type:text[]" json:"technologies"`
 	Category     string   `json:"category"`
 	Tags         []string `gorm:"type:text[]" json:"tags"`
 	Featured     bool     `json:"featured"`
 	Stars        int      `json:"stars"`
-	CreatedAt    string   `json:"created_at"`
-	UpdatedAt    string   `json:"updated_at"`
+	CreatedAt    string   `json:"createdAt"`
+	UpdatedAt    string   `json:"updatedAt"`
 }
 
 // GetExperiencesByCategory retrieves experiences filtered by category with pagination

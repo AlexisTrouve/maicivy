@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -11,6 +12,7 @@ interface ExportPDFButtonProps {
 export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('cv.export');
 
   const handleExport = async () => {
     setLoading(true);
@@ -22,7 +24,7 @@ export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
       );
 
       if (!response.ok) {
-        throw new Error('Échec de l\'export PDF');
+        throw new Error(t('error'));
       }
 
       // Get filename from Content-Disposition header
@@ -57,12 +59,12 @@ export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Export en cours...
+            {t('downloading')}
           </>
         ) : (
           <>
             <Download className="w-4 h-4 mr-2" />
-            Télécharger PDF
+            {t('download')}
           </>
         )}
       </Button>

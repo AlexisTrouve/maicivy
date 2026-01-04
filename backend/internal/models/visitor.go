@@ -65,7 +65,8 @@ type Visitor struct {
 	// Détection profil (NOUVEAU - Feature 3)
 	ProfileDetected      ProfileType    `gorm:"type:varchar(50);default:'unknown'" json:"profile_detected"`
 	ProfileType          string         `gorm:"type:varchar(50);index" json:"profile_type"` // recruiter, cto, tech_lead, ceo, other
-	EnrichmentData       EnrichmentData `gorm:"type:jsonb" json:"enrichment_data,omitempty"` // Données Clearbit
+	// EnrichmentData field removed - column doesn't exist in database and Clearbit integration not configured
+	// EnrichmentData       EnrichmentData `gorm:"type:jsonb" json:"enrichment_data,omitempty"` // Données Clearbit
 	DetectionConfidence  int            `gorm:"default:0" json:"detection_confidence"` // 0-100%
 	CompanyName          string         `gorm:"type:varchar(255)" json:"company_name"` // Via IP lookup ou LinkedIn
 	LinkedInURL          string         `gorm:"type:varchar(500)" json:"linkedin_url"` // Si détecté via referrer

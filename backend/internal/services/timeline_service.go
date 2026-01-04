@@ -34,12 +34,12 @@ type TimelineEventDTO struct {
 	Title     string     `json:"title"`
 	Subtitle  string     `json:"subtitle"`
 	Content   string     `json:"content"`
-	StartDate time.Time  `json:"start_date"`
-	EndDate   *time.Time `json:"end_date,omitempty"`
+	StartDate time.Time  `json:"startDate"`
+	EndDate   *time.Time `json:"endDate,omitempty"`
 	Tags      []string   `json:"tags"`
 	Category  string     `json:"category"`
 	Image     string     `json:"image,omitempty"`
-	IsCurrent bool       `json:"is_current"`
+	IsCurrent bool       `json:"isCurrent"`
 	Duration  string     `json:"duration"` // Format: "2 years 3 months"
 }
 
@@ -253,8 +253,8 @@ func (s *TimelineService) CalculateOverlaps(ctx context.Context) ([]TimelineOver
 type TimelineOverlap struct {
 	Event1    TimelineEventDTO `json:"event1"`
 	Event2    TimelineEventDTO `json:"event2"`
-	StartDate time.Time        `json:"start_date"`
-	EndDate   time.Time        `json:"end_date"`
+	StartDate time.Time        `json:"startDate"`
+	EndDate   time.Time        `json:"endDate"`
 	Duration  string           `json:"duration"`
 }
 
@@ -333,8 +333,8 @@ func (s *TimelineService) GetYearlyBreakdown(ctx context.Context) (map[int]YearS
 // YearStats représente les stats pour une année donnée
 type YearStats struct {
 	Year             int                `json:"year"`
-	ExperiencesCount int                `json:"experiences_count"`
-	ProjectsCount    int                `json:"projects_count"`
+	ExperiencesCount int                `json:"experiencesCount"`
+	ProjectsCount    int                `json:"projectsCount"`
 	Events           []TimelineEventDTO `json:"events"`
 }
 

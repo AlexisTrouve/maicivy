@@ -157,11 +157,21 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 	// 2. Sauvegarder en DB (80% progress)
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 80)
 
-	// Récupérer le visitor
+	// Récupérer ou créer le visitor
 	var visitor models.Visitor
 	result := w.db.Where("session_id = ?", job.VisitorID).First(&visitor)
 	if result.Error != nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("visitor not found: %w", result.Error)
+		// Créer le visiteur s'il n'existe pas (pour les appels API directs)
+		now := time.Now()
+		visitor = models.Visitor{
+			SessionID:  job.VisitorID,
+			VisitCount: 1,
+			FirstVisit: now,
+			LastVisit:  now,
+		}
+		if err := w.db.Create(&visitor).Error; err != nil {
+			return uuid.Nil, uuid.Nil, fmt.Errorf("failed to create visitor: %w", err)
+		}
 	}
 
 	// Marshaller CompanyInfo en JSON

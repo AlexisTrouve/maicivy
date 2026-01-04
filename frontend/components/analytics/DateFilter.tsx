@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Calendar } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type PeriodPreset = 'today' | '7d' | '30d' | 'all';
 
@@ -11,17 +12,19 @@ interface DateRange {
 }
 
 export default function DateFilter() {
+  const t = useTranslations('analytics.periods');
   const [selectedPreset, setSelectedPreset] = useState<PeriodPreset>('7d');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [dateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
   });
 
   const presets: { value: PeriodPreset; label: string }[] = [
-    { value: 'today', label: "Aujourd'hui" },
-    { value: '7d', label: '7 derniers jours' },
-    { value: '30d', label: '30 derniers jours' },
-    { value: 'all', label: 'Tout' },
+    { value: 'today', label: t('today') },
+    { value: '7d', label: t('last7days') },
+    { value: '30d', label: t('last30days') },
+    { value: 'all', label: t('all') },
   ];
 
   const handlePresetChange = (preset: PeriodPreset) => {
@@ -50,16 +53,17 @@ export default function DateFilter() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatDateRange = (): string => {
     const preset = presets.find((p) => p.value === selectedPreset);
-    return preset?.label || 'Sélectionner une période';
+    return preset?.label || t('select');
   };
 
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar className="h-4 w-4" />
-        <span>Période:</span>
+        <span>{t('label')}</span>
       </div>
 
       <div className="flex gap-1 bg-muted p-1 rounded-md">

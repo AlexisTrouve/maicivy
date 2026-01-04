@@ -66,15 +66,15 @@ Arrête proprement le backend et le frontend (PostgreSQL et Redis restent actifs
 ## 📊 Données chargées
 
 **Profil actuel :**
-- 👤 Nom : Alexi
-- 💼 Poste : AI Integration Developer
-- 🎯 Skills : React, TypeScript, Go, PostgreSQL, Docker, Redis, Next.js, Fiber
-- 📅 Expérience : 8 ans (2016-2024)
+- 👤 Nom : Alexis Trouvé
+- 💼 Poste : Développeur Full-Stack & IA
+- 🎯 Skills : Go, TypeScript, C++, Next.js, React, Three.js, PostgreSQL, Claude API, MCP
+- 📅 Expérience : Projets personnels et freelance
 
 **En base de données :**
-- 7 expériences professionnelles
-- 20 compétences techniques
-- 8 projets portfolio
+- 4 expériences (projets personnels)
+- 17 compétences techniques
+- 6 projets portfolio
 
 ---
 

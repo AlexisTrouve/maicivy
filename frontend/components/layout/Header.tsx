@@ -1,22 +1,25 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
-
-const navigation = [
-  { name: 'Accueil', href: '/' },
-  { name: 'CV', href: '/cv' },
-  { name: 'Lettres', href: '/letters' },
-  { name: 'Analytics', href: '/analytics' },
-];
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 
 export function Header() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const t = useTranslations('nav');
+  const tCommon = useTranslations('common');
+
+  const navigation = [
+    { name: t('home'), href: '/' },
+    { name: t('cv'), href: '/cv' },
+    { name: t('letters'), href: '/letters' },
+    { name: t('analytics'), href: '/analytics' },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -45,11 +48,12 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            aria-label="Changer de thème"
+            aria-label={tCommon('toggleTheme')}
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />

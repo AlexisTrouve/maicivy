@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -11,6 +12,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('errors');
+
   useEffect(() => {
     // Log l'erreur (pourrait envoyer à un service de monitoring)
     console.error('Error boundary:', error);
@@ -20,9 +23,9 @@ export default function Error({
     <div className="container flex min-h-screen items-center justify-center py-10">
       <Card className="max-w-md">
         <CardHeader>
-          <CardTitle>Une erreur est survenue</CardTitle>
+          <CardTitle>{t('generic')}</CardTitle>
           <CardDescription>
-            Désolé, quelque chose s'est mal passé. Veuillez réessayer.
+            {t('tryAgain')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -34,7 +37,7 @@ export default function Error({
             </div>
           )}
           <Button onClick={reset} className="w-full">
-            Réessayer
+            {t('retry', { ns: 'common' })}
           </Button>
         </CardContent>
       </Card>

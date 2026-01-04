@@ -1,5 +1,9 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import RealtimeVisitors from '@/components/analytics/RealtimeVisitors';
 import ThemeStats from '@/components/analytics/ThemeStats';
 import LettersGenerated from '@/components/analytics/LettersGenerated';
@@ -16,14 +20,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
+  const t = await getTranslations('analytics');
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-2">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Statistiques publiques en temps réel - Découvrez comment les visiteurs interagissent avec le site
+          {t('subtitle')} - {t('description')}
         </p>
       </div>
 
@@ -75,8 +81,7 @@ export default function AnalyticsPage() {
       {/* Footer Note */}
       <div className="mt-8 p-4 border rounded-lg bg-muted/50">
         <p className="text-sm text-muted-foreground text-center">
-          Ce dashboard est public et mis à jour en temps réel. Les données sont collectées de manière anonyme
-          dans le respect de la vie privée des visiteurs.
+          {t('privacy')}
         </p>
       </div>
     </div>

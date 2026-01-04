@@ -7,6 +7,10 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+*.test.ts
+*.test.tsx
 
 # next.js
 /.next/

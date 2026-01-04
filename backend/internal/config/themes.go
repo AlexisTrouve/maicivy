@@ -5,7 +5,7 @@ type CVTheme struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
-	TagWeights  map[string]float64 `json:"tag_weights"` // tag → poids (0.0-1.0)
+	TagWeights  map[string]float64 `json:"tagWeights"` // tag → poids (0.0-1.0)
 }
 
 // GetAvailableThemes retourne tous les thèmes configurés

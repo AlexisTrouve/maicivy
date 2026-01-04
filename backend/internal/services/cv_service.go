@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -35,7 +36,7 @@ type AdaptiveCVResponse struct {
 	Experiences []models.Experience `json:"experiences"`
 	Skills      []models.Skill      `json:"skills"`
 	Projects    []models.Project    `json:"projects"`
-	GeneratedAt time.Time           `json:"generated_at"`
+	GeneratedAt time.Time           `json:"generatedAt"`
 }
 
 // GetAdaptiveCV retourne le CV adapté au thème demandé
@@ -62,7 +63,7 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 	var skills []models.Skill
 	var projects []models.Project
 
-	if err := s.db.Find(&experiences).Error; err != nil {
+	if err := s.db.Order("start_date DESC").Find(&experiences).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch experiences: %w", err)
 	}
 
@@ -84,6 +85,11 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 	for _, se := range scoredExp {
 		filteredExperiences = append(filteredExperiences, se.Experience)
 	}
+
+	// Sort experiences by start date (most recent first)
+	sort.Slice(filteredExperiences, func(i, j int) bool {
+		return filteredExperiences[i].StartDate.After(filteredExperiences[j].StartDate)
+	})
 
 	filteredSkills := make([]models.Skill, 0)
 	for _, ss := range scoredSkills {

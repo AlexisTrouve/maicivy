@@ -1,298 +1,442 @@
-# maicivy - My CV AI
+# maicivy - My AI-Powered Interactive CV
 
-**CV interactif intelligent avec génération de lettres de motivation/anti-motivation par IA**
+<div align="center">
 
----
+![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude_AI-Anthropic-orange?style=for-the-badge)
 
-## 🎯 Qu'est-ce que maicivy ?
+**An intelligent, adaptive CV platform with AI-powered cover letter generation**
 
-Un CV en ligne qui sert de **démo technique complète**, démontrant des compétences en :
-- ✅ Backend (Go + Fiber)
-- ✅ Frontend (Next.js 14 + TypeScript)
-- ✅ Intelligence Artificielle (Claude + GPT-4)
-- ✅ DevOps (Docker, CI/CD, Monitoring)
-- ✅ Architecture système (PostgreSQL, Redis, APIs)
+[Features](#-features) | [Quick Start](#-quick-start) | [Tech Stack](#-tech-stack) | [API](#-api-endpoints) | [Documentation](#-documentation)
 
-### Fonctionnalités Principales
-
-1. **CV Dynamique Adaptatif** - Se personnalise selon le thème (Backend, C++, Artistique, etc.)
-2. **Générateur de Lettres IA** ⭐ - Génère 2 lettres : Motivation + **Anti-Motivation** (humoristique)
-3. **Analytics Publiques Temps Réel** - Dashboard visible par tous
-4. **Import GitHub** - Synchronisation automatique de vos projets
-5. **Timeline Interactive** - Visualisation chronologique avec animations
+</div>
 
 ---
 
-## 📚 Documentation
+## What is maicivy?
 
-**👉 DÉMARRAGE RAPIDE : [QUICK_START.md](QUICK_START.md)** - Lancez le projet en 15 minutes
+**maicivy** transforms the traditional CV into an interactive, intelligent experience. It's both a personal portfolio showcasing full-stack expertise and a technical demonstration of modern development practices.
 
-**📋 NAVIGATION : [INDEX.md](INDEX.md)** - Index complet de toute la documentation
+### The Signature Feature: AI Letter Generator
 
-**🧭 GUIDE : [CLAUDE.md](CLAUDE.md)** - Guide de navigation détaillé
+Enter any company name, and maicivy generates **two letters simultaneously**:
 
-### Documents Clés
+| **Motivation Letter** | **Anti-Motivation Letter** |
+|----------------------|---------------------------|
+| Professional, compelling, tailored | Humorous, satirical, creative |
+| Highlights relevant experience | Parodies skills with wit |
+| Perfect for applications | Perfect for laughs |
 
-| Fichier | Description | Pour Qui |
-|---------|-------------|----------|
-| **[CLAUDE.md](CLAUDE.md)** | 🧭 **Guide de navigation** | Tout le monde |
-| [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md) | 📖 Spécifications complètes | Tous (à lire en premier) |
-| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | 📋 Plan global (19 docs) | Chef de projet, Devs |
-| [docs/DEVELOPMENT_SEQUENCING.md](docs/DEVELOPMENT_SEQUENCING.md) | 🚀 Séquençage optimal (6 sprints) | Chef de projet, Devs |
-| [docs/IMPLEMENTATION_INDEX.md](docs/IMPLEMENTATION_INDEX.md) | 📊 Index des 19 docs | Navigation rapide |
-| [docs/implementation/](docs/implementation/) | 🔨 19 guides d'implémentation | Développeurs |
+The AI researches the company in real-time using **multiple sources** (Wikipedia, GitHub, company blog) to create contextually relevant, personalized content.
 
 ---
 
-## 🏗️ Stack Technique
+## Features
 
-### Backend
-- **Langage:** Go 1.21+
-- **Framework:** Fiber
-- **Base de données:** PostgreSQL (GORM)
-- **Cache:** Redis (go-redis)
-- **Logger:** zerolog
+### Dynamic Adaptive CV
+- **5 Themes**: Backend, C++, Artistic, Full-Stack, DevOps
+- **Intelligent Scoring**: Automatically ranks experiences and skills by relevance to selected theme
+- **PDF Export**: Generate professional PDFs for any theme
+- **Animated Timeline**: Framer Motion-powered experience visualization
 
-### Frontend
-- **Framework:** Next.js 14 (App Router)
-- **Langage:** TypeScript
-- **Styling:** Tailwind CSS
-- **Animations:** Framer Motion
-- **UI:** shadcn/ui
+### AI-Powered Letter Generation
+- **Dual Output**: Motivation + Anti-motivation letters generated in parallel
+- **Multi-Source Company Research**:
+  - Wikipedia API (company description, industry)
+  - GitHub API (open-source projects, what they're building)
+  - Blog/Newsroom scraping (recent news and announcements)
+  - DuckDuckGo Instant Answer API
+  - Clearbit API (optional enrichment)
+- **Providers**: Claude (Anthropic) primary, GPT-4o fallback
+- **PDF Download**: Professional formatting for both letters
 
-### IA
-- **APIs:** Claude (Anthropic) + GPT-4 (OpenAI)
-- **Usage:** Génération lettres, traduction
+### Real-Time Analytics Dashboard
+- Live visitor count (WebSocket)
+- Theme popularity charts
+- Letter generation statistics
+- Interaction heatmap
+- **Public dashboard** - transparency as a feature
 
-### Infrastructure
-- **Conteneurisation:** Docker + Docker Compose
-- **Reverse Proxy:** Nginx + Let's Encrypt SSL
-- **Monitoring:** Prometheus + Grafana (dashboard public)
-- **CI/CD:** GitHub Actions
-- **Hébergement:** VPS OVH
+### Smart Access Control
+- **Access Gate**: AI features unlock after 3 visits
+- **Profile Detection**: Immediate access for recruiters, CTOs, tech leads
+- **Rate Limiting**: 5 generations/day, 2-minute cooldown
+
+### GitHub Integration
+- OAuth authentication
+- Auto-import public repositories
+- Automatic sync every 6 hours
 
 ---
 
-## 🚀 Démarrage Rapide
+## Quick Start
 
-### Prérequis
+### Prerequisites
+- Docker & Docker Compose
+- Claude API key (`ANTHROPIC_API_KEY`)
+
+### One-Command Setup
 
 ```bash
-# Go 1.21+
-go version
-
-# Node 18+
-node --version
-
-# Docker
-docker --version
-```
-
-### Installation
-
-```bash
-# Clone du repo
-git clone <repo-url>
+# Clone the repository
+git clone <REPO_URL>
 cd maicivy
 
-# Setup environnement
+# Configure environment
 cp .env.example .env
-# Éditer .env avec vos API keys
+# Edit .env and add your ANTHROPIC_API_KEY
 
-# Lancer l'infrastructure
-docker-compose up -d
+# Start everything
+bash START.sh
+```
 
-# Backend
+### Access Points
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8080 |
+| API Docs | http://localhost:8080/api/docs |
+| Grafana | http://localhost:3001 |
+
+### Stop
+```bash
+bash STOP.sh
+```
+
+---
+
+## Tech Stack
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| **Go 1.24+** | Language |
+| **Fiber** | Web framework (Express-like, high performance) |
+| **GORM** | ORM for PostgreSQL |
+| **Redis** | Caching, sessions, rate limiting |
+| **zerolog** | Structured logging |
+| **chromedp** | PDF generation (headless Chrome) |
+| **Colly** | Web scraping |
+| **testify** | Testing framework |
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| **Next.js 14** | React framework (App Router) |
+| **TypeScript 5.3** | Type safety |
+| **Tailwind CSS** | Styling |
+| **shadcn/ui** | UI components |
+| **Framer Motion** | Animations |
+| **React Hook Form + Zod** | Form validation |
+| **Jest + Playwright** | Testing |
+
+### AI Services
+| Provider | Model | Use Case |
+|----------|-------|----------|
+| **Anthropic** | claude-sonnet-4 | Primary letter generation |
+| **OpenAI** | gpt-4o | Fallback provider |
+
+### Infrastructure
+| Technology | Purpose |
+|------------|---------|
+| **Docker** | Containerization |
+| **PostgreSQL 16** | Primary database |
+| **Redis 7** | Cache & sessions |
+| **Nginx** | Reverse proxy |
+| **Prometheus + Grafana** | Monitoring |
+| **GitHub Actions** | CI/CD |
+
+---
+
+## Project Structure
+
+```
+maicivy/
+├── backend/                 # Go API Server
+│   ├── cmd/main.go         # Entry point
+│   ├── internal/
+│   │   ├── api/            # HTTP handlers
+│   │   ├── services/       # Business logic
+│   │   │   ├── ai.go               # Claude/GPT integration
+│   │   │   ├── scraper.go          # Multi-source company scraper
+│   │   │   ├── letter_generator.go # Letter orchestration
+│   │   │   ├── profile_builder.go  # User profile builder
+│   │   │   └── cv_scoring.go       # Theme scoring algorithm
+│   │   ├── middleware/     # CORS, tracking, rate limiting
+│   │   ├── models/         # GORM models
+│   │   └── workers/        # Background jobs
+│   ├── migrations/         # SQL migrations
+│   └── tests/              # 28 test files
+│
+├── frontend/               # Next.js Application
+│   ├── app/               # App Router pages
+│   │   ├── cv/            # CV page
+│   │   ├── letters/       # Letter generator
+│   │   └── analytics/     # Dashboard
+│   ├── components/        # React components
+│   │   ├── cv/            # CVThemeSelector, ExperienceTimeline...
+│   │   ├── letters/       # LetterGenerator, LetterPreview...
+│   │   └── analytics/     # RealtimeVisitors, ThemeStats...
+│   └── __tests__/         # 228 test files
+│
+├── docs/                  # Comprehensive documentation
+│   ├── PROJECT_SPEC.md    # Full specifications
+│   └── implementation/    # 19 detailed guides
+│
+├── docker-compose.yml     # Full stack orchestration
+├── START.sh              # Quick start script
+└── STOP.sh               # Stop script
+```
+
+---
+
+## API Endpoints
+
+### CV
+```http
+GET  /api/v1/cv?theme=backend     # Get adaptive CV
+GET  /api/v1/cv/themes            # List available themes
+GET  /api/v1/cv/export?format=pdf # Export to PDF
+GET  /api/v1/experiences          # All experiences
+GET  /api/v1/skills               # All skills
+GET  /api/v1/projects             # All projects
+```
+
+### Letters (AI-Powered)
+```http
+POST /api/v1/letters/generate     # Start async generation
+     Body: { "company_name": "Vercel", "letter_type": "motivation" }
+     Returns: { "job_id": "uuid" }
+
+GET  /api/v1/letters/job/:id      # Poll job status
+GET  /api/v1/letters/:id          # Get letter details
+GET  /api/v1/letters/:id/pdf      # Download PDF
+GET  /api/v1/letters/access/status    # Check access eligibility
+GET  /api/v1/letters/ratelimit/status # Check rate limit
+```
+
+### Analytics
+```http
+GET  /api/v1/analytics/realtime   # Real-time stats
+GET  /api/v1/analytics/stats      # Aggregated statistics
+GET  /api/v1/analytics/themes     # Top CV themes
+GET  /api/v1/analytics/heatmap    # Interaction heatmap
+WS   /ws/analytics                # WebSocket real-time updates
+```
+
+---
+
+## The Company Scraper
+
+The multi-source scraper fetches real company data to personalize letters:
+
+```
+┌─────────────────┐
+│  Company Name   │
+│   "Vercel"      │
+└────────┬────────┘
+         │
+         ▼
+┌────────────────────────────────────────────────────┐
+│              Parallel Data Fetching                │
+├──────────┬──────────┬──────────┬──────────┬───────┤
+│Wikipedia │DuckDuckGo│ Website  │  GitHub  │ Blog  │
+│   API    │   API    │ Scraper  │   API    │Scraper│
+└────┬─────┴────┬─────┴────┬─────┴────┬─────┴───┬───┘
+     │          │          │          │         │
+     ▼          ▼          ▼          ▼         ▼
+┌─────────────────────────────────────────────────────┐
+│                  Aggregated Result                  │
+├─────────────────────────────────────────────────────┤
+│ Description: "Vercel Inc. is an American cloud..."  │
+│ Industry: Technology / Cloud Computing              │
+│ GitHub Projects: next.js, turborepo, swr...        │
+│ Recent News: "Zero-config backends on Vercel AI"   │
+└─────────────────────────────────────────────────────┘
+```
+
+**Example output for Vercel:**
+- **Wikipedia**: "Vercel Inc. is an American cloud application company. The company created and maintains the Next.js web development framework."
+- **GitHub Projects**: academy-subscription-starter, vercel-deploy-claude-code-plugin, v0-starter-template
+- **Recent News**: "Zero-config backends on Vercel AI Cloud", "You can just ship agents"
+
+---
+
+## Configuration
+
+### Required Environment Variables
+
+```bash
+# Database
+DB_USER=maicivy
+DB_PASSWORD=your-secure-password
+DB_NAME=maicivy_db
+DB_HOST=postgres
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# AI (Required for letter generation)
+ANTHROPIC_API_KEY=sk-ant-xxxxx  # Required
+OPENAI_API_KEY=sk-xxxxx         # Optional fallback
+
+# Server
+SERVER_PORT=8080
+SERVER_ENV=development
+
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+### Optional Features
+
+```bash
+# Enhanced company scraping
+CLEARBIT_API_KEY=xxxxx
+
+# GitHub integration
+GITHUB_CLIENT_ID=xxxxx
+GITHUB_CLIENT_SECRET=xxxxx
+
+# Rate limiting
+RATE_LIMIT_AI=5                 # Generations per day
+AI_GENERATION_COOLDOWN=120      # Seconds between generations
+```
+
+---
+
+## Development
+
+### Manual Setup
+
+**Backend:**
+```bash
 cd backend
 go mod download
 go run cmd/main.go
+```
 
-# Frontend (nouveau terminal)
+**Frontend:**
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Accès
+### Testing
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8080
-- **Swagger UI:** http://localhost:8080/api/docs
-- **Grafana:** http://localhost:3001
-
----
-
-## 📖 Guide de Développement
-
-### Pour les Nouveaux
-
-1. **Lire [CLAUDE.md](CLAUDE.md)** - Guide de navigation
-2. **Lire [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md)** - Comprendre le projet
-3. **Choisir votre rôle** dans CLAUDE.md (Backend, Frontend, DevOps, etc.)
-4. **Suivre le parcours** recommandé pour votre rôle
-
-### Pour les Développeurs
-
-**Ordre d'implémentation :**
-
-```
-Phase 1 (8-12j)  → Infrastructure + Backend + Frontend Foundation
-Phase 2 (5j)     → CV Dynamique
-Phase 3 (10j)    → IA Lettres (feature principale)
-Phase 4 (5j)     → Analytics
-Phase 5 (5-7j)   → Features Avancées
-Phase 6 (5j)     → Production
-
-Total : 38-44 jours (avec parallélisation)
-```
-
-**Voir [docs/DEVELOPMENT_SEQUENCING.md](docs/DEVELOPMENT_SEQUENCING.md)** pour le plan détaillé.
-
----
-
-## 🎯 Roadmap
-
-### ✅ Phase 0 - Documentation (TERMINÉ)
-- [x] Spécifications complètes
-- [x] Plan d'implémentation (19 documents)
-- [x] Séquençage optimal
-- [x] Guide de navigation
-
-### ✅ Phase 1 - MVP Foundation (TERMINÉ - 2025-12-08)
-- [x] Setup Docker Compose
-- [x] Backend Go + Fiber
-- [x] Frontend Next.js 14
-- [ ] Database schema + migrations (Sprint 2)
-- [ ] Middlewares (tracking, rate limiting) (Sprint 2)
-
-**Détails:** Voir [SPRINT1_COMPLETE.md](SPRINT1_COMPLETE.md)
-
-### 🔲 Phase 2 - CV Dynamique
-- [ ] API Backend (algorithme scoring)
-- [ ] Frontend (5 thèmes : Backend, C++, Artistique, Full-Stack, DevOps)
-- [ ] Export PDF
-
-### 🔲 Phase 3 - IA Lettres
-- [ ] Intégration Claude/GPT-4
-- [ ] Génération 2 lettres (motivation + anti-motivation)
-- [ ] Access gate (3 visites)
-- [ ] Rate limiting (5/jour)
-
-### 🔲 Phase 4 - Analytics
-- [ ] Dashboard temps réel
-- [ ] WebSocket
-- [ ] Prometheus + Grafana public
-
-### 🔲 Phase 5 - Features Avancées
-- [ ] Import GitHub
-- [ ] Timeline interactive
-- [ ] Détection profils avancée
-
-### 🔲 Phase 6 - Production
-- [ ] Infrastructure Nginx + SSL
-- [ ] CI/CD GitHub Actions
-- [ ] Tests (80%+ coverage)
-- [ ] Sécurité (OWASP Top 10)
-- [ ] Performance (benchmarks)
-
----
-
-## 🧪 Tests
-
+**Backend (Go):**
 ```bash
-# Backend
 cd backend
-go test -v ./...
-go test -cover ./...
-
-# Frontend
-cd frontend
-npm test
-npm test -- --coverage
-
-# E2E
-npm run test:e2e
+go test -v ./...           # Run all tests
+go test -cover ./...       # With coverage
+make test                  # Using Makefile
 ```
 
-**Coverage Targets:**
-- Backend : 80%+
-- Frontend : 70%+
+**Frontend (TypeScript):**
+```bash
+cd frontend
+npm test                   # Run Jest tests
+npm run test:e2e          # Run Playwright E2E
+npm run test:coverage     # Coverage report
+```
+
+### Code Quality
+- **Go**: gofmt, go vet, golangci-lint
+- **TypeScript**: ESLint, Prettier, strict mode
+- **Target Coverage**: Backend 80%+, Frontend 70%+
 
 ---
 
-## 🔒 Sécurité
+## Security
 
-- ✅ OWASP Top 10 compliant
-- ✅ Input validation (Zod frontend, validator backend)
-- ✅ Sanitization (XSS, SQL injection)
-- ✅ Rate limiting (global + AI)
-- ✅ HTTPS enforcement
-- ✅ Security headers (CSP, HSTS, etc.)
+### OWASP Top 10 Compliance
+- **Injection Prevention**: GORM ORM, parameterized queries
+- **XSS Protection**: Input sanitization, bluemonday
+- **Rate Limiting**: Redis-based sliding window
+- **Security Headers**: CSP, X-Frame-Options, HSTS
+- **GDPR**: IP hashing, no PII storage
 
-Voir [docs/implementation/17_SECURITY.md](docs/implementation/17_SECURITY.md)
-
----
-
-## 📊 Monitoring
-
-### Métriques Disponibles
-
-- Visiteurs actuels (temps réel)
-- Total visites (jour/semaine/mois)
-- Top thèmes CV consultés
-- Lettres générées
-- Response times (P50, P95, P99)
-- Error rates
-- Database connections
-- Redis memory usage
-
-**Dashboard Public:** https://maicivy.com/grafana (après déploiement)
+### Privacy
+- IPs are hashed (SHA256), never stored in plain text
+- No personal data collection without consent
+- Analytics are aggregated and anonymous
 
 ---
 
-## 🤝 Contribution
+## Documentation
 
-### Workflow
+| Document | Description |
+|----------|-------------|
+| [CLAUDE.md](./CLAUDE.md) | Navigation guide for developers |
+| [docs/PROJECT_SPEC.md](./docs/PROJECT_SPEC.md) | Complete specifications |
+| [QUICKSTART.md](./QUICKSTART.md) | Quick start guide |
+| [docs/implementation/](./docs/implementation/) | 19 detailed implementation guides |
 
-1. Lire [CLAUDE.md](CLAUDE.md) pour comprendre la structure
-2. Choisir un document d'implémentation dans [docs/implementation/](docs/implementation/)
-3. Créer une branche `feature/XX-nom`
-4. Implémenter selon le document
-5. Écrire les tests
-6. Soumettre une Pull Request
-
-### Standards
-
-- **Go:** `gofmt`, `golangci-lint`
-- **TypeScript:** ESLint, Prettier
-- **Commits:** Conventional Commits
-- **Tests:** Obligatoires (coverage > seuils)
-
----
-
-## 📝 Licence
-
-À définir
+### Implementation Guides
+- `01_SETUP_INFRASTRUCTURE.md` - Docker, PostgreSQL, Redis
+- `02_BACKEND_FOUNDATION.md` - Go, Fiber, GORM setup
+- `08_BACKEND_AI_SERVICES.md` - Claude/GPT integration
+- `10_FRONTEND_LETTERS.md` - Letter generator UI
+- `17_SECURITY.md` - OWASP compliance
+- ... and 14 more
 
 ---
 
-## 👤 Auteur
+## Metrics
 
-**Alexi**
+| Metric | Value |
+|--------|-------|
+| Backend Go files | 100+ |
+| Frontend components | 60+ |
+| Backend tests | 28 files |
+| Frontend tests | 228 files |
+| Total tests | 882 passing |
+| Documentation | ~10,000 lines |
+| API endpoints | 30+ |
 
 ---
 
-## 🔗 Liens Utiles
+## Roadmap
 
-- **Documentation:** [CLAUDE.md](CLAUDE.md)
-- **Spécifications:** [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md)
-- **Plan d'Implémentation:** [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
-- **Séquençage Dev:** [docs/DEVELOPMENT_SEQUENCING.md](docs/DEVELOPMENT_SEQUENCING.md)
+- [x] Backend foundation (Go + Fiber + GORM)
+- [x] Frontend foundation (Next.js 14 + TypeScript)
+- [x] Database schema + migrations
+- [x] Middleware system (tracking, rate limiting, CORS)
+- [x] Adaptive CV with 5 themes
+- [x] AI letter generator (dual output)
+- [x] Multi-source company scraper (Wikipedia, GitHub, News)
+- [x] Real-time analytics dashboard (WebSocket)
+- [x] GitHub OAuth integration
+- [x] Comprehensive testing (882 tests passing)
+- [ ] Production deployment
+- [ ] Multi-language support (FR/EN)
+- [ ] AI chatbot for CV Q&A
 
 ---
 
-**Status:** ✅ Sprint 1 COMPLET - Backend + Frontend Foundations prêts
+## License
 
-**Prochaine étape:** Sprint 2 - Database Schema + Middlewares
+MIT License - See [LICENSE](./LICENSE) for details.
 
-**Dernière mise à jour:** 2025-12-08
+---
+
+## Author
+
+**Alexis Trouve**
+Full-Stack Developer | VBA Migration Specialist | Automation Engineer
+
+*This project itself is the CV.*
+
+---
+
+<div align="center">
+
+**[Back to Top](#maicivy---my-ai-powered-interactive-cv)**
+
+</div>

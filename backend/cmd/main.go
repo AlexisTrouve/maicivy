@@ -18,6 +18,7 @@ import (
 	"maicivy/internal/jobs"
 	"maicivy/internal/middleware"
 	"maicivy/internal/services"
+	"maicivy/internal/websocket"
 	"maicivy/internal/workers"
 	"maicivy/pkg/logger"
 )
@@ -178,6 +179,10 @@ func main() {
 
 	// Routes Analytics (Phase 4 - IMPLEMENTED)
 	analyticsHandler.RegisterRoutes(app)
+
+	// WebSocket for analytics real-time (Phase 4 - IMPLEMENTED)
+	wsHandler := websocket.NewAnalyticsWSHandler(analyticsService, redisClient)
+	wsHandler.RegisterRoutes(app)
 
 	// Routes GitHub (Phase 5 - IMPLEMENTED)
 	githubHandler.RegisterRoutes(apiV1)

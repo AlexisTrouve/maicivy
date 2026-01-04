@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BarChart3 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ThemeStat {
   theme: string;
@@ -19,6 +20,7 @@ const THEME_COLORS: Record<string, string> = {
 };
 
 export default function ThemeStats() {
+  const t = useTranslations('analytics.widgets.themes');
   const [stats, setStats] = useState<ThemeStat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,7 +80,7 @@ export default function ThemeStats() {
     <div className="rounded-lg border bg-card p-6">
       <h2 className="text-xl font-semibold flex items-center gap-2 mb-6">
         <BarChart3 className="h-5 w-5" />
-        Top Thèmes CV
+        {t('title')}
       </h2>
 
       <div className="space-y-4">
@@ -92,7 +94,7 @@ export default function ThemeStats() {
                 <span className="font-medium capitalize">{stat.theme}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{stat.count} vues</span>
+                <span className="text-muted-foreground">{stat.count} {t('views')}</span>
                 <span className="text-xs bg-muted px-2 py-1 rounded min-w-[3rem] text-center">
                   {stat.percentage.toFixed(1)}%
                 </span>
@@ -109,7 +111,7 @@ export default function ThemeStats() {
       </div>
 
       <div className="text-xs text-muted-foreground text-center mt-6">
-        Mise à jour toutes les 30 secondes
+        {t('update')}
       </div>
     </div>
   );

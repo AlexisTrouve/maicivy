@@ -23,7 +23,7 @@ type Skill struct {
 	Level           SkillLevel     `gorm:"type:varchar(20);not null" json:"level" validate:"required,oneof=beginner intermediate advanced expert"`
 	Category        string         `gorm:"type:varchar(100);index" json:"category" validate:"required"`
 	Tags            pq.StringArray `gorm:"type:text[]" json:"tags"`
-	YearsExperience int            `gorm:"default:0" json:"years_experience" validate:"min=0,max=50"`
+	YearsExperience int            `gorm:"default:0" json:"yearsExperience" validate:"min=0,max=50"`
 
 	// Métadonnées
 	Description string `gorm:"type:text" json:"description" validate:"max=500"`

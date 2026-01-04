@@ -36,15 +36,16 @@ export const TextSkeleton = () => (
 /**
  * Creates a lazy-loaded component with custom loader
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyLoad<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options?: {
-    loading?: ComponentType
+    loading?: () => JSX.Element | null
     ssr?: boolean
   }
 ) {
   return dynamic(importFn, {
-    loading: options?.loading || DefaultLoader,
+    loading: options?.loading ?? (() => <DefaultLoader />),
     ssr: options?.ssr ?? true, // SSR enabled by default
   })
 }
@@ -53,12 +54,13 @@ export function lazyLoad<T extends ComponentType<any>>(
  * Lazy load component with no SSR (client-side only)
  * Useful for components that use browser-only APIs
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyLoadClientOnly<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
-  LoadingComponent?: ComponentType
+  LoadingComponent?: () => JSX.Element | null
 ) {
   return dynamic(importFn, {
-    loading: LoadingComponent || DefaultLoader,
+    loading: LoadingComponent ?? (() => <DefaultLoader />),
     ssr: false,
   })
 }
@@ -67,6 +69,7 @@ export function lazyLoadClientOnly<T extends ComponentType<any>>(
  * Preload a component before it's needed
  * Call this on hover or when user is likely to need the component
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function preloadComponent(importFn: () => Promise<any>) {
   // Webpack magic comment for prefetching
   importFn()
@@ -76,8 +79,10 @@ export function preloadComponent(importFn: () => Promise<any>) {
  * Intersection Observer hook for lazy loading on scroll
  */
 export function useLazyLoadOnScroll(
-  threshold: number = 0.1,
-  rootMargin: string = '50px'
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _threshold: number = 0.1,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _rootMargin: string = '50px'
 ) {
   if (typeof window === 'undefined') {
     return { ref: null, inView: false }

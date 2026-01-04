@@ -8,7 +8,7 @@
 
 import React, { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { Text, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { Scene3DWrapper } from './Scene3DWrapper';
 import { generateSkillsGraph } from '@/lib/3d-utils';
@@ -89,23 +89,20 @@ interface EdgeLineProps {
  */
 function EdgeLine({ start, end, strength }: EdgeLineProps) {
   const points = useMemo(() => {
-    return [new THREE.Vector3(...start), new THREE.Vector3(...end)];
+    return [start, end] as [
+      [number, number, number],
+      [number, number, number]
+    ];
   }, [start, end]);
 
-  const lineGeometry = useMemo(() => {
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    return geometry;
-  }, [points]);
-
   return (
-    <line geometry={lineGeometry}>
-      <lineBasicMaterial
-        color="#6366f1"
-        opacity={strength * 0.5}
-        transparent
-        linewidth={2}
-      />
-    </line>
+    <Line
+      points={points}
+      color="#6366f1"
+      lineWidth={2}
+      opacity={strength * 0.5}
+      transparent
+    />
   );
 }
 

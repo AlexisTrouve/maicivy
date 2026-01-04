@@ -84,7 +84,10 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 		c.Locals("profile_detected", profileDetected)
 
 		// 5. Enregistrer/update visiteur dans PostgreSQL (async)
-		go tm.saveVisitor(sessionID, c, visitCount, profileDetected)
+		// IMPORTANT: Extraire les valeurs du contexte AVANT la goroutine
+		userAgent := c.Get("User-Agent")
+		ip := c.IP()
+		go tm.saveVisitor(sessionID, ip, userAgent, visitCount, profileDetected)
 
 		return c.Next()
 	}
@@ -133,29 +136,55 @@ func (tm *TrackingMiddleware) detectProfile(c *fiber.Ctx) string {
 }
 
 // saveVisitor enregistre ou met à jour le visiteur dans PostgreSQL
-func (tm *TrackingMiddleware) saveVisitor(sessionID string, c *fiber.Ctx, visitCount int64, profile string) {
+func (tm *TrackingMiddleware) saveVisitor(sessionID string, ip string, userAgent string, visitCount int64, profile string) {
 	// Hash IP pour privacy
-	ipHash := hashIP(c.IP())
+	ipHash := hashIP(ip)
+	now := time.Now()
 
-	visitor := models.Visitor{
-		SessionID:       sessionID,
-		IPHash:          ipHash,
-		UserAgent:       c.Get("User-Agent"),
-		VisitCount:      int(visitCount),
-		ProfileDetected: models.ProfileType(profile),
-		LastVisit:       time.Now(),
-	}
+	// Check if visitor exists
+	var existingVisitor models.Visitor
+	result := tm.db.Where("session_id = ?", sessionID).First(&existingVisitor)
 
-	// Upsert (insert ou update si existe)
-	result := tm.db.Where("session_id = ?", sessionID).
-		Assign(visitor).
-		FirstOrCreate(&visitor)
+	if result.Error == gorm.ErrRecordNotFound {
+		// New visitor - create with FirstVisit set
+		newVisitor := models.Visitor{
+			SessionID:       sessionID,
+			IPHash:          ipHash,
+			UserAgent:       userAgent,
+			VisitCount:      int(visitCount),
+			ProfileDetected: models.ProfileType(profile),
+			FirstVisit:      now,
+			LastVisit:       now,
+		}
 
-	if result.Error != nil {
+		if err := tm.db.Create(&newVisitor).Error; err != nil {
+			log.Error().
+				Err(err).
+				Str("session_id", sessionID).
+				Msg("Failed to create visitor in database")
+		}
+	} else if result.Error == nil {
+		// Existing visitor - update visit count and last visit
+		updates := map[string]interface{}{
+			"visit_count":      int(visitCount),
+			"last_visit":       now,
+			"profile_detected": models.ProfileType(profile),
+			"user_agent":       userAgent,
+			"ip_hash":          ipHash,
+		}
+
+		if err := tm.db.Model(&existingVisitor).Updates(updates).Error; err != nil {
+			log.Error().
+				Err(err).
+				Str("session_id", sessionID).
+				Msg("Failed to update visitor in database")
+		}
+	} else {
+		// Database error
 		log.Error().
 			Err(result.Error).
 			Str("session_id", sessionID).
-			Msg("Failed to save visitor to database")
+			Msg("Failed to query visitor from database")
 	}
 }
 

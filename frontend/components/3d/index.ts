@@ -11,3 +11,13 @@ export {
   MinimalBackground,
 } from './ParallaxBackground';
 export { Scene3DWrapper, SimpleScene3D } from './Scene3DWrapper';
+
+// Portfolio Glassmorphism Showcase
+export {
+  PortfolioShowcase,
+  GlassCard3D,
+  GlassEnvironment,
+  AmbientParticles,
+  LightRays,
+  PortfolioNavigation
+} from './portfolio';

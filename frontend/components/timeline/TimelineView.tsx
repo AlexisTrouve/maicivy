@@ -34,6 +34,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedPeriod, setSelectedPeriod] = useState<{
     from: string;
     to: string;

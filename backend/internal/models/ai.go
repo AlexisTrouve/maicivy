@@ -22,12 +22,23 @@ type LetterRequest struct {
 	UserProfile UserProfile `json:"user_profile,omitempty"`
 }
 
+// ExperienceDetail : détail d'une expérience professionnelle pour les prompts
+type ExperienceDetail struct {
+	Title       string   `json:"title"`
+	Company     string   `json:"company"`
+	Duration    string   `json:"duration"`    // ex: "2021-2023" ou "2023-présent"
+	Description string   `json:"description"` // Description complète
+	Highlights  []string `json:"highlights"`  // Points clés / achievements
+}
+
 // UserProfile : profil utilisateur pour personnalisation
 type UserProfile struct {
-	Name        string   `json:"name"`
-	CurrentRole string   `json:"current_role"`
-	Skills      []string `json:"skills"`
-	Experience  int      `json:"experience_years"`
+	Name        string             `json:"name"`
+	CurrentRole string             `json:"current_role"`
+	Skills      []string           `json:"skills"`
+	Experience  int                `json:"experience_years"`
+	Experiences []ExperienceDetail `json:"experiences"` // Expériences détaillées
+	Summary     string             `json:"summary"`     // Résumé professionnel
 }
 
 // LetterResponse : lettre générée

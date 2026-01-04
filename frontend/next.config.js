@@ -1,7 +1,12 @@
+const withNextIntl = require('next-intl/plugin')('./i18n/request.ts');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+
+  // Transpile three.js packages for better compatibility
+  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', 'three-stdlib'],
 
   // API Backend
   async rewrites() {
@@ -37,7 +42,13 @@ const nextConfig = {
   // Experimental features for performance
   experimental: {
     // Optimize package imports for better tree-shaking
-    optimizePackageImports: ['@mantine/core', '@mantine/hooks', 'lucide-react'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-select',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-slot',
+    ],
   },
 
   // Headers de sécurité
@@ -65,6 +76,15 @@ const nextConfig = {
 
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
+    // WSL performance optimization - reduce file watching overhead
+    if (dev) {
+      config.watchOptions = {
+        poll: 3000,
+        aggregateTimeout: 1000,
+        ignored: /node_modules|\.next|coverage|__tests__|__mocks__|playwright-report|test-results/,
+      };
+    }
+
     // Production optimizations
     if (!dev && !isServer) {
       // Enable tree shaking
@@ -79,4 +99,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

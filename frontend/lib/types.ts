@@ -312,6 +312,34 @@ export interface GitHubDisconnectResponse {
   message: string;
 }
 
+// Portfolio 3D Types (Glassmorphism Showcase)
+export interface Portfolio3DProject {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  technologies: string[];
+  githubUrl?: string;
+  demoUrl?: string;
+  featured: boolean;
+  category: string;
+}
+
+export interface CardPosition3D {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: number;
+}
+
+export interface PortfolioShowcaseConfig {
+  layout: 'circular' | 'spiral' | 'grid';
+  radius: number;
+  cardSpacing: number;
+  enablePostProcessing: boolean;
+  enableParticles: boolean;
+  enableLightRays: boolean;
+}
+
 // Timeline Types (Phase 5 - Feature 2)
 export interface TimelineEvent {
   id: string;

@@ -222,6 +222,7 @@ func (s *AIService) generateWithOpenAI(ctx context.Context, prompt string) (stri
 		metrics.Success = false
 		metrics.ErrorMessage = err.Error()
 		s.recordMetrics(metrics)
+		log.Error().Err(err).Str("model", s.config.OpenAIModel).Msg("OpenAI API call failed")
 		return "", metrics, fmt.Errorf("openai API error: %w", err)
 	}
 

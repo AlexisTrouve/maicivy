@@ -14,8 +14,8 @@ type Experience struct {
 	Title       string    `gorm:"type:varchar(255);not null" json:"title" validate:"required,min=3,max=255"`
 	Company     string    `gorm:"type:varchar(255);not null" json:"company" validate:"required,min=2,max=255"`
 	Description string    `gorm:"type:text" json:"description" validate:"max=5000"`
-	StartDate   time.Time `gorm:"not null" json:"start_date" validate:"required"`
-	EndDate     *time.Time `json:"end_date"` // Nullable pour emploi actuel
+	StartDate   time.Time `gorm:"not null" json:"startDate" validate:"required"`
+	EndDate     *time.Time `json:"endDate"` // Nullable pour emploi actuel
 
 	// Catégorisation et filtrage
 	Technologies pq.StringArray `gorm:"type:text[]" json:"technologies"` // PostgreSQL array

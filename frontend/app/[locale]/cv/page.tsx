@@ -1,5 +1,9 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
+
+// Force dynamic rendering to avoid build-time API calls
+export const dynamic = 'force-dynamic';
 import CVThemeSelector from '@/components/cv/CVThemeSelector';
 import ExperienceTimeline from '@/components/cv/ExperienceTimeline';
 import SkillsCloud from '@/components/cv/SkillsCloud';
@@ -37,10 +41,10 @@ export async function generateMetadata({
   const theme = searchParams.theme || 'fullstack';
 
   return {
-    title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexi`,
+    title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexis`,
     description: `Découvrez mon profil ${theme} avec mes expériences, compétences et projets pertinents.`,
     openGraph: {
-      title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexi`,
+      title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexis`,
       description: `Profil ${theme} adapté`,
       type: 'profile',
     },
@@ -51,16 +55,17 @@ export async function generateMetadata({
 export default async function CVPage({ searchParams }: CVPageProps) {
   const theme = searchParams.theme || 'fullstack';
   const cvData = await getCVData(theme);
+  const t = await getTranslations('cv');
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <header className="mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Alexi - CV Dynamique
+          Alexis - {t('title')}
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-          CV adapté au profil : <span className="font-semibold">{theme}</span>
+          {t('adaptedTo')} <span className="font-semibold">{theme}</span>
         </p>
 
         {/* Theme Selector & Export Button */}
@@ -77,7 +82,7 @@ export default async function CVPage({ searchParams }: CVPageProps) {
           <section id="experiences">
             <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
               <span className="text-blue-600">💼</span>
-              Expériences Professionnelles
+              {t('sections.experiences')}
             </h2>
             <ExperienceTimeline experiences={cvData.experiences} />
           </section>
@@ -86,7 +91,7 @@ export default async function CVPage({ searchParams }: CVPageProps) {
           <section id="skills">
             <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
               <span className="text-purple-600">🎯</span>
-              Compétences
+              {t('sections.skills')}
             </h2>
             <SkillsCloud skills={cvData.skills} />
           </section>
@@ -95,7 +100,7 @@ export default async function CVPage({ searchParams }: CVPageProps) {
           <section id="projects">
             <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
               <span className="text-green-600">🚀</span>
-              Projets
+              {t('sections.projects')}
             </h2>
             <ProjectsGrid projects={cvData.projects} />
           </section>

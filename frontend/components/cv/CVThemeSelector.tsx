@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Select,
   SelectContent,
@@ -16,7 +17,8 @@ import { Theme } from '@/lib/types';
 async function fetchThemes(): Promise<Theme[]> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv/themes`);
   if (!res.ok) throw new Error('Failed to fetch themes');
-  return res.json();
+  const data = await res.json();
+  return data.themes || [];
 }
 
 interface CVThemeSelectorProps {
@@ -28,6 +30,7 @@ export default function CVThemeSelector({ currentTheme }: CVThemeSelectorProps) 
   const searchParams = useSearchParams();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations('cv');
 
   useEffect(() => {
     fetchThemes()
@@ -53,7 +56,7 @@ export default function CVThemeSelector({ currentTheme }: CVThemeSelectorProps) 
       <Select value={currentTheme} onValueChange={handleThemeChange}>
         <SelectTrigger className="w-64 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 transition-colors">
           <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
-          <SelectValue placeholder="Sélectionner un thème" />
+          <SelectValue placeholder={t('selectTheme')} />
         </SelectTrigger>
         <SelectContent>
           {themes.map((theme) => (

@@ -1,5 +1,9 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { LetterGenerator } from '@/components/letters/LetterGenerator';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { AccessGate } from '@/components/letters/AccessGate';
 
 export const metadata: Metadata = {
@@ -11,17 +15,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LettersPage() {
+export default async function LettersPage() {
+  const t = await getTranslations('letters');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-            Générateur de Lettres par IA
+            {t('title')}
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Générez instantanément une lettre de motivation professionnelle et sa version humoristique "anti-motivation"
+            {t('subtitle')}
           </p>
         </div>
 

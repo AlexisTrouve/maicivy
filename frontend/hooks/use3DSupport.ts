@@ -40,12 +40,18 @@ export function use3DSupport(): Device3DSupport {
 
       try {
         // Tester WebGL 2.0
-        gl = canvas.getContext('webgl2') || canvas.getContext('experimental-webgl2');
+        gl = canvas.getContext('webgl2') as WebGL2RenderingContext | null;
+        if (!gl) {
+          gl = canvas.getContext('experimental-webgl2') as WebGL2RenderingContext | null;
+        }
         if (gl) {
           webGLVersion = 2;
         } else {
           // Fallback WebGL 1.0
-          gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          gl = canvas.getContext('webgl') as WebGLRenderingContext | null;
+          if (!gl) {
+            gl = canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
+          }
           if (gl) {
             webGLVersion = 1;
           }

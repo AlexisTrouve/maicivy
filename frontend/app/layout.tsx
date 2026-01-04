@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import './globals.css';
 
 const inter = Inter({
@@ -22,15 +20,15 @@ export const metadata: Metadata = {
     default: 'maicivy - CV Interactif Intelligent',
     template: '%s | maicivy',
   },
-  description: 'CV interactif avec génération de lettres de motivation par IA',
-  keywords: ['CV', 'portfolio', 'IA', 'développeur', 'full-stack'],
-  authors: [{ name: 'Alexi' }],
+  description: 'CV interactif avec generation de lettres de motivation par IA',
+  keywords: ['CV', 'portfolio', 'IA', 'developpeur', 'full-stack'],
+  authors: [{ name: 'Alexis' }],
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
     url: 'https://maicivy.com',
     title: 'maicivy - CV Interactif Intelligent',
-    description: 'CV interactif avec génération de lettres de motivation par IA',
+    description: 'CV interactif avec generation de lettres de motivation par IA',
   },
 };
 
@@ -42,11 +40,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        {children}
       </body>
     </html>
   );

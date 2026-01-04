@@ -2,9 +2,15 @@
 
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
+import { useLocale, useTranslations } from 'next-intl';
 import { Briefcase, Calendar } from 'lucide-react';
 import { Experience } from '@/lib/types';
+
+const localeMap = {
+  fr: fr,
+  en: enUS
+};
 
 interface ExperienceTimelineProps {
   experiences: Experience[];
@@ -33,25 +39,72 @@ const itemVariants = {
 };
 
 export default function ExperienceTimeline({ experiences }: ExperienceTimelineProps) {
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM yyyy', { locale: fr });
+  const locale = useLocale();
+  const t = useTranslations('cv.duration');
+  const dateLocale = localeMap[locale as keyof typeof localeMap];
+
+  const formatDate = (dateString: string | undefined | null) => {
+    // Vérifier les cas null/undefined/empty
+    if (!dateString || dateString === '') return t('unknownDate');
+
+    try {
+      // Essayer de parser la date (supporte ISO, SQL, et formats courants)
+      const date = new Date(dateString);
+
+      // Vérifier si la date est valide AVANT d'appeler format
+      if (!date || isNaN(date.getTime()) || date.getTime() === 0) {
+        console.warn('Invalid date:', dateString);
+        return t('invalidDate');
+      }
+
+      return format(date, 'MMM yyyy', { locale: dateLocale });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return t('invalidDate');
+    }
   };
 
-  const calculateDuration = (start: string, end?: string) => {
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : new Date();
-    const months = Math.round(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
-    );
-    const years = Math.floor(months / 12);
-    const remainingMonths = months % 12;
+  const calculateDuration = (start: string | undefined | null, end?: string | null) => {
+    // Vérifier les cas null/undefined/empty pour start
+    if (!start || start === '') {
+      return t('unknownDuration');
+    }
 
-    if (years > 0 && remainingMonths > 0) {
-      return `${years} an${years > 1 ? 's' : ''} ${remainingMonths} mois`;
-    } else if (years > 0) {
-      return `${years} an${years > 1 ? 's' : ''}`;
-    } else {
-      return `${months} mois`;
+    try {
+      const startDate = new Date(start);
+      const endDate = end && end !== '' ? new Date(end) : new Date();
+
+      // Vérifier que les dates sont valides
+      if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return t('unknownDuration');
+      }
+
+      const months = Math.round(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+      );
+
+      // Gérer les durées négatives
+      if (months < 0) {
+        return t('unknownDuration');
+      }
+
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+
+      if (years > 0 && remainingMonths > 0) {
+        const yearText = years === 1 ? t('year') : t('years');
+        const monthText = t('months');
+        return `${years} ${yearText} ${remainingMonths} ${monthText}`;
+      } else if (years > 0) {
+        const yearText = years === 1 ? t('year') : t('years');
+        return `${years} ${yearText}`;
+      } else {
+        const monthText = months === 1 ? t('month') : t('months');
+        return `${months} ${monthText}`;
+      }
+    } catch (error) {
+      console.error('Error calculating duration:', error);
+      return t('unknownDuration');
     }
   };
 
@@ -112,7 +165,7 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
                   <Calendar className="w-4 h-4" />
                   <span>
-                    {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : 'Présent'}
+                    {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : t('present')}
                   </span>
                   <span className="text-gray-400">•</span>
                   <span>{calculateDuration(exp.startDate, exp.endDate)}</span>

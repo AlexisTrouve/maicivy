@@ -18,12 +18,12 @@ type TimelineEvent struct {
 	Title     string     `json:"title"`
 	Subtitle  string     `json:"subtitle"`
 	Content   string     `json:"content"`
-	StartDate time.Time  `json:"start_date"`
-	EndDate   *time.Time `json:"end_date,omitempty"`
+	StartDate time.Time  `json:"startDate"`
+	EndDate   *time.Time `json:"endDate,omitempty"`
 	Tags      []string   `json:"tags"`
 	Category  string     `json:"category"` // "backend", "frontend", "fullstack", etc.
 	Image     string     `json:"image,omitempty"`
-	IsCurrent bool       `json:"is_current"` // Pour emploi actuel ou projet en cours
+	IsCurrent bool       `json:"isCurrent"` // Pour emploi actuel ou projet en cours
 }
 
 // TimelineHandler gère les endpoints timeline
@@ -265,11 +265,11 @@ func (h *TimelineHandler) generateMilestones() []TimelineMilestone {
 
 // TimelineStats contient des statistiques sur la timeline
 type TimelineStats struct {
-	TotalExperiences   int               `json:"total_experiences"`
-	TotalProjects      int               `json:"total_projects"`
-	CategoriesBreakdown map[string]int   `json:"categories_breakdown"`
-	YearsOfExperience  float64           `json:"years_of_experience"`
-	TopTechnologies    []TechnologyCount `json:"top_technologies"`
+	TotalExperiences    int               `json:"totalExperiences"`
+	TotalProjects       int               `json:"totalProjects"`
+	CategoriesBreakdown map[string]int    `json:"categoriesBreakdown"`
+	YearsOfExperience   float64           `json:"yearsOfExperience"`
+	TopTechnologies     []TechnologyCount `json:"topTechnologies"`
 }
 
 // TechnologyCount compte les occurrences d'une technologie

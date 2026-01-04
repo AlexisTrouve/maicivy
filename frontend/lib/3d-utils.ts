@@ -342,3 +342,110 @@ export function lerp(start: number, end: number, t: number): number {
 export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
+
+// ============================================
+// Portfolio 3D Layout Functions
+// ============================================
+
+export interface CardPosition3D {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: number;
+}
+
+/**
+ * Generate circular layout for portfolio cards
+ * Cards arranged in a circle, facing the center
+ */
+export function generateCircularLayout(
+  count: number,
+  radius: number = 4,
+  yOffset: number = 0
+): CardPosition3D[] {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * Math.PI * 2;
+    return {
+      position: [
+        Math.sin(angle) * radius,
+        yOffset,
+        Math.cos(angle) * radius
+      ] as [number, number, number],
+      rotation: [0, angle + Math.PI, 0] as [number, number, number], // Face center
+      scale: 1
+    };
+  });
+}
+
+/**
+ * Generate spiral/helix layout for portfolio cards
+ * Good for many projects
+ */
+export function generateSpiralLayout(
+  count: number,
+  baseRadius: number = 3,
+  heightRange: number = 4,
+  turns: number = 1.5
+): CardPosition3D[] {
+  return Array.from({ length: count }, (_, i) => {
+    const t = i / (count - 1 || 1);
+    const angle = t * Math.PI * 2 * turns;
+    const radius = baseRadius + t * 1.5; // Expanding spiral
+    const y = (t - 0.5) * heightRange;
+
+    return {
+      position: [
+        Math.sin(angle) * radius,
+        y,
+        Math.cos(angle) * radius
+      ] as [number, number, number],
+      rotation: [0, angle + Math.PI, 0] as [number, number, number],
+      scale: 1 - t * 0.2 // Slightly smaller as they go up
+    };
+  });
+}
+
+/**
+ * Generate grid layout for portfolio cards
+ * Simple flat grid arrangement
+ */
+export function generateGridLayout(
+  count: number,
+  columns: number = 3,
+  spacing: number = 2.5
+): CardPosition3D[] {
+  const rows = Math.ceil(count / columns);
+  const offsetX = ((columns - 1) * spacing) / 2;
+  const offsetY = ((rows - 1) * spacing) / 2;
+
+  return Array.from({ length: count }, (_, i) => {
+    const col = i % columns;
+    const row = Math.floor(i / columns);
+
+    return {
+      position: [
+        col * spacing - offsetX,
+        row * -spacing + offsetY,
+        0
+      ] as [number, number, number],
+      rotation: [0, 0, 0] as [number, number, number],
+      scale: 1
+    };
+  });
+}
+
+/**
+ * Smooth camera transition helper
+ * Returns interpolated position/target for smooth camera movement
+ */
+export function smoothCameraTransition(
+  currentPos: THREE.Vector3,
+  targetPos: THREE.Vector3,
+  currentLookAt: THREE.Vector3,
+  targetLookAt: THREE.Vector3,
+  smoothness: number = 0.05
+): { position: THREE.Vector3; lookAt: THREE.Vector3 } {
+  return {
+    position: currentPos.clone().lerp(targetPos, smoothness),
+    lookAt: currentLookAt.clone().lerp(targetLookAt, smoothness)
+  };
+}

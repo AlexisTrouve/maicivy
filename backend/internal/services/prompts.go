@@ -17,15 +17,22 @@ func NewPromptBuilder(profile models.UserProfile) *PromptBuilder {
 
 // BuildMotivationPrompt : prompt pour lettre de motivation professionnelle
 func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo) string {
+	// Construire la section expériences détaillées
+	experiencesSection := pb.buildExperiencesSection()
+
 	template := `Tu es un expert en rédaction de lettres de motivation professionnelles.
 
-CONTEXTE CANDIDAT:
+PROFIL DU CANDIDAT:
 - Nom: %s
+- Résumé: %s
 - Poste actuel: %s
 - Années d'expérience: %d ans
 - Compétences clés: %s
 
-CONTEXTE ENTREPRISE:
+PARCOURS PROFESSIONNEL DÉTAILLÉ:
+%s
+
+ENTREPRISE CIBLE:
 - Nom: %s
 - Secteur: %s
 - Description: %s
@@ -38,26 +45,29 @@ Rédige une lettre de motivation professionnelle, convaincante et authentique po
 INSTRUCTIONS:
 1. Structure classique (introduction, corps, conclusion)
 2. Ton professionnel mais pas rigide
-3. Mets en avant l'alignement entre les compétences du candidat et les besoins probables de l'entreprise
-4. Montre un intérêt sincère pour l'entreprise (culture, projets, technologies)
-5. Sois spécifique et concret (évite les généralités)
-6. Longueur: 250-350 mots
-7. Format: paragraphes bien structurés (pas de bullet points)
+3. UTILISE des exemples CONCRETS du parcours du candidat (projets, achievements, métriques)
+4. Mets en avant l'alignement entre les compétences du candidat et les besoins probables de l'entreprise
+5. Montre un intérêt sincère pour l'entreprise (culture, projets, technologies)
+6. Cite des réalisations spécifiques avec des chiffres quand disponibles
+7. Longueur: 350-450 mots
+8. Format: paragraphes bien structurés (pas de bullet points)
 
 EXEMPLES DE BON STYLE:
-- "Votre engagement dans [technologie/projet spécifique] résonne particulièrement avec mon expérience en..."
-- "Ayant travaillé X années sur [compétence], je serais ravi de contribuer à [objectif entreprise]..."
+- "Chez [entreprise précédente], j'ai [réalisation concrète avec métrique], ce qui m'a préparé à..."
+- "Mon expérience en [technologie] où j'ai [achievement] correspond parfaitement à vos besoins en..."
 
-N'invente PAS de faits sur l'entreprise. Utilise uniquement les informations fournies.
+N'invente PAS de faits sur l'entreprise. Utilise les informations du parcours du candidat.
 
-Génère la lettre maintenant (sans formule de politesse finale "Cordialement", etc.) :`
+Génère la lettre maintenant:`
 
 	return fmt.Sprintf(
 		template,
 		pb.userProfile.Name,
+		pb.userProfile.Summary,
 		pb.userProfile.CurrentRole,
 		pb.userProfile.Experience,
 		strings.Join(pb.userProfile.Skills, ", "),
+		experiencesSection,
 		company.Name,
 		company.Industry,
 		company.Description,
@@ -67,46 +77,72 @@ Génère la lettre maintenant (sans formule de politesse finale "Cordialement", 
 	)
 }
 
+// buildExperiencesSection construit la section des expériences pour le prompt
+func (pb *PromptBuilder) buildExperiencesSection() string {
+	if len(pb.userProfile.Experiences) == 0 {
+		return "Aucune expérience détaillée disponible."
+	}
+
+	var sb strings.Builder
+	for i, exp := range pb.userProfile.Experiences {
+		sb.WriteString(fmt.Sprintf("%d. %s @ %s (%s)\n", i+1, exp.Title, exp.Company, exp.Duration))
+		if len(exp.Highlights) > 0 {
+			for _, h := range exp.Highlights {
+				sb.WriteString(fmt.Sprintf("   • %s\n", h))
+			}
+		}
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
+
 // BuildAntiMotivationPrompt : prompt pour lettre d'anti-motivation humoristique
 func (pb *PromptBuilder) BuildAntiMotivationPrompt(company models.CompanyInfo) string {
+	// Construire la section expériences pour l'humour
+	experiencesSection := pb.buildExperiencesSection()
+
 	template := `Tu es un humoriste spécialisé en rédaction de lettres d'anti-motivation créatives et absurdes.
 
-CONTEXTE CANDIDAT:
+PROFIL DU CANDIDAT (à détourner avec humour):
 - Nom: %s
 - Poste actuel: %s
 - Années d'expérience: %d ans
 - Compétences clés: %s
 
-CONTEXTE ENTREPRISE:
+VRAI PARCOURS (à parodier):
+%s
+
+ENTREPRISE CIBLE:
 - Nom: %s
 - Secteur: %s
 - Description: %s
 
 TÂCHE:
-Rédige une lettre d'ANTI-MOTIVATION humoristique expliquant pourquoi le candidat ne devrait SURTOUT PAS être embauché chez %s.
+Rédige une lettre d'ANTI-MOTIVATION humoristique expliquant pourquoi %s ne devrait SURTOUT PAS être embauché chez %s.
 
 STYLE ET TON:
 - Humour absurde et auto-dérision
 - Deuxième degré évident (personne ne doit prendre ça au sérieux)
+- DÉTOURNE les vraies compétences/expériences du candidat de manière comique
 - Références pop culture, jeux de mots, exagérations comiques
 - Ton léger, jamais méchant ou offensant envers l'entreprise
-- Créatif et original
 
 INSTRUCTIONS:
 1. Structure libre (sois créatif !)
-2. Liste de "défauts" hilarants et absurdes
-3. Fausses compétences inutiles ("Expert en procrastination", "Champion de café froid", etc.)
-4. Anecdotes inventées ridicules
-5. Conclusion ironique inversée
-6. Longueur: 200-300 mots
-7. Évite l'humour vulgaire ou offensant
+2. PARODIE les vraies expériences du candidat (ex: "J'ai réduit la latence de 70%%... en supprimant les features")
+3. Transforme les achievements en "anti-achievements" hilarants
+4. Fausses compétences inutiles basées sur les vraies
+5. Anecdotes absurdes liées au vrai parcours
+6. Conclusion ironique inversée
+7. Longueur: 300-400 mots
+8. Évite l'humour vulgaire ou offensant
 
-EXEMPLES DE STYLE:
-- "Mes 10 ans d'expérience en débogage de code m'ont surtout appris à créer des bugs encore plus créatifs..."
-- "Je maîtrise l'art ancestral de transformer un projet de 2 semaines en 6 mois..."
-- "Mon CV ressemble à un README.md mal formaté, ce qui est ironique vu que je suis développeur..."
+EXEMPLES DE STYLE BASÉS SUR LE VRAI PARCOURS:
+- "Mon expertise en 'high-performance REST APIs' signifie que je sais faire crasher 100K requêtes/jour avec style..."
+- "J'ai 'mentoré 4 développeurs juniors'... dans l'art subtil de la procrastination professionnelle..."
+- "Mon '99.9%% uptime SLA' cache les 0.1%% où j'ai paniqué devant mon écran..."
 
-RAPPEL: C'est de l'humour ! Le but est de faire sourire tout en montrant créativité et auto-dérision.
+RAPPEL: C'est de l'humour ! Utilise le VRAI parcours pour créer des parodies personnalisées.
 
 Génère la lettre maintenant:`
 
@@ -116,9 +152,11 @@ Génère la lettre maintenant:`
 		pb.userProfile.CurrentRole,
 		pb.userProfile.Experience,
 		strings.Join(pb.userProfile.Skills, ", "),
+		experiencesSection,
 		company.Name,
 		company.Industry,
 		company.Description,
+		pb.userProfile.Name,
 		company.Name,
 	)
 }

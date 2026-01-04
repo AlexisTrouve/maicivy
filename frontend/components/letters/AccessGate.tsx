@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Lock, Eye, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useVisitCount } from '@/hooks/useVisitCount';
 
 interface AccessGateProps {
@@ -9,6 +10,7 @@ interface AccessGateProps {
 }
 
 export function AccessGate({ children }: AccessGateProps) {
+  const t = useTranslations('letters.accessGate');
   const { status, loading } = useVisitCount();
 
   if (loading) {
@@ -44,23 +46,22 @@ export function AccessGate({ children }: AccessGateProps) {
 
         {/* Title */}
         <h2 className="text-2xl font-bold text-center mb-4 text-slate-900 dark:text-white">
-          Fonctionnalité Premium
+          {t('title')}
         </h2>
 
         {/* Description */}
         <p className="text-center text-slate-600 dark:text-slate-300 mb-6">
-          Le générateur de lettres par IA est accessible à partir de la{' '}
-          <span className="font-bold text-blue-600 dark:text-blue-400">3ème visite</span>.
+          {t('description')}
         </p>
 
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Votre progression
+              {t('progress')}
             </span>
             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-              {status?.visitCount || 0} / 3 visites
+              {t('visits', { count: status?.visitCount || 0 })}
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
@@ -79,10 +80,10 @@ export function AccessGate({ children }: AccessGateProps) {
             <Eye className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Encore {status?.remainingVisits || 3} visite{status?.remainingVisits !== 1 ? 's' : ''} avant déblocage
+                {t('remaining', { count: status?.remainingVisits || 3 })}
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                Revenez explorer mon CV pour débloquer cette fonctionnalité !
+                {t('encourage')}
               </p>
             </div>
           </div>
@@ -91,13 +92,13 @@ export function AccessGate({ children }: AccessGateProps) {
         {/* Features preview */}
         <div className="space-y-3">
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Vous débloquerez :
+            {t('unlockTitle')}
           </p>
           {[
-            'Génération de lettre de motivation personnalisée',
-            "Lettre d'anti-motivation humoristique unique",
-            'Export PDF professionnel des deux lettres',
-            "Analyse IA de l'entreprise cible",
+            t('features.motivation'),
+            t('features.anti'),
+            t('features.pdf'),
+            t('features.analysis'),
           ].map((feature, index) => (
             <motion.div
               key={index}
@@ -118,7 +119,7 @@ export function AccessGate({ children }: AccessGateProps) {
             href="/cv"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            Explorer mon CV
+            {t('exploreCV')}
           </a>
         </div>
       </div>

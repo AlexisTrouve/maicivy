@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -75,11 +77,36 @@ func (pb *ProfileBuilder) BuildProfile(ctx context.Context) models.UserProfile {
 		}
 	}
 
+	// 4. Récupérer les expériences détaillées (max 5 plus récentes)
+	var experiences []models.Experience
+	pb.db.Order("start_date DESC").Limit(5).Find(&experiences)
+
+	experienceDetails := make([]models.ExperienceDetail, 0, len(experiences))
+	for _, exp := range experiences {
+		duration := formatDuration(exp.StartDate, exp.EndDate)
+
+		// Extraire les highlights de la description (phrases séparées par des points)
+		highlights := extractHighlights(exp.Description)
+
+		experienceDetails = append(experienceDetails, models.ExperienceDetail{
+			Title:       exp.Title,
+			Company:     exp.Company,
+			Duration:    duration,
+			Description: exp.Description,
+			Highlights:  highlights,
+		})
+	}
+
+	// 5. Construire un résumé professionnel
+	summary := pb.buildSummary(currentRole, yearsOfExperience, skillNames)
+
 	profile := models.UserProfile{
-		Name:        "Alexi",
+		Name:        "Alexis Trouvé",
 		CurrentRole: currentRole,
 		Skills:      skillNames,
 		Experience:  yearsOfExperience,
+		Experiences: experienceDetails,
+		Summary:     summary,
 	}
 
 	log.Info().
@@ -87,7 +114,59 @@ func (pb *ProfileBuilder) BuildProfile(ctx context.Context) models.UserProfile {
 		Str("role", profile.CurrentRole).
 		Int("skills_count", len(profile.Skills)).
 		Int("experience_years", profile.Experience).
+		Int("experiences_count", len(profile.Experiences)).
 		Msg("User profile built from database")
 
 	return profile
+}
+
+// formatDuration formate la durée d'une expérience
+func formatDuration(start time.Time, end *time.Time) string {
+	startYear := start.Year()
+	if end == nil {
+		return fmt.Sprintf("%d - présent", startYear)
+	}
+	return fmt.Sprintf("%d - %d", startYear, end.Year())
+}
+
+// extractHighlights extrait les points clés d'une description
+func extractHighlights(description string) []string {
+	if description == "" {
+		return nil
+	}
+
+	// Séparer par les phrases (points suivis d'espace ou fin de chaîne)
+	sentences := strings.Split(description, ". ")
+	highlights := make([]string, 0)
+
+	for _, sentence := range sentences {
+		sentence = strings.TrimSpace(sentence)
+		if len(sentence) > 20 { // Ignorer les fragments trop courts
+			// Nettoyer le point final si présent
+			sentence = strings.TrimSuffix(sentence, ".")
+			highlights = append(highlights, sentence)
+		}
+	}
+
+	// Limiter à 3 highlights par expérience
+	if len(highlights) > 3 {
+		highlights = highlights[:3]
+	}
+
+	return highlights
+}
+
+// buildSummary construit un résumé professionnel
+func (pb *ProfileBuilder) buildSummary(role string, years int, skills []string) string {
+	topSkills := skills
+	if len(topSkills) > 5 {
+		topSkills = topSkills[:5]
+	}
+
+	return fmt.Sprintf(
+		"%s avec %d ans d'expérience, spécialisé en %s",
+		role,
+		years,
+		strings.Join(topSkills, ", "),
+	)
 }

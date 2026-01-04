@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface LettersStat {
   date: string;
@@ -11,6 +12,8 @@ interface LettersStat {
 type Period = 'day' | 'week' | 'month';
 
 export default function LettersGenerated() {
+  const t = useTranslations('analytics.widgets.letters');
+  const tPeriods = useTranslations('analytics.periods');
   const [stats, setStats] = useState<LettersStat[]>([]);
   const [period, setPeriod] = useState<Period>('week');
   const [totalLetters, setTotalLetters] = useState(0);
@@ -79,7 +82,7 @@ export default function LettersGenerated() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Lettres IA
+          {t('title')}
         </h2>
 
         {/* Period selector */}
@@ -94,7 +97,7 @@ export default function LettersGenerated() {
                   : 'hover:bg-background'
               }`}
             >
-              {p === 'day' ? 'Jour' : p === 'week' ? 'Semaine' : 'Mois'}
+              {p === 'day' ? tPeriods('day') : p === 'week' ? tPeriods('week') : tPeriods('month')}
             </button>
           ))}
         </div>
@@ -103,7 +106,7 @@ export default function LettersGenerated() {
       {/* Total counter */}
       <div className="mb-6 text-center">
         <div className="text-3xl font-bold text-primary">{totalLetters}</div>
-        <div className="text-xs text-muted-foreground">lettres générées au total</div>
+        <div className="text-xs text-muted-foreground">{t('total')}</div>
       </div>
 
       {/* Simple line chart using SVG */}
@@ -162,7 +165,7 @@ export default function LettersGenerated() {
           </svg>
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            Aucune donnée disponible
+            {t('noData')}
           </div>
         )}
       </div>
@@ -179,7 +182,7 @@ export default function LettersGenerated() {
       )}
 
       <div className="text-xs text-muted-foreground text-center mt-4">
-        Évolution sur {period === 'day' ? '24h' : period === 'week' ? '7 jours' : '30 jours'}
+        {t('evolution', { period: period === 'day' ? '24h' : period === 'week' ? '7 jours' : '30 jours' })}
       </div>
     </div>
   );

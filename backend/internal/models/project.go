@@ -13,22 +13,22 @@ type Project struct {
 	Description string `gorm:"type:text" json:"description" validate:"max=5000"`
 
 	// URLs
-	GithubURL string `gorm:"type:varchar(500)" json:"github_url" validate:"omitempty,url"`
-	DemoURL   string `gorm:"type:varchar(500)" json:"demo_url" validate:"omitempty,url"`
-	ImageURL  string `gorm:"type:varchar(500)" json:"image_url" validate:"omitempty,url"`
+	GithubURL string `gorm:"type:varchar(500)" json:"githubUrl" validate:"omitempty,url"`
+	DemoURL   string `gorm:"type:varchar(500)" json:"demoUrl" validate:"omitempty,url"`
+	ImageURL  string `gorm:"type:varchar(500)" json:"imageUrl" validate:"omitempty,url"`
 
 	// Catégorisation
 	Technologies pq.StringArray `gorm:"type:text[]" json:"technologies"`
 	Category     string         `gorm:"type:varchar(100);index" json:"category" validate:"required"`
 
 	// Métadonnées GitHub (synced automatiquement)
-	GithubStars    int    `gorm:"default:0" json:"github_stars"`
-	GithubForks    int    `gorm:"default:0" json:"github_forks"`
-	GithubLanguage string `gorm:"type:varchar(50)" json:"github_language"`
+	GithubStars    int    `gorm:"default:0" json:"githubStars"`
+	GithubForks    int    `gorm:"default:0" json:"githubForks"`
+	GithubLanguage string `gorm:"type:varchar(50)" json:"githubLanguage"`
 
 	// Flags
 	Featured   bool `gorm:"default:false" json:"featured"`
-	InProgress bool `gorm:"default:false" json:"in_progress"`
+	InProgress bool `gorm:"default:false" json:"inProgress"`
 }
 
 // TableName override le nom de table par défaut

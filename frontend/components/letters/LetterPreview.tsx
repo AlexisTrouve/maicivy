@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, RotateCcw, Copy, Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { lettersApi } from '@/lib/api';
 import type { GeneratedLetters } from '@/lib/types';
 
@@ -12,6 +13,7 @@ interface LetterPreviewProps {
 }
 
 export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
+  const t = useTranslations('letters.preview');
   const [downloadingMotivation, setDownloadingMotivation] = useState(false);
   const [downloadingAnti, setDownloadingAnti] = useState(false);
   const [downloadingBoth, setDownloadingBoth] = useState(false);
@@ -41,7 +43,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('PDF download failed:', error);
-      alert('Erreur lors du téléchargement du PDF');
+      alert(t('downloadError'));
     } finally {
       setLoading(false);
     }
@@ -73,11 +75,11 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-              Lettres pour {letters.companyName}
+              {t('title', { company: letters.companyName })}
             </h2>
             {letters.companyInfo?.industry && (
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Secteur: {letters.companyInfo.industry}
+                {t('sector')} {letters.companyInfo.industry}
               </p>
             )}
           </div>
@@ -93,7 +95,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
               ) : (
                 <Download className="w-4 h-4" />
               )}
-              PDF Dual
+              {t('downloadDual')}
             </button>
 
             <button
@@ -101,7 +103,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
               className="inline-flex items-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-all text-sm"
             >
               <RotateCcw className="w-4 h-4" />
-              Nouvelle génération
+              {t('newGeneration')}
             </button>
           </div>
         </div>
@@ -121,13 +123,13 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <span className="text-2xl">✅</span>
-                Lettre de Motivation
+                {t('motivation')}
               </h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => copyToClipboard(letters.motivationLetter, 'motivation')}
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  title="Copier le texte"
+                  title={t('copyText')}
                 >
                   {copiedMotivation ? (
                     <Check className="w-4 h-4 text-white" />
@@ -139,7 +141,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
                   onClick={() => downloadPDF('motivation')}
                   disabled={downloadingMotivation}
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
-                  title="Télécharger PDF"
+                  title={t('downloadPDF')}
                 >
                   {downloadingMotivation ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -173,13 +175,13 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <span className="text-2xl">❌</span>
-                Lettre d'Anti-Motivation
+                {t('antiMotivation')}
               </h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => copyToClipboard(letters.antiMotivationLetter, 'anti')}
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  title="Copier le texte"
+                  title={t('copyText')}
                 >
                   {copiedAnti ? (
                     <Check className="w-4 h-4 text-white" />
@@ -191,7 +193,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
                   onClick={() => downloadPDF('anti')}
                   disabled={downloadingAnti}
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
-                  title="Télécharger PDF"
+                  title={t('downloadPDF')}
                 >
                   {downloadingAnti ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -217,9 +219,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
       {/* Info Footer */}
       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
         <p className="text-sm text-amber-800 dark:text-amber-200">
-          <strong>Note:</strong> La lettre d'anti-motivation est générée à titre humoristique et créatif.
-          Elle ne doit PAS être envoyée à l'entreprise. Utilisez uniquement la lettre de motivation professionnelle
-          pour vos candidatures réelles.
+          {t('warning')}
         </p>
       </div>
     </motion.div>

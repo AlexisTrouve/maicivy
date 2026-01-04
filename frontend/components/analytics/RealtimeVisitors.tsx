@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface RealtimeData {
   currentVisitors: number;
@@ -9,9 +10,12 @@ interface RealtimeData {
 }
 
 export default function RealtimeVisitors() {
+  const t = useTranslations('analytics.widgets.visitors');
   const [visitors, setVisitors] = useState<number>(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [prevVisitors, setPrevVisitors] = useState<number>(0);
   const [isConnected, setIsConnected] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
@@ -108,7 +112,7 @@ export default function RealtimeVisitors() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Visiteurs Actuels
+          {t('title')}
         </h2>
         <div className="flex items-center gap-2">
           <div
@@ -117,7 +121,7 @@ export default function RealtimeVisitors() {
             } animate-pulse`}
           />
           <span className="text-xs text-muted-foreground">
-            {isConnected ? 'En ligne' : 'Déconnecté'}
+            {isConnected ? t('online') : t('offline')}
           </span>
         </div>
       </div>
@@ -128,13 +132,13 @@ export default function RealtimeVisitors() {
             {displayCount}
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            {visitors === 0 || visitors === 1 ? 'personne' : 'personnes'} en ce moment
+            {visitors === 0 || visitors === 1 ? t('person') : t('people')} {t('rightNow')}
           </p>
         </div>
       </div>
 
       <div className="text-xs text-muted-foreground text-center">
-        Mise à jour en temps réel via WebSocket
+        {t('realtime')}
       </div>
     </div>
   );

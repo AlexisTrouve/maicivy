@@ -216,7 +216,7 @@ export const useScrollSnap = (snapThreshold = 100) => {
 
         // Snap vers l'élément le plus proche
         if (closestElement) {
-          closestElement.scrollIntoView({
+          (closestElement as Element).scrollIntoView({
             behavior: 'smooth',
             block: 'start',
           });

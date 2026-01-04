@@ -1,8 +1,13 @@
-import Link from 'next/link';
+'use client';
+
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { Github, Linkedin, Mail } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const t = useTranslations('footer');
+  const tNav = useTranslations('nav');
 
   return (
     <footer className="border-t bg-muted/50">
@@ -11,65 +16,51 @@ export function Footer() {
           <div>
             <h3 className="font-heading text-lg font-semibold">maicivy</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              CV interactif intelligent avec génération de lettres par IA
+              {t('description')}
             </p>
           </div>
 
           <div>
-            <h3 className="font-heading text-lg font-semibold">Navigation</h3>
+            <h3 className="font-heading text-lg font-semibold">{t('navigation')}</h3>
             <ul className="mt-2 space-y-2 text-sm">
               <li>
                 <Link href="/cv" className="text-muted-foreground hover:text-foreground">
-                  CV Dynamique
+                  {tNav('cv')}
                 </Link>
               </li>
               <li>
                 <Link href="/letters" className="text-muted-foreground hover:text-foreground">
-                  Générateur de Lettres
+                  {tNav('letters')}
                 </Link>
               </li>
               <li>
                 <Link href="/analytics" className="text-muted-foreground hover:text-foreground">
-                  Analytics
+                  {tNav('analytics')}
                 </Link>
               </li>
             </ul>
           </div>
 
+          {/* TODO: Add real contact links
           <div>
-            <h3 className="font-heading text-lg font-semibold">Contact</h3>
+            <h3 className="font-heading text-lg font-semibold">{t('contact')}</h3>
             <div className="mt-2 flex gap-4">
-              <a
-                href="https://github.com/yourusername"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <a href="https://github.com/USERNAME" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
                 <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
               </a>
-              <a
-                href="https://linkedin.com/in/yourusername"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <a href="https://linkedin.com/in/USERNAME" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
                 <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
               </a>
-              <a
-                href="mailto:contact@example.com"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <a href="mailto:EMAIL" className="text-muted-foreground hover:text-foreground">
                 <Mail className="h-5 w-5" />
-                <span className="sr-only">Email</span>
               </a>
             </div>
           </div>
+          */}
         </div>
 
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} maicivy. Tous droits réservés.</p>
+          <p>&copy; {currentYear} maicivy. {t('rights')}</p>
         </div>
       </div>
     </footer>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Flame } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface HeatmapPoint {
   x: number;
@@ -16,6 +17,7 @@ interface HeatmapData {
 }
 
 export default function Heatmap() {
+  const t = useTranslations('analytics.widgets.heatmap');
   const [heatmapData, setHeatmapData] = useState<HeatmapData>({
     points: [],
     maxIntensity: 0,
@@ -101,10 +103,10 @@ export default function Heatmap() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Flame className="h-5 w-5" />
-          Heatmap des Interactions
+          {t('title')}
         </h2>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Faible</span>
+          <span>{t('low')}</span>
           <div className="flex gap-1">
             <div
               className="w-6 h-4 rounded"
@@ -123,7 +125,7 @@ export default function Heatmap() {
               style={{ backgroundColor: 'rgba(239, 68, 68, 0.8)' }}
             />
           </div>
-          <span>Fort</span>
+          <span>{t('high')}</span>
         </div>
       </div>
 
@@ -156,7 +158,7 @@ export default function Heatmap() {
 
         {heatmapData.points.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-            Aucune donnée d'interaction disponible
+            {t('noData')}
           </div>
         )}
 
@@ -172,14 +174,14 @@ export default function Heatmap() {
           >
             <div className="font-medium">{formatElementName(hoveredPoint.element)}</div>
             <div className="text-xs text-muted-foreground">
-              {hoveredPoint.intensity} interactions
+              {t('interactions', { count: hoveredPoint.intensity })}
             </div>
           </div>
         )}
       </div>
 
       <div className="text-xs text-muted-foreground text-center mt-4">
-        Basé sur {heatmapData.points.length} points d'interaction
+        {t('based', { count: heatmapData.points.length })}
       </div>
     </div>
   );

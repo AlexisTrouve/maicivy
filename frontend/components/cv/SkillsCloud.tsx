@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Skill } from '@/lib/types';
 
 interface SkillsCloudProps {
@@ -19,6 +20,7 @@ const categoryColors: Record<string, string> = {
 
 export default function SkillsCloud({ skills }: SkillsCloudProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const t = useTranslations('cv.skills');
 
   // Calculate font size based on level and score
   const getFontSize = (skill: Skill) => {
@@ -48,7 +50,7 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
               : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
           }`}
         >
-          Toutes
+          {t('all')}
         </button>
         {categories.map((category) => (
           <button

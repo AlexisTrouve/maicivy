@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { ExternalLink, Github, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Project } from '@/lib/types';
@@ -41,6 +42,8 @@ const languageColors: Record<string, string> = {
 };
 
 export default function ProjectsGrid({ projects }: ProjectsGridProps) {
+  const t = useTranslations('cv.projects');
+
   return (
     <motion.div
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -64,7 +67,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
           {project.featured && (
             <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 mb-2 font-semibold text-sm">
               <Star className="w-4 h-4 fill-current" />
-              <span>Projet Vedette</span>
+              <span>{t('featured')}</span>
             </div>
           )}
 
@@ -129,7 +132,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                 className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <Github className="w-4 h-4" />
-                <span className="text-sm font-medium">Code</span>
+                <span className="text-sm font-medium">{t('code')}</span>
               </Link>
             )}
             {project.demoUrl && (
@@ -140,7 +143,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                 className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span className="text-sm font-medium">Demo</span>
+                <span className="text-sm font-medium">{t('demo')}</span>
               </Link>
             )}
           </div>
@@ -149,7 +152,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
           {project.score && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Pertinence</span>
+                <span className="text-gray-600 dark:text-gray-400">{t('relevance')}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div

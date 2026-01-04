@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { lettersApi } from '@/lib/api';
 import { LetterPreview } from './LetterPreview';
 import type { GeneratedLetters } from '@/lib/types';
@@ -21,6 +22,9 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export function LetterGenerator() {
+  const t = useTranslations('letters');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _tValidation = useTranslations('validation');
   const [letters, setLetters] = useState<GeneratedLetters | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +72,16 @@ export function LetterGenerator() {
 
     switch (status) {
       case 403:
-        setError('Accès refusé. Vous devez effectuer 3 visites pour débloquer cette fonctionnalité.');
+        setError(t('errors.accessDenied'));
         break;
       case 429:
-        setError('Limite atteinte. Réessayez dans quelques minutes.');
+        setError(t('errors.rateLimit'));
         break;
       case 500:
-        setError('Erreur serveur. Nos IA prennent une pause café. Réessayez dans quelques instants.');
+        setError(t('errors.serverError'));
         break;
       default:
-        setError(message || 'Une erreur est survenue lors de la génération.');
+        setError(message || t('errors.generic'));
     }
   };
 
@@ -120,13 +124,13 @@ export function LetterGenerator() {
                   htmlFor="companyName"
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                 >
-                  Nom de l'entreprise
+                  {t('form.companyName')}
                 </label>
                 <input
                   {...register('companyName')}
                   id="companyName"
                   type="text"
-                  placeholder="Ex: Google, Microsoft, Startup Innovante..."
+                  placeholder={t('form.placeholder')}
                   disabled={isGenerating}
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -146,12 +150,12 @@ export function LetterGenerator() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Génération en cours...
+                    {t('form.generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5" />
-                    Générer les lettres
+                    {t('form.submit')}
                   </>
                 )}
               </button>
@@ -161,10 +165,10 @@ export function LetterGenerator() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-600 dark:text-slate-400">
-                      {progress < 30 && "Analyse de l'entreprise..."}
-                      {progress >= 30 && progress < 60 && 'Rédaction de la lettre de motivation...'}
-                      {progress >= 60 && progress < 90 && "Création de l'anti-motivation..."}
-                      {progress >= 90 && 'Finalisation...'}
+                      {progress < 30 && t('progress.analyzing')}
+                      {progress >= 30 && progress < 60 && t('progress.writingMotivation')}
+                      {progress >= 60 && progress < 90 && t('progress.writingAnti')}
+                      {progress >= 90 && t('progress.finalizing')}
                     </span>
                     <span className="font-medium text-blue-600 dark:text-blue-400">
                       {progress}%
@@ -194,8 +198,7 @@ export function LetterGenerator() {
               {/* Info */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <p className="text-xs text-blue-800 dark:text-blue-200">
-                  L'IA va générer deux lettres : une motivation professionnelle et une anti-motivation humoristique.
-                  La génération prend environ 30-60 secondes.
+                  {t('form.info')}
                 </p>
               </div>
             </form>
