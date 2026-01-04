@@ -1,0 +1,144 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests before deployment'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  GO_VERSION: '1.21'
+  NODE_VERSION: '20'
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: maicivy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: maicivy_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: |
+          go test ./... -v -race -coverprofile=coverage.out
+          go tool cover -func=coverage.out
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run linter
+        working-directory: frontend
+        run: npm run lint || true
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm test -- --passWithNoTests --coverage
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  deploy:
+    name: Deploy to VPS
+    needs: [test-backend, test-frontend]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd /opt/maicivy
+
+            echo "=== Pulling latest changes ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== Building and starting containers ==="
+            docker-compose -f docker-compose.yml up -d --build
+
+            echo "=== Cleaning up ==="
+            docker system prune -f
+
+            echo "=== Health check ==="
+            sleep 15
+            curl -sf http://localhost:8080/health || exit 1
+
+            echo "=== Deployment successful! ==="
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Deployment failed! Check the logs above."
+          # Add notification here (Discord, Slack, email, etc.)
