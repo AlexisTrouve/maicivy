@@ -77,9 +77,9 @@ build/
 secrets/
 credentials/
 
-# Database dumps
-*.sql
+# Database dumps (but allow migrations)
 *.dump
+!backend/migrations/*.sql
 
 # Redis dumps
 dump.rdb
