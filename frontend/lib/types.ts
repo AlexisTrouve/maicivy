@@ -22,6 +22,13 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// Link type for detail modals
+export interface DetailLink {
+  type: 'github' | 'demo' | 'website' | 'linkedin' | 'other';
+  url: string;
+  label?: string;
+}
+
 // CV Types
 export interface Experience {
   id: string;
@@ -33,12 +40,24 @@ export interface Experience {
   technologies: string[];
   tags: string[];
   score?: number;
+  category?: string;
+  featured?: boolean;
+  // Extended fields for detail modal
+  catchphrase?: string;
+  functionalDescription?: string;
+  technicalDescription?: string;
+  images?: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  links?: any[]; // Backend format: {name, url, icon}, mapped to DetailLink in components
 }
+
+// Skill levels matching backend SkillLevel type
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 
 export interface Skill {
   id: string;
   name: string;
-  level: number;
+  level: SkillLevel;
   category: string;
   yearsExperience: number;
   score?: number;
@@ -55,6 +74,15 @@ export interface Project {
   language?: string;
   featured: boolean;
   score?: number;
+  // Extended fields for detail modal
+  category?: string;
+  catchphrase?: string;
+  inProgress?: boolean;
+  functionalDescription?: string;
+  technicalDescription?: string;
+  images?: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  links?: any[]; // Backend format: {name, url, icon}, mapped to DetailLink in components
 }
 
 export interface CVData {
@@ -97,7 +125,7 @@ export interface LetterHistoryItem {
 }
 
 export interface GenerateLetterRequest {
-  companyName: string;
+  company_name: string;
 }
 
 export interface GenerateLetterResponse extends GeneratedLetters {}

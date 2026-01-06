@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useLocale, useTranslations } from 'next-intl';
-import { Briefcase, Calendar } from 'lucide-react';
-import { Experience } from '@/lib/types';
+import { Briefcase, Calendar, ArrowRight } from 'lucide-react';
+import { Experience, DetailLink } from '@/lib/types';
+import DetailModal, { DetailModalData } from './DetailModal';
 
 const localeMap = {
   fr: fr,
@@ -41,7 +43,11 @@ const itemVariants = {
 export default function ExperienceTimeline({ experiences }: ExperienceTimelineProps) {
   const locale = useLocale();
   const t = useTranslations('cv.duration');
+  const tExp = useTranslations('cv.experience');
   const dateLocale = localeMap[locale as keyof typeof localeMap];
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedExperience, setSelectedExperience] = useState<DetailModalData | null>(null);
 
   const formatDate = (dateString: string | undefined | null) => {
     // Vérifier les cas null/undefined/empty
@@ -108,6 +114,55 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
     }
   };
 
+  // Map backend link icon to frontend link type
+  const mapIconToType = (icon: string): DetailLink['type'] => {
+    const iconMap: Record<string, DetailLink['type']> = {
+      github: 'github',
+      globe: 'website',
+      linkedin: 'linkedin',
+      demo: 'demo',
+      link: 'other',
+      npm: 'other',
+      book: 'other',
+      download: 'other',
+    };
+    return iconMap[icon?.toLowerCase()] || 'other';
+  };
+
+  const openExperienceModal = (exp: Experience) => {
+    try {
+      // Map backend link format to frontend format
+      let mappedLinks: DetailLink[] | undefined;
+      if (exp.links && Array.isArray(exp.links)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mappedLinks = exp.links.map((link: any) => ({
+          type: mapIconToType(link.icon || link.type),
+          url: link.url,
+          label: link.name || link.label,
+        })).filter((link: DetailLink) => link.url);
+      }
+
+      setSelectedExperience({
+        title: exp.title,
+        subtitle: exp.company,
+        period: `${formatDate(exp.startDate)} - ${exp.endDate ? formatDate(exp.endDate) : t('present')}`,
+        functionalDescription: exp.functionalDescription || exp.description || '',
+        technicalDescription: exp.technicalDescription || '',
+        skills: exp.technologies || [],
+        images: exp.images || [],
+        links: mappedLinks,
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error opening experience modal:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedExperience(null);
+  };
+
   return (
     <motion.div
       className="relative"
@@ -139,9 +194,19 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
               }`}
             >
               <motion.div
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all cursor-pointer group"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
+                onClick={() => openExperienceModal(exp)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openExperienceModal(exp);
+                  }
+                }}
+                aria-label={`${tExp('viewDetails')}: ${exp.title} - ${exp.company}`}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -171,14 +236,14 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
                   <span>{calculateDuration(exp.startDate, exp.endDate)}</span>
                 </div>
 
-                {/* Description */}
-                <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                {/* Short Description / Catchphrase */}
+                <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed line-clamp-2">
                   {exp.description}
                 </p>
 
-                {/* Technologies */}
-                <div className="flex flex-wrap gap-2">
-                  {exp.technologies.map((tech) => (
+                {/* Technologies - show only first 4 */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {exp.technologies.slice(0, 4).map((tech) => (
                     <span
                       key={tech}
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium"
@@ -186,12 +251,33 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
                       {tech}
                     </span>
                   ))}
+                  {exp.technologies.length > 4 && (
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full text-sm font-medium">
+                      +{exp.technologies.length - 4}
+                    </span>
+                  )}
+                </div>
+
+                {/* View Details Button */}
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                  <span>{tExp('viewDetails')}</span>
+                  <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </motion.div>
             </div>
           </motion.div>
         ))}
       </div>
+
+      {/* Detail Modal */}
+      {selectedExperience && (
+        <DetailModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          type="experience"
+          data={selectedExperience}
+        />
+      )}
     </motion.div>
   );
 }

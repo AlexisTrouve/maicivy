@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Build arguments
 ARG BUILD_DATE
@@ -19,6 +19,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Update go.sum with any new dependencies
+RUN go mod tidy
+
 # Build binary
 RUN CGO_ENABLED=1 GOOS=linux go build \
     -ldflags="-w -s -X main.version=${VCS_REF} -X main.buildDate=${BUILD_DATE}" \
@@ -31,8 +34,8 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 # ============================================
 FROM alpine:latest
 
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata curl
+# Install runtime dependencies including Chromium for PDF generation
+RUN apk add --no-cache ca-certificates tzdata curl chromium
 
 # Create non-root user
 RUN addgroup -g 1000 app && \
@@ -45,6 +48,9 @@ COPY --from=builder /app/maicivy-backend .
 
 # Copy migrations (if needed)
 COPY --from=builder /app/migrations ./migrations
+
+# Copy templates (for PDF generation)
+COPY --from=builder /app/templates ./templates
 
 # Change ownership
 RUN chown -R app:app /app

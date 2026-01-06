@@ -55,7 +55,7 @@ func TestAccessGate_InsufficientVisits(t *testing.T) {
 
 	// Request
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "test-session"})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: "test-session"})
 
 	resp, _ := app.Test(req)
 
@@ -92,7 +92,7 @@ func TestAccessGate_SufficientVisits(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "test-session"})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: "test-session"})
 
 	resp, _ := app.Test(req)
 
@@ -134,7 +134,7 @@ func TestAccessGate_ProfileBypass(t *testing.T) {
 	redisClient.Set(mr.Ctx(), "visitor:recruiter-session:profile", "recruiter", 0)
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "recruiter-session"})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: "recruiter-session"})
 
 	resp, _ := app.Test(req)
 

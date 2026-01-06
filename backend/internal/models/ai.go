@@ -34,6 +34,11 @@ type ExperienceDetail struct {
 // UserProfile : profil utilisateur pour personnalisation
 type UserProfile struct {
 	Name        string             `json:"name"`
+	Address     string             `json:"address"`      // Adresse complète
+	PostalCode  string             `json:"postal_code"`  // Code postal
+	City        string             `json:"city"`         // Ville
+	Email       string             `json:"email"`        // Email
+	Phone       string             `json:"phone"`        // Téléphone
 	CurrentRole string             `json:"current_role"`
 	Skills      []string           `json:"skills"`
 	Experience  int                `json:"experience_years"`

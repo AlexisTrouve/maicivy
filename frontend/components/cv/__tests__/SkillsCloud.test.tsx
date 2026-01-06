@@ -17,7 +17,7 @@ describe('SkillsCloud', () => {
     {
       id: '1',
       name: 'Go',
-      level: 5,
+      level: 'expert' as const,
       category: 'backend',
       yearsExperience: 4,
       score: 0.95,
@@ -25,7 +25,7 @@ describe('SkillsCloud', () => {
     {
       id: '2',
       name: 'React',
-      level: 4,
+      level: 'advanced' as const,
       category: 'frontend',
       yearsExperience: 5,
       score: 0.90,
@@ -33,7 +33,7 @@ describe('SkillsCloud', () => {
     {
       id: '3',
       name: 'Docker',
-      level: 4,
+      level: 'advanced' as const,
       category: 'devops',
       yearsExperience: 3,
       score: 0.85,
@@ -41,7 +41,7 @@ describe('SkillsCloud', () => {
     {
       id: '4',
       name: 'PostgreSQL',
-      level: 3,
+      level: 'intermediate' as const,
       category: 'database',
       yearsExperience: 4,
       score: 0.80,
@@ -49,7 +49,7 @@ describe('SkillsCloud', () => {
     {
       id: '5',
       name: 'TypeScript',
-      level: 4,
+      level: 'advanced' as const,
       category: 'frontend',
       yearsExperience: 3,
       score: 0.88,
@@ -122,11 +122,11 @@ describe('SkillsCloud', () => {
   it('should calculate font size based on level and score', () => {
     const { container } = render(<SkillsCloud skills={mockSkills} />);
 
-    // Go has level 5 and score 0.95, should have larger font
+    // Go has level 'expert' (value 4) and score 0.95, should have larger font
     const goSkill = screen.getByText('Go');
     const fontSize = window.getComputedStyle(goSkill.parentElement!).fontSize;
 
-    // Just verify fontSize is set (actual calculation: 14 + 5*2 + 0.95*4 = 27.8)
+    // Just verify fontSize is set (actual calculation: 14 + 4*2 + 0.95*4 = 25.8)
     expect(goSkill.parentElement).toHaveStyle({ fontSize: expect.any(String) });
   });
 
@@ -156,7 +156,7 @@ describe('SkillsCloud', () => {
 
     expect(goSkill).toHaveAttribute('title');
     expect(goSkill?.getAttribute('title')).toContain('Go');
-    expect(goSkill?.getAttribute('title')).toContain('Niveau 5/5');
+    expect(goSkill?.getAttribute('title')).toContain('expert');
     expect(goSkill?.getAttribute('title')).toContain('4 ans');
   });
 

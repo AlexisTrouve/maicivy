@@ -42,7 +42,7 @@ func (m *ProfileEnrichmentMiddleware) Handle() fiber.Handler {
 		ip := c.IP()
 		userAgent := c.Get("User-Agent")
 		referer := c.Get("Referer")
-		sessionID := c.Cookies("session_id", "")
+		sessionID := c.Cookies("maicivy_session", "")
 
 		// Si pas de session ID, passer au next (sera géré par visitor_tracking middleware)
 		if sessionID == "" {
@@ -141,7 +141,7 @@ func GetDetectedProfile(c *fiber.Ctx) *services.DetectedProfile {
 
 // CheckAccessGateBypass vérifie si la session a un bypass actif
 func CheckAccessGateBypass(c *fiber.Ctx, redis *goredis.Client) (bool, error) {
-	sessionID := c.Cookies("session_id", "")
+	sessionID := c.Cookies("maicivy_session", "")
 	if sessionID == "" {
 		return false, nil
 	}

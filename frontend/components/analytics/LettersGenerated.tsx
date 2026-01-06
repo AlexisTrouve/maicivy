@@ -37,22 +37,32 @@ export default function LettersGenerated() {
 
       if (!response.ok) throw new Error('Failed to fetch letters stats');
 
-      const data = await response.json();
-      setStats(data.history || []);
-      setTotalLetters(data.total || 0);
+      const json = await response.json();
+
+      // Handle API response format: { success: true, data: {...} }
+      if (json.success && json.data) {
+        const data = json.data;
+        // Total is motivation + anti_motivation
+        const total = (data.motivation || 0) + (data.anti_motivation || 0);
+        setTotalLetters(total);
+
+        // If there's a history array, use it; otherwise create a simple display
+        if (Array.isArray(data.history) && data.history.length > 0) {
+          setStats(data.history);
+        } else {
+          // Create a single data point for display
+          setStats([
+            { date: new Date().toISOString().split('T')[0], count: total }
+          ]);
+        }
+      } else {
+        setStats([]);
+        setTotalLetters(0);
+      }
     } catch (error) {
       console.error('Error fetching letters stats:', error);
-      // Mock data for development
-      setStats([
-        { date: '2024-12-01', count: 12 },
-        { date: '2024-12-02', count: 18 },
-        { date: '2024-12-03', count: 15 },
-        { date: '2024-12-04', count: 22 },
-        { date: '2024-12-05', count: 28 },
-        { date: '2024-12-06', count: 25 },
-        { date: '2024-12-07', count: 30 },
-      ]);
-      setTotalLetters(456);
+      setStats([]);
+      setTotalLetters(0);
     } finally {
       setIsLoading(false);
     }

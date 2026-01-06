@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Select,
@@ -30,6 +31,7 @@ export default function CVThemeSelector({ currentTheme }: CVThemeSelectorProps) 
   const searchParams = useSearchParams();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
   const t = useTranslations('cv');
 
   useEffect(() => {
@@ -40,9 +42,15 @@ export default function CVThemeSelector({ currentTheme }: CVThemeSelectorProps) 
   }, []);
 
   const handleThemeChange = (newTheme: string) => {
-    const params = new URLSearchParams(searchParams);
+    if (newTheme === currentTheme) return;
+
+    const params = new URLSearchParams(searchParams.toString());
     params.set('theme', newTheme);
-    router.push(`/cv?${params.toString()}`);
+
+    // Use startTransition for smoother navigation without blocking UI
+    startTransition(() => {
+      router.push(`/cv?${params.toString()}`);
+    });
   };
 
   if (loading) {
@@ -53,9 +61,17 @@ export default function CVThemeSelector({ currentTheme }: CVThemeSelectorProps) 
 
   return (
     <div className="relative">
-      <Select value={currentTheme} onValueChange={handleThemeChange}>
-        <SelectTrigger className="w-64 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 transition-colors">
-          <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
+      <Select value={currentTheme} onValueChange={handleThemeChange} disabled={isPending}>
+        <SelectTrigger
+          className={`w-64 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 transition-colors ${
+            isPending ? 'opacity-70 cursor-wait' : ''
+          }`}
+        >
+          {isPending ? (
+            <div className="w-4 h-4 mr-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
+          )}
           <SelectValue placeholder={t('selectTheme')} />
         </SelectTrigger>
         <SelectContent>

@@ -24,7 +24,7 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := context.Background()
 
-		sessionID := c.Cookies("session_id")
+		sessionID := c.Cookies("maicivy_session")
 		if sessionID == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Session non trouvée",

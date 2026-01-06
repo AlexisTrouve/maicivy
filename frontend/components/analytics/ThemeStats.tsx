@@ -41,19 +41,26 @@ export default function ThemeStats() {
 
       if (!response.ok) throw new Error('Failed to fetch theme stats');
 
-      const data = await response.json();
-      setStats(data.themes || []);
+      const json = await response.json();
+
+      // Handle API response format: { success: true, data: [...] }
+      if (json.success && Array.isArray(json.data)) {
+        // Calculate total for percentages
+        // Backend returns 'views' field, not 'count'
+        const total = json.data.reduce((sum: number, item: { views?: number; count?: number }) => sum + (item.views || item.count || 0), 0);
+
+        const mappedStats = json.data.map((item: { theme: string; views?: number; count?: number }) => ({
+          theme: item.theme || 'unknown',
+          count: item.views || item.count || 0,
+          percentage: total > 0 ? ((item.views || item.count || 0) / total) * 100 : 0,
+        }));
+        setStats(mappedStats);
+      } else {
+        setStats([]);
+      }
     } catch (error) {
       console.error('Error fetching theme stats:', error);
-      // Set mock data for development
-      setStats([
-        { theme: 'backend', count: 523, percentage: 34 },
-        { theme: 'full-stack', count: 312, percentage: 20 },
-        { theme: 'devops', count: 198, percentage: 13 },
-        { theme: 'ai', count: 167, percentage: 11 },
-        { theme: 'mobile', count: 89, percentage: 6 },
-        { theme: 'other', count: 65, percentage: 4 },
-      ]);
+      setStats([]);
     } finally {
       setIsLoading(false);
     }

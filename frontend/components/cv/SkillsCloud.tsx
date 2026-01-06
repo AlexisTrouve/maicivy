@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Skill } from '@/lib/types';
 
@@ -22,21 +22,47 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const t = useTranslations('cv.skills');
 
+  // Get categories - memoized for performance
+  const categories = useMemo(
+    () => Array.from(new Set(skills.map((s) => s.category))),
+    [skills]
+  );
+
+  // Reset category filter when skills change (theme switch)
+  // Also validate that selected category still exists in new skills
+  useEffect(() => {
+    if (selectedCategory && !categories.includes(selectedCategory)) {
+      setSelectedCategory(null);
+    }
+  }, [categories, selectedCategory]);
+
+  // Convert skill level string to numeric value for sizing
+  const getLevelValue = (level: string): number => {
+    switch (level) {
+      case 'expert': return 4;
+      case 'advanced': return 3;
+      case 'intermediate': return 2;
+      case 'beginner': return 1;
+      default: return 1;
+    }
+  };
+
   // Calculate font size based on level and score
   const getFontSize = (skill: Skill) => {
     const baseSize = 14;
-    const levelMultiplier = skill.level * 2;
+    const levelValue = getLevelValue(skill.level);
+    const levelMultiplier = levelValue * 2;
     const scoreMultiplier = skill.score ? skill.score * 4 : 0;
     return baseSize + levelMultiplier + scoreMultiplier;
   };
 
-  // Get categories
-  const categories = Array.from(new Set(skills.map((s) => s.category)));
-
-  // Filter skills by category
-  const filteredSkills = selectedCategory
-    ? skills.filter((s) => s.category === selectedCategory)
-    : skills;
+  // Filter skills by category - memoized
+  const filteredSkills = useMemo(
+    () => selectedCategory
+      ? skills.filter((s) => s.category === selectedCategory)
+      : skills,
+    [skills, selectedCategory]
+  );
 
   return (
     <div className="space-y-6">
@@ -72,26 +98,28 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
         className="flex flex-wrap gap-3 justify-center items-center p-8 bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[300px]"
         layout
       >
-        {filteredSkills.map((skill) => (
-          <motion.div
-            key={skill.id}
-            layout
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            whileHover={{ scale: 1.15, rotate: 2 }}
-            transition={{ duration: 0.3 }}
-            className={`px-4 py-2 rounded-full font-semibold border-2 cursor-pointer ${
-              categoryColors[skill.category] || categoryColors.other
-            }`}
-            style={{
-              fontSize: `${getFontSize(skill)}px`,
-            }}
-            title={`${skill.name} - Niveau ${skill.level}/5 - ${skill.yearsExperience} ans d'expérience`}
-          >
-            {skill.name}
-          </motion.div>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {filteredSkills.map((skill) => (
+            <motion.div
+              key={skill.id}
+              layout
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              whileHover={{ scale: 1.15, rotate: 2 }}
+              transition={{ duration: 0.3 }}
+              className={`px-4 py-2 rounded-full font-semibold border-2 cursor-pointer ${
+                categoryColors[skill.category] || categoryColors.other
+              }`}
+              style={{
+                fontSize: `${getFontSize(skill)}px`,
+              }}
+              title={`${skill.name} - ${skill.level} - ${skill.yearsExperience} ans d'expérience`}
+            >
+              {skill.name}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </motion.div>
 
       {/* Legend */}

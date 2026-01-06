@@ -170,7 +170,7 @@ func (rl *RateLimiterAdvanced) getIdentifier(c *fiber.Ctx, identifierType string
 	case "ip":
 		return c.IP()
 	case "session":
-		return c.Cookies("session_id")
+		return c.Cookies("maicivy_session")
 	case "user":
 		// For future user authentication
 		return c.Get("X-User-ID", "")

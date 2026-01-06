@@ -101,7 +101,12 @@ func (pb *ProfileBuilder) BuildProfile(ctx context.Context) models.UserProfile {
 	summary := pb.buildSummary(currentRole, yearsOfExperience, skillNames)
 
 	profile := models.UserProfile{
-		Name:        "Alexis Trouvé",
+		Name:        "Alexis Trouve",
+		Address:     "17 rue principale",
+		PostalCode:  "79100",
+		City:        "Tourtenay",
+		Email:       "alexistrouve.pro@gmail.com",
+		Phone:       "+33 6 95 11 09 67",
 		CurrentRole: currentRole,
 		Skills:      skillNames,
 		Experience:  yearsOfExperience,

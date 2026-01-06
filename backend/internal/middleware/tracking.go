@@ -78,16 +78,18 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 			tm.redis.Set(ctx, profileKey, profileDetected, SessionTTL)
 		}
 
-		// 4. Stocker dans context pour utilisation dans handlers
+		// 4. Extraire les valeurs du contexte
+		userAgent := c.Get("User-Agent")
+		ip := c.IP()
+
+		// 5. Enregistrer/update visiteur dans PostgreSQL (SYNCHRONE pour avoir visitor_id)
+		visitorID := tm.saveVisitorSync(sessionID, ip, userAgent, visitCount, profileDetected)
+
+		// 6. Stocker dans context pour utilisation dans handlers et analytics middleware
 		c.Locals("session_id", sessionID)
 		c.Locals("visit_count", visitCount)
 		c.Locals("profile_detected", profileDetected)
-
-		// 5. Enregistrer/update visiteur dans PostgreSQL (async)
-		// IMPORTANT: Extraire les valeurs du contexte AVANT la goroutine
-		userAgent := c.Get("User-Agent")
-		ip := c.IP()
-		go tm.saveVisitor(sessionID, ip, userAgent, visitCount, profileDetected)
+		c.Locals("visitor_id", visitorID) // UUID pour analytics
 
 		return c.Next()
 	}
@@ -135,8 +137,8 @@ func (tm *TrackingMiddleware) detectProfile(c *fiber.Ctx) string {
 	return "" // Pas de profil spécifique détecté
 }
 
-// saveVisitor enregistre ou met à jour le visiteur dans PostgreSQL
-func (tm *TrackingMiddleware) saveVisitor(sessionID string, ip string, userAgent string, visitCount int64, profile string) {
+// saveVisitorSync enregistre ou met à jour le visiteur dans PostgreSQL et retourne l'ID
+func (tm *TrackingMiddleware) saveVisitorSync(sessionID string, ip string, userAgent string, visitCount int64, profile string) uuid.UUID {
 	// Hash IP pour privacy
 	ipHash := hashIP(ip)
 	now := time.Now()
@@ -162,7 +164,9 @@ func (tm *TrackingMiddleware) saveVisitor(sessionID string, ip string, userAgent
 				Err(err).
 				Str("session_id", sessionID).
 				Msg("Failed to create visitor in database")
+			return uuid.Nil
 		}
+		return newVisitor.ID
 	} else if result.Error == nil {
 		// Existing visitor - update visit count and last visit
 		updates := map[string]interface{}{
@@ -179,12 +183,14 @@ func (tm *TrackingMiddleware) saveVisitor(sessionID string, ip string, userAgent
 				Str("session_id", sessionID).
 				Msg("Failed to update visitor in database")
 		}
+		return existingVisitor.ID
 	} else {
 		// Database error
 		log.Error().
 			Err(result.Error).
 			Str("session_id", sessionID).
 			Msg("Failed to query visitor from database")
+		return uuid.Nil
 	}
 }
 

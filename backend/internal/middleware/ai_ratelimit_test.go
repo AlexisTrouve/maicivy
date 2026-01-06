@@ -33,7 +33,7 @@ func TestAIRateLimit_FirstRequest(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "test-session"})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: "test-session"})
 
 	resp, _ := app.Test(req)
 
@@ -66,7 +66,7 @@ func TestAIRateLimit_DailyLimitExceeded(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: sessionID})
 
 	resp, _ := app.Test(req)
 
@@ -99,7 +99,7 @@ func TestAIRateLimit_CooldownActive(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID})
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: sessionID})
 
 	resp, _ := app.Test(req)
 

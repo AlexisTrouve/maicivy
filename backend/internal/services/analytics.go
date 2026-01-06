@@ -149,10 +149,33 @@ func (s *AnalyticsService) GetRealtimeStats(ctx context.Context) (map[string]int
 
 	totalEvents, _ := totalEventsCmd.Int64()
 	lettersGenerated, _ := lettersCmd.Int64()
+	uniqueToday := uniqueTodayCmd.Val()
+
+	// Fallback: si Redis n'a pas de visiteurs uniques aujourd'hui, lire depuis PostgreSQL
+	if uniqueToday == 0 {
+		now := time.Now()
+		startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		var count int64
+		s.db.WithContext(ctx).Model(&models.Visitor{}).
+			Where("created_at >= ?", startOfDay).
+			Count(&count)
+		uniqueToday = count
+	}
+
+	// Fallback: compter les lettres d'aujourd'hui depuis PostgreSQL
+	if lettersGenerated == 0 {
+		now := time.Now()
+		startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		var count int64
+		s.db.WithContext(ctx).Model(&models.GeneratedLetter{}).
+			Where("created_at >= ?", startOfDay).
+			Count(&count)
+		lettersGenerated = count
+	}
 
 	stats := map[string]interface{}{
 		"current_visitors": currentVisitorsCmd.Val(),
-		"unique_today":     uniqueTodayCmd.Val(),
+		"unique_today":     uniqueToday,
 		"total_events":     totalEvents,
 		"letters_today":    lettersGenerated,
 		"timestamp":        time.Now().Unix(),
@@ -190,11 +213,61 @@ func (s *AnalyticsService) GetStats(ctx context.Context, period string) (map[str
 
 	totalEvents, _ := totalEventsCmd.Int64()
 	lettersGenerated, _ := lettersCmd.Int64()
+	uniqueVisitors := uniqueVisitorsCmd.Val()
+
+	// Fallback: si Redis n'a pas de visiteurs, lire depuis PostgreSQL
+	if uniqueVisitors == 0 {
+		var startDate time.Time
+		switch period {
+		case "day":
+			startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		case "week":
+			weekday := int(now.Weekday())
+			if weekday == 0 {
+				weekday = 7
+			}
+			startDate = now.AddDate(0, 0, -(weekday - 1))
+			startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+		case "month":
+			startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		}
+
+		// Compter les visiteurs uniques depuis PostgreSQL
+		var count int64
+		s.db.WithContext(ctx).Model(&models.Visitor{}).
+			Where("created_at >= ?", startDate).
+			Count(&count)
+		uniqueVisitors = count
+	}
+
+	// Fallback: compter les lettres depuis PostgreSQL si Redis vide
+	if lettersGenerated == 0 {
+		var startDate time.Time
+		switch period {
+		case "day":
+			startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		case "week":
+			weekday := int(now.Weekday())
+			if weekday == 0 {
+				weekday = 7
+			}
+			startDate = now.AddDate(0, 0, -(weekday - 1))
+			startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+		case "month":
+			startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		}
+
+		var count int64
+		s.db.WithContext(ctx).Model(&models.GeneratedLetter{}).
+			Where("created_at >= ?", startDate).
+			Count(&count)
+		lettersGenerated = count
+	}
 
 	// Calculer taux de conversion
 	conversionRate := 0.0
-	if uniqueVisitorsCmd.Val() > 0 {
-		conversionRate = float64(lettersGenerated) / float64(uniqueVisitorsCmd.Val())
+	if uniqueVisitors > 0 {
+		conversionRate = float64(lettersGenerated) / float64(uniqueVisitors)
 	}
 
 	stats := map[string]interface{}{
@@ -202,7 +275,7 @@ func (s *AnalyticsService) GetStats(ctx context.Context, period string) (map[str
 		"period_key":        periodKey,
 		"total_events":      totalEvents,
 		"letters_generated": lettersGenerated,
-		"unique_visitors":   uniqueVisitorsCmd.Val(),
+		"unique_visitors":   uniqueVisitors,
 		"conversion_rate":   conversionRate,
 	}
 
@@ -270,14 +343,80 @@ func (s *AnalyticsService) GetLettersStats(ctx context.Context, period string) (
 		Where("letter_type = ? AND created_at >= ?", "anti_motivation", startDate).
 		Count(&antiMotivationCount)
 
+	// Get history data (letters per day for the period)
+	history, err := s.getLettersHistory(ctx, period, startDate)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get letters history")
+		history = []map[string]interface{}{}
+	}
+
 	return map[string]interface{}{
-		"period":                 period,
-		"total":                  stats["letters_generated"],
-		"motivation":             motivationCount,
-		"anti_motivation":        antiMotivationCount,
-		"unique_visitors":        stats["unique_visitors"],
-		"conversion_rate":        stats["conversion_rate"],
+		"period":          period,
+		"total":           stats["letters_generated"],
+		"motivation":      motivationCount,
+		"anti_motivation": antiMotivationCount,
+		"unique_visitors": stats["unique_visitors"],
+		"conversion_rate": stats["conversion_rate"],
+		"history":         history,
 	}, nil
+}
+
+// getLettersHistory récupère l'historique des lettres générées par jour
+func (s *AnalyticsService) getLettersHistory(ctx context.Context, period string, startDate time.Time) ([]map[string]interface{}, error) {
+	// Query PostgreSQL for daily counts
+	type DailyCount struct {
+		Date  string `gorm:"column:date"`
+		Count int64  `gorm:"column:count"`
+	}
+
+	var dailyCounts []DailyCount
+
+	// Use date_trunc to group by day
+	query := `
+		SELECT DATE(created_at) as date, COUNT(*) as count
+		FROM generated_letters
+		WHERE created_at >= ?
+		GROUP BY DATE(created_at)
+		ORDER BY date ASC
+	`
+
+	if err := s.db.WithContext(ctx).Raw(query, startDate).Scan(&dailyCounts).Error; err != nil {
+		return nil, err
+	}
+
+	// Convert to expected format
+	history := make([]map[string]interface{}, len(dailyCounts))
+	for i, dc := range dailyCounts {
+		history[i] = map[string]interface{}{
+			"date":  dc.Date,
+			"count": dc.Count,
+		}
+	}
+
+	// If no data, create empty entries for each day in the period
+	if len(history) == 0 {
+		now := time.Now()
+		var days int
+		switch period {
+		case "day":
+			days = 1
+		case "week":
+			days = 7
+		case "month":
+			days = 30
+		}
+
+		history = make([]map[string]interface{}, days)
+		for i := 0; i < days; i++ {
+			date := now.AddDate(0, 0, -(days - 1 - i))
+			history[i] = map[string]interface{}{
+				"date":  date.Format("2006-01-02"),
+				"count": 0,
+			}
+		}
+	}
+
+	return history, nil
 }
 
 // MarkVisitorActive marque un visiteur comme actif (temps réel)

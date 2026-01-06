@@ -30,13 +30,31 @@ func NewCVService(db *gorm.DB, redisClient *redis.Client) *CVService {
 	}
 }
 
+// ScoredExperienceResponse représente une expérience avec son score pour la réponse JSON
+type ScoredExperienceResponse struct {
+	models.Experience
+	Score float64 `json:"score"`
+}
+
+// ScoredSkillResponse représente une compétence avec son score pour la réponse JSON
+type ScoredSkillResponse struct {
+	models.Skill
+	Score float64 `json:"score"`
+}
+
+// ScoredProjectResponse représente un projet avec son score pour la réponse JSON
+type ScoredProjectResponse struct {
+	models.Project
+	Score float64 `json:"score"`
+}
+
 // AdaptiveCVResponse représente la réponse complète du CV adaptatif
 type AdaptiveCVResponse struct {
-	Theme       config.CVTheme      `json:"theme"`
-	Experiences []models.Experience `json:"experiences"`
-	Skills      []models.Skill      `json:"skills"`
-	Projects    []models.Project    `json:"projects"`
-	GeneratedAt time.Time           `json:"generatedAt"`
+	Theme       config.CVTheme             `json:"theme"`
+	Experiences []ScoredExperienceResponse `json:"experiences"`
+	Skills      []ScoredSkillResponse      `json:"skills"`
+	Projects    []ScoredProjectResponse    `json:"projects"`
+	GeneratedAt time.Time                  `json:"generatedAt"`
 }
 
 // GetAdaptiveCV retourne le CV adapté au thème demandé
@@ -80,10 +98,13 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 	scoredSkills := s.scoringService.ScoreSkills(skills, theme)
 	scoredProjects := s.scoringService.ScoreProjects(projects, theme)
 
-	// 5. Extraire les items (sans scores) pour la réponse
-	filteredExperiences := make([]models.Experience, 0)
+	// 5. Extraire les items AVEC scores pour la réponse
+	filteredExperiences := make([]ScoredExperienceResponse, 0, len(scoredExp))
 	for _, se := range scoredExp {
-		filteredExperiences = append(filteredExperiences, se.Experience)
+		filteredExperiences = append(filteredExperiences, ScoredExperienceResponse{
+			Experience: se.Experience,
+			Score:      se.Score,
+		})
 	}
 
 	// Sort experiences by start date (most recent first)
@@ -91,14 +112,20 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 		return filteredExperiences[i].StartDate.After(filteredExperiences[j].StartDate)
 	})
 
-	filteredSkills := make([]models.Skill, 0)
+	filteredSkills := make([]ScoredSkillResponse, 0, len(scoredSkills))
 	for _, ss := range scoredSkills {
-		filteredSkills = append(filteredSkills, ss.Skill)
+		filteredSkills = append(filteredSkills, ScoredSkillResponse{
+			Skill: ss.Skill,
+			Score: ss.Score,
+		})
 	}
 
-	filteredProjects := make([]models.Project, 0)
+	filteredProjects := make([]ScoredProjectResponse, 0, len(scoredProjects))
 	for _, sp := range scoredProjects {
-		filteredProjects = append(filteredProjects, sp.Project)
+		filteredProjects = append(filteredProjects, ScoredProjectResponse{
+			Project: sp.Project,
+			Score:   sp.Score,
+		})
 	}
 
 	// 6. Construire réponse

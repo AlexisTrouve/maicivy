@@ -18,10 +18,19 @@ interface CVPageProps {
   };
 }
 
+// Get API URL - internal for server, public for client
+const getApiUrl = () => {
+  if (typeof window === 'undefined') {
+    return process.env.API_URL || 'http://maicivy-backend:8080';
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+};
+
 // Fetch CV data
 async function getCVData(theme: string = 'fullstack'): Promise<CVData> {
+  const apiUrl = getApiUrl();
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv?theme=${theme}`,
+    `${apiUrl}/api/v1/cv?theme=${theme}`,
     {
       next: { revalidate: 3600 }, // Cache 1 hour
     }

@@ -12,13 +12,17 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (legacy-peer-deps for @react-three compatibility)
+RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build
 FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Build arguments for Next.js
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -35,6 +39,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+# API_URL for server-side (internal docker network)
+ENV API_URL=http://maicivy-backend:8080
 
 # Copy public files
 COPY --from=builder /app/public ./public
@@ -43,9 +49,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Create non-root user
-RUN addgroup -g 1000 appuser && adduser -D -u 1000 -G appuser appuser
-USER appuser
+# Use existing node user (already in node:alpine image)
+USER node
 
 # Expose port
 EXPOSE 3000

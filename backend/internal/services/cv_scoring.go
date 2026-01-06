@@ -206,17 +206,20 @@ func (s *CVScoringService) ScoreSkills(skills []models.Skill, theme *config.CVTh
 }
 
 // ScoreProjects score et trie une liste de projets
+// Retourne TOUS les projets, triés par score (les plus pertinents en premier)
 func (s *CVScoringService) ScoreProjects(projects []models.Project, theme *config.CVTheme) []ScoredProject {
 	scored := make([]ScoredProject, 0, len(projects))
 
 	for _, project := range projects {
 		score := s.CalculateProjectScore(project, theme)
-		if score > 0 {
-			scored = append(scored, ScoredProject{
-				Project: project,
-				Score:   score,
-			})
+		// Inclure tous les projets avec un score minimum de 0.1 pour les non-matchés
+		if score == 0 {
+			score = 0.1
 		}
+		scored = append(scored, ScoredProject{
+			Project: project,
+			Score:   score,
+		})
 	}
 
 	// Trier par score décroissant

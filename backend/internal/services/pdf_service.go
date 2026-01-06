@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
+	"os"
 	"strings"
 	"time"
 
@@ -39,8 +40,28 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse) ([]byte, error) {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 
-	// 2. Convertir HTML → PDF avec chromedp
-	ctx, cancel := chromedp.NewContext(context.Background())
+	// 2. Configure chromedp allocator options for container environment
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.DisableGPU,
+		chromedp.NoSandbox, // Required for running in container as non-root
+		chromedp.Headless,
+		chromedp.Flag("disable-dev-shm-usage", true), // Overcome limited /dev/shm in containers
+		chromedp.Flag("disable-setuid-sandbox", true),
+		chromedp.Flag("single-process", true),
+	)
+
+	// Check for custom Chrome path (Alpine uses chromium-browser)
+	if chromePath := os.Getenv("CHROME_PATH"); chromePath != "" {
+		opts = append(opts, chromedp.ExecPath(chromePath))
+	} else if _, err := os.Stat("/usr/bin/chromium-browser"); err == nil {
+		opts = append(opts, chromedp.ExecPath("/usr/bin/chromium-browser"))
+	}
+
+	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	defer allocCancel()
+
+	// Create browser context
+	ctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
 	// Timeout pour génération PDF

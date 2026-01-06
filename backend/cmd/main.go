@@ -39,6 +39,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to connect to PostgreSQL")
 	}
 
+	// 3.5. Run database migrations
+	if err := database.RunAutoMigrations(db); err != nil {
+		log.Fatal().Err(err).Msg("Failed to run database migrations")
+	}
+
 	// 4. Connexion Redis
 	redisClient, err := database.ConnectRedis(cfg)
 	if err != nil {
@@ -79,13 +84,17 @@ func main() {
 	trackingMW := middleware.NewTracking(db, redisClient)
 	app.Use(trackingMW.Handler())
 
-	// 7. Rate limiting global
-	rateLimitMW := middleware.NewRateLimit(redisClient)
-	app.Use(rateLimitMW.Global())
-
-	// 7. Initialiser services
+	// 7. Initialiser services (needed for analytics middleware)
 	cvService := services.NewCVService(db, redisClient)
 	analyticsService := services.NewAnalyticsService(db, redisClient)
+
+	// 8. Analytics middleware (après tracking pour avoir visitor_id)
+	analyticsMW := middleware.NewAnalytics(analyticsService)
+	app.Use(analyticsMW.Handler())
+
+	// 9. Rate limiting global
+	rateLimitMW := middleware.NewRateLimit(redisClient)
+	app.Use(rateLimitMW.Global())
 
 	// AI Config et services
 	aiConfig := config.LoadAIConfig()
@@ -167,15 +176,20 @@ func main() {
 
 	// Routes Letters avec rate limiting AI (Phase 3 - IMPLEMENTED)
 	lettersGroup := apiV1.Group("/letters")
-	lettersGroup.Use(rateLimitMW.AI()) // Rate limit AI appliqué ici
-	lettersGroup.Post("/generate", lettersHandler.GenerateLetter)
-	lettersGroup.Get("/job/:job_id", lettersHandler.GetJobStatus)
-	lettersGroup.Get("/:id", lettersHandler.GetLetter)
-	lettersGroup.Get("/pair/:job_id", lettersHandler.GetLetterPair)
-	lettersGroup.Get("/history/:visitor_id", lettersHandler.GetHistory)
-	lettersGroup.Get("/:id/pdf", lettersHandler.DownloadPDF)
+	// Rate limit AI uniquement sur /generate (utilise le bon middleware avec incrémentation après succès)
+	aiRateLimitMW := middleware.AIRateLimit(middleware.AIRateLimitConfig{
+		Redis:            redisClient,
+		MaxPerDay:        5,
+		CooldownDuration: 2 * time.Minute,
+	})
+	lettersGroup.Post("/generate", aiRateLimitMW, lettersHandler.GenerateLetter)
+	lettersGroup.Get("/job/:jobId", lettersHandler.GetJobStatus)
+	lettersGroup.Get("/pair", lettersHandler.GetLetterPair) // ?company=Google
+	lettersGroup.Get("/history", lettersHandler.GetHistory)
 	lettersGroup.Get("/access/status", lettersHandler.GetAccessStatus)
 	lettersGroup.Get("/ratelimit/status", lettersHandler.GetRateLimitStatus)
+	lettersGroup.Get("/:id/pdf", lettersHandler.DownloadPDF)
+	lettersGroup.Get("/:id", lettersHandler.GetLetter) // Must be last (catch-all)
 
 	// Routes Analytics (Phase 4 - IMPLEMENTED)
 	analyticsHandler.RegisterRoutes(app)

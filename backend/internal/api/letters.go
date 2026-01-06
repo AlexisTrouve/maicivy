@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
@@ -54,10 +55,10 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 		})
 	}
 
-	// Récupérer session ID depuis les locals (mis par AccessGate middleware)
+	// Récupérer session ID depuis les locals (mis par tracking middleware)
 	sessionID, ok := c.Locals("session_id").(string)
-	if !ok {
-		sessionID = c.Cookies("session_id")
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
 	}
 
 	if sessionID == "" {
@@ -148,7 +149,7 @@ func (h *LettersHandler) GetJobStatus(c *fiber.Ctx) error {
 // GetLetter récupère une lettre générée par ID
 // GET /api/v1/letters/:id
 func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
-	letterID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	letterID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid letter ID",
@@ -157,7 +158,10 @@ func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
 	}
 
 	// Récupérer session ID pour vérifier ownership
-	sessionID := c.Cookies("session_id")
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
+	}
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
@@ -222,7 +226,7 @@ func (h *LettersHandler) GetLetterPair(c *fiber.Ctx) error {
 		})
 	}
 
-	sessionID := c.Cookies("session_id")
+	sessionID := c.Cookies("maicivy_session")
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
@@ -298,7 +302,10 @@ func (h *LettersHandler) GetLetterPair(c *fiber.Ctx) error {
 // GetHistory récupère l'historique des lettres générées
 // GET /api/v1/letters/history?page=1&per_page=10
 func (h *LettersHandler) GetHistory(c *fiber.Ctx) error {
-	sessionID := c.Cookies("session_id")
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
+	}
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
@@ -370,7 +377,7 @@ func (h *LettersHandler) GetHistory(c *fiber.Ctx) error {
 // DownloadPDF télécharge le PDF d'une lettre
 // GET /api/v1/letters/:id/pdf
 func (h *LettersHandler) DownloadPDF(c *fiber.Ctx) error {
-	letterID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	letterID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid letter ID",
@@ -378,7 +385,10 @@ func (h *LettersHandler) DownloadPDF(c *fiber.Ctx) error {
 		})
 	}
 
-	sessionID := c.Cookies("session_id")
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
+	}
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
@@ -426,8 +436,10 @@ func (h *LettersHandler) DownloadPDF(c *fiber.Ctx) error {
 // GET /api/v1/letters/access-status
 func (h *LettersHandler) GetAccessStatus(c *fiber.Ctx) error {
 	ctx := context.Background()
-	sessionID := c.Cookies("session_id")
-
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
+	}
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
@@ -484,8 +496,10 @@ func (h *LettersHandler) GetAccessStatus(c *fiber.Ctx) error {
 // GET /api/v1/letters/rate-limit-status
 func (h *LettersHandler) GetRateLimitStatus(c *fiber.Ctx) error {
 	ctx := context.Background()
-	sessionID := c.Cookies("session_id")
-
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		sessionID = c.Cookies("maicivy_session")
+	}
 	if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",

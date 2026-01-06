@@ -44,13 +44,11 @@ export function LetterGenerator() {
     setError(null);
     setProgress(0);
 
-    // Simulation de progression (réel: utiliser WebSocket ou polling)
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 10, 90));
-    }, 800);
-
     try {
-      const response = await lettersApi.generate({ companyName: data.companyName });
+      const response = await lettersApi.generateAndWait(
+        { company_name: data.companyName },
+        (p) => setProgress(p)
+      );
 
       setLetters(response);
       setProgress(100);
@@ -58,10 +56,8 @@ export function LetterGenerator() {
       // Sauvegarder dans localStorage (historique)
       saveToHistory(response);
     } catch (err: any) {
-      clearInterval(progressInterval);
       handleError(err);
     } finally {
-      clearInterval(progressInterval);
       setIsGenerating(false);
     }
   };

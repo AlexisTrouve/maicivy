@@ -122,24 +122,15 @@ func (rlm *RateLimitMiddleware) AI() fiber.Handler {
 			})
 		}
 
-		// 3. Incrémenter compteur journalier
-		newCount, err := rlm.redis.Incr(ctx, dailyKey).Result()
-		if err != nil {
-			log.Error().Err(err).Msg("Redis incr failed for daily counter")
-			return c.Next() // Fail open
-		}
+		// NOTE: On n'incrémente PAS ici - c'est fait dans le handler APRÈS succès
+		// via IncrementAIRateLimit()
 
-		// Set TTL si première génération du jour
-		if newCount == 1 {
-			rlm.redis.Expire(ctx, dailyKey, AIGenerationsWindow)
-		}
-
-		// 4. Activer cooldown
-		rlm.redis.Set(ctx, cooldownKey, "1", AICooldown)
+		// Stocker remaining pour le handler
+		c.Locals("rate_limit_remaining", int(AIGenerationsLimit-count))
 
 		// Headers de rate limiting
 		c.Set("X-RateLimit-AI-Limit", strconv.Itoa(AIGenerationsLimit))
-		c.Set("X-RateLimit-AI-Remaining", strconv.Itoa(AIGenerationsLimit-int(newCount)))
+		c.Set("X-RateLimit-AI-Remaining", strconv.Itoa(int(AIGenerationsLimit-count)))
 
 		return c.Next()
 	}

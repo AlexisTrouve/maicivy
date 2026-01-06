@@ -4,24 +4,37 @@ import (
 	"github.com/lib/pq"
 )
 
-// Project représente un projet réalisé
+// Project represents a realized project
 type Project struct {
 	BaseModel
 
-	// Informations principales
+	// Main information
 	Title       string `gorm:"type:varchar(255);not null" json:"title" validate:"required,min=3,max=255"`
 	Description string `gorm:"type:text" json:"description" validate:"max=5000"`
+
+	// Short catchphrase for card display
+	Catchphrase string `gorm:"type:varchar(200)" json:"catchphrase"`
+
+	// Detailed descriptions for modal
+	FunctionalDescription string `gorm:"type:text" json:"functionalDescription"`
+	TechnicalDescription  string `gorm:"type:text" json:"technicalDescription"`
 
 	// URLs
 	GithubURL string `gorm:"type:varchar(500)" json:"githubUrl" validate:"omitempty,url"`
 	DemoURL   string `gorm:"type:varchar(500)" json:"demoUrl" validate:"omitempty,url"`
 	ImageURL  string `gorm:"type:varchar(500)" json:"imageUrl" validate:"omitempty,url"`
 
-	// Catégorisation
+	// Images (array of URLs for gallery)
+	Images pq.StringArray `gorm:"type:text[]" json:"images"`
+
+	// Links (JSON array of link objects: [{name, url, icon}])
+	Links LinksJSON `gorm:"type:jsonb" json:"links"`
+
+	// Categorization
 	Technologies pq.StringArray `gorm:"type:text[]" json:"technologies"`
 	Category     string         `gorm:"type:varchar(100);index" json:"category" validate:"required"`
 
-	// Métadonnées GitHub (synced automatiquement)
+	// GitHub metadata (synced automatically)
 	GithubStars    int    `gorm:"default:0" json:"githubStars"`
 	GithubForks    int    `gorm:"default:0" json:"githubForks"`
 	GithubLanguage string `gorm:"type:varchar(50)" json:"githubLanguage"`

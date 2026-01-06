@@ -44,7 +44,7 @@ func (a *Analytics) Handler() fiber.Handler {
 			}
 		}()
 
-		// Capturer pageview seulement pour routes HTML (pas API, pas WebSocket)
+		// Capturer pageview pour routes trackables
 		path := c.Path()
 		if !isAPIRoute(path) && !isWebSocketRoute(path) && !isStaticAsset(path) {
 			// Créer événement pageview
@@ -65,9 +65,22 @@ func (a *Analytics) Handler() fiber.Handler {
 
 			eventDataJSON, _ := json.Marshal(eventData)
 
+			// Déterminer le type d'événement
+			eventType := models.EventTypePageView
+
+			// Si c'est une requête CV avec un thème, tracker comme theme change
+			if strings.HasPrefix(path, "/api/v1/cv") {
+				theme := c.Query("theme", "")
+				if theme != "" {
+					eventType = models.EventTypeCVThemeChange
+					eventData["theme"] = theme
+					eventDataJSON, _ = json.Marshal(eventData)
+				}
+			}
+
 			event := &models.AnalyticsEvent{
 				VisitorID: visitorID,
-				EventType: models.EventTypePageView,
+				EventType: eventType,
 				EventData: string(eventDataJSON),
 				PageURL:   c.OriginalURL(),
 				Referrer:  c.Get("Referer"),
@@ -104,8 +117,23 @@ func (a *Analytics) Handler() fiber.Handler {
 	}
 }
 
-// isAPIRoute vérifie si c'est une route API
+// isAPIRoute vérifie si c'est une route API (mais certaines routes API sont trackées)
 func isAPIRoute(path string) bool {
+	// Track certain API routes that represent meaningful pageviews
+	trackableAPIRoutes := []string{
+		"/api/v1/cv",
+		"/api/v1/letters/generate",
+		"/api/v1/letters/pair",
+		"/api/v1/timeline",
+		"/api/v1/github",
+	}
+
+	for _, route := range trackableAPIRoutes {
+		if strings.HasPrefix(path, route) {
+			return false // Not considered "skip" for these routes
+		}
+	}
+
 	return strings.HasPrefix(path, "/api/")
 }
 

@@ -25,8 +25,8 @@ func AccessGate(config AccessGateConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := context.Background()
 
-		// Récupérer le session ID depuis le cookie
-		sessionID := c.Cookies("session_id")
+		// Récupérer le session ID depuis le cookie (même nom que tracking middleware)
+		sessionID := c.Cookies("maicivy_session")
 		if sessionID == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Session non trouvée",

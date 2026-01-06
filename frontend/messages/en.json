@@ -71,6 +71,9 @@
       "invalidDate": "Invalid date",
       "unknownDuration": "Unknown duration"
     },
+    "experience": {
+      "viewDetails": "View details"
+    },
     "skills": {
       "all": "All",
       "tooltip": "{name} - Level {level}/5 - {years} years of experience",
@@ -80,7 +83,11 @@
       "featured": "Featured Project",
       "code": "Code",
       "demo": "Demo",
-      "relevance": "Relevance"
+      "relevance": "Relevance",
+      "inProgress": "In Progress",
+      "clickForDetails": "Click for more details",
+      "openDetails": "Open details for {title}",
+      "defaultCategory": "Project"
     },
     "export": {
       "downloading": "Exporting...",
@@ -93,6 +100,29 @@
       "devops": "DevOps",
       "cpp": "C++",
       "artistic": "Artistic"
+    },
+    "detailModal": {
+      "close": "Close",
+      "image": "Image",
+      "prevImage": "Previous image",
+      "nextImage": "Next image",
+      "goToImage": "Go to image",
+      "functional": {
+        "title": "What it does"
+      },
+      "technical": {
+        "title": "How it's built"
+      },
+      "technologies": "Technologies",
+      "skills": "Skills",
+      "links": {
+        "title": "Links",
+        "github": "GitHub",
+        "demo": "Live Demo",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "other": "Link"
+      }
     }
   },
   "letters": {

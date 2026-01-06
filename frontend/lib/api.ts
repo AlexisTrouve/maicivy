@@ -5,7 +5,17 @@ import {
   VisitorStatus
 } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// Use internal Docker URL for server-side, public URL for client-side
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    // Server-side: use internal Docker network
+    return process.env.API_URL || 'http://maicivy-backend:8080';
+  }
+  // Client-side: use public URL
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export class ApiClient {
   private baseUrl: string;
@@ -143,22 +153,121 @@ export const api = new ApiClient();
 // Export helpers typés (seront enrichis dans les phases suivantes)
 export const cvApi = {
   getCV: (theme?: string) =>
-    api.get<any>('/api/cv', theme ? { theme } : undefined),
+    api.get<any>('/api/v1/cv', theme ? { theme } : undefined),
   getThemes: () =>
-    api.get<any>('/api/cv/themes'),
+    api.get<any>('/api/v1/cv/themes'),
 };
 
 export const healthApi = {
   check: () => api.get<{ status: string; timestamp: string }>('/health'),
 };
 
+// Job response type
+interface JobResponse {
+  job_id: string;
+  status: string;
+  message: string;
+  rate_limit_remaining: number;
+}
+
+interface JobStatus {
+  job_id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  letter_motivation_id?: string;
+  letter_anti_motivation_id?: string;
+  error?: string;
+}
+
+interface LetterPairResponse {
+  motivation_letter: {
+    id: string;
+    company_name: string;
+    letter_type: string;
+    content: string;
+    created_at: string;
+  } | null;
+  anti_motivation_letter: {
+    id: string;
+    company_name: string;
+    letter_type: string;
+    content: string;
+    created_at: string;
+  } | null;
+  company_name: string;
+}
+
 // Letters API (Phase 3)
 export const lettersApi = {
   generate: (data: GenerateLetterRequest) =>
-    api.post<GeneratedLetters>('/api/v1/letters/generate', data),
+    api.post<JobResponse>('/api/v1/letters/generate', data),
+
+  getJobStatus: (jobId: string) =>
+    api.get<JobStatus>(`/api/v1/letters/job/${jobId}`),
+
+  getLetterPair: (companyName: string) =>
+    api.get<LetterPairResponse>('/api/v1/letters/pair', { company: companyName }),
 
   getById: (id: string) =>
     api.get<GeneratedLetters>(`/api/v1/letters/${id}`),
+
+  // Poll until job completes and return letters
+  generateAndWait: async (data: GenerateLetterRequest, onProgress?: (p: number) => void): Promise<GeneratedLetters> => {
+    const job = await api.post<JobResponse>('/api/v1/letters/generate', data);
+    const jobId = job.job_id;
+    const companyName = data.company_name;
+
+    // Poll for completion
+    let attempts = 0;
+    const maxAttempts = 60; // 60 * 2s = 2 minutes max
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      attempts++;
+
+      try {
+        const status = await api.get<JobStatus>(`/api/v1/letters/job/${jobId}`);
+
+        if (onProgress) {
+          onProgress(status.progress || Math.min(attempts * 5, 90));
+        }
+
+        if (status.status === 'completed') {
+          // Get the letter pair
+          const pair = await api.get<LetterPairResponse>('/api/v1/letters/pair', { company: companyName });
+
+          return {
+            id: jobId,
+            companyName: pair.company_name,
+            createdAt: pair.motivation_letter?.created_at || new Date().toISOString(),
+            motivationLetter: pair.motivation_letter?.content || '',
+            antiMotivationLetter: pair.anti_motivation_letter?.content || '',
+          } as GeneratedLetters;
+        }
+
+        if (status.status === 'failed') {
+          throw new Error(status.error || 'Generation failed');
+        }
+      } catch (e: any) {
+        // Job might be completed and removed from queue, try getting letters directly
+        if (e.statusCode === 404) {
+          const pair = await api.get<LetterPairResponse>('/api/v1/letters/pair', { company: companyName });
+          if (pair.motivation_letter) {
+            return {
+              id: jobId,
+              companyName: pair.company_name,
+              createdAt: pair.motivation_letter.created_at,
+              motivationLetter: pair.motivation_letter.content,
+              antiMotivationLetter: pair.anti_motivation_letter?.content || '',
+            } as GeneratedLetters;
+          }
+        }
+        // Continue polling if other error
+      }
+    }
+
+    throw new Error('Generation timeout');
+  },
 
   downloadPDF: async (id: string, type: 'motivation' | 'anti' | 'both') => {
     const response = await fetch(

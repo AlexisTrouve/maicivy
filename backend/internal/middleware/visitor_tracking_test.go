@@ -81,7 +81,7 @@ func TestVisitorTracking_SubsequentVisits(t *testing.T) {
 
 	// Request avec cookie existant
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.Header.Set("Cookie", "session_id=existing-session-123")
+	req.Header.Set("Cookie", "maicivy_session=existing-session-123")
 
 	resp, err := app.Test(req)
 
@@ -248,7 +248,7 @@ func TestVisitorTracking_RateLimiting(t *testing.T) {
 
 	// Request
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.Header.Set("Cookie", "session_id=spammer")
+	req.Header.Set("Cookie", "maicivy_session=spammer")
 
 	resp, err := app.Test(req)
 

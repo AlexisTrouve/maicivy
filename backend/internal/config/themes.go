@@ -5,6 +5,7 @@ type CVTheme struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
+	Icon        string             `json:"icon"`               // Emoji or icon identifier
 	TagWeights  map[string]float64 `json:"tagWeights"` // tag → poids (0.0-1.0)
 }
 
@@ -15,6 +16,7 @@ func GetAvailableThemes() map[string]CVTheme {
 			ID:          "backend",
 			Name:        "Backend Developer",
 			Description: "Focus sur développement backend, APIs, bases de données",
+			Icon:        "\U0001F5A5",
 			TagWeights: map[string]float64{
 				"go":            1.0,
 				"api":           1.0,
@@ -34,6 +36,7 @@ func GetAvailableThemes() map[string]CVTheme {
 			ID:          "cpp",
 			Name:        "C++ Developer",
 			Description: "Focus sur développement C++, systèmes bas niveau",
+			Icon:        "\U0001F527",
 			TagWeights: map[string]float64{
 				"c++":          1.0,
 				"cpp":          1.0,
@@ -53,6 +56,7 @@ func GetAvailableThemes() map[string]CVTheme {
 			ID:          "artistique",
 			Name:        "Creative & Artistic",
 			Description: "Focus sur projets créatifs, design, visualisation",
+			Icon:        "\U0001F3A8",
 			TagWeights: map[string]float64{
 				"design":      1.0,
 				"art":         1.0,
@@ -73,6 +77,7 @@ func GetAvailableThemes() map[string]CVTheme {
 			ID:          "fullstack",
 			Name:        "Full-Stack Developer",
 			Description: "Focus sur développement full-stack, frontend + backend",
+			Icon:        "\U0001F4BB",
 			TagWeights: map[string]float64{
 				"fullstack":  1.0,
 				"frontend":   0.9,
@@ -92,6 +97,7 @@ func GetAvailableThemes() map[string]CVTheme {
 			ID:          "devops",
 			Name:        "DevOps Engineer",
 			Description: "Focus sur infrastructure, CI/CD, monitoring",
+			Icon:        "\U0001F433",
 			TagWeights: map[string]float64{
 				"devops":     1.0,
 				"docker":     1.0,

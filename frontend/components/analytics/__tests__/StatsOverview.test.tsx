@@ -25,12 +25,42 @@ describe('StatsOverview', () => {
     jest.useRealTimers();
   });
 
-  const mockStatsData = {
-    totalVisitors: 1543,
-    totalPageViews: 8234,
-    totalLetters: 456,
-    conversionRate: 29.6,
-    activeVisitors: 12,
+  // API response format uses snake_case wrapped in {success, data}
+  const mockStatsApiResponse = {
+    success: true,
+    data: {
+      unique_visitors: 1543,
+      total_events: 8234,
+      letters_generated: 456,
+      conversion_rate: 0.296, // Backend returns as decimal
+    },
+  };
+
+  const mockRealtimeApiResponse = {
+    success: true,
+    data: {
+      current_visitors: 12,
+      unique_today: 100,
+      total_events: 500,
+      letters_today: 10,
+      timestamp: Date.now(),
+    },
+  };
+
+  // Helper to mock both fetch calls
+  const mockBothApis = () => {
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/realtime')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => mockRealtimeApiResponse,
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockStatsApiResponse,
+      });
+    });
   };
 
   it('should render loading skeletons initially', () => {
@@ -45,10 +75,7 @@ describe('StatsOverview', () => {
   });
 
   it('should fetch stats on mount', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -57,14 +84,15 @@ describe('StatsOverview', () => {
         'http://localhost:8080/api/v1/analytics/stats',
         { credentials: 'include' }
       );
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:8080/api/v1/analytics/realtime',
+        { credentials: 'include' }
+      );
     });
   });
 
   it('should render all 4 stat cards', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -77,10 +105,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display visitors count', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -90,10 +115,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display active visitors in subtitle', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -103,10 +125,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display page views count', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -116,10 +135,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display letters count', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -129,10 +145,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display conversion rate as percentage', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -142,10 +155,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render all icons', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -158,10 +168,7 @@ describe('StatsOverview', () => {
   });
 
   it('should apply correct color classes to icons', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -173,10 +180,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render in grid layout', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -187,10 +191,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render cards with rounded borders', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -201,10 +202,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display subtitles for each card', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -216,34 +214,35 @@ describe('StatsOverview', () => {
     });
   });
 
-  it('should use mock data on API error', async () => {
+  it('should show zeros on API error', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('API Error'));
 
     render(<StatsOverview />);
 
     await waitFor(() => {
-      // Should display mock data
-      expect(screen.getByText('1543')).toBeInTheDocument();
-      expect(screen.getByText('8234')).toBeInTheDocument();
-      expect(screen.getByText('456')).toBeInTheDocument();
-      expect(screen.getByText('29.6%')).toBeInTheDocument();
+      // Should display zeros on error
+      const zeros = screen.getAllByText('0');
+      expect(zeros.length).toBeGreaterThan(0);
     });
 
     consoleErrorSpy.mockRestore();
   });
 
   it('should handle API response with missing activeVisitors', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        totalVisitors: 100,
-        totalPageViews: 500,
-        totalLetters: 20,
-        conversionRate: 20,
-        // activeVisitors is undefined
-      }),
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/realtime')) {
+        // Realtime returns no current_visitors
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, data: {} }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockStatsApiResponse,
+      });
     });
 
     render(<StatsOverview />);
@@ -255,17 +254,13 @@ describe('StatsOverview', () => {
 
   it('should auto-refresh every 30 seconds', async () => {
     jest.useFakeTimers();
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
-    // Initial fetch
+    // Initial fetch (2 calls: stats + realtime)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
     // Advance 30 seconds and flush promises
@@ -275,7 +270,7 @@ describe('StatsOverview', () => {
     });
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(4); // 2 more calls
     });
 
     jest.useRealTimers();
@@ -283,16 +278,12 @@ describe('StatsOverview', () => {
 
   it('should cleanup interval on unmount', async () => {
     jest.useFakeTimers();
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { unmount } = render(<StatsOverview />);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
     unmount();
@@ -303,16 +294,13 @@ describe('StatsOverview', () => {
     });
 
     // Should not fetch again
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
 
     jest.useRealTimers();
   });
 
   it('should display values with correct text size and styling', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -323,10 +311,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render card titles as muted foreground', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -337,10 +322,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render subtitles with small text', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -353,7 +335,7 @@ describe('StatsOverview', () => {
   it('should handle 404 API response', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 404,
     });
@@ -361,18 +343,16 @@ describe('StatsOverview', () => {
     render(<StatsOverview />);
 
     await waitFor(() => {
-      // Should fall back to mock data
-      expect(screen.getByText('1543')).toBeInTheDocument();
+      // Should fall back to zero values
+      const zeros = screen.getAllByText('0');
+      expect(zeros.length).toBeGreaterThan(0);
     });
 
     consoleErrorSpy.mockRestore();
   });
 
   it('should apply gap-4 spacing to grid', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -383,10 +363,7 @@ describe('StatsOverview', () => {
   });
 
   it('should render cards with p-6 padding', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     const { container } = render(<StatsOverview />);
 
@@ -397,10 +374,7 @@ describe('StatsOverview', () => {
   });
 
   it('should display icons with h-4 w-4 size', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStatsData,
-    });
+    mockBothApis();
 
     render(<StatsOverview />);
 
@@ -425,15 +399,28 @@ describe('StatsOverview', () => {
   });
 
   it('should handle zero values', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        totalVisitors: 0,
-        totalPageViews: 0,
-        totalLetters: 0,
-        conversionRate: 0,
-        activeVisitors: 0,
-      }),
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/realtime')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: { current_visitors: 0 },
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            unique_visitors: 0,
+            total_events: 0,
+            letters_generated: 0,
+            conversion_rate: 0,
+          },
+        }),
+      });
     });
 
     render(<StatsOverview />);

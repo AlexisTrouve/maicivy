@@ -112,7 +112,7 @@ func (h *ProfileHandler) GetCurrentProfile(c *fiber.Ctx) error {
 // GetBypassStatus vérifie si la session a un bypass actif
 // GET /api/v1/profile/bypass
 func (h *ProfileHandler) GetBypassStatus(c *fiber.Ctx) error {
-	sessionID := c.Cookies("session_id", "")
+	sessionID := c.Cookies("maicivy_session", "")
 	if sessionID == "" {
 		return c.JSON(fiber.Map{
 			"success": true,
@@ -139,7 +139,7 @@ func (h *ProfileHandler) GetBypassStatus(c *fiber.Ctx) error {
 // PostEnableBypass active manuellement le bypass pour une session (admin only)
 // POST /api/v1/profile/bypass/enable
 func (h *ProfileHandler) PostEnableBypass(c *fiber.Ctx) error {
-	sessionID := c.Cookies("session_id", "")
+	sessionID := c.Cookies("maicivy_session", "")
 	if sessionID == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"success": false,

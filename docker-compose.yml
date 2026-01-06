@@ -14,7 +14,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+      # Removed initdb.d mount - GORM handles schema creation
     networks:
       - maicivy
     healthcheck:
@@ -77,6 +77,8 @@ services:
       # Server
       SERVER_PORT: 8080
       SERVER_ENV: ${SERVER_ENV:-development}
+      # Chrome for PDF generation
+      CHROME_PATH: /usr/bin/chromium-browser
       # API Keys (to be set in .env)
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -96,9 +98,7 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    volumes:
-      - ./backend:/app
-      - backend-cache:/go/pkg/mod
+    # Note: volume mounts removed for production (binary is in container)
 
   # Frontend - Next.js
   frontend:
@@ -107,8 +107,12 @@ services:
       dockerfile: Dockerfile
       args:
         - BUILDKIT_INLINE_CACHE=1
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     container_name: maicivy-frontend
     environment:
+      # Server-side: internal docker network URL
+      API_URL: http://maicivy-backend:8080
+      # Client-side: public URL
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       NODE_ENV: ${NODE_ENV:-development}
     ports:
@@ -125,18 +129,12 @@ services:
       retries: 5
       start_period: 45s
     restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - frontend-node-modules:/app/node_modules
+    # Note: volume mounts removed for production (built app is in container)
 
 volumes:
   postgres-data:
     driver: local
   redis-data:
-    driver: local
-  backend-cache:
-    driver: local
-  frontend-node-modules:
     driver: local
 
 networks:

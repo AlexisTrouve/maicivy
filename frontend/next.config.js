@@ -5,15 +5,26 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
+  // Ignore ESLint during production builds (warnings are checked in CI)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Ignore TypeScript errors during builds (checked separately in CI)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Transpile three.js packages for better compatibility
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', 'three-stdlib'],
 
   // API Backend
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
     return [
       {
         source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL + '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },

@@ -42,23 +42,26 @@ export default function Heatmap() {
 
       if (!response.ok) throw new Error('Failed to fetch heatmap data');
 
-      const data = await response.json();
-      setHeatmapData(data);
+      const json = await response.json();
+
+      // Handle API response format: { success: true, data: [...] }
+      if (json.success && Array.isArray(json.data)) {
+        const points = json.data.map((item: { x: number; y: number; intensity?: number; count?: number; element?: string }) => ({
+          x: item.x || 0,
+          y: item.y || 0,
+          intensity: item.intensity || item.count || 0,
+          element: item.element,
+        }));
+        const maxIntensity = points.length > 0
+          ? Math.max(...points.map((p: HeatmapPoint) => p.intensity))
+          : 0;
+        setHeatmapData({ points, maxIntensity });
+      } else {
+        setHeatmapData({ points: [], maxIntensity: 0 });
+      }
     } catch (error) {
       console.error('Error fetching heatmap data:', error);
-      // Mock data for development
-      setHeatmapData({
-        points: [
-          { x: 20, y: 15, intensity: 45, element: 'theme_selector' },
-          { x: 50, y: 30, intensity: 78, element: 'experience_timeline' },
-          { x: 75, y: 25, intensity: 92, element: 'export_pdf_button' },
-          { x: 30, y: 60, intensity: 34, element: 'skills_cloud' },
-          { x: 65, y: 70, intensity: 56, element: 'projects_grid' },
-          { x: 85, y: 55, intensity: 23, element: 'contact_form' },
-          { x: 40, y: 45, intensity: 67, element: 'letter_generator' },
-        ],
-        maxIntensity: 100,
-      });
+      setHeatmapData({ points: [], maxIntensity: 0 });
     } finally {
       setIsLoading(false);
     }

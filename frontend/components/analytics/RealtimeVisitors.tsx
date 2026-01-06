@@ -4,9 +4,17 @@ import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-interface RealtimeData {
-  currentVisitors: number;
-  timestamp: number;
+// Backend WebSocket message format
+interface WSMessage {
+  type: 'heartbeat' | 'initial_stats' | 'pong';
+  data?: {
+    current_visitors?: number;
+    unique_today?: number;
+    total_events?: number;
+    letters_today?: number;
+    timestamp?: number;
+  };
+  time?: number;
 }
 
 export default function RealtimeVisitors() {
@@ -40,9 +48,15 @@ export default function RealtimeVisitors() {
 
         socket.onmessage = (event) => {
           try {
-            const data: RealtimeData = JSON.parse(event.data);
-            setPrevVisitors(visitors);
-            setVisitors(data.currentVisitors);
+            const message: WSMessage = JSON.parse(event.data);
+
+            // Handle different message types from backend
+            if ((message.type === 'heartbeat' || message.type === 'initial_stats') && message.data) {
+              // Backend uses snake_case: current_visitors
+              const currentVisitors = message.data.current_visitors || 0;
+              setPrevVisitors(visitors);
+              setVisitors(currentVisitors);
+            }
           } catch (error) {
             console.error('[WS] Failed to parse message:', error);
           }

@@ -34,23 +34,44 @@ export default function StatsOverview() {
   const fetchStats = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const response = await fetch(`${backendUrl}/api/v1/analytics/stats`, {
-        credentials: 'include',
-      });
 
-      if (!response.ok) throw new Error('Failed to fetch stats');
+      // Fetch both stats and realtime in parallel
+      const [statsResponse, realtimeResponse] = await Promise.all([
+        fetch(`${backendUrl}/api/v1/analytics/stats`, { credentials: 'include' }),
+        fetch(`${backendUrl}/api/v1/analytics/realtime`, { credentials: 'include' }),
+      ]);
 
-      const data = await response.json();
-      setStats(data);
+      if (!statsResponse.ok) throw new Error('Failed to fetch stats');
+
+      const statsJson = await statsResponse.json();
+      const realtimeJson = realtimeResponse.ok ? await realtimeResponse.json() : null;
+
+      // Map API response to expected format
+      if (statsJson.success && statsJson.data) {
+        // Get active visitors from realtime endpoint (current_visitors field)
+        const activeVisitors = realtimeJson?.success && realtimeJson?.data?.current_visitors
+          ? realtimeJson.data.current_visitors
+          : 0;
+
+        setStats({
+          totalVisitors: statsJson.data.unique_visitors || 0,
+          totalPageViews: statsJson.data.total_events || 0,
+          totalLetters: statsJson.data.letters_generated || 0,
+          conversionRate: Math.round((statsJson.data.conversion_rate || 0) * 100 * 10) / 10,
+          activeVisitors: activeVisitors,
+        });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Mock data for development
+      // Keep current stats on error, don't show mock data in production
       setStats({
-        totalVisitors: 1543,
-        totalPageViews: 8234,
-        totalLetters: 456,
-        conversionRate: 29.6,
-        activeVisitors: 12,
+        totalVisitors: 0,
+        totalPageViews: 0,
+        totalLetters: 0,
+        conversionRate: 0,
+        activeVisitors: 0,
       });
     } finally {
       setIsLoading(false);

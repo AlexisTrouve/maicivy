@@ -16,7 +16,6 @@ import {
   Code,
   Layers,
   ArrowRight,
-  ExternalLink,
   CheckCircle2,
   Terminal
 } from 'lucide-react';

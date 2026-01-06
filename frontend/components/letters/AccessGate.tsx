@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Lock, Eye, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useVisitCount } from '@/hooks/useVisitCount';
 
 interface AccessGateProps {
@@ -115,12 +116,12 @@ export function AccessGate({ children }: AccessGateProps) {
 
         {/* CTA */}
         <div className="mt-8 text-center">
-          <a
+          <Link
             href="/cv"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             {t('exploreCV')}
-          </a>
+          </Link>
         </div>
       </div>
     </motion.div>

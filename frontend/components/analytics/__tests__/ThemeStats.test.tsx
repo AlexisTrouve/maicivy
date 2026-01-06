@@ -19,13 +19,16 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe('ThemeStats', () => {
+  // Mock data matching actual API format: { success: true, data: [...] }
+  // Backend returns 'views' field (not 'count')
   const mockThemeStats = {
-    themes: [
-      { theme: 'backend', count: 523, percentage: 34 },
-      { theme: 'full-stack', count: 312, percentage: 20 },
-      { theme: 'devops', count: 198, percentage: 13 },
-      { theme: 'ai', count: 167, percentage: 11 },
-      { theme: 'mobile', count: 89, percentage: 6 },
+    success: true,
+    data: [
+      { theme: 'backend', views: 523 },
+      { theme: 'full-stack', views: 312 },
+      { theme: 'devops', views: 198 },
+      { theme: 'ai', views: 167 },
+      { theme: 'mobile', views: 89 },
     ],
   };
 
@@ -90,14 +93,16 @@ describe('ThemeStats', () => {
 
     render(<ThemeStats />);
 
+    // Percentages are calculated by component: count/total*100
+    // Total = 523+312+198+167+89 = 1289
     await waitFor(() => {
-      expect(screen.getByText('34.0%')).toBeInTheDocument();
+      expect(screen.getByText('40.6%')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('20.0%')).toBeInTheDocument();
+    expect(screen.getByText('24.2%')).toBeInTheDocument();
+    expect(screen.getByText('15.4%')).toBeInTheDocument();
     expect(screen.getByText('13.0%')).toBeInTheDocument();
-    expect(screen.getByText('11.0%')).toBeInTheDocument();
-    expect(screen.getByText('6.0%')).toBeInTheDocument();
+    expect(screen.getByText('6.9%')).toBeInTheDocument();
   });
 
   it('should render progress bars for each theme', async () => {
@@ -180,7 +185,7 @@ describe('ThemeStats', () => {
     });
   });
 
-  it('should handle API error and show mock data', async () => {
+  it('should handle API error gracefully', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     server.use(
@@ -194,8 +199,9 @@ describe('ThemeStats', () => {
     render(<ThemeStats />);
 
     await waitFor(() => {
-      // Should show mock data on error
-      expect(screen.getByText('backend')).toBeInTheDocument();
+      // Should not be in loading state anymore
+      const skeleton = document.querySelector('.animate-pulse');
+      expect(skeleton).not.toBeInTheDocument();
     });
 
     consoleErrorSpy.mockRestore();
@@ -205,7 +211,8 @@ describe('ThemeStats', () => {
     server.use(
       rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
         return res(ctx.json({
-          themes: [{ theme: 'backend', count: 100, percentage: 50 }],
+          success: true,
+          data: [{ theme: 'backend', views: 100 }],
         }));
       })
     );
@@ -222,7 +229,8 @@ describe('ThemeStats', () => {
     server.use(
       rest.get('*/api/v1/analytics/themes', (req, res, ctx) => {
         return res(ctx.json({
-          themes: [{ theme: 'backend', count: 100, percentage: 75 }],
+          success: true,
+          data: [{ theme: 'backend', views: 100 }],
         }));
       })
     );
@@ -231,7 +239,8 @@ describe('ThemeStats', () => {
 
     await waitFor(() => {
       const progressBar = container.querySelector('.bg-blue-500');
-      expect(progressBar).toHaveStyle({ width: '75%' });
+      // With single item, percentage is 100%
+      expect(progressBar).toHaveStyle({ width: '100%' });
     });
   });
 
