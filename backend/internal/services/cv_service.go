@@ -19,6 +19,7 @@ type CVService struct {
 	db             *gorm.DB
 	redis          *redis.Client
 	scoringService *CVScoringService
+	l10nHelper     *LocalizationHelper
 }
 
 // NewCVService crée une nouvelle instance
@@ -27,6 +28,7 @@ func NewCVService(db *gorm.DB, redisClient *redis.Client) *CVService {
 		db:             db,
 		redis:          redisClient,
 		scoringService: NewCVScoringService(),
+		l10nHelper:     NewLocalizationHelper(),
 	}
 }
 
@@ -57,16 +59,19 @@ type AdaptiveCVResponse struct {
 	GeneratedAt time.Time                  `json:"generatedAt"`
 }
 
-// GetAdaptiveCV retourne le CV adapté au thème demandé
-func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*AdaptiveCVResponse, error) {
+// GetAdaptiveCV retourne le CV adapté au thème et à la langue demandés
+func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang string) (*AdaptiveCVResponse, error) {
+	// 0. Normaliser la langue
+	lang = s.l10nHelper.NormalizeLanguage(lang)
+
 	// 1. Vérifier si thème existe
 	theme := config.GetTheme(themeID)
 	if theme == nil {
 		return nil, fmt.Errorf("theme not found: %s", themeID)
 	}
 
-	// 2. Vérifier cache Redis
-	cacheKey := fmt.Sprintf("cv:theme:%s", themeID)
+	// 2. Vérifier cache Redis (inclure langue dans la clé)
+	cacheKey := fmt.Sprintf("cv:theme:%s:lang:%s", themeID, lang)
 	cached, err := s.redis.Get(ctx, cacheKey).Result()
 	if err == nil && cached != "" {
 		// Cache hit
@@ -98,11 +103,12 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 	scoredSkills := s.scoringService.ScoreSkills(skills, theme)
 	scoredProjects := s.scoringService.ScoreProjects(projects, theme)
 
-	// 5. Extraire les items AVEC scores pour la réponse
+	// 5. Localiser et extraire les items AVEC scores pour la réponse
 	filteredExperiences := make([]ScoredExperienceResponse, 0, len(scoredExp))
 	for _, se := range scoredExp {
+		localizedExp := s.l10nHelper.LocalizeExperience(se.Experience, lang)
 		filteredExperiences = append(filteredExperiences, ScoredExperienceResponse{
-			Experience: se.Experience,
+			Experience: localizedExp,
 			Score:      se.Score,
 		})
 	}
@@ -114,16 +120,18 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string) (*Adaptiv
 
 	filteredSkills := make([]ScoredSkillResponse, 0, len(scoredSkills))
 	for _, ss := range scoredSkills {
+		localizedSkill := s.l10nHelper.LocalizeSkill(ss.Skill, lang)
 		filteredSkills = append(filteredSkills, ScoredSkillResponse{
-			Skill: ss.Skill,
+			Skill: localizedSkill,
 			Score: ss.Score,
 		})
 	}
 
 	filteredProjects := make([]ScoredProjectResponse, 0, len(scoredProjects))
 	for _, sp := range scoredProjects {
+		localizedProject := s.l10nHelper.LocalizeProject(sp.Project, lang)
 		filteredProjects = append(filteredProjects, ScoredProjectResponse{
-			Project: sp.Project,
+			Project: localizedProject,
 			Score:   sp.Score,
 		})
 	}

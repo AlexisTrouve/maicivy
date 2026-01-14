@@ -21,8 +21,8 @@ type MockLetterQueueService struct {
 	mock.Mock
 }
 
-func (m *MockLetterQueueService) EnqueueJob(visitorID, companyName, jobTitle, theme string) (string, error) {
-	args := m.Called(visitorID, companyName, jobTitle, theme)
+func (m *MockLetterQueueService) EnqueueJob(visitorID, companyName, jobTitle, theme, lang string) (string, error) {
+	args := m.Called(visitorID, companyName, jobTitle, theme, lang)
 	return args.String(0), args.Error(1)
 }
 
@@ -89,7 +89,7 @@ func TestGenerateLetters_Success(t *testing.T) {
 	})
 
 	// Mock queue success
-	mockQueue.On("EnqueueJob", "test-session-123", "Google", "", "backend").
+	mockQueue.On("EnqueueJob", "test-session-123", "Google", "", "backend", "fr").
 		Return("job-abc-123", nil)
 
 	// Request body
@@ -222,7 +222,7 @@ func TestGenerateLetters_QueueError(t *testing.T) {
 	})
 
 	// Mock queue error
-	mockQueue.On("EnqueueJob", "test-session", "Google", "", "backend").
+	mockQueue.On("EnqueueJob", "test-session", "Google", "", "backend", "fr").
 		Return("", assert.AnError)
 
 	// Request
@@ -265,7 +265,7 @@ func TestGenerateLetters_WithJobTitle(t *testing.T) {
 	})
 
 	// Mock avec job title
-	mockQueue.On("EnqueueJob", "test-session", "Microsoft", "Senior Backend Engineer", "backend").
+	mockQueue.On("EnqueueJob", "test-session", "Microsoft", "Senior Backend Engineer", "backend", "fr").
 		Return("job-xyz-456", nil)
 
 	// Request avec job_title
@@ -341,7 +341,7 @@ func TestGenerateLetters_ValidThemes(t *testing.T) {
 
 	for _, theme := range validThemes {
 		t.Run(theme, func(t *testing.T) {
-			mockQueue.On("EnqueueJob", "test-session", "TestCorp", "", theme).
+			mockQueue.On("EnqueueJob", "test-session", "TestCorp", "", theme, "fr").
 				Return("job-123", nil).Once()
 
 			reqBody := dto.GenerateLetterRequest{
@@ -376,7 +376,7 @@ func BenchmarkGenerateLetters(b *testing.B) {
 		return handler.GenerateLetter(c)
 	})
 
-	mockQueue.On("EnqueueJob", "bench-session", "BenchCorp", "", "backend").
+	mockQueue.On("EnqueueJob", "bench-session", "BenchCorp", "", "backend", "fr").
 		Return("job-bench", nil)
 
 	reqBody := dto.GenerateLetterRequest{

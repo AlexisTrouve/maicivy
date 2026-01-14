@@ -30,19 +30,21 @@ func (h *CVHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/cv/export", h.ExportPDF)
 }
 
-// GetAdaptiveCV retourne le CV adapté au thème
+// GetAdaptiveCV retourne le CV adapté au thème et à la langue
 // @Summary Get adaptive CV
-// @Description Returns CV adapted to specified theme
+// @Description Returns CV adapted to specified theme and language
 // @Tags CV
 // @Param theme query string false "Theme ID (backend, cpp, artistique, fullstack, devops)"
+// @Param lang query string false "Language (fr, en)" default(fr)
 // @Success 200 {object} services.AdaptiveCVResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /api/v1/cv [get]
 func (h *CVHandler) GetAdaptiveCV(c *fiber.Ctx) error {
 	themeID := c.Query("theme", "fullstack") // Default: fullstack
+	lang := c.Query("lang", "fr")            // Default: fr
 
-	cv, err := h.cvService.GetAdaptiveCV(c.Context(), themeID)
+	cv, err := h.cvService.GetAdaptiveCV(c.Context(), themeID, lang)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Invalid theme",
@@ -132,10 +134,11 @@ func (h *CVHandler) GetProjects(c *fiber.Ctx) error {
 
 // ExportPDF exporte le CV en PDF
 // @Summary Export CV as PDF
-// @Description Generates and downloads CV as PDF for specified theme
+// @Description Generates and downloads CV as PDF for specified theme and language
 // @Tags CV
 // @Param theme query string false "Theme ID"
 // @Param format query string false "Export format (pdf)" default(pdf)
+// @Param lang query string false "Language (fr, en)" default(fr)
 // @Success 200 {file} application/pdf
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -143,6 +146,7 @@ func (h *CVHandler) GetProjects(c *fiber.Ctx) error {
 func (h *CVHandler) ExportPDF(c *fiber.Ctx) error {
 	themeID := c.Query("theme", "fullstack")
 	format := c.Query("format", "pdf")
+	lang := c.Query("lang", "fr")
 
 	if format != "pdf" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -150,17 +154,24 @@ func (h *CVHandler) ExportPDF(c *fiber.Ctx) error {
 		})
 	}
 
-	// Récupérer CV adaptatif
-	cv, err := h.cvService.GetAdaptiveCV(c.Context(), themeID)
+	// Valider la langue
+	if lang != "fr" && lang != "en" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Supported languages: fr, en",
+		})
+	}
+
+	// Récupérer CV adaptatif avec la langue spécifiée
+	cv, err := h.cvService.GetAdaptiveCV(c.Context(), themeID, lang)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Générer PDF
+	// Générer PDF avec la langue spécifiée
 	pdfService := services.NewPDFService()
-	pdfBytes, err := pdfService.GenerateCVPDF(cv)
+	pdfBytes, err := pdfService.GenerateCVPDF(cv, lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to generate PDF",
@@ -169,7 +180,7 @@ func (h *CVHandler) ExportPDF(c *fiber.Ctx) error {
 
 	// Retourner PDF
 	c.Set("Content-Type", "application/pdf")
-	c.Set("Content-Disposition", "attachment; filename=cv_"+themeID+".pdf")
+	c.Set("Content-Disposition", "attachment; filename=cv_"+themeID+"_"+lang+".pdf")
 	return c.Send(pdfBytes)
 }
 

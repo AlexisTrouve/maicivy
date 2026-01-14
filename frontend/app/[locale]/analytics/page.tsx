@@ -11,17 +11,25 @@ import Heatmap from '@/components/analytics/Heatmap';
 import DateFilter from '@/components/analytics/DateFilter';
 import StatsOverview from '@/components/analytics/StatsOverview';
 
-export const metadata: Metadata = {
-  title: 'Analytics Dashboard - maicivy',
-  description: 'Dashboard analytics en temps réel du CV interactif avec IA',
-  openGraph: {
-    title: 'Analytics Dashboard - maicivy',
-    description: 'Statistiques publiques en temps réel',
-  },
-};
+// Generate dynamic metadata
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const locale = resolvedParams.locale || 'en';
+  const messages = (await import(`@/messages/${locale}.json`)).default;
 
-export default async function AnalyticsPage() {
-  const t = await getTranslations('analytics');
+  return {
+    title: `${messages.analytics.title} - maicivy`,
+    description: messages.analytics.subtitle,
+    openGraph: {
+      title: `${messages.analytics.title} - maicivy`,
+      description: messages.analytics.subtitle,
+    },
+  };
+}
+
+export default async function AnalyticsPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const t = await getTranslations({ locale: resolvedParams.locale, namespace: 'analytics' });
 
   return (
     <div className="container mx-auto px-4 py-8">

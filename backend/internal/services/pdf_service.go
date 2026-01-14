@@ -33,9 +33,9 @@ func NewPDFService() *PDFService {
 }
 
 // GenerateCVPDF génère un PDF du CV
-func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse) ([]byte, error) {
-	// 1. Générer HTML depuis template
-	html, err := s.renderCVHTML(cv)
+func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte, error) {
+	// 1. Générer HTML depuis template avec la langue
+	html, err := s.renderCVHTML(cv, lang)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
@@ -73,20 +73,39 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse) ([]byte, error) {
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate("about:blank"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Injecter HTML encodé en base64
+			// Injecter HTML encodé en base64 pour préserver UTF-8
 			encoded := base64.StdEncoding.EncodeToString([]byte(html))
 			script := fmt.Sprintf(`
-				const html = atob('%s');
-				document.open();
+				const bytes = Uint8Array.from(atob('%s'), c => c.charCodeAt(0));
+				const html = new TextDecoder('utf-8').decode(bytes);
+				document.open('text/html', 'replace');
 				document.write(html);
 				document.close();
 			`, encoded)
 			return chromedp.Evaluate(script, nil).Do(ctx)
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Générer PDF
+			// Attendre que les fonts soient chargées
+			script := `
+				new Promise((resolve) => {
+					if (document.fonts) {
+						document.fonts.ready.then(() => {
+							setTimeout(resolve, 500);
+						});
+					} else {
+						setTimeout(resolve, 2000);
+					}
+				});
+			`
+			return chromedp.Evaluate(script, nil).Do(ctx)
+		}),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			// Générer PDF avec options pour préserver UTF-8
 			var err error
-			pdfBuffer, _, err = page.PrintToPDF().Do(ctx)
+			pdfBuffer, _, err = page.PrintToPDF().
+				WithPrintBackground(true).
+				WithPreferCSSPageSize(true).
+				Do(ctx)
 			return err
 		}),
 	); err != nil {
@@ -97,32 +116,75 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse) ([]byte, error) {
 }
 
 // renderCVHTML génère le HTML du CV depuis template
-func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse) (string, error) {
+func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, error) {
 	var buf strings.Builder
+
+	// Préparer les données avec les traductions
+	data := struct {
+		*AdaptiveCVResponse
+		Lang   string
+		Labels map[string]string
+	}{
+		AdaptiveCVResponse: cv,
+		Lang:               lang,
+		Labels:             getLabels(lang),
+	}
 
 	// Vérifier si template existe
 	tmpl := s.templates.Lookup("cv_base.html")
 	if tmpl == nil {
 		// Utiliser template basique si pas trouvé
-		return s.renderBasicHTML(cv), nil
+		return s.renderBasicHTML(cv, lang), nil
 	}
 
-	if err := tmpl.Execute(&buf, cv); err != nil {
+	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", err
 	}
 
 	return buf.String(), nil
 }
 
+// getLabels retourne les labels traduits pour une langue
+func getLabels(lang string) map[string]string {
+	labels := map[string]map[string]string{
+		"fr": {
+			"cv":                   "CV",
+			"experiences":          "Expériences Professionnelles",
+			"skills":               "Compétences",
+			"projects":             "Projets",
+			"present":              "Présent",
+			"years":                "ans",
+			"generated_on":         "Généré le",
+			"theme":                "Thème",
+		},
+		"en": {
+			"cv":                   "Resume",
+			"experiences":          "Professional Experience",
+			"skills":               "Skills",
+			"projects":             "Projects",
+			"present":              "Present",
+			"years":                "years",
+			"generated_on":         "Generated on",
+			"theme":                "Theme",
+		},
+	}
+
+	if l, ok := labels[lang]; ok {
+		return l
+	}
+	return labels["fr"] // Default to French
+}
+
 // renderBasicHTML génère un HTML simple si template pas disponible
-func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse) string {
+func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse, lang string) string {
 	var buf strings.Builder
+	labels := getLabels(lang)
 
 	buf.WriteString(`<!DOCTYPE html>
-<html lang="fr">
+<html lang="` + lang + `">
 <head>
     <meta charset="UTF-8">
-    <title>CV - ` + cv.Theme.Name + `</title>
+    <title>` + labels["cv"] + ` - ` + cv.Theme.Name + `</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         h1 { color: #2563eb; }
@@ -132,13 +194,13 @@ func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse) string {
     </style>
 </head>
 <body>
-    <h1>CV - ` + cv.Theme.Name + `</h1>
+    <h1>` + labels["cv"] + ` - ` + cv.Theme.Name + `</h1>
     <p>` + cv.Theme.Description + `</p>
 `)
 
 	// Expériences
 	if len(cv.Experiences) > 0 {
-		buf.WriteString(`<div class="section"><h2>Expériences</h2>`)
+		buf.WriteString(`<div class="section"><h2>` + labels["experiences"] + `</h2>`)
 		for _, exp := range cv.Experiences {
 			buf.WriteString(fmt.Sprintf(`<div class="item">
 				<strong>%s</strong> - %s<br>
@@ -150,18 +212,18 @@ func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse) string {
 
 	// Skills
 	if len(cv.Skills) > 0 {
-		buf.WriteString(`<div class="section"><h2>Compétences</h2>`)
+		buf.WriteString(`<div class="section"><h2>` + labels["skills"] + `</h2>`)
 		for _, skill := range cv.Skills {
 			buf.WriteString(fmt.Sprintf(`<div class="item">
-				<strong>%s</strong> - %s (%d ans)
-			</div>`, skill.Name, skill.Level, skill.YearsExperience))
+				<strong>%s</strong> - %s (%d %s)
+			</div>`, skill.Name, skill.Level, skill.YearsExperience, labels["years"]))
 		}
 		buf.WriteString(`</div>`)
 	}
 
 	// Projets
 	if len(cv.Projects) > 0 {
-		buf.WriteString(`<div class="section"><h2>Projets</h2>`)
+		buf.WriteString(`<div class="section"><h2>` + labels["projects"] + `</h2>`)
 		for _, project := range cv.Projects {
 			buf.WriteString(fmt.Sprintf(`<div class="item">
 				<strong>%s</strong><br>

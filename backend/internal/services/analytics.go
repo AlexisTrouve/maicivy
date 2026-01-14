@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
+	"maicivy/internal/metrics"
 	"maicivy/internal/models"
 )
 
@@ -47,6 +48,28 @@ func (s *AnalyticsService) TrackEvent(ctx context.Context, event *models.Analyti
 	// 3. Publier événement temps réel via Pub/Sub
 	if err := s.publishRealtimeEvent(ctx, event); err != nil {
 		log.Warn().Err(err).Msg("Failed to publish realtime event")
+	}
+
+	// 4. Incrémenter métrique Prometheus
+	metrics.IncrementEvent(string(event.EventType))
+
+	// 5. Métriques spécifiques
+	if event.EventType == models.EventTypeLetterGenerate {
+		var eventData map[string]interface{}
+		if err := json.Unmarshal([]byte(event.EventData), &eventData); err == nil {
+			if letterType, ok := eventData["letter_type"].(string); ok {
+				metrics.IncrementLetter(letterType)
+			}
+		}
+	} else if event.EventType == models.EventTypeCVThemeChange {
+		var eventData map[string]interface{}
+		if err := json.Unmarshal([]byte(event.EventData), &eventData); err == nil {
+			if theme, ok := eventData["theme"].(string); ok {
+				// Incrémenter la vue de ce thème dans Prometheus
+				// Note: on pourrait maintenir un compteur par thème
+				metrics.IncrementEvent("cv_theme_view_" + theme)
+			}
+		}
 	}
 
 	return nil
@@ -128,8 +151,13 @@ func (s *AnalyticsService) publishRealtimeEvent(ctx context.Context, event *mode
 func (s *AnalyticsService) GetRealtimeStats(ctx context.Context) (map[string]interface{}, error) {
 	pipe := s.redis.Pipeline()
 
-	// Visiteurs actuels (Set avec TTL 5 minutes)
-	currentVisitorsCmd := pipe.SCard(ctx, "analytics:realtime:visitors")
+	// Nettoyer les visiteurs inactifs d'abord
+	now := time.Now().Unix()
+	fiveMinutesAgo := now - 5*60
+	pipe.ZRemRangeByScore(ctx, "analytics:realtime:visitors", "-inf", fmt.Sprintf("%d", fiveMinutesAgo))
+
+	// Visiteurs actuels (Sorted Set avec timestamps)
+	currentVisitorsCmd := pipe.ZCard(ctx, "analytics:realtime:visitors")
 
 	// Visiteurs uniques aujourd'hui (HyperLogLog)
 	uniqueTodayCmd := pipe.PFCount(ctx, "analytics:visitors:unique:day:"+time.Now().Format("2006-01-02"))
@@ -180,6 +208,9 @@ func (s *AnalyticsService) GetRealtimeStats(ctx context.Context) (map[string]int
 		"letters_today":    lettersGenerated,
 		"timestamp":        time.Now().Unix(),
 	}
+
+	// Mettre à jour Gauge Prometheus pour visiteurs actuels
+	metrics.UpdateCurrentVisitors(float64(currentVisitorsCmd.Val()))
 
 	return stats, nil
 }
@@ -269,6 +300,9 @@ func (s *AnalyticsService) GetStats(ctx context.Context, period string) (map[str
 	if uniqueVisitors > 0 {
 		conversionRate = float64(lettersGenerated) / float64(uniqueVisitors)
 	}
+
+	// Mettre à jour métrique Prometheus
+	metrics.UpdateConversionRate(conversionRate)
 
 	stats := map[string]interface{}{
 		"period":            period,
@@ -421,11 +455,25 @@ func (s *AnalyticsService) getLettersHistory(ctx context.Context, period string,
 
 // MarkVisitorActive marque un visiteur comme actif (temps réel)
 func (s *AnalyticsService) MarkVisitorActive(ctx context.Context, visitorID uuid.UUID) error {
-	// Ajouter au Set avec TTL 5 minutes
+	// Utiliser un Sorted Set avec timestamp pour pouvoir supprimer individuellement
 	key := "analytics:realtime:visitors"
+	now := time.Now().Unix()
+
 	pipe := s.redis.Pipeline()
-	pipe.SAdd(ctx, key, visitorID.String())
-	pipe.Expire(ctx, key, 5*time.Minute)
+
+	// Ajouter le visiteur avec le timestamp actuel comme score
+	pipe.ZAdd(ctx, key, redis.Z{
+		Score:  float64(now),
+		Member: visitorID.String(),
+	})
+
+	// Supprimer les visiteurs inactifs (> 5 minutes)
+	fiveMinutesAgo := now - 5*60
+	pipe.ZRemRangeByScore(ctx, key, "-inf", fmt.Sprintf("%d", fiveMinutesAgo))
+
+	// TTL global sur la clé pour cleanup si plus personne
+	pipe.Expire(ctx, key, 10*time.Minute)
+
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -508,9 +556,10 @@ func (s *AnalyticsService) GetHeatmapData(ctx context.Context, pageURL string, h
 		var x, y float64
 		fmt.Sscanf(key, "%f,%f", &x, &y)
 		result = append(result, map[string]interface{}{
-			"x":     x,
-			"y":     y,
-			"count": count,
+			"x":         x,
+			"y":         y,
+			"count":     count,
+			"intensity": count, // Alias pour compatibilité frontend
 		})
 	}
 

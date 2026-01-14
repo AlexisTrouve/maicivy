@@ -124,7 +124,7 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
 
       {/* Legend */}
       <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-        <p>La taille représente le niveau de compétence et la pertinence par rapport au thème sélectionné</p>
+        <p>{t('legend')}</p>
       </div>
     </div>
   );

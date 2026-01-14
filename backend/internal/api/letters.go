@@ -55,6 +55,12 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 		})
 	}
 
+	// Normaliser la langue (défaut: fr)
+	lang := req.Lang
+	if lang == "" {
+		lang = "fr"
+	}
+
 	// Récupérer session ID depuis les locals (mis par tracking middleware)
 	sessionID, ok := c.Locals("session_id").(string)
 	if !ok || sessionID == "" {
@@ -69,7 +75,7 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 	}
 
 	// Enqueue job
-	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme)
+	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme, lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to enqueue generation job",

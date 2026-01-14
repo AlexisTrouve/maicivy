@@ -228,7 +228,7 @@ func (suite *PDFServiceTestSuite) TestGenerateCVPDF_Integration() {
 		GeneratedAt: time.Now(),
 	}
 
-	pdfBytes, err := suite.service.GenerateCVPDF(cv)
+	pdfBytes, err := suite.service.GenerateCVPDF(cv, "fr")
 
 	// Si chromedp n'est pas disponible, erreur attendue
 	if err != nil {
@@ -265,7 +265,7 @@ func (suite *PDFServiceTestSuite) TestGenerateCVPDF_EmptyCV() {
 		GeneratedAt: time.Now(),
 	}
 
-	pdfBytes, err := suite.service.GenerateCVPDF(cv)
+	pdfBytes, err := suite.service.GenerateCVPDF(cv, "en")
 
 	if err != nil {
 		if strings.Contains(err.Error(), "chromedp") {

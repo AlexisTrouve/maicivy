@@ -36,7 +36,7 @@ export function LetterPreview({ letters, onReset }: LetterPreviewProps) {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `lettre-${letters.companyName}-${type}.pdf`);
+      link.setAttribute('download', `${t('filenameLetter')}-${letters.companyName}-${type}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();

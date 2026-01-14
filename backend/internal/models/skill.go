@@ -29,6 +29,10 @@ type Skill struct {
 	Description string `gorm:"type:text" json:"description" validate:"max=500"`
 	Featured    bool   `gorm:"default:false" json:"featured"`
 	Icon        string `gorm:"type:varchar(100)" json:"icon"` // Icon name (ex: "golang", "react")
+
+	// i18n - English translations
+	NameEn        string `gorm:"type:varchar(100);column:name_en" json:"nameEn,omitempty"`
+	DescriptionEn string `gorm:"type:text;column:description_en" json:"descriptionEn,omitempty"`
 }
 
 // TableName override le nom de table par défaut

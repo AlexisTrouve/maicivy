@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{.Lang}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV - {{.Theme.Name}}</title>
+    <title>{{.Labels.cv}} - {{.Theme.Name}}</title>
     <style>
         * {
             margin: 0;
@@ -161,14 +161,14 @@
 
     {{if .Experiences}}
     <div class="section">
-        <h2 class="section-title">Expériences Professionnelles</h2>
+        <h2 class="section-title">{{.Labels.experiences}}</h2>
         {{range .Experiences}}
         <div class="experience">
             <div class="experience-title">{{.Title}}</div>
             <div class="experience-company">{{.Company}}</div>
             <div class="experience-dates">
                 {{.StartDate.Format "Jan 2006"}} -
-                {{if .EndDate}}{{.EndDate.Format "Jan 2006"}}{{else}}Présent{{end}}
+                {{if .EndDate}}{{.EndDate.Format "Jan 2006"}}{{else}}{{$.Labels.present}}{{end}}
             </div>
             <div class="experience-description">{{.Description}}</div>
             {{if .Technologies}}
@@ -185,12 +185,12 @@
 
     {{if .Skills}}
     <div class="section">
-        <h2 class="section-title">Compétences</h2>
+        <h2 class="section-title">{{.Labels.skills}}</h2>
         <div class="skills-grid">
             {{range .Skills}}
             <div class="skill">
                 <div class="skill-name">{{.Name}}</div>
-                <div class="skill-level">{{.Level}} - {{.YearsExperience}} ans</div>
+                <div class="skill-level">{{.Level}} - {{.YearsExperience}} {{$.Labels.years}}</div>
             </div>
             {{end}}
         </div>
@@ -199,7 +199,7 @@
 
     {{if .Projects}}
     <div class="section">
-        <h2 class="section-title">Projets</h2>
+        <h2 class="section-title">{{.Labels.projects}}</h2>
         <ul class="projects-list">
             {{range .Projects}}
             <li class="project">
@@ -219,7 +219,7 @@
     {{end}}
 
     <div class="footer">
-        Généré le {{.GeneratedAt.Format "02/01/2006 15:04"}} - Thème: {{.Theme.ID}}
+        {{.Labels.generated_on}} {{.GeneratedAt.Format "02/01/2006 15:04"}} - {{.Labels.theme}}: {{.Theme.ID}}
     </div>
 </body>
 </html>

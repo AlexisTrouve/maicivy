@@ -6,25 +6,28 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { lettersApi } from '@/lib/api';
 import { LetterPreview } from './LetterPreview';
 import type { GeneratedLetters } from '@/lib/types';
 
-// Validation schema
-const formSchema = z.object({
+// Create validation schema with translations
+const createFormSchema = (t: (key: string, params?: Record<string, number>) => string) => z.object({
   companyName: z.string()
-    .min(2, 'Le nom doit contenir au moins 2 caractères')
-    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
-    .regex(/^[a-zA-Z0-9\s\-&.,'À-ÿ]+$/, 'Caractères invalides détectés'),
+    .min(2, t('validation.minLength', { min: 2 }))
+    .max(100, t('validation.maxLength', { max: 100 }))
+    .regex(/^[a-zA-Z0-9\s\-&.,'À-ÿ]+$/, t('validation.invalidChars')),
 });
-
-type FormData = z.infer<typeof formSchema>;
 
 export function LetterGenerator() {
   const t = useTranslations('letters');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _tValidation = useTranslations('validation');
+  const tValidation = useTranslations('validation');
+  const locale = useLocale();
+
+  // Create schema with translated messages
+  const formSchema = createFormSchema(tValidation);
+  type FormData = z.infer<typeof formSchema>;
+
   const [letters, setLetters] = useState<GeneratedLetters | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,10 @@ export function LetterGenerator() {
 
     try {
       const response = await lettersApi.generateAndWait(
-        { company_name: data.companyName },
+        {
+          company_name: data.companyName,
+          lang: locale
+        },
         (p) => setProgress(p)
       );
 

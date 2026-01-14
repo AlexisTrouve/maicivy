@@ -27,10 +27,10 @@ const getApiUrl = () => {
 };
 
 // Fetch CV data
-async function getCVData(theme: string = 'fullstack'): Promise<CVData> {
+async function getCVData(theme: string = 'fullstack', lang: string = 'fr'): Promise<CVData> {
   const apiUrl = getApiUrl();
   const res = await fetch(
-    `${apiUrl}/api/v1/cv?theme=${theme}`,
+    `${apiUrl}/api/v1/cv?theme=${theme}&lang=${lang}`,
     {
       next: { revalidate: 3600 }, // Cache 1 hour
     }
@@ -45,26 +45,34 @@ async function getCVData(theme: string = 'fullstack'): Promise<CVData> {
 
 // Generate dynamic metadata
 export async function generateMetadata({
+  params,
   searchParams,
-}: CVPageProps): Promise<Metadata> {
+}: CVPageProps & { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
+  const resolvedParams = params instanceof Promise ? await params : params;
   const theme = searchParams.theme || 'fullstack';
+  const locale = resolvedParams.locale || 'en';
+  const messages = (await import(`@/messages/${locale}.json`)).default;
+
+  const themeName = messages.cv.themes[theme as keyof typeof messages.cv.themes] || theme;
 
   return {
-    title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexis`,
-    description: `Découvrez mon profil ${theme} avec mes expériences, compétences et projets pertinents.`,
+    title: `CV ${themeName} - Alexis`,
+    description: `${messages.cv.adaptedTo} ${themeName}`,
     openGraph: {
-      title: `CV ${theme.charAt(0).toUpperCase() + theme.slice(1)} - Alexis`,
-      description: `Profil ${theme} adapté`,
+      title: `CV ${themeName} - Alexis`,
+      description: `${messages.cv.adaptedTo} ${themeName}`,
       type: 'profile',
     },
   };
 }
 
 // Main CV Page Component
-export default async function CVPage({ searchParams }: CVPageProps) {
+export default async function CVPage({ params, searchParams }: CVPageProps & { params: Promise<{ locale: string }> | { locale: string } }) {
+  const resolvedParams = params instanceof Promise ? await params : params;
   const theme = searchParams.theme || 'fullstack';
-  const cvData = await getCVData(theme);
-  const t = await getTranslations('cv');
+  const lang = resolvedParams.locale || 'fr';
+  const cvData = await getCVData(theme, lang);
+  const t = await getTranslations({ locale: resolvedParams.locale, namespace: 'cv' });
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">

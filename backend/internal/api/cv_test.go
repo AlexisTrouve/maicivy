@@ -23,8 +23,8 @@ type MockCVService struct {
 	mock.Mock
 }
 
-func (m *MockCVService) GetAdaptiveCV(ctx context.Context, themeID string) (*services.AdaptiveCVResponse, error) {
-	args := m.Called(ctx, themeID)
+func (m *MockCVService) GetAdaptiveCV(ctx context.Context, themeID string, lang string) (*services.AdaptiveCVResponse, error) {
+	args := m.Called(ctx, themeID, lang)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -92,7 +92,7 @@ func TestGetCV_DefaultTheme(t *testing.T) {
 		GeneratedAt: now,
 	}
 
-	mockService.On("GetAdaptiveCV", mock.Anything, "fullstack").Return(cvResp, nil)
+	mockService.On("GetAdaptiveCV", mock.Anything, "fullstack", "fr").Return(cvResp, nil)
 
 	// Request
 	req := httptest.NewRequest("GET", "/api/v1/cv", nil)
@@ -152,7 +152,7 @@ func TestGetCV_BackendTheme(t *testing.T) {
 		GeneratedAt: now,
 	}
 
-	mockService.On("GetAdaptiveCV", mock.Anything, "backend").Return(cvResp, nil)
+	mockService.On("GetAdaptiveCV", mock.Anything, "backend", "fr").Return(cvResp, nil)
 
 	// Request avec query param
 	req := httptest.NewRequest("GET", "/api/v1/cv?theme=backend", nil)
@@ -313,7 +313,7 @@ func TestGetCV_InvalidTheme(t *testing.T) {
 	app.Get("/api/v1/cv", handler.GetAdaptiveCV)
 
 	// Mock erreur
-	mockService.On("GetAdaptiveCV", mock.Anything, "invalidtheme123").
+	mockService.On("GetAdaptiveCV", mock.Anything, "invalidtheme123", "fr").
 		Return((*services.AdaptiveCVResponse)(nil), assert.AnError)
 
 	// Request avec thème invalide
@@ -382,7 +382,7 @@ func BenchmarkGetCV(b *testing.B) {
 		GeneratedAt: time.Now(),
 	}
 
-	mockService.On("GetAdaptiveCV", mock.Anything, "fullstack").Return(cvResp, nil)
+	mockService.On("GetAdaptiveCV", mock.Anything, "fullstack", "fr").Return(cvResp, nil)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

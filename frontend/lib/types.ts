@@ -126,6 +126,7 @@ export interface LetterHistoryItem {
 
 export interface GenerateLetterRequest {
   company_name: string;
+  lang?: string; // 'fr' or 'en'
 }
 
 export interface GenerateLetterResponse extends GeneratedLetters {}

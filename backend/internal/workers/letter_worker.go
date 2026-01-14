@@ -149,7 +149,8 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 	// 1. Générer les deux lettres en parallèle (20-80% progress)
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 20)
 
-	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName)
+	// Use lang from job (defaults to "fr" in GenerateDualLetters if empty)
+	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName, job.Lang)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to generate letters: %w", err)
 	}

@@ -59,48 +59,51 @@ const infraStack = [
   { name: 'GitHub Actions', description: 'CI/CD pipeline', icon: '🔄' },
 ];
 
-const features = [
-  {
-    title: 'CV Dynamique Adaptatif',
-    description: '5 thèmes (Backend, C++, Artistic, Full-Stack, DevOps) avec scoring intelligent des expériences',
-    tech: ['Algorithme de scoring', 'Export PDF', 'Framer Motion animations'],
-  },
-  {
-    title: 'Générateur de Lettres IA',
-    description: 'Génération parallèle de lettres Motivation + Anti-Motivation',
-    tech: ['Claude API', 'Job Queue async', 'PDF generation'],
-  },
-  {
-    title: 'Scraper Multi-Sources',
-    description: 'Recherche entreprise en temps réel depuis 6 sources',
-    tech: ['Wikipedia API', 'GitHub API', 'Blog scraping', 'DuckDuckGo', 'Clearbit'],
-  },
-  {
-    title: 'Analytics Temps Réel',
-    description: 'Dashboard public avec WebSocket pour les mises à jour live',
-    tech: ['WebSocket', 'Chart.js', 'Heatmap clicks'],
-  },
-  {
-    title: 'Access Gate Intelligent',
-    description: 'Déblocage après 3 visites ou détection de profil (recruteur, CTO...)',
-    tech: ['Profile detection', 'User-Agent parsing', 'Cookie tracking'],
-  },
-  {
-    title: 'Rate Limiting IA',
-    description: '5 générations/jour, 2min cooldown, suivi des coûts',
-    tech: ['Redis sliding window', 'Token counting', 'Cost tracking'],
-  },
-];
+const getFeatures = (t: any) => {
+  const features = t.raw('technicalFeatures');
+  return [
+    {
+      title: features.dynamicCV.title,
+      description: features.dynamicCV.description,
+      tech: features.dynamicCV.tech,
+    },
+    {
+      title: features.aiLetters.title,
+      description: features.aiLetters.description,
+      tech: features.aiLetters.tech,
+    },
+    {
+      title: features.scraper.title,
+      description: features.scraper.description,
+      tech: features.scraper.tech,
+    },
+    {
+      title: features.analytics.title,
+      description: features.analytics.description,
+      tech: features.analytics.tech,
+    },
+    {
+      title: features.accessGate.title,
+      description: features.accessGate.description,
+      tech: features.accessGate.tech,
+    },
+    {
+      title: features.rateLimiting.title,
+      description: features.rateLimiting.description,
+      tech: features.rateLimiting.tech,
+    },
+  ];
+};
 
-const metrics = [
-  { label: 'Fichiers Go (Backend)', value: '100+' },
-  { label: 'Composants React', value: '60+' },
-  { label: 'Tests Backend', value: '28 fichiers' },
-  { label: 'Tests Frontend', value: '228 fichiers' },
-  { label: 'Tests Passants', value: '882' },
-  { label: 'Endpoints API', value: '30+' },
-  { label: 'Documentation', value: '~10,000 lignes' },
-  { label: 'Guides Implémentation', value: '19 docs' },
+const getMetrics = (t: (key: string) => string) => [
+  { label: t('metrics.goFiles'), value: '100+' },
+  { label: t('metrics.reactComponents'), value: '60+' },
+  { label: t('metrics.backendTests'), value: '28 fichiers' },
+  { label: t('metrics.frontendTests'), value: '228 fichiers' },
+  { label: t('metrics.passingTests'), value: '882' },
+  { label: t('metrics.apiEndpoints'), value: '30+' },
+  { label: t('metrics.documentation'), value: '~10,000 lignes' },
+  { label: t('metrics.implementationGuides'), value: '19 docs' },
 ];
 
 function TechBadge({ name, description, icon }: { name: string; description: string; icon: string }) {
@@ -281,6 +284,8 @@ function ScraperDiagram() {
 export default function ArchitecturePage() {
   const [mounted, setMounted] = useState(false);
   const t = useTranslations('architecture');
+  const metrics = getMetrics(t);
+  const features = getFeatures(t);
 
   useEffect(() => {
     setMounted(true);

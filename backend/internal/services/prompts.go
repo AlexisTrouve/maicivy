@@ -17,7 +17,15 @@ func NewPromptBuilder(profile models.UserProfile) *PromptBuilder {
 }
 
 // BuildMotivationPrompt : prompt pour lettre de motivation professionnelle
-func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo) string {
+func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang string) string {
+	if lang == "en" {
+		return pb.buildMotivationPromptEN(company)
+	}
+	return pb.buildMotivationPromptFR(company)
+}
+
+// buildMotivationPromptFR : prompt français pour lettre de motivation
+func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo) string {
 	// Construire la section expériences détaillées
 	experiencesSection := pb.buildExperiencesSection()
 
@@ -128,8 +136,109 @@ func (pb *PromptBuilder) buildExperiencesSection() string {
 	return sb.String()
 }
 
+// buildMotivationPromptEN : prompt anglais pour lettre de motivation
+func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo) string {
+	// Build detailed experiences section
+	experiencesSection := pb.buildExperiencesSection()
+
+	// Format date in English (ex: "Tourtenay, January 5, 2026")
+	currentDate := formatEnglishDate(time.Now())
+
+	template := `You are an expert in writing professional cover letters.
+
+CANDIDATE PROFILE:
+- Name: %s
+- Address: %s
+- Postal Code, City: %s %s
+- Email: %s
+- Phone: %s
+- Summary: %s
+- Current Position: %s
+- Years of Experience: %d years
+- Key Skills: %s
+
+DETAILED PROFESSIONAL BACKGROUND:
+%s
+
+TARGET COMPANY:
+- Name: %s
+- Industry: %s
+- Description: %s
+- Technologies Used: %s
+- Size: %s
+
+CURRENT DATE (for the letter):
+%s
+
+TASK:
+Write a professional, compelling, and authentic cover letter to apply at %s.
+
+INSTRUCTIONS:
+1. START OBLIGATORILY with the complete header in classic English format (left-aligned):
+   - Full name of the candidate
+   - Address
+   - Postal code and city
+   - Email
+   - Phone
+   - Blank line
+   - Current date (use the one provided above)
+   - Blank line
+   - Company name
+   - [Address if known, otherwise leave blank]
+   - Blank line
+   - "Subject: Application for Position"
+   - Blank line
+
+2. Classic structure afterwards (introduction, body, conclusion)
+3. Professional but not rigid tone
+4. USE CONCRETE examples from the candidate's background (projects, achievements, metrics)
+5. Highlight alignment between candidate's skills and company's likely needs
+6. Show sincere interest in the company (culture, projects, technologies)
+7. Cite specific achievements with numbers when available
+8. Length: 350-450 words (excluding header)
+9. Format: well-structured paragraphs (no bullet points)
+10. END with "Sincerely," followed by the candidate's name
+
+EXAMPLES OF GOOD STYLE:
+- "At [previous company], I [concrete achievement with metric], which prepared me to..."
+- "My experience in [technology] where I [achievement] aligns perfectly with your needs in..."
+
+Do NOT invent facts about the company. Use information from the candidate's background.
+
+Generate the letter now (WITH the complete header):`
+
+	return fmt.Sprintf(
+		template,
+		pb.userProfile.Name,
+		pb.userProfile.Address,
+		pb.userProfile.PostalCode, pb.userProfile.City,
+		pb.userProfile.Email,
+		pb.userProfile.Phone,
+		pb.userProfile.Summary,
+		pb.userProfile.CurrentRole,
+		pb.userProfile.Experience,
+		strings.Join(pb.userProfile.Skills, ", "),
+		experiencesSection,
+		company.Name,
+		company.Industry,
+		company.Description,
+		strings.Join(company.Technologies, ", "),
+		company.Size,
+		currentDate,
+		company.Name,
+	)
+}
+
 // BuildAntiMotivationPrompt : prompt pour lettre d'anti-motivation humoristique
-func (pb *PromptBuilder) BuildAntiMotivationPrompt(company models.CompanyInfo) string {
+func (pb *PromptBuilder) BuildAntiMotivationPrompt(company models.CompanyInfo, lang string) string {
+	if lang == "en" {
+		return pb.buildAntiMotivationPromptEN(company)
+	}
+	return pb.buildAntiMotivationPromptFR(company)
+}
+
+// buildAntiMotivationPromptFR : prompt français pour lettre d'anti-motivation
+func (pb *PromptBuilder) buildAntiMotivationPromptFR(company models.CompanyInfo) string {
 	// Construire la section expériences pour l'humour
 	experiencesSection := pb.buildExperiencesSection()
 
@@ -224,6 +333,103 @@ Génère la lettre maintenant (AVEC l'en-tête complet):`
 	)
 }
 
+// buildAntiMotivationPromptEN : prompt anglais pour lettre d'anti-motivation
+func (pb *PromptBuilder) buildAntiMotivationPromptEN(company models.CompanyInfo) string {
+	// Build experiences section for humor
+	experiencesSection := pb.buildExperiencesSection()
+
+	// Format date in English
+	currentDate := formatEnglishDate(time.Now())
+
+	template := `You are a comedian specialized in writing creative and absurd anti-motivation letters.
+
+CANDIDATE PROFILE (to parody with humor):
+- Name: %s
+- Address: %s
+- Postal Code, City: %s %s
+- Email: %s
+- Phone: %s
+- Current Position: %s
+- Years of Experience: %d years
+- Key Skills: %s
+
+REAL BACKGROUND (to parody):
+%s
+
+TARGET COMPANY:
+- Name: %s
+- Industry: %s
+- Description: %s
+
+CURRENT DATE (for the letter):
+%s
+
+TASK:
+Write a humorous ANTI-MOTIVATION letter explaining why %s should DEFINITELY NOT be hired at %s.
+
+STYLE AND TONE:
+- Absurd humor and self-deprecation
+- Obviously tongue-in-cheek (nobody should take this seriously)
+- TWIST the candidate's real skills/experiences in a comedic way
+- Pop culture references, puns, comedic exaggerations
+- Light tone, never mean-spirited or offensive to the company
+- Adapt humor for English-speaking audience (witty, dry British/American humor)
+
+INSTRUCTIONS:
+1. START OBLIGATORILY with the complete header in classic English format - EVEN FOR ANTI-MOTIVATION:
+   - Full name of the candidate
+   - Address
+   - Postal code and city
+   - Email
+   - Phone
+   - Blank line
+   - Current date (use the one provided above)
+   - Blank line
+   - Company name
+   - [Address if known, otherwise leave blank]
+   - Blank line
+   - "Subject: Anti-Motivation Letter (Humor - Not Serious)"
+   - Blank line
+
+2. Free structure afterwards (be creative!)
+3. PARODY the candidate's real experiences (ex: "I reduced latency by 70%%... by deleting features")
+4. Transform achievements into hilarious "anti-achievements"
+5. Fake useless skills based on real ones
+6. Absurd anecdotes related to real background
+7. Ironic reversed conclusion
+8. Length: 300-400 words (excluding header)
+9. Avoid vulgar or offensive humor
+10. END absurdly but with "Best regards (or not)," + name
+
+STYLE EXAMPLES BASED ON REAL BACKGROUND:
+- "My expertise in 'high-performance REST APIs' means I know how to crash 100K requests/day with style..."
+- "I 'mentored 4 junior developers'... in the subtle art of professional procrastination..."
+- "My '99.9%% uptime SLA' hides the 0.1%% where I panicked staring at my screen..."
+
+REMINDER: This is humor! Use the REAL background to create personalized parodies.
+
+Generate the letter now (WITH the complete header):`
+
+	return fmt.Sprintf(
+		template,
+		pb.userProfile.Name,
+		pb.userProfile.Address,
+		pb.userProfile.PostalCode, pb.userProfile.City,
+		pb.userProfile.Email,
+		pb.userProfile.Phone,
+		pb.userProfile.CurrentRole,
+		pb.userProfile.Experience,
+		strings.Join(pb.userProfile.Skills, ", "),
+		experiencesSection,
+		company.Name,
+		company.Industry,
+		company.Description,
+		currentDate,
+		pb.userProfile.Name,
+		company.Name,
+	)
+}
+
 // formatFrenchDate formate une date au format français pour les lettres
 // Ex: "Tourtenay, le 5 janvier 2026"
 func formatFrenchDate(t time.Time) string {
@@ -245,6 +451,16 @@ func formatFrenchDate(t time.Time) string {
 	return fmt.Sprintf("Tourtenay, le %d %s %d",
 		t.Day(),
 		frenchMonths[t.Month()],
+		t.Year(),
+	)
+}
+
+// formatEnglishDate formate une date au format anglais pour les lettres
+// Ex: "Tourtenay, January 5, 2026"
+func formatEnglishDate(t time.Time) string {
+	return fmt.Sprintf("Tourtenay, %s %d, %d",
+		t.Month().String(),
+		t.Day(),
 		t.Year(),
 	)
 }

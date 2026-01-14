@@ -34,8 +34,15 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 # ============================================
 FROM alpine:latest
 
-# Install runtime dependencies including Chromium for PDF generation
-RUN apk add --no-cache ca-certificates tzdata curl chromium
+# Install runtime dependencies including Chromium and fonts for PDF generation
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    curl \
+    chromium \
+    font-noto \
+    ttf-dejavu \
+    fontconfig
 
 # Create non-root user
 RUN addgroup -g 1000 app && \

@@ -151,7 +151,8 @@
       "copyText": "Copier le texte",
       "downloadPDF": "Télécharger PDF",
       "warning": "Note: La lettre d'anti-motivation est générée à titre humoristique et créatif. Elle ne doit PAS être envoyée à l'entreprise. Utilisez uniquement la lettre de motivation professionnelle pour vos candidatures réelles.",
-      "downloadError": "Erreur lors du téléchargement du PDF"
+      "downloadError": "Erreur lors du téléchargement du PDF",
+      "filenameLetter": "lettre"
     },
     "accessGate": {
       "title": "Fonctionnalité Premium",
@@ -277,6 +278,38 @@
       "apiEndpoints": "Endpoints API",
       "documentation": "Documentation",
       "implementationGuides": "Guides Implémentation"
+    },
+    "technicalFeatures": {
+      "dynamicCV": {
+        "title": "CV Dynamique Adaptatif",
+        "description": "5 thèmes (Backend, C++, Artistic, Full-Stack, DevOps) avec scoring intelligent des expériences",
+        "tech": ["Algorithme de scoring", "Export PDF", "Framer Motion animations"]
+      },
+      "aiLetters": {
+        "title": "Générateur de Lettres IA",
+        "description": "Génération parallèle de lettres Motivation + Anti-Motivation",
+        "tech": ["Claude API", "Job Queue async", "PDF generation"]
+      },
+      "scraper": {
+        "title": "Scraper Multi-Sources",
+        "description": "Recherche entreprise en temps réel depuis 6 sources",
+        "tech": ["Wikipedia API", "GitHub API", "Blog scraping", "DuckDuckGo", "Clearbit"]
+      },
+      "analytics": {
+        "title": "Analytics Temps Réel",
+        "description": "Dashboard public avec WebSocket pour les mises à jour live",
+        "tech": ["WebSocket", "Chart.js", "Heatmap clicks"]
+      },
+      "accessGate": {
+        "title": "Access Gate Intelligent",
+        "description": "Déblocage après 3 visites ou détection de profil (recruteur, CTO...)",
+        "tech": ["Profile detection", "User-Agent parsing", "Cookie tracking"]
+      },
+      "rateLimiting": {
+        "title": "Rate Limiting IA",
+        "description": "5 générations/jour, 2min cooldown, suivi des coûts",
+        "tech": ["Redis sliding window", "Token counting", "Cost tracking"]
+      }
     },
     "securityItems": {
       "injection": {

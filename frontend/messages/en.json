@@ -151,7 +151,8 @@
       "copyText": "Copy text",
       "downloadPDF": "Download PDF",
       "warning": "Note: The anti-motivation letter is generated for humorous and creative purposes. It should NOT be sent to the company. Only use the professional cover letter for real applications.",
-      "downloadError": "Error downloading PDF"
+      "downloadError": "Error downloading PDF",
+      "filenameLetter": "letter"
     },
     "accessGate": {
       "title": "Premium Feature",
@@ -277,6 +278,38 @@
       "apiEndpoints": "API Endpoints",
       "documentation": "Documentation",
       "implementationGuides": "Implementation Guides"
+    },
+    "technicalFeatures": {
+      "dynamicCV": {
+        "title": "Adaptive Dynamic CV",
+        "description": "5 themes (Backend, C++, Artistic, Full-Stack, DevOps) with intelligent experience scoring",
+        "tech": ["Scoring algorithm", "PDF export", "Framer Motion animations"]
+      },
+      "aiLetters": {
+        "title": "AI Letter Generator",
+        "description": "Parallel generation of Motivation + Anti-Motivation letters",
+        "tech": ["Claude API", "Async job queue", "PDF generation"]
+      },
+      "scraper": {
+        "title": "Multi-Source Scraper",
+        "description": "Real-time company research from 6 sources",
+        "tech": ["Wikipedia API", "GitHub API", "Blog scraping", "DuckDuckGo", "Clearbit"]
+      },
+      "analytics": {
+        "title": "Real-Time Analytics",
+        "description": "Public dashboard with WebSocket for live updates",
+        "tech": ["WebSocket", "Chart.js", "Click heatmap"]
+      },
+      "accessGate": {
+        "title": "Intelligent Access Gate",
+        "description": "Unlock after 3 visits or profile detection (recruiter, CTO...)",
+        "tech": ["Profile detection", "User-Agent parsing", "Cookie tracking"]
+      },
+      "rateLimiting": {
+        "title": "AI Rate Limiting",
+        "description": "5 generations/day, 2min cooldown, cost tracking",
+        "tech": ["Redis sliding window", "Token counting", "Cost tracking"]
+      }
     },
     "securityItems": {
       "injection": {

@@ -100,6 +100,9 @@ CREATE INDEX IF NOT EXISTS idx_analytics_timerange ON analytics_events(event_typ
 -- Composite index for visitor + time
 CREATE INDEX IF NOT EXISTS idx_analytics_visitor_time ON analytics_events(visitor_id, created_at DESC);
 
+-- GIN index for JSONB event_data (for searching within JSON)
+CREATE INDEX IF NOT EXISTS idx_analytics_event_data ON analytics_events USING GIN(event_data);
+
 -- Partial index for specific event types (for heatmap)
 CREATE INDEX IF NOT EXISTS idx_analytics_clicks ON analytics_events(event_type, event_data)
 WHERE event_type = 'click';

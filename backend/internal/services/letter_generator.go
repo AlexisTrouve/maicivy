@@ -51,12 +51,18 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 	}
 
 	// 2. Build prompt based on type
+	// Default lang to fr if empty
+	lang := req.Lang
+	if lang == "" {
+		lang = "fr"
+	}
+
 	var prompt string
 	switch req.LetterType {
 	case models.LetterTypeMotivation:
-		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo)
+		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo, lang)
 	case models.LetterTypeAntiMotivation:
-		prompt = lg.promptBuilder.BuildAntiMotivationPrompt(*companyInfo)
+		prompt = lg.promptBuilder.BuildAntiMotivationPrompt(*companyInfo, lang)
 	default:
 		return nil, fmt.Errorf("unknown letter type: %s", req.LetterType)
 	}
@@ -89,7 +95,12 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 }
 
 // GenerateDualLetters : génère les 2 lettres en parallèle
-func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string) (*models.LetterResponse, *models.LetterResponse, error) {
+func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string, lang string) (*models.LetterResponse, *models.LetterResponse, error) {
+	// Default lang to fr if empty
+	if lang == "" {
+		lang = "fr"
+	}
+
 	type result struct {
 		letter *models.LetterResponse
 		err    error
@@ -103,6 +114,7 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,
 			LetterType:  models.LetterTypeMotivation,
+			Lang:        lang,
 		})
 		motivationChan <- result{letter, err}
 	}()
@@ -112,6 +124,7 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,
 			LetterType:  models.LetterTypeAntiMotivation,
+			Lang:        lang,
 		})
 		antiMotivationChan <- result{letter, err}
 	}()

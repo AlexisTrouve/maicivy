@@ -6,24 +6,33 @@ import { LetterGenerator } from '@/components/letters/LetterGenerator';
 export const dynamic = 'force-dynamic';
 import { AccessGate } from '@/components/letters/AccessGate';
 
-export const metadata: Metadata = {
-  title: 'Générateur de Lettres IA | maicivy',
-  description: 'Générez des lettres de motivation et anti-motivation personnalisées par IA pour vos candidatures.',
-  openGraph: {
-    title: 'Générateur de Lettres IA',
-    description: 'Lettres de motivation/anti-motivation générées par IA',
-  },
-};
+// Metadata is now generated dynamically via generateMetadata
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const locale = resolvedParams.locale || 'en';
+  const messages = (await import(`@/messages/${locale}.json`)).default;
 
-export default async function LettersPage() {
-  const t = await getTranslations('letters');
+  return {
+    title: `${messages.letters.title} | maicivy`,
+    description: messages.letters.subtitle,
+    openGraph: {
+      title: messages.letters.title,
+      description: messages.letters.subtitle,
+    },
+  };
+}
+
+export default async function LettersPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
+  // Handle both Promise and non-Promise params (Next.js 14.2+ compatibility)
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const t = await getTranslations({ locale: resolvedParams.locale, namespace: 'letters' });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900 dark:text-white">
             {t('title')}
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">

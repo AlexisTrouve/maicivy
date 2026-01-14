@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -13,6 +13,7 @@ export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('cv.export');
+  const locale = useLocale();
 
   const handleExport = async () => {
     setLoading(true);
@@ -20,7 +21,7 @@ export default function ExportPDFButton({ theme }: ExportPDFButtonProps) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv/export?theme=${theme}&format=pdf`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/cv/export?theme=${theme}&format=pdf&lang=${locale}`
       );
 
       if (!response.ok) {

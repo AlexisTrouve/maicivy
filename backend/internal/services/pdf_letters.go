@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
@@ -86,24 +87,29 @@ func (s *PDFLetterService) htmlToPDF(ctx context.Context, html string, writer io
 	err := chromedp.Run(allocCtx,
 		chromedp.Navigate("about:blank"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Set HTML content
+			// Encoder HTML en base64 pour préserver UTF-8
+			encoded := base64.StdEncoding.EncodeToString([]byte(html))
 			script := fmt.Sprintf(`
-				document.open();
-				document.write(%s);
+				const bytes = Uint8Array.from(atob('%s'), c => c.charCodeAt(0));
+				const html = new TextDecoder('utf-8').decode(bytes);
+				document.open('text/html', 'replace');
+				document.write(html);
 				document.close();
-			`, escapeJSString(html))
-
+			`, encoded)
 			return chromedp.Evaluate(script, nil).Do(ctx)
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Wait for page load
+			// Attendre que le document soit chargé
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Print to PDF
+			// Générer PDF avec options pour préserver le style
 			var err error
-			pdfBuf, _, err = page.PrintToPDF().Do(ctx)
+			pdfBuf, _, err = page.PrintToPDF().
+				WithPrintBackground(true).
+				WithPreferCSSPageSize(true).
+				Do(ctx)
 			return err
 		}),
 	)
@@ -116,15 +122,4 @@ func (s *PDFLetterService) htmlToPDF(ctx context.Context, html string, writer io
 	// Write PDF to output
 	_, err = writer.Write(pdfBuf)
 	return err
-}
-
-// escapeJSString : escape string pour JS
-func escapeJSString(s string) string {
-	// Simple escaping for JavaScript template literal
-	s = strings.ReplaceAll(s, "\\", "\\\\")
-	s = strings.ReplaceAll(s, "`", "\\`")
-	s = strings.ReplaceAll(s, "\n", "\\n")
-	s = strings.ReplaceAll(s, "\r", "\\r")
-	s = strings.ReplaceAll(s, "$", "\\$")
-	return "`" + s + "`"
 }

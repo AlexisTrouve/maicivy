@@ -20,6 +20,7 @@ type LetterRequest struct {
 	CompanyName string      `json:"company_name" validate:"required,min=2"`
 	LetterType  LetterType  `json:"letter_type" validate:"required,oneof=motivation anti_motivation"`
 	UserProfile UserProfile `json:"user_profile,omitempty"`
+	Lang        string      `json:"lang" validate:"omitempty,oneof=fr en"` // Langue: fr ou en
 }
 
 // ExperienceDetail : détail d'une expérience professionnelle pour les prompts
