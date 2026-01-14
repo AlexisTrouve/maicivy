@@ -73,6 +73,11 @@ The AI researches the company in real-time using **multiple sources** (Wikipedia
 - Auto-import public repositories
 - Automatic sync every 6 hours
 
+### Internationalization
+- **Bilingual Support**: Full French and English versions
+- **API Language Switching**: `?lang=en` parameter on all endpoints
+- **Localized Content**: Experiences, skills, projects, and AI-generated letters
+
 ---
 
 ## Quick Start
@@ -417,7 +422,7 @@ npm run test:coverage     # Coverage report
 - [x] GitHub OAuth integration
 - [x] Comprehensive testing (882 tests passing)
 - [ ] Production deployment
-- [ ] Multi-language support (FR/EN)
+- [x] Multi-language support (FR/EN)
 - [ ] AI chatbot for CV Q&A
 
 ---
