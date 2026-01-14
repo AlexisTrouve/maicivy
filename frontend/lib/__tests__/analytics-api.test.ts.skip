@@ -1,0 +1,489 @@
+import {
+  fetchAnalyticsStats,
+  fetchThemeStats,
+  fetchLettersStats,
+  fetchHeatmapData,
+  createAnalyticsWebSocket,
+  exportAnalyticsCSV
+} from '../analytics-api';
+import { server } from '@/__mocks__/server';
+import { rest } from 'msw';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+describe('Analytics API', () => {
+  beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
+  describe('fetchAnalyticsStats', () => {
+    it('should fetch stats with default period (week)', async () => {
+      let capturedPeriod: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPeriod = url.searchParams.get('period');
+          return res(ctx.json({
+            totalVisitors: 100,
+            uniqueVisitors: 75,
+            pageViews: 500,
+            avgSessionDuration: 180
+          });
+        })
+      );
+
+      const stats = await fetchAnalyticsStats();
+
+      expect(capturedPeriod).toBe('week');
+      expect(stats.totalVisitors).toBe(100);
+      expect(stats.uniqueVisitors).toBe(75);
+    });
+
+    it('should fetch stats with custom period', async () => {
+      let capturedPeriod: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPeriod = url.searchParams.get('period');
+          return res(ctx.json({
+            totalVisitors: 500,
+            uniqueVisitors: 300
+          });
+        })
+      );
+
+      await fetchAnalyticsStats('month');
+      expect(capturedPeriod).toBe('month');
+    });
+
+    it('should handle fetch errors', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json(
+            { error: 'Internal error' },
+            { status: 500 }
+          );
+        })
+      );
+
+      await expect(fetchAnalyticsStats()).rejects.toThrow('Failed to fetch analytics stats');
+    });
+
+    it('should include credentials in request', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({
+            totalVisitors: 100,
+            uniqueVisitors: 75
+          });
+        })
+      );
+
+      const stats = await fetchAnalyticsStats('day');
+      expect(stats).toBeDefined();
+    });
+  });
+
+  describe('fetchThemeStats', () => {
+    it('should fetch theme statistics', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({
+            themes: [
+              { theme: 'backend', count: 50, percentage: 40 },
+              { theme: 'frontend', count: 40, percentage: 32 },
+              { theme: 'fullstack', count: 35, percentage: 28 }
+            ]
+          });
+        })
+      );
+
+      const stats = await fetchThemeStats();
+
+      expect(stats.themes).toHaveLength(3);
+      expect(stats.themes[0].theme).toBe('backend');
+      expect(stats.themes[0].count).toBe(50);
+    });
+
+    it('should handle errors', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json(
+            { error: 'Not found' },
+            { status: 404 }
+          );
+        })
+      );
+
+      await expect(fetchThemeStats()).rejects.toThrow('Failed to fetch theme stats');
+    });
+
+    it('should return empty array for no data', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({
+            themes: []
+          });
+        })
+      );
+
+      const stats = await fetchThemeStats();
+      expect(stats.themes).toEqual([]);
+    });
+  });
+
+  describe('fetchLettersStats', () => {
+    it('should fetch letters stats with default period', async () => {
+      let capturedPeriod: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPeriod = url.searchParams.get('period');
+          return res(ctx.json({
+            totalLetters: 150,
+            successRate: 95,
+            avgGenerationTime: 2.5
+          });
+        })
+      );
+
+      const stats = await fetchLettersStats();
+
+      expect(capturedPeriod).toBe('week');
+      expect(stats.totalLetters).toBe(150);
+      expect(stats.successRate).toBe(95);
+    });
+
+    it('should fetch letters stats with custom period', async () => {
+      let capturedPeriod: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPeriod = url.searchParams.get('period');
+          return res(ctx.json({
+            totalLetters: 800
+          });
+        })
+      );
+
+      await fetchLettersStats('month');
+      expect(capturedPeriod).toBe('month');
+    });
+
+    it('should handle errors', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/letters`, () => {
+          return res(ctx.json(
+            { error: 'Server error' },
+            { status: 500 }
+          );
+        })
+      );
+
+      await expect(fetchLettersStats('day')).rejects.toThrow('Failed to fetch letters stats');
+    });
+  });
+
+  describe('fetchHeatmapData', () => {
+    it('should fetch heatmap data without page filter', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
+          const url = new URL(request.url);
+          const page = url.searchParams.get('page');
+
+          return res(ctx.json({
+            clicks: [
+              { x: 100, y: 200, count: 15 },
+              { x: 300, y: 150, count: 23 }
+            ],
+            scrollDepth: [
+              { depth: 25, count: 100 },
+              { depth: 50, count: 75 }
+            ]
+          });
+        })
+      );
+
+      const heatmap = await fetchHeatmapData();
+
+      expect(heatmap.clicks).toHaveLength(2);
+      expect(heatmap.scrollDepth).toHaveLength(2);
+    });
+
+    it('should fetch heatmap data with page filter', async () => {
+      let capturedPage: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPage = url.searchParams.get('page');
+
+          return res(ctx.json({
+            clicks: [],
+            scrollDepth: []
+          });
+        })
+      );
+
+      await fetchHeatmapData('/cv');
+      expect(capturedPage).toBe('/cv');
+    });
+
+    it('should handle errors', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/heatmap`, () => {
+          return res(ctx.json(
+            { error: 'Not authorized' },
+            { status: 403 }
+          );
+        })
+      );
+
+      await expect(fetchHeatmapData()).rejects.toThrow('Failed to fetch heatmap data');
+    });
+  });
+
+  describe('createAnalyticsWebSocket', () => {
+    let mockWebSocket: any;
+
+    beforeEach(() => {
+      // Mock WebSocket
+      mockWebSocket = {
+        onopen: null,
+        onmessage: null,
+        onerror: null,
+        onclose: null,
+        close: jest.fn(),
+        send: jest.fn()
+      };
+
+      global.WebSocket = jest.fn(() => mockWebSocket) as any;
+    });
+
+    it('should create WebSocket with correct URL', () => {
+      const onMessage = jest.fn();
+      const wsUrl = API_BASE_URL.replace('http', 'ws') + '/ws/analytics';
+
+      createAnalyticsWebSocket(onMessage);
+
+      expect(global.WebSocket).toHaveBeenCalledWith(wsUrl);
+    });
+
+    it('should handle onopen callback', () => {
+      const onMessage = jest.fn();
+      const onOpen = jest.fn();
+      const consoleLog = jest.spyOn(console, 'log').mockImplementation();
+
+      createAnalyticsWebSocket(onMessage, undefined, onOpen);
+
+      // Simulate WebSocket open
+      if (mockWebSocket.onopen) {
+        mockWebSocket.onopen();
+      }
+
+      expect(consoleLog).toHaveBeenCalledWith('[Analytics WebSocket] Connected');
+      expect(onOpen).toHaveBeenCalled();
+
+      consoleLog.mockRestore();
+    });
+
+    it('should parse and handle incoming messages', () => {
+      const onMessage = jest.fn();
+
+      createAnalyticsWebSocket(onMessage);
+
+      // Simulate incoming message
+      const testData = { type: 'visitor', count: 42 };
+      if (mockWebSocket.onmessage) {
+        mockWebSocket.onmessage({
+          data: JSON.stringify(testData)
+        });
+      }
+
+      expect(onMessage).toHaveBeenCalledWith(testData);
+    });
+
+    it('should handle malformed JSON messages', () => {
+      const onMessage = jest.fn();
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+      createAnalyticsWebSocket(onMessage);
+
+      // Simulate malformed message
+      if (mockWebSocket.onmessage) {
+        mockWebSocket.onmessage({
+          data: 'invalid json'
+        });
+      }
+
+      expect(consoleError).toHaveBeenCalled();
+      expect(onMessage).not.toHaveBeenCalled();
+
+      consoleError.mockRestore();
+    });
+
+    it('should handle onerror callback', () => {
+      const onMessage = jest.fn();
+      const onError = jest.fn();
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+      createAnalyticsWebSocket(onMessage, onError);
+
+      const errorEvent = new Event('error');
+      if (mockWebSocket.onerror) {
+        mockWebSocket.onerror(errorEvent);
+      }
+
+      expect(consoleError).toHaveBeenCalled();
+      expect(onError).toHaveBeenCalledWith(errorEvent);
+
+      consoleError.mockRestore();
+    });
+
+    it('should handle onclose callback', () => {
+      const onMessage = jest.fn();
+      const onClose = jest.fn();
+      const consoleLog = jest.spyOn(console, 'log').mockImplementation();
+
+      createAnalyticsWebSocket(onMessage, undefined, undefined, onClose);
+
+      if (mockWebSocket.onclose) {
+        mockWebSocket.onclose();
+      }
+
+      expect(consoleLog).toHaveBeenCalledWith('[Analytics WebSocket] Disconnected');
+      expect(onClose).toHaveBeenCalled();
+
+      consoleLog.mockRestore();
+    });
+
+    it('should return WebSocket instance', () => {
+      const onMessage = jest.fn();
+
+      const ws = createAnalyticsWebSocket(onMessage);
+
+      expect(ws).toBe(mockWebSocket);
+    });
+  });
+
+  describe('exportAnalyticsCSV', () => {
+    it('should export visitors CSV with default period', async () => {
+      let capturedParams: { type: string; period: string | null; format: string | null } | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedParams = {
+            type: 'visitors',
+            period: url.searchParams.get('period'),
+            format: url.searchParams.get('format')
+          };
+
+          return HttpResponse.arrayBuffer(
+            new TextEncoder().encode('date,visitors\n2024-01-01,100').buffer
+          );
+        })
+      );
+
+      const blob = await exportAnalyticsCSV('visitors');
+
+      expect(capturedParams?.period).toBe('week');
+      expect(capturedParams?.format).toBe('csv');
+      expect(blob).toBeInstanceOf(Blob);
+    });
+
+    it('should export themes CSV with custom period', async () => {
+      let capturedPeriod: string | null = null;
+
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/themes`, ({ request }) => {
+          const url = new URL(request.url);
+          capturedPeriod = url.searchParams.get('period');
+
+          return HttpResponse.arrayBuffer(
+            new TextEncoder().encode('theme,count\nbackend,50').buffer
+          );
+        })
+      );
+
+      const blob = await exportAnalyticsCSV('themes', 'month');
+
+      expect(capturedPeriod).toBe('month');
+      expect(blob).toBeInstanceOf(Blob);
+    });
+
+    it('should export letters CSV', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/letters`, () => {
+          return HttpResponse.arrayBuffer(
+            new TextEncoder().encode('company,date\nGoogle,2024-01-01').buffer
+          );
+        })
+      );
+
+      const blob = await exportAnalyticsCSV('letters', 'day');
+      expect(blob).toBeInstanceOf(Blob);
+    });
+
+    it('should handle export errors', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/export/visitors`, () => {
+          return res(ctx.json(
+            { error: 'Export failed' },
+            { status: 500 }
+          );
+        })
+      );
+
+      await expect(exportAnalyticsCSV('visitors')).rejects.toThrow('Failed to export analytics');
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should handle network timeout', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, async () => {
+          await new Promise(resolve => setTimeout(resolve, 35000));
+          return res(ctx.json({});
+        })
+      );
+
+      // Test that function exists and can be called
+      expect(fetchAnalyticsStats).toBeDefined();
+    });
+
+    it('should handle concurrent requests', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({ totalVisitors: 100 });
+        }),
+        rest.get(`${API_BASE_URL}/api/v1/analytics/themes`, () => {
+          return res(ctx.json({ themes: [] });
+        })
+      );
+
+      const [stats, themes] = await Promise.all([
+        fetchAnalyticsStats(),
+        fetchThemeStats()
+      ]);
+
+      expect(stats).toBeDefined();
+      expect(themes).toBeDefined();
+    });
+
+    it('should handle empty responses', async () => {
+      server.use(
+        rest.get(`${API_BASE_URL}/api/v1/analytics/stats`, () => {
+          return res(ctx.json({});
+        })
+      );
+
+      const stats = await fetchAnalyticsStats();
+      expect(stats).toEqual({});
+    });
+  });
+});

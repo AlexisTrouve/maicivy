@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV - {{.Theme.Name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Helvetica', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #1a1a1a;
+            background: white;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 28pt;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+
+        .header .theme {
+            font-size: 14pt;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .experience {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid #e2e8f0;
+        }
+
+        .experience-title {
+            font-size: 13pt;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .experience-company {
+            font-size: 11pt;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .experience-dates {
+            font-size: 10pt;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .experience-description {
+            font-size: 10pt;
+            color: #334155;
+            margin-top: 5px;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .skill {
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 10pt;
+        }
+
+        .skill-name {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .skill-level {
+            font-size: 9pt;
+            color: #64748b;
+        }
+
+        .projects-list {
+            list-style: none;
+        }
+
+        .project {
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .project-title {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .project-description {
+            font-size: 10pt;
+            color: #334155;
+            margin-top: 3px;
+        }
+
+        .tags {
+            margin-top: 5px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 4px;
+            font-size: 9pt;
+            margin-right: 5px;
+            margin-top: 3px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Alexi - CV</h1>
+        <div class="theme">{{.Theme.Name}}</div>
+    </div>
+
+    {{if .Experiences}}
+    <div class="section">
+        <h2 class="section-title">Expériences Professionnelles</h2>
+        {{range .Experiences}}
+        <div class="experience">
+            <div class="experience-title">{{.Title}}</div>
+            <div class="experience-company">{{.Company}}</div>
+            <div class="experience-dates">
+                {{.StartDate.Format "Jan 2006"}} -
+                {{if .EndDate}}{{.EndDate.Format "Jan 2006"}}{{else}}Présent{{end}}
+            </div>
+            <div class="experience-description">{{.Description}}</div>
+            {{if .Technologies}}
+            <div class="tags">
+                {{range .Technologies}}
+                <span class="tag">{{.}}</span>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{if .Skills}}
+    <div class="section">
+        <h2 class="section-title">Compétences</h2>
+        <div class="skills-grid">
+            {{range .Skills}}
+            <div class="skill">
+                <div class="skill-name">{{.Name}}</div>
+                <div class="skill-level">{{.Level}} - {{.YearsExperience}} ans</div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
+    {{if .Projects}}
+    <div class="section">
+        <h2 class="section-title">Projets</h2>
+        <ul class="projects-list">
+            {{range .Projects}}
+            <li class="project">
+                <div class="project-title">{{.Title}}</div>
+                <div class="project-description">{{.Description}}</div>
+                {{if .Technologies}}
+                <div class="tags">
+                    {{range .Technologies}}
+                    <span class="tag">{{.}}</span>
+                    {{end}}
+                </div>
+                {{end}}
+            </li>
+            {{end}}
+        </ul>
+    </div>
+    {{end}}
+
+    <div class="footer">
+        Généré le {{.GeneratedAt.Format "02/01/2006 15:04"}} - Thème: {{.Theme.ID}}
+    </div>
+</body>
+</html>

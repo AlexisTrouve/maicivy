@@ -1,0 +1,1223 @@
+openapi: 3.0.0
+info:
+  title: maicivy API
+  version: 1.0.0
+  description: |
+    API pour CV interactif intelligent avec génération de lettres de motivation/anti-motivation par IA.
+
+    ## Fonctionnalités
+
+    - **CV Dynamique** : CV adaptatif selon le thème (backend, frontend, fullstack, etc.)
+    - **Génération de Lettres** : Création automatique de lettres de motivation et anti-motivation avec IA
+    - **Analytics Temps Réel** : Métriques et statistiques publiques en direct
+    - **Import GitHub** : Synchronisation automatique des projets GitHub
+    - **Timeline Interactive** : Visualisation chronologique des expériences
+
+    ## Authentification
+
+    L'API utilise des cookies de session pour tracker les visiteurs et gérer l'accès aux fonctionnalités IA.
+    Aucune authentification n'est requise pour la consultation du CV et des analytics.
+
+    ## Rate Limiting
+
+    - **Génération de lettres** : 5 générations par jour par session
+    - **Cooldown** : 2 minutes entre chaque génération
+    - **Access gate** : 3 visites minimum avant d'accéder aux fonctionnalités IA (sauf profils détectés)
+
+  contact:
+    name: Alexi
+    url: https://maicivy.dev
+    email: contact@maicivy.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: http://localhost:5000
+    description: Local backend
+  - url: https://api.maicivy.dev
+    description: Production server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: CV
+    description: CV data and adaptive filtering endpoints
+  - name: Letters
+    description: AI letter generation endpoints
+  - name: Analytics
+    description: Real-time analytics and statistics
+  - name: GitHub
+    description: GitHub projects import and synchronization
+  - name: Profile
+    description: Visitor profile detection
+  - name: Timeline
+    description: Interactive timeline endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check (shallow)
+      description: Basic health verification that server is responding
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: maicivy-api
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /health/deep:
+    get:
+      tags:
+        - Health
+      summary: Health check (deep)
+      description: Complete health check including database and Redis connectivity
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: boolean
+                    example: true
+                  redis:
+                    type: boolean
+                    example: true
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Service degraded or unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: degraded
+                  database:
+                    type: boolean
+                  redis:
+                    type: boolean
+
+  /api/v1/cv:
+    get:
+      tags:
+        - CV
+      summary: Get adaptive CV
+      description: Returns CV filtered and adapted according to specified theme
+      parameters:
+        - name: theme
+          in: query
+          description: CV theme ID
+          required: false
+          schema:
+            type: string
+            enum: [backend, frontend, fullstack, cpp, artistique, devops]
+            default: fullstack
+          example: backend
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdaptiveCVResponse'
+        '400':
+          description: Invalid theme
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cv/themes:
+    get:
+      tags:
+        - CV
+      summary: Get available CV themes
+      description: Returns list of all available CV themes
+      responses:
+        '200':
+          description: List of themes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  themes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CVTheme'
+                  count:
+                    type: integer
+                    example: 6
+
+  /api/v1/experiences:
+    get:
+      tags:
+        - CV
+      summary: Get all experiences
+      description: Returns all professional experiences
+      responses:
+        '200':
+          description: List of experiences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experience'
+                  count:
+                    type: integer
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/skills:
+    get:
+      tags:
+        - CV
+      summary: Get all skills
+      description: Returns all skills with levels
+      responses:
+        '200':
+          description: List of skills
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Skill'
+                  count:
+                    type: integer
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects:
+    get:
+      tags:
+        - CV
+      summary: Get all projects
+      description: Returns all projects with GitHub information
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  count:
+                    type: integer
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cv/export:
+    get:
+      tags:
+        - CV
+      summary: Export CV as PDF
+      description: Generates and downloads CV as PDF for specified theme
+      parameters:
+        - name: theme
+          in: query
+          description: CV theme ID
+          required: false
+          schema:
+            type: string
+            default: fullstack
+        - name: format
+          in: query
+          description: Export format (only pdf supported)
+          required: false
+          schema:
+            type: string
+            enum: [pdf]
+            default: pdf
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: PDF generation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/generate:
+    post:
+      tags:
+        - Letters
+      summary: Generate motivation and anti-motivation letters
+      description: |
+        Generates two letters (motivation + anti-motivation) for a company.
+        Requires access gate (3 visits minimum) unless profile detected.
+        Rate limited to 5 generations per day with 2-minute cooldown.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLetterRequest'
+      responses:
+        '202':
+          description: Generation job queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterGenerationResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (less than 3 visits)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded (5/day)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Generation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/jobs/{jobId}:
+    get:
+      tags:
+        - Letters
+      summary: Get letter generation job status
+      description: Returns status and progress of a letter generation job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID returned from POST /letters/generate
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterJobStatus'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/{id}:
+    get:
+      tags:
+        - Letters
+      summary: Get letter by ID
+      description: Returns a previously generated letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Letter ID
+      responses:
+        '200':
+          description: Letter details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterDetailResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Letter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/{id}/pdf:
+    get:
+      tags:
+        - Letters
+      summary: Download letter as PDF
+      description: Returns formatted PDF of the letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Letter ID
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Letter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/pair:
+    get:
+      tags:
+        - Letters
+      summary: Get letter pair by company
+      description: Returns motivation and anti-motivation letters for a company
+      parameters:
+        - name: company
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Company name
+      responses:
+        '200':
+          description: Letter pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterPairResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Letters not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/history:
+    get:
+      tags:
+        - Letters
+      summary: Get letter generation history
+      description: Returns history of generated letters for current session
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+          description: Results per page
+      responses:
+        '200':
+          description: Letter history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LetterHistoryResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/access-status:
+    get:
+      tags:
+        - Letters
+      summary: Get AI access status
+      description: Returns visitor's AI features access status
+      responses:
+        '200':
+          description: Access status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessStatusResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/letters/rate-limit-status:
+    get:
+      tags:
+        - Letters
+      summary: Get rate limit status
+      description: Returns AI rate limiting status for current session
+      responses:
+        '200':
+          description: Rate limit status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitStatusResponse'
+        '401':
+          description: Session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/realtime:
+    get:
+      tags:
+        - Analytics
+      summary: Get realtime visitor statistics
+      description: Returns current visitor count and realtime metrics
+      responses:
+        '200':
+          description: Realtime stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RealtimeStats'
+
+  /api/v1/analytics/stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get aggregated statistics
+      description: Returns aggregated statistics for specified period
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+          description: Statistics period
+      responses:
+        '200':
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AnalyticsStats'
+        '400':
+          description: Invalid period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics/themes:
+    get:
+      tags:
+        - Analytics
+      summary: Get top CV themes
+      description: Returns most consulted CV themes with counts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 20
+          description: Number of themes to return
+      responses:
+        '200':
+          description: Top themes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ThemeCount'
+
+  /api/v1/analytics/letters:
+    get:
+      tags:
+        - Analytics
+      summary: Get letters generation statistics
+      description: Returns statistics about letter generation
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+          description: Statistics period
+      responses:
+        '200':
+          description: Letters stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/LettersStats'
+
+  /api/v1/analytics/timeline:
+    get:
+      tags:
+        - Analytics
+      summary: Get recent events timeline
+      description: Returns recent analytics events
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: Number of events
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Offset for pagination
+      responses:
+        '200':
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimelineEvent'
+                  meta:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                      count:
+                        type: integer
+
+  /api/v1/analytics/heatmap:
+    get:
+      tags:
+        - Analytics
+      summary: Get heatmap data
+      description: Returns click/interaction heatmap data
+      parameters:
+        - name: page_url
+          in: query
+          schema:
+            type: string
+          description: Filter by page URL
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+            minimum: 1
+            maximum: 168
+          description: Timeframe in hours (max 7 days)
+      responses:
+        '200':
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HeatmapPoint'
+                  meta:
+                    type: object
+
+  /api/v1/analytics/event:
+    post:
+      tags:
+        - Analytics
+      summary: Track custom event
+      description: Records a custom analytics event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_type
+              properties:
+                event_type:
+                  type: string
+                  example: button_click
+                event_data:
+                  type: object
+                  additionalProperties: true
+                page_url:
+                  type: string
+                  example: /cv
+      responses:
+        '201':
+          description: Event tracked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/sync:
+    post:
+      tags:
+        - GitHub
+      summary: Trigger GitHub sync
+      description: Manually triggers synchronization of GitHub projects
+      responses:
+        '202':
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '500':
+          description: Sync failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/github/status:
+    get:
+      tags:
+        - GitHub
+      summary: Get GitHub sync status
+      description: Returns status of GitHub synchronization
+      responses:
+        '200':
+          description: Sync status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/GitHubSyncStatus'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid request
+        message:
+          type: string
+          example: Field 'company_name' is required
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        details:
+          type: string
+
+    AdaptiveCVResponse:
+      type: object
+      properties:
+        theme:
+          type: string
+          example: backend
+        title:
+          type: string
+          example: Backend Engineer
+        summary:
+          type: string
+        experiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experience'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        generated_at:
+          type: string
+          format: date-time
+
+    CVTheme:
+      type: object
+      properties:
+        id:
+          type: string
+          example: backend
+        name:
+          type: string
+          example: Backend Engineer
+        description:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+
+    Experience:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          example: Senior Backend Engineer
+        company:
+          type: string
+          example: TechCorp
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        technologies:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        relevance_score:
+          type: number
+          format: float
+
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: Go
+        level:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        years_experience:
+          type: integer
+        relevance_score:
+          type: number
+          format: float
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          example: maicivy
+        description:
+          type: string
+        github_url:
+          type: string
+        demo_url:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        featured:
+          type: boolean
+        stars:
+          type: integer
+        relevance_score:
+          type: number
+          format: float
+
+    GenerateLetterRequest:
+      type: object
+      required:
+        - company_name
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Google
+        job_title:
+          type: string
+          example: Backend Engineer
+        theme:
+          type: string
+          example: backend
+
+    LetterGenerationResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          example: job_abc123
+        status:
+          type: string
+          example: queued
+        message:
+          type: string
+        rate_limit_remaining:
+          type: integer
+
+    LetterJobStatus:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        letter_motivation_id:
+          type: integer
+        letter_anti_motivation_id:
+          type: integer
+        error:
+          type: string
+        estimated_time:
+          type: integer
+          description: Estimated remaining time in seconds
+
+    LetterDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_name:
+          type: string
+        letter_type:
+          type: string
+          enum: [motivation, anti_motivation]
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        ai_model:
+          type: string
+        tokens_used:
+          type: integer
+        generation_ms:
+          type: integer
+        cost:
+          type: number
+          format: float
+        pdf_url:
+          type: string
+
+    LetterPairResponse:
+      type: object
+      properties:
+        motivation_letter:
+          $ref: '#/components/schemas/LetterDetailResponse'
+        anti_motivation_letter:
+          $ref: '#/components/schemas/LetterDetailResponse'
+        company_name:
+          type: string
+
+    LetterHistoryResponse:
+      type: object
+      properties:
+        letters:
+          type: array
+          items:
+            $ref: '#/components/schemas/LetterHistoryItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    LetterHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_name:
+          type: string
+        letter_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        downloaded:
+          type: boolean
+
+    AccessStatusResponse:
+      type: object
+      properties:
+        has_access:
+          type: boolean
+        current_visits:
+          type: integer
+        required_visits:
+          type: integer
+        visits_remaining:
+          type: integer
+        profile_detected:
+          type: string
+        access_granted_by:
+          type: string
+          enum: [visits, profile]
+        message:
+          type: string
+
+    RateLimitStatusResponse:
+      type: object
+      properties:
+        daily_limit:
+          type: integer
+        daily_used:
+          type: integer
+        daily_remaining:
+          type: integer
+        reset_at:
+          type: string
+          format: date-time
+        cooldown_active:
+          type: boolean
+        cooldown_remaining:
+          type: integer
+
+    RealtimeStats:
+      type: object
+      properties:
+        active_visitors:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    AnalyticsStats:
+      type: object
+      properties:
+        period:
+          type: string
+        total_visitors:
+          type: integer
+        unique_visitors:
+          type: integer
+        page_views:
+          type: integer
+        average_session_length:
+          type: number
+          format: float
+        letters_generated:
+          type: integer
+
+    ThemeCount:
+      type: object
+      properties:
+        theme:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    LettersStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        motivation:
+          type: integer
+        anti_motivation:
+          type: integer
+        period:
+          type: string
+
+    TimelineEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        page_url:
+          type: string
+
+    HeatmapPoint:
+      type: object
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        count:
+          type: integer
+        page_url:
+          type: string
+
+    GitHubSyncStatus:
+      type: object
+      properties:
+        last_sync:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [idle, syncing, error]
+        projects_count:
+          type: integer
+        message:
+          type: string

@@ -1,0 +1,53 @@
+# Infrastructure Production - Statistics
+
+Date: $(date +"%Y-%m-%d %H:%M:%S")
+
+## Files Created
+
+### Configuration Files
+$(find docker/ monitoring/ -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.conf" -o -name "*.json" \) | wc -l) configuration files
+
+### Scripts
+$(find scripts/ -type f -name "*.sh" | wc -l) bash scripts
+
+### Documentation
+$(find . -maxdepth 1 -type f -name "*.md" | wc -l) markdown documentation files
+
+## Total Files
+$(find docker/ monitoring/ scripts/ -type f | wc -l) files in infrastructure directories
+
+## Lines of Code
+
+### Configuration
+$(find docker/ monitoring/ -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.conf" -o -name "*.json" \) -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}') lines
+
+### Scripts
+$(find scripts/ -type f -name "*.sh" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}') lines
+
+### Documentation
+$(find . -maxdepth 1 -type f -name "*INFRASTRUCTURE*.md" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}') lines
+
+## Docker Services
+
+Production Stack (docker-compose.prod.yml):
+$(grep -c "^  [a-z]" docker/docker-compose.prod.yml || echo 0) services
+
+Monitoring Stack (docker-compose.monitoring.yml):
+$(grep -c "^  [a-z]" docker/docker-compose.monitoring.yml || echo 0) services (optional)
+
+## Prometheus
+
+Scrape jobs: $(grep -c "job_name:" monitoring/prometheus/prometheus.yml || echo 0)
+Alert rules: $(grep -c "alert:" monitoring/prometheus/alerts.yml || echo 0)
+
+## File Breakdown
+
+Docker:
+$(find docker/ -type f | wc -l) files
+
+Monitoring:
+$(find monitoring/ -type f | wc -l) files
+
+Scripts:
+$(find scripts/ -type f | wc -l) files
+

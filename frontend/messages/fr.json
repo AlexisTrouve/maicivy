@@ -1,0 +1,329 @@
+{
+  "metadata": {
+    "title": "maicivy - CV Interactif Intelligent",
+    "description": "CV interactif avec génération de lettres de motivation par IA"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "backToHome": "Retour à l'accueil",
+    "download": "Télécharger",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "viewMore": "Voir plus",
+    "toggleTheme": "Changer de thème"
+  },
+  "nav": {
+    "home": "Accueil",
+    "cv": "CV",
+    "letters": "Lettres",
+    "analytics": "Analytics",
+    "architecture": "Architecture"
+  },
+  "home": {
+    "title": "CV Interactif Intelligent",
+    "subtitle": "Découvrez mon parcours professionnel adaptatif et générez des lettres de motivation personnalisées grâce à l'intelligence artificielle.",
+    "cta": {
+      "viewCV": "Voir mon CV",
+      "generateLetter": "Générer une lettre"
+    },
+    "features": {
+      "cv": {
+        "title": "CV Dynamique",
+        "description": "Un CV qui s'adapte automatiquement selon le contexte : backend, frontend, DevOps...",
+        "action": "Explorer"
+      },
+      "letters": {
+        "title": "Lettres IA",
+        "description": "Génération de lettres de motivation et anti-motivation personnalisées par IA.",
+        "action": "Essayer"
+      },
+      "analytics": {
+        "title": "Analytics Publiques",
+        "description": "Dashboard temps réel des statistiques de visite et d'utilisation.",
+        "action": "Voir les stats"
+      },
+      "architecture": {
+        "title": "Architecture",
+        "description": "Stack technique complète : Go, Next.js, PostgreSQL, Redis, Claude AI...",
+        "action": "Découvrir"
+      }
+    }
+  },
+  "cv": {
+    "title": "CV Dynamique",
+    "adaptedTo": "CV adapté au profil :",
+    "selectTheme": "Sélectionner un thème",
+    "sections": {
+      "experiences": "Expériences Professionnelles",
+      "skills": "Compétences",
+      "projects": "Projets"
+    },
+    "duration": {
+      "present": "Présent",
+      "year": "an",
+      "years": "ans",
+      "month": "mois",
+      "months": "mois",
+      "unknownDate": "Date inconnue",
+      "invalidDate": "Date invalide",
+      "unknownDuration": "Durée inconnue"
+    },
+    "experience": {
+      "viewDetails": "Voir détails"
+    },
+    "skills": {
+      "all": "Toutes",
+      "tooltip": "{name} - Niveau {level}/5 - {years} ans d'expérience",
+      "legend": "La taille représente le niveau de compétence et la pertinence par rapport au thème sélectionné"
+    },
+    "projects": {
+      "featured": "Projet Vedette",
+      "code": "Code",
+      "demo": "Demo",
+      "relevance": "Pertinence",
+      "inProgress": "En cours",
+      "clickForDetails": "Cliquez pour plus de details",
+      "openDetails": "Ouvrir les details de {title}",
+      "defaultCategory": "Projet"
+    },
+    "export": {
+      "downloading": "Export en cours...",
+      "download": "Télécharger PDF",
+      "error": "Échec de l'export PDF"
+    },
+    "themes": {
+      "backend": "Backend",
+      "fullstack": "Full-Stack",
+      "devops": "DevOps",
+      "cpp": "C++",
+      "artistic": "Artistique"
+    },
+    "detailModal": {
+      "close": "Fermer",
+      "image": "Image",
+      "prevImage": "Image precedente",
+      "nextImage": "Image suivante",
+      "goToImage": "Aller a l'image",
+      "functional": {
+        "title": "Ce que ca fait"
+      },
+      "technical": {
+        "title": "Comment c'est fait"
+      },
+      "technologies": "Technologies",
+      "skills": "Competences",
+      "links": {
+        "title": "Liens",
+        "github": "GitHub",
+        "demo": "Demo en ligne",
+        "website": "Site web",
+        "linkedin": "LinkedIn",
+        "other": "Lien"
+      }
+    }
+  },
+  "letters": {
+    "title": "Générateur de Lettres par IA",
+    "subtitle": "Générez instantanément une lettre de motivation professionnelle et sa version humoristique \"anti-motivation\"",
+    "form": {
+      "companyName": "Nom de l'entreprise",
+      "placeholder": "Ex: Google, Microsoft, Startup Innovante...",
+      "submit": "Générer les lettres",
+      "generating": "Génération en cours...",
+      "info": "L'IA va générer deux lettres : une motivation professionnelle et une anti-motivation humoristique. La génération prend environ 30-60 secondes."
+    },
+    "progress": {
+      "analyzing": "Analyse de l'entreprise...",
+      "writingMotivation": "Rédaction de la lettre de motivation...",
+      "writingAnti": "Création de l'anti-motivation...",
+      "finalizing": "Finalisation..."
+    },
+    "preview": {
+      "title": "Lettres pour {company}",
+      "sector": "Secteur:",
+      "motivation": "Lettre de Motivation",
+      "antiMotivation": "Lettre d'Anti-Motivation",
+      "downloadDual": "PDF Dual",
+      "newGeneration": "Nouvelle génération",
+      "copyText": "Copier le texte",
+      "downloadPDF": "Télécharger PDF",
+      "warning": "Note: La lettre d'anti-motivation est générée à titre humoristique et créatif. Elle ne doit PAS être envoyée à l'entreprise. Utilisez uniquement la lettre de motivation professionnelle pour vos candidatures réelles.",
+      "downloadError": "Erreur lors du téléchargement du PDF"
+    },
+    "accessGate": {
+      "title": "Fonctionnalité Premium",
+      "description": "Le générateur de lettres par IA est accessible à partir de la 3ème visite.",
+      "progress": "Votre progression",
+      "visits": "{count} / 3 visites",
+      "remaining": "Encore {count} visite(s) avant déblocage",
+      "encourage": "Revenez explorer mon CV pour débloquer cette fonctionnalité !",
+      "unlockTitle": "Vous débloquerez :",
+      "features": {
+        "motivation": "Génération de lettre de motivation personnalisée",
+        "anti": "Lettre d'anti-motivation humoristique unique",
+        "pdf": "Export PDF professionnel des deux lettres",
+        "analysis": "Analyse IA de l'entreprise cible"
+      },
+      "exploreCV": "Explorer mon CV"
+    },
+    "errors": {
+      "accessDenied": "Accès refusé. Vous devez effectuer 3 visites pour débloquer cette fonctionnalité.",
+      "rateLimit": "Limite atteinte. Réessayez dans quelques minutes.",
+      "serverError": "Erreur serveur. Nos IA prennent une pause café. Réessayez dans quelques instants.",
+      "generic": "Une erreur est survenue lors de la génération."
+    }
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "subtitle": "Statistiques publiques en temps réel",
+    "description": "Découvrez comment les visiteurs interagissent avec le site",
+    "privacy": "Ce dashboard est public et mis à jour en temps réel. Les données sont collectées de manière anonyme dans le respect de la vie privée des visiteurs.",
+    "widgets": {
+      "visitors": {
+        "title": "Visiteurs Actuels",
+        "online": "En ligne",
+        "offline": "Déconnecté",
+        "person": "personne",
+        "people": "personnes",
+        "rightNow": "en ce moment",
+        "realtime": "Mise à jour en temps réel via WebSocket"
+      },
+      "themes": {
+        "title": "Top Thèmes CV",
+        "views": "vues",
+        "update": "Mise à jour toutes les 30 secondes"
+      },
+      "letters": {
+        "title": "Lettres IA",
+        "total": "lettres générées au total",
+        "noData": "Aucune donnée disponible",
+        "evolution": "Évolution sur {period}"
+      },
+      "heatmap": {
+        "title": "Heatmap des Interactions",
+        "low": "Faible",
+        "high": "Fort",
+        "noData": "Aucune donnée d'interaction disponible",
+        "interactions": "{count} interactions",
+        "based": "Basé sur {count} points d'interaction"
+      },
+      "stats": {
+        "visitors": "Visiteurs",
+        "pageViews": "Pages Vues",
+        "letters": "Lettres",
+        "conversion": "Conversion"
+      }
+    },
+    "periods": {
+      "today": "Aujourd'hui",
+      "last7days": "7 derniers jours",
+      "last30days": "30 derniers jours",
+      "all": "Tout",
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "select": "Sélectionner une période",
+      "label": "Période:"
+    }
+  },
+  "architecture": {
+    "title": "Architecture & Stack Technique",
+    "subtitle": "Découvrez les technologies et l'architecture derrière maicivy",
+    "overview": "Vue d'Ensemble",
+    "fullStack": "Stack Technique Complète",
+    "scraper": "Company Scraper Multi-Sources",
+    "features": "Fonctionnalités Techniques",
+    "security": "Sécurité (OWASP Top 10)",
+    "codeExample": "Exemple: Scraper Multi-Sources",
+    "sourceCode": "Code Source",
+    "sourceCodeDesc": "Explorez le code complet sur GitHub - 100+ fichiers Go, 60+ composants React, 882 tests",
+    "viewOnGithub": "Voir sur GitHub",
+    "backToCV": "Retour au CV",
+    "layers": {
+      "client": "CLIENT",
+      "backend": "API BACKEND",
+      "services": "SERVICES",
+      "database": "DATABASE",
+      "cache": "CACHE",
+      "aiProviders": "AI PROVIDERS"
+    },
+    "stacks": {
+      "backend": {
+        "title": "Backend (Go)",
+        "description": "API haute performance avec Go et Fiber"
+      },
+      "frontend": {
+        "title": "Frontend (Next.js)",
+        "description": "Interface moderne avec React et TypeScript"
+      },
+      "ai": {
+        "title": "Intelligence Artificielle",
+        "description": "Génération de contenu avec Claude et GPT-4"
+      },
+      "infra": {
+        "title": "Infrastructure",
+        "description": "Docker, bases de données et monitoring"
+      }
+    },
+    "metrics": {
+      "goFiles": "Fichiers Go (Backend)",
+      "reactComponents": "Composants React",
+      "backendTests": "Tests Backend",
+      "frontendTests": "Tests Frontend",
+      "passingTests": "Tests Passants",
+      "apiEndpoints": "Endpoints API",
+      "documentation": "Documentation",
+      "implementationGuides": "Guides Implémentation"
+    },
+    "securityItems": {
+      "injection": {
+        "title": "Injection Prevention",
+        "description": "GORM ORM, requêtes paramétrées"
+      },
+      "xss": {
+        "title": "XSS Protection",
+        "description": "Input sanitization, bluemonday"
+      },
+      "rateLimit": {
+        "title": "Rate Limiting",
+        "description": "Redis sliding window"
+      },
+      "headers": {
+        "title": "Security Headers",
+        "description": "CSP, X-Frame-Options, HSTS"
+      },
+      "gdpr": {
+        "title": "GDPR Compliance",
+        "description": "IP hashing SHA256, pas de PII"
+      },
+      "cookies": {
+        "title": "Secure Cookies",
+        "description": "HttpOnly, Secure, SameSite"
+      }
+    }
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "tryAgain": "Désolé, quelque chose s'est mal passé. Veuillez réessayer.",
+    "notFound": "Page non trouvée",
+    "serverError": "Erreur serveur",
+    "retry": "Réessayer"
+  },
+  "validation": {
+    "minLength": "Doit contenir au moins {min} caractères",
+    "maxLength": "Ne peut pas dépasser {max} caractères",
+    "invalidChars": "Caractères invalides détectés",
+    "required": "Ce champ est requis",
+    "invalidEmail": "Adresse email invalide",
+    "invalidUrl": "URL invalide"
+  },
+  "footer": {
+    "description": "CV interactif intelligent avec génération de lettres par IA",
+    "navigation": "Navigation",
+    "contact": "Contact",
+    "rights": "Tous droits réservés."
+  }
+}

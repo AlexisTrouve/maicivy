@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Base de données principale
+  postgres:
+    image: postgres:16-alpine
+    container_name: maicivy-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-maicivy}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev-password-change-in-prod}
+      POSTGRES_DB: ${DB_NAME:-maicivy_db}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Removed initdb.d mount - GORM handles schema creation
+    networks:
+      - maicivy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-maicivy} -d ${DB_NAME:-maicivy_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    command: |
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # Redis - Cache et sessions
+  redis:
+    image: redis:7-alpine
+    container_name: maicivy-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - maicivy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Backend - API Go
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: maicivy-backend
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-maicivy}
+      DB_PASSWORD: ${DB_PASSWORD:-dev-password-change-in-prod}
+      DB_NAME: ${DB_NAME:-maicivy_db}
+      DB_SSL_MODE: ${DB_SSL_MODE:-disable}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # Server
+      SERVER_PORT: 8080
+      SERVER_ENV: ${SERVER_ENV:-development}
+      # Chrome for PDF generation
+      CHROME_PATH: /usr/bin/chromium-browser
+      # API Keys (to be set in .env)
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - maicivy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    # Note: volume mounts removed for production (binary is in container)
+
+  # Frontend - Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    container_name: maicivy-frontend
+    environment:
+      # Server-side: internal docker network URL
+      API_URL: http://maicivy-backend:8080
+      # Client-side: public URL
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - maicivy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    restart: unless-stopped
+    # Note: volume mounts removed for production (built app is in container)
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  maicivy:
+    driver: bridge

@@ -1,0 +1,26 @@
+--- a/lib/validations.ts
++++ b/lib/validations.ts
+@@ -177,11 +177,11 @@ export function isValidURL(url: string): boolean {
+  * Sanitizes a string by removing HTML tags
+  */
+ export function sanitizeString(input: string): string {
+-  // Remove HTML tags
+-  let sanitized = input.replace(/<[^>]*>/g, '');
+-
+   // Remove script tags and content FIRST (before removing tags)
+   sanitized = sanitized.replace(/<script[\s\S]*?<\/script>/gi, '');
++
++  // Remove HTML tags
++  let sanitized = input.replace(/<[^>]*>/g, '');
+
+   // Trim whitespace
+   sanitized = sanitized.trim();
+@@ -224,7 +224,7 @@ export function containsSQLInjection(input: string): boolean {
+     /'; delete from/i,
+     /union select/i,
+     /exec\(/i,
+-    /execute\(/i,
++    /execute[\s(]/i,
+   ];
+
+   return sqlPatterns.some((pattern) => pattern.test(input));

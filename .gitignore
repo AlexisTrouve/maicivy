@@ -1,0 +1,86 @@
+# ============================================================================
+# MAICIVY - Git Ignore
+# ============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes data
+postgres-data/
+redis-data/
+
+# Backend (Go)
+backend/backend
+backend/*.exe
+backend/*.test
+backend/*.out
+backend/tmp/
+backend/vendor/
+*.swp
+*.swo
+
+# Frontend (Next.js)
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/node_modules/
+frontend/.DS_Store
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+*.coverprofile
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Build artifacts
+dist/
+build/
+*.tar.gz
+*.zip
+
+# Secrets & Keys
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# Database dumps (but allow migrations)
+*.dump
+!backend/migrations/*.sql
+
+# Redis dumps
+dump.rdb
+appendonly.aof

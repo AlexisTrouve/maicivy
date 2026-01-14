@@ -1,0 +1,329 @@
+{
+  "metadata": {
+    "title": "maicivy - Interactive Intelligent CV",
+    "description": "Interactive CV with AI-powered cover letter generation"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "close": "Close",
+    "backToHome": "Back to Home",
+    "download": "Download",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "viewMore": "View more",
+    "toggleTheme": "Toggle theme"
+  },
+  "nav": {
+    "home": "Home",
+    "cv": "CV",
+    "letters": "Letters",
+    "analytics": "Analytics",
+    "architecture": "Architecture"
+  },
+  "home": {
+    "title": "Interactive Intelligent CV",
+    "subtitle": "Discover my adaptive professional journey and generate personalized cover letters powered by artificial intelligence.",
+    "cta": {
+      "viewCV": "View my CV",
+      "generateLetter": "Generate a letter"
+    },
+    "features": {
+      "cv": {
+        "title": "Dynamic CV",
+        "description": "A CV that automatically adapts to context: backend, frontend, DevOps...",
+        "action": "Explore"
+      },
+      "letters": {
+        "title": "AI Letters",
+        "description": "Generation of personalized motivation and anti-motivation letters by AI.",
+        "action": "Try it"
+      },
+      "analytics": {
+        "title": "Public Analytics",
+        "description": "Real-time dashboard of visit and usage statistics.",
+        "action": "View stats"
+      },
+      "architecture": {
+        "title": "Architecture",
+        "description": "Complete tech stack: Go, Next.js, PostgreSQL, Redis, Claude AI...",
+        "action": "Discover"
+      }
+    }
+  },
+  "cv": {
+    "title": "Dynamic CV",
+    "adaptedTo": "CV adapted to profile:",
+    "selectTheme": "Select a theme",
+    "sections": {
+      "experiences": "Professional Experiences",
+      "skills": "Skills",
+      "projects": "Projects"
+    },
+    "duration": {
+      "present": "Present",
+      "year": "year",
+      "years": "years",
+      "month": "month",
+      "months": "months",
+      "unknownDate": "Unknown date",
+      "invalidDate": "Invalid date",
+      "unknownDuration": "Unknown duration"
+    },
+    "experience": {
+      "viewDetails": "View details"
+    },
+    "skills": {
+      "all": "All",
+      "tooltip": "{name} - Level {level}/5 - {years} years of experience",
+      "legend": "Size represents skill level and relevance to selected theme"
+    },
+    "projects": {
+      "featured": "Featured Project",
+      "code": "Code",
+      "demo": "Demo",
+      "relevance": "Relevance",
+      "inProgress": "In Progress",
+      "clickForDetails": "Click for more details",
+      "openDetails": "Open details for {title}",
+      "defaultCategory": "Project"
+    },
+    "export": {
+      "downloading": "Exporting...",
+      "download": "Download PDF",
+      "error": "PDF export failed"
+    },
+    "themes": {
+      "backend": "Backend",
+      "fullstack": "Full-Stack",
+      "devops": "DevOps",
+      "cpp": "C++",
+      "artistic": "Artistic"
+    },
+    "detailModal": {
+      "close": "Close",
+      "image": "Image",
+      "prevImage": "Previous image",
+      "nextImage": "Next image",
+      "goToImage": "Go to image",
+      "functional": {
+        "title": "What it does"
+      },
+      "technical": {
+        "title": "How it's built"
+      },
+      "technologies": "Technologies",
+      "skills": "Skills",
+      "links": {
+        "title": "Links",
+        "github": "GitHub",
+        "demo": "Live Demo",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "other": "Link"
+      }
+    }
+  },
+  "letters": {
+    "title": "AI Letter Generator",
+    "subtitle": "Instantly generate a professional cover letter and its humorous \"anti-motivation\" version",
+    "form": {
+      "companyName": "Company name",
+      "placeholder": "E.g.: Google, Microsoft, Innovative Startup...",
+      "submit": "Generate letters",
+      "generating": "Generating...",
+      "info": "The AI will generate two letters: a professional motivation letter and a humorous anti-motivation letter. Generation takes approximately 30-60 seconds."
+    },
+    "progress": {
+      "analyzing": "Analyzing the company...",
+      "writingMotivation": "Writing the cover letter...",
+      "writingAnti": "Creating the anti-motivation...",
+      "finalizing": "Finalizing..."
+    },
+    "preview": {
+      "title": "Letters for {company}",
+      "sector": "Sector:",
+      "motivation": "Cover Letter",
+      "antiMotivation": "Anti-Motivation Letter",
+      "downloadDual": "Dual PDF",
+      "newGeneration": "New generation",
+      "copyText": "Copy text",
+      "downloadPDF": "Download PDF",
+      "warning": "Note: The anti-motivation letter is generated for humorous and creative purposes. It should NOT be sent to the company. Only use the professional cover letter for real applications.",
+      "downloadError": "Error downloading PDF"
+    },
+    "accessGate": {
+      "title": "Premium Feature",
+      "description": "The AI letter generator is accessible from your 3rd visit.",
+      "progress": "Your progress",
+      "visits": "{count} / 3 visits",
+      "remaining": "{count} more visit(s) before unlocking",
+      "encourage": "Come back to explore my CV to unlock this feature!",
+      "unlockTitle": "You will unlock:",
+      "features": {
+        "motivation": "Personalized cover letter generation",
+        "anti": "Unique humorous anti-motivation letter",
+        "pdf": "Professional PDF export of both letters",
+        "analysis": "AI analysis of target company"
+      },
+      "exploreCV": "Explore my CV"
+    },
+    "errors": {
+      "accessDenied": "Access denied. You must make 3 visits to unlock this feature.",
+      "rateLimit": "Rate limit reached. Please try again in a few minutes.",
+      "serverError": "Server error. Our AIs are taking a coffee break. Please try again shortly.",
+      "generic": "An error occurred during generation."
+    }
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "subtitle": "Real-time public statistics",
+    "description": "Discover how visitors interact with the site",
+    "privacy": "This dashboard is public and updated in real-time. Data is collected anonymously in respect of visitor privacy.",
+    "widgets": {
+      "visitors": {
+        "title": "Current Visitors",
+        "online": "Online",
+        "offline": "Disconnected",
+        "person": "person",
+        "people": "people",
+        "rightNow": "right now",
+        "realtime": "Real-time updates via WebSocket"
+      },
+      "themes": {
+        "title": "Top CV Themes",
+        "views": "views",
+        "update": "Updates every 30 seconds"
+      },
+      "letters": {
+        "title": "AI Letters",
+        "total": "letters generated in total",
+        "noData": "No data available",
+        "evolution": "Evolution over {period}"
+      },
+      "heatmap": {
+        "title": "Interaction Heatmap",
+        "low": "Low",
+        "high": "High",
+        "noData": "No interaction data available",
+        "interactions": "{count} interactions",
+        "based": "Based on {count} interaction points"
+      },
+      "stats": {
+        "visitors": "Visitors",
+        "pageViews": "Page Views",
+        "letters": "Letters",
+        "conversion": "Conversion"
+      }
+    },
+    "periods": {
+      "today": "Today",
+      "last7days": "Last 7 days",
+      "last30days": "Last 30 days",
+      "all": "All",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "select": "Select a period",
+      "label": "Period:"
+    }
+  },
+  "architecture": {
+    "title": "Architecture & Tech Stack",
+    "subtitle": "Discover the technologies and architecture behind maicivy",
+    "overview": "Overview",
+    "fullStack": "Complete Tech Stack",
+    "scraper": "Multi-Source Company Scraper",
+    "features": "Technical Features",
+    "security": "Security (OWASP Top 10)",
+    "codeExample": "Example: Multi-Source Scraper",
+    "sourceCode": "Source Code",
+    "sourceCodeDesc": "Explore the complete code on GitHub - 100+ Go files, 60+ React components, 882 tests",
+    "viewOnGithub": "View on GitHub",
+    "backToCV": "Back to CV",
+    "layers": {
+      "client": "CLIENT",
+      "backend": "API BACKEND",
+      "services": "SERVICES",
+      "database": "DATABASE",
+      "cache": "CACHE",
+      "aiProviders": "AI PROVIDERS"
+    },
+    "stacks": {
+      "backend": {
+        "title": "Backend (Go)",
+        "description": "High-performance API with Go and Fiber"
+      },
+      "frontend": {
+        "title": "Frontend (Next.js)",
+        "description": "Modern interface with React and TypeScript"
+      },
+      "ai": {
+        "title": "Artificial Intelligence",
+        "description": "Content generation with Claude and GPT-4"
+      },
+      "infra": {
+        "title": "Infrastructure",
+        "description": "Docker, databases and monitoring"
+      }
+    },
+    "metrics": {
+      "goFiles": "Go Files (Backend)",
+      "reactComponents": "React Components",
+      "backendTests": "Backend Tests",
+      "frontendTests": "Frontend Tests",
+      "passingTests": "Passing Tests",
+      "apiEndpoints": "API Endpoints",
+      "documentation": "Documentation",
+      "implementationGuides": "Implementation Guides"
+    },
+    "securityItems": {
+      "injection": {
+        "title": "Injection Prevention",
+        "description": "GORM ORM, parameterized queries"
+      },
+      "xss": {
+        "title": "XSS Protection",
+        "description": "Input sanitization, bluemonday"
+      },
+      "rateLimit": {
+        "title": "Rate Limiting",
+        "description": "Redis sliding window"
+      },
+      "headers": {
+        "title": "Security Headers",
+        "description": "CSP, X-Frame-Options, HSTS"
+      },
+      "gdpr": {
+        "title": "GDPR Compliance",
+        "description": "IP hashing SHA256, no PII"
+      },
+      "cookies": {
+        "title": "Secure Cookies",
+        "description": "HttpOnly, Secure, SameSite"
+      }
+    }
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "tryAgain": "Sorry, something went wrong. Please try again.",
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "retry": "Retry"
+  },
+  "validation": {
+    "minLength": "Must contain at least {min} characters",
+    "maxLength": "Cannot exceed {max} characters",
+    "invalidChars": "Invalid characters detected",
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidUrl": "Invalid URL"
+  },
+  "footer": {
+    "description": "Interactive intelligent CV with AI-powered letter generation",
+    "navigation": "Navigation",
+    "contact": "Contact",
+    "rights": "All rights reserved."
+  }
+}

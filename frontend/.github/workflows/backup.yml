@@ -1,0 +1,81 @@
+name: Weekly Backup
+
+on:
+  schedule:
+    # Every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  backup:
+    name: Backup Database & Redis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute backup script
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+
+          # Variables
+          BACKUP_DIR="/opt/maicivy/backups"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+          # Create backup directory
+          mkdir -p $BACKUP_DIR
+
+          # PostgreSQL backup
+          docker exec maicivy-postgres pg_dump -U postgres maicivy > $BACKUP_DIR/postgres_$TIMESTAMP.sql
+          gzip $BACKUP_DIR/postgres_$TIMESTAMP.sql
+
+          # Redis backup (RDB snapshot)
+          docker exec maicivy-redis redis-cli SAVE
+          docker cp maicivy-redis:/data/dump.rdb $BACKUP_DIR/redis_$TIMESTAMP.rdb
+
+          # Cleanup old backups (keep last 4 weeks)
+          find $BACKUP_DIR -name "*.sql.gz" -mtime +28 -delete
+          find $BACKUP_DIR -name "*.rdb" -mtime +28 -delete
+
+          echo "✅ Backup completed: $BACKUP_DIR/*_$TIMESTAMP.*"
+
+          EOF
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+      - name: Notify backup completion
+        if: success()
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#0099FF"
+          message: |
+            💾 **Weekly Backup Completed**
+
+            **Timestamp:** $(date)
+            **Status:** Success
+
+            Database and Redis backups created successfully.
+
+      - name: Notify backup failure
+        if: failure()
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#FF0000"
+          message: |
+            ❌ **Weekly Backup Failed**
+
+            **Timestamp:** $(date)
+            **Status:** Failed
+
+            Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

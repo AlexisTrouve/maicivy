@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lettre d'Anti-Motivation - {{.CompanyName}}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Neue', cursive, sans-serif;
+            font-size: 11pt;
+            line-height: 1.7;
+            color: #1a1a1a;
+            padding: 40px 60px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #fef3c7 0%, #fca5a5 100%);
+        }
+
+        .header {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 3px dashed #ef4444;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 20pt;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header .warning {
+            font-size: 12pt;
+            color: #991b1b;
+            font-weight: 600;
+        }
+
+        .header .date {
+            margin-top: 10px;
+            font-size: 10pt;
+            color: #6b7280;
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+        }
+
+        .content p {
+            margin-bottom: 16px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 9pt;
+            color: #6b7280;
+            border: 2px solid #fbbf24;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚠️ Lettre d'Anti-Motivation ⚠️</h1>
+        <div class="warning">Humour et second degré - Ne pas prendre au sérieux !</div>
+        <div class="date">{{.Date}}</div>
+    </div>
+
+    <div class="content">
+        {{.Content}}
+    </div>
+
+    <div class="footer">
+        Générée par l'IA avec beaucoup d'humour 🤖<br>
+        maicivy - Parce que l'auto-dérision, c'est la vie
+    </div>
+</body>
+</html>
