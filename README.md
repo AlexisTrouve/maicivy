@@ -11,6 +11,8 @@
 
 **An intelligent, adaptive CV platform with AI-powered cover letter generation**
 
+🌐 **Live Demo:** [https://maicivy.etheryale.com](https://maicivy.etheryale.com)
+
 [Features](#-features) | [Quick Start](#-quick-start) | [Tech Stack](#-tech-stack) | [API](#-api-endpoints) | [Documentation](#-documentation)
 
 </div>
