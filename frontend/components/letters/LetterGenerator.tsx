@@ -6,7 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { lettersApi } from '@/lib/api';
 import { LetterPreview } from './LetterPreview';
 import type { GeneratedLetters } from '@/lib/types';
@@ -22,7 +23,9 @@ const createFormSchema = (t: (key: string, params?: Record<string, number>) => s
 export function LetterGenerator() {
   const t = useTranslations('letters');
   const tValidation = useTranslations('validation');
-  const locale = useLocale();
+  const pathname = usePathname();
+  // Extract locale from pathname (same fix as LanguageSwitcher)
+  const locale = pathname.startsWith('/en') ? 'en' : 'fr';
 
   // Create schema with translated messages
   const formSchema = createFormSchema(tValidation);
