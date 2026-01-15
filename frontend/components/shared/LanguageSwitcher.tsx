@@ -1,18 +1,20 @@
 'use client';
 
-import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function LanguageSwitcher() {
-  const locale = useLocale();
   const pathname = usePathname();
 
-  const switchLocale = (newLocale: 'fr' | 'en') => {
+  // Extract current locale from pathname
+  const currentLocale = pathname.startsWith('/en') ? 'en' : 'fr';
+  const targetLocale = currentLocale === 'fr' ? 'en' : 'fr';
+
+  const switchLocale = () => {
     // Remove current locale prefix from pathname
     const pathWithoutLocale = pathname.replace(/^\/(fr|en)/, '') || '/';
-    // Build new URL with new locale
-    const newPath = `/${newLocale}${pathWithoutLocale}`;
+    // Build new URL with target locale
+    const newPath = `/${targetLocale}${pathWithoutLocale}`;
     window.location.href = newPath;
   };
 
@@ -20,10 +22,10 @@ export function LanguageSwitcher() {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => switchLocale(locale === 'fr' ? 'en' : 'fr')}
+      onClick={switchLocale}
       className="gap-2"
     >
-      {locale === 'fr' ? (
+      {targetLocale === 'en' ? (
         <>🇬🇧 EN</>
       ) : (
         <>🇫🇷 FR</>
