@@ -1,16 +1,19 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from '@/i18n/navigation';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function LanguageSwitcher() {
   const locale = useLocale();
-  const router = useRouter();
   const pathname = usePathname();
 
   const switchLocale = (newLocale: 'fr' | 'en') => {
-    router.replace(pathname, { locale: newLocale });
+    // Remove current locale prefix from pathname
+    const pathWithoutLocale = pathname.replace(/^\/(fr|en)/, '') || '/';
+    // Build new URL with new locale
+    const newPath = `/${newLocale}${pathWithoutLocale}`;
+    window.location.href = newPath;
   };
 
   return (
