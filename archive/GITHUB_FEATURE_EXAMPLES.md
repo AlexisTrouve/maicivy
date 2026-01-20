@@ -22,8 +22,9 @@
 
 ```bash
 # backend/.env
-GITHUB_CLIENT_ID=Iv1.a1b2c3d4e5f6g7h8
-GITHUB_CLIENT_SECRET=0123456789abcdef0123456789abcdef01234567
+# ⚠️ EXAMPLE VALUES - Replace with your actual GitHub OAuth credentials
+GITHUB_CLIENT_ID=Iv1.YOUR_GITHUB_CLIENT_ID
+GITHUB_CLIENT_SECRET=your_github_client_secret_here
 GITHUB_REDIRECT_URI=http://localhost:8080/api/v1/github/callback
 ```
 

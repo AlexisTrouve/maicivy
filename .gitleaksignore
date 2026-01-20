@@ -1,0 +1,22 @@
+# Gitleaks Ignore File
+# Documentation: https://github.com/gitleaks/gitleaks#gitleaksignore
+
+# ============================================================================
+# Documentation Files with Example/Placeholder Secrets
+# ============================================================================
+
+# Archive documentation with example GitHub OAuth configuration
+archive/GITHUB_FEATURE_EXAMPLES.md:GITHUB_CLIENT_SECRET=0123456789abcdef0123456789abcdef01234567
+
+# Implementation summary with example curl command using placeholder token
+backend/docs/reports/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md:curl -H "Authorization: Bearer YOUR_TOKEN"
+
+# ============================================================================
+# Patterns to Ignore (Optional)
+# ============================================================================
+
+# Ignore all files in archive/ directory (uncomment if needed)
+# archive/**
+
+# Ignore all markdown files in docs/ (uncomment if needed)
+# **/docs/**/*.md

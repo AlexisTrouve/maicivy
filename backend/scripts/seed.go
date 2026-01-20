@@ -1,3 +1,6 @@
+//go:build scripts
+// +build scripts
+
 package main
 
 import (

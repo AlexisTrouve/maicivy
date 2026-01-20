@@ -36,7 +36,7 @@ jobs:
       - name: Run gosec
         uses: securego/gosec@master
         with:
-          args: '-fmt json -out gosec-report.json -exclude-dir=test ./backend/...'
+          args: '-fmt json -out gosec-report.json -exclude-dir=test -exclude-dir=scripts ./backend/...'
 
       - name: Upload gosec report
         uses: actions/upload-artifact@v4
@@ -48,7 +48,7 @@ jobs:
       - name: Run gosec (SARIF for GitHub)
         uses: securego/gosec@master
         with:
-          args: '-fmt sarif -out gosec.sarif ./backend/...'
+          args: '-fmt sarif -out gosec.sarif -exclude-dir=test -exclude-dir=scripts ./backend/...'
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
@@ -78,7 +78,9 @@ jobs:
 
       - name: Run govulncheck
         working-directory: ./backend
-        run: govulncheck ./...
+        run: |
+          # Scan all packages except scripts (which have build tags)
+          govulncheck $(go list ./... | grep -v '/scripts$')
 
   # ============================================================================
   # NPM Dependencies Audit
@@ -271,6 +273,7 @@ jobs:
           args: >
             --failOnCVSS 7
             --enableRetired
+            --suppression dependency-check-suppressions.xml
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4

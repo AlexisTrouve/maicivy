@@ -539,7 +539,8 @@ redis-cli GET "github:oauth:state:XXX"
 **Solutions:**
 ```bash
 # Vérifier limites actuelles
-curl -H "Authorization: Bearer YOUR_TOKEN" https://api.github.com/rate_limit
+# Replace <YOUR_GITHUB_TOKEN> with your actual GitHub personal access token
+curl -H "Authorization: Bearer <YOUR_GITHUB_TOKEN>" https://api.github.com/rate_limit
 
 # Attendre reset ou utiliser token avec limites plus élevées
 ```
