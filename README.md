@@ -383,7 +383,6 @@ npm run test:coverage     # Coverage report
 | [CLAUDE.md](./CLAUDE.md) | Navigation guide for developers |
 | [docs/PROJECT_SPEC.md](./docs/PROJECT_SPEC.md) | Complete specifications |
 | [QUICKSTART.md](./QUICKSTART.md) | Quick start guide |
-| [docs/GITHUB_SYNC.md](./docs/GITHUB_SYNC.md) | GitHub synchronization workflow |
 | [docs/implementation/](./docs/implementation/) | 19 detailed implementation guides |
 
 ### Implementation Guides
