@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 
@@ -228,7 +229,8 @@ func (h *AnalyticsWSHandler) runHeartbeat() {
 // handleClientMessage gère les messages reçus du client
 func (h *AnalyticsWSHandler) handleClientMessage(c *websocket.Conn, message []byte) {
 	var req struct {
-		Type string `json:"type"`
+		Type      string `json:"type"`
+		VisitorID string `json:"visitor_id,omitempty"`
 	}
 
 	if err := json.Unmarshal(message, &req); err != nil {
@@ -247,7 +249,23 @@ func (h *AnalyticsWSHandler) handleClientMessage(c *websocket.Conn, message []by
 		// Client demande un refresh manuel
 		h.sendInitialStats(c)
 
-	case "ping":
+	case "ping", "heartbeat":
+		// Heartbeat client: marquer le visiteur comme actif
+		if req.VisitorID != "" {
+			visitorUUID, err := uuid.Parse(req.VisitorID)
+			if err == nil && visitorUUID != uuid.Nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+
+				// Marquer le visiteur comme actif dans Redis
+				if err := h.service.MarkVisitorActive(ctx, visitorUUID); err != nil {
+					log.Warn().Err(err).Str("visitor_id", req.VisitorID).Msg("Failed to mark visitor active via WebSocket")
+				} else {
+					log.Debug().Str("visitor_id", req.VisitorID).Msg("Visitor marked active via WebSocket heartbeat")
+				}
+			}
+		}
+
 		// Répondre avec pong
 		response, _ := json.Marshal(map[string]interface{}{
 			"type": "pong",

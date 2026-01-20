@@ -40,6 +40,12 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := context.Background()
 
+		// Skip tracking pour les endpoints de monitoring/health
+		path := c.Path()
+		if path == "/health" || path == "/health/deep" || path == "/metrics" {
+			return c.Next()
+		}
+
 		// 1. Récupérer ou créer session ID
 		sessionID := c.Cookies(SessionCookieName)
 		if sessionID == "" {

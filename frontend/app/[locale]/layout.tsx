@@ -2,8 +2,11 @@ import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import Script from 'next/script';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { VisitorHeartbeatProvider } from '@/components/providers/VisitorHeartbeatProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import '../globals.css';
 
 const inter = Inter({
@@ -63,13 +66,33 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
+        <Script id="theme-script" strategy="beforeInteractive">
+          {`
+            (function() {
+              try {
+                const theme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const initialTheme = theme || (prefersDark ? 'dark' : 'light');
+                if (initialTheme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            })();
+          `}
+        </Script>
         <NextIntlClientProvider messages={messages}>
-          <div className="relative flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <ThemeProvider>
+            <VisitorHeartbeatProvider showActiveVisitors={false}>
+              <div className="relative flex min-h-screen flex-col bg-background">
+                <Header />
+                <main className="flex-1 bg-background">{children}</main>
+                <Footer />
+              </div>
+            </VisitorHeartbeatProvider>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

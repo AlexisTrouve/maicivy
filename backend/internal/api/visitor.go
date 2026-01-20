@@ -1,24 +1,33 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"
+	"maicivy/internal/services"
 )
 
 // VisitorHandler gère les endpoints liés aux visiteurs
 type VisitorHandler struct {
-	db    *gorm.DB
-	redis *redis.Client
+	db               *gorm.DB
+	redis            *redis.Client
+	analyticsService *services.AnalyticsService
 }
 
 // NewVisitorHandler crée une nouvelle instance
-func NewVisitorHandler(db *gorm.DB, redisClient *redis.Client) *VisitorHandler {
+func NewVisitorHandler(db *gorm.DB, redisClient *redis.Client, analyticsService *services.AnalyticsService) *VisitorHandler {
 	return &VisitorHandler{
-		db:    db,
-		redis: redisClient,
+		db:               db,
+		redis:            redisClient,
+		analyticsService: analyticsService,
 	}
 }
 
@@ -125,6 +134,116 @@ func (vh *VisitorHandler) CheckVisitorStatus(c *fiber.Ctx) error {
 		ProfileDetected: string(visitor.ProfileDetected),
 		RemainingVisits: remainingVisits,
 	}
+
+	return c.JSON(response)
+}
+
+// HeartbeatRequest représente une requête de heartbeat
+type HeartbeatRequest struct {
+	PageURL   string                 `json:"page_url,omitempty"`
+	EventData map[string]interface{} `json:"event_data,omitempty"`
+}
+
+// HeartbeatResponse représente la réponse d'un heartbeat
+type HeartbeatResponse struct {
+	Success       bool  `json:"success"`
+	Timestamp     int64 `json:"timestamp"`
+	ActiveVisitors int  `json:"active_visitors,omitempty"`
+}
+
+// Heartbeat endpoint pour marquer un visiteur comme actif
+// @Summary Send visitor heartbeat
+// @Description Marks visitor as active and returns current active visitor count
+// @Tags visitor
+// @Accept json
+// @Produce json
+// @Param body body HeartbeatRequest false "Heartbeat data"
+// @Success 200 {object} HeartbeatResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/visitors/heartbeat [post]
+func (vh *VisitorHandler) Heartbeat(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Récupérer visitor_id depuis context (set by tracking middleware)
+	visitorID := c.Locals("visitor_id")
+	if visitorID == nil {
+		log.Warn().Msg("Heartbeat called without visitor_id in context")
+		return c.Status(404).JSON(fiber.Map{
+			"error": "No visitor session found",
+		})
+	}
+
+	visitorUUID, ok := visitorID.(uuid.UUID)
+	if !ok || visitorUUID == uuid.Nil {
+		log.Warn().Interface("visitor_id", visitorID).Msg("Invalid visitor_id in heartbeat")
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid visitor session",
+		})
+	}
+
+	// Parser le body (optionnel)
+	var req HeartbeatRequest
+	if err := c.BodyParser(&req); err != nil {
+		// Body parsing est optionnel, continuer même si erreur
+		log.Debug().Err(err).Msg("Failed to parse heartbeat body, continuing anyway")
+	}
+
+	// Marquer le visiteur comme actif dans Redis
+	if err := vh.analyticsService.MarkVisitorActive(ctx, visitorUUID); err != nil {
+		log.Error().Err(err).Str("visitor_id", visitorUUID.String()).Msg("Failed to mark visitor as active")
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to update visitor status",
+		})
+	}
+
+	// Optionnel: tracker un événement analytics si page_url fourni
+	if req.PageURL != "" {
+		event := &models.AnalyticsEvent{
+			VisitorID: visitorUUID,
+			EventType: models.EventTypePageView,
+			PageURL:   req.PageURL,
+			EventData: "",
+		}
+
+		// Ajouter event_data si présent
+		if len(req.EventData) > 0 {
+			eventDataJSON, err := json.Marshal(req.EventData)
+			if err == nil {
+				event.EventData = string(eventDataJSON)
+			}
+		}
+
+		// Tracker l'événement (non bloquant)
+		go func() {
+			bgCtx, bgCancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer bgCancel()
+			if err := vh.analyticsService.TrackEvent(bgCtx, event); err != nil {
+				log.Warn().Err(err).Msg("Failed to track heartbeat event")
+			}
+		}()
+	}
+
+	// Récupérer le nombre de visiteurs actifs (optionnel, peut être coûteux)
+	stats, err := vh.analyticsService.GetRealtimeStats(ctx)
+	activeVisitors := 0
+	if err == nil {
+		if cv, ok := stats["current_visitors"].(int64); ok {
+			activeVisitors = int(cv)
+		}
+	}
+
+	response := HeartbeatResponse{
+		Success:        true,
+		Timestamp:      time.Now().Unix(),
+		ActiveVisitors: activeVisitors,
+	}
+
+	log.Debug().
+		Str("visitor_id", visitorUUID.String()).
+		Int("active_visitors", activeVisitors).
+		Msg("Heartbeat received")
 
 	return c.JSON(response)
 }

@@ -1,11 +1,16 @@
 import { renderHook, act } from '@testing-library/react'
-import { useTheme } from '../useTheme'
+import { useTheme, ThemeProvider } from '@/components/providers/ThemeProvider'
+import React from 'react'
 
 describe('useTheme', () => {
   // Mock localStorage
   let localStorageMock: { [key: string]: string } = {}
   let getItemSpy: jest.Mock
   let setItemSpy: jest.Mock
+
+  // Wrapper helper
+  const wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(ThemeProvider, null, children)
 
   beforeEach(() => {
     localStorageMock = {}
@@ -51,7 +56,7 @@ describe('useTheme', () => {
   })
 
   it('should initialize with light theme by default', () => {
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
     expect(result.current.theme).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
@@ -60,13 +65,13 @@ describe('useTheme', () => {
   it('should initialize with stored theme from localStorage', () => {
     localStorageMock['theme'] = 'dark'
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
     expect(result.current.theme).toBe('dark')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
   })
 
-  it('should initialize with dark theme when system preference is dark', () => {
+  it('should initialize with light theme even when system preference is dark', () => {
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: jest.fn().mockImplementation((query) => ({
@@ -81,14 +86,15 @@ describe('useTheme', () => {
       })),
     })
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
-    expect(result.current.theme).toBe('dark')
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    // Now we force light mode by default, ignoring system preference
+    expect(result.current.theme).toBe('light')
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 
   it('should toggle theme from light to dark', () => {
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
     expect(result.current.theme).toBe('light')
 
@@ -104,7 +110,7 @@ describe('useTheme', () => {
   it('should toggle theme from dark to light', () => {
     localStorageMock['theme'] = 'dark'
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
     expect(result.current.theme).toBe('dark')
 
@@ -118,7 +124,7 @@ describe('useTheme', () => {
   })
 
   it('should persist theme changes to localStorage', () => {
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper })
 
     act(() => {
       result.current.toggleTheme()

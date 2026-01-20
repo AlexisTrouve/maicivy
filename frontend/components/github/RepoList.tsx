@@ -132,7 +132,7 @@ export function RepoList({ username, showPrivate = false }: RepoListProps) {
             </div>
 
             {/* Badge GitHub */}
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 text-white text-xs rounded">
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                 <path
                   fillRule="evenodd"

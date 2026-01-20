@@ -286,9 +286,21 @@ export const lettersApi = {
   },
 };
 
+interface HeartbeatResponse {
+  success: boolean;
+  timestamp: number;
+  active_visitors?: number;
+}
+
 export const visitorsApi = {
   checkStatus: () =>
     api.get<VisitorStatus>('/api/v1/visitors/check'),
+
+  sendHeartbeat: (pageUrl?: string, eventData?: Record<string, any>) =>
+    api.post<HeartbeatResponse>('/api/v1/visitors/heartbeat', {
+      page_url: pageUrl,
+      event_data: eventData,
+    }),
 };
 
 // Analytics API (Phase 4)

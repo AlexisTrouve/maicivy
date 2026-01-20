@@ -156,7 +156,7 @@ func main() {
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	swaggerHandler := api.NewSwaggerHandler()
-	visitorHandler := api.NewVisitorHandler(db, redisClient)
+	visitorHandler := api.NewVisitorHandler(db, redisClient, analyticsService)
 
 	// 9. Routes
 	app.Get("/health", healthHandler.Health)
@@ -213,6 +213,7 @@ func main() {
 	// Routes Visitor (Tracking & Access Gate)
 	apiV1.Get("/visitors/check", visitorHandler.CheckVisitorStatus)
 	apiV1.Get("/visitor/status", visitorHandler.GetVisitorStatus)
+	apiV1.Post("/visitors/heartbeat", visitorHandler.Heartbeat)
 
 	// Routes Swagger (Documentation API)
 	swaggerHandler.RegisterRoutes(app)
@@ -228,6 +229,11 @@ func main() {
 	analyticsCleanupJob := jobs.NewAnalyticsCleanupJob(analyticsService, 90) // 90 jours de rétention
 	go analyticsCleanupJob.Start(ctx)
 	log.Info().Msg("Analytics cleanup job started")
+
+	// Job 1.5: Visitor cleanup (every minute) - Nettoie les visiteurs inactifs > 5 minutes
+	visitorCleanupJob := jobs.NewVisitorCleanupJob(analyticsService, 1*time.Minute)
+	go visitorCleanupJob.Start(ctx)
+	log.Info().Msg("Visitor cleanup job started")
 
 	// Job 2: GitHub auto-sync (every 6 hours)
 	githubAutoSyncJob := jobs.NewGitHubAutoSyncJob(db, githubSyncService)

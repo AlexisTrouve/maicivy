@@ -459,6 +459,10 @@ func (s *AnalyticsService) MarkVisitorActive(ctx context.Context, visitorID uuid
 	key := "analytics:realtime:visitors"
 	now := time.Now().Unix()
 
+	// Vérifier si le visiteur était déjà actif (pour détecter nouvelles connexions)
+	wasActive, _ := s.redis.ZScore(ctx, key, visitorID.String()).Result()
+	isNewConnection := wasActive == 0
+
 	pipe := s.redis.Pipeline()
 
 	// Ajouter le visiteur avec le timestamp actuel comme score
@@ -475,7 +479,79 @@ func (s *AnalyticsService) MarkVisitorActive(ctx context.Context, visitorID uuid
 	pipe.Expire(ctx, key, 10*time.Minute)
 
 	_, err := pipe.Exec(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Publier événement de connexion si nouveau visiteur
+	if isNewConnection {
+		s.publishVisitorEvent(ctx, "visitor_connected", visitorID)
+	}
+
+	return nil
+}
+
+// publishVisitorEvent publie un événement de visiteur (connexion/déconnexion)
+func (s *AnalyticsService) publishVisitorEvent(ctx context.Context, eventType string, visitorID uuid.UUID) {
+	payload := map[string]interface{}{
+		"type":       eventType,
+		"visitor_id": visitorID.String(),
+		"timestamp":  time.Now().Unix(),
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to marshal visitor event")
+		return
+	}
+
+	if err := s.redis.Publish(ctx, s.pubSubTopic, data).Err(); err != nil {
+		log.Warn().Err(err).Msg("Failed to publish visitor event")
+	}
+}
+
+// CleanupInactiveVisitors nettoie les visiteurs inactifs et publie des événements
+// Cette méthode peut être appelée périodiquement par un job
+func (s *AnalyticsService) CleanupInactiveVisitors(ctx context.Context) (int64, error) {
+	key := "analytics:realtime:visitors"
+	now := time.Now().Unix()
+	fiveMinutesAgo := now - 5*60
+
+	// Récupérer les visiteurs qui vont être supprimés
+	inactiveVisitors, err := s.redis.ZRangeByScore(ctx, key, &redis.ZRangeBy{
+		Min: "-inf",
+		Max: fmt.Sprintf("%d", fiveMinutesAgo),
+	}).Result()
+
+	if err != nil {
+		return 0, err
+	}
+
+	if len(inactiveVisitors) == 0 {
+		return 0, nil
+	}
+
+	// Supprimer les visiteurs inactifs
+	removed, err := s.redis.ZRemRangeByScore(ctx, key, "-inf", fmt.Sprintf("%d", fiveMinutesAgo)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	// Publier événements de déconnexion pour chaque visiteur inactif
+	for _, visitorIDStr := range inactiveVisitors {
+		visitorID, err := uuid.Parse(visitorIDStr)
+		if err != nil {
+			continue
+		}
+		s.publishVisitorEvent(ctx, "visitor_disconnected", visitorID)
+	}
+
+	log.Debug().
+		Int64("removed", removed).
+		Int("events_published", len(inactiveVisitors)).
+		Msg("Cleaned up inactive visitors")
+
+	return removed, nil
 }
 
 // CleanupOldEvents nettoie les événements > 90 jours
