@@ -84,3 +84,8 @@ credentials/
 # Redis dumps
 dump.rdb
 appendonly.aof
+
+# Development files (not for public repo)
+CLAUDE.md
+.claude*
+tmpclaude-*
