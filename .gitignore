@@ -89,3 +89,14 @@ appendonly.aof
 CLAUDE.md
 .claude*
 tmpclaude-*
+
+# Internal sync documentation (local only, never commit)
+AUTO_SYNC_PLAN.txt
+GIT_WORKFLOW.md
+START_HERE.md
+SYNC_README.md
+TEST_SYNC.md
+auto-sync.sh
+dry-run-test.sh
+sync-to-github*.ps1
+sync-to-github*.sh
