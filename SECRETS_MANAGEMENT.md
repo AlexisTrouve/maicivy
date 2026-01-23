@@ -33,8 +33,8 @@ cp backend/.env.example backend/.env
 When writing documentation with secrets:
 
 ```bash
-# ❌ BAD - Looks like a real secret
-GITHUB_CLIENT_SECRET=0123456789abcdef0123456789abcdef01234567
+# ❌ BAD - Looks like a real secret (DO NOT DO THIS)
+GITHUB_CLIENT_SECRET=abc123_fake_example_do_not_use
 
 # ✅ GOOD - Clearly a placeholder
 GITHUB_CLIENT_SECRET=<your_github_client_secret_here>

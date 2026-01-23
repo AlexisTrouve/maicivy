@@ -12,7 +12,7 @@ require (
 	github.com/go-resty/resty/v2 v2.17.0
 	github.com/gocolly/colly/v2 v2.3.0
 	github.com/gofiber/contrib/websocket v1.2.2
-	github.com/gofiber/fiber/v2 v2.51.0
+	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/google/go-github/v60 v60.0.0

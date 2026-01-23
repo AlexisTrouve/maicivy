@@ -1,22 +1,15 @@
 # Gitleaks Ignore File
-# Documentation: https://github.com/gitleaks/gitleaks#gitleaksignore
+# Format: commit:file:rule:line OR just fingerprint hash
 
-# ============================================================================
-# Documentation Files with Example/Placeholder Secrets
-# ============================================================================
+# Documentation files with example placeholders (not real secrets)
+# These are clearly marked as examples in documentation
 
-# Archive documentation with example GitHub OAuth configuration
-archive/GITHUB_FEATURE_EXAMPLES.md:GITHUB_CLIENT_SECRET=0123456789abcdef0123456789abcdef01234567
+# SECRETS_MANAGEMENT.md - Example of BAD practice (intentional for teaching)
+*:SECRETS_MANAGEMENT.md:generic-api-key:*
 
-# Implementation summary with example curl command using placeholder token
-backend/docs/reports/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md:curl -H "Authorization: Bearer YOUR_TOKEN"
+# Archive documentation examples
+*:archive/GITHUB_FEATURE_EXAMPLES.md:generic-api-key:*
+*:archive/GITHUB_FEATURE_EXAMPLES.md:github-oauth:*
 
-# ============================================================================
-# Patterns to Ignore (Optional)
-# ============================================================================
-
-# Ignore all files in archive/ directory (uncomment if needed)
-# archive/**
-
-# Ignore all markdown files in docs/ (uncomment if needed)
-# **/docs/**/*.md
+# Backend docs with curl examples
+*:backend/docs/reports/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md:curl-auth-header:*
