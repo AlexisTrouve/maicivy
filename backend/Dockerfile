@@ -39,6 +39,7 @@ RUN apk add --no-cache \
     ca-certificates \
     tzdata \
     curl \
+    git \
     chromium \
     font-noto \
     ttf-dejavu \
