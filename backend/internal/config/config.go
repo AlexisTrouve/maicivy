@@ -35,6 +35,12 @@ type Config struct {
 	// API Keys (pour Phase 3)
 	ClaudeAPIKey string
 	OpenAIAPIKey string
+
+	// Activity Feed (ProjectTracker)
+	ActivityFeedURL string
+
+	// Repos Scanner (path to git repos directory)
+	ReposDir string
 }
 
 func Load() (*Config, error) {
@@ -67,6 +73,12 @@ func Load() (*Config, error) {
 		// API Keys
 		ClaudeAPIKey: getEnv("CLAUDE_API_KEY", ""),
 		OpenAIAPIKey: getEnv("OPENAI_API_KEY", ""),
+
+		// Activity Feed
+		ActivityFeedURL: getEnv("ACTIVITY_FEED_URL", ""),
+
+		// Repos Scanner
+		ReposDir: getEnv("REPOS_DIR", "/repos"),
 	}
 
 	if err := cfg.Validate(); err != nil {

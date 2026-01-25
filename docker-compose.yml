@@ -82,6 +82,8 @@ services:
       # API Keys (to be set in .env)
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Repos scanner
+      REPOS_DIR: /repos
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -98,7 +100,8 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    # Note: volume mounts removed for production (binary is in container)
+    volumes:
+      - /home/debian:/repos:ro  # Accès lecture seule aux repos pour le scan
 
   # Frontend - Next.js
   frontend:

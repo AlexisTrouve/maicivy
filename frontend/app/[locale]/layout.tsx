@@ -35,6 +35,8 @@ export async function generateMetadata({
   const locale = resolvedParams.locale || 'fr';
   const messages = (await import(`@/messages/${locale}.json`)).default;
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.com';
+
   return {
     title: {
       default: messages.metadata.title,
@@ -42,13 +44,35 @@ export async function generateMetadata({
     },
     description: messages.metadata.description,
     keywords: ['CV', 'portfolio', 'AI', 'developer', 'full-stack', 'IA', 'développeur'],
-    authors: [{ name: 'Alexis' }],
+    authors: [{ name: 'Alexis Trouvé' }],
+    creator: 'Alexis Trouvé',
+    metadataBase: new URL(baseUrl),
     openGraph: {
       type: 'website',
       locale: locale === 'fr' ? 'fr_FR' : 'en_US',
-      url: 'https://maicivy.com',
+      url: baseUrl,
+      siteName: 'maicivy',
       title: messages.metadata.title,
       description: messages.metadata.description,
+      images: [
+        {
+          url: `/api/og?locale=${locale}`,
+          width: 1200,
+          height: 630,
+          alt: messages.metadata.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: messages.metadata.title,
+      description: messages.metadata.description,
+      images: [`/api/og?locale=${locale}`],
+      creator: '@AlexisTrouve',
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }

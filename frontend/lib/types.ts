@@ -441,3 +441,87 @@ export interface TimelineMilestonesResponse {
   milestones: TimelineMilestone[];
   total: number;
 }
+
+// Activity Feed Types (Auto-sync from ProjectTracker)
+export interface ActivityCommit {
+  sha: string;
+  message: string;
+  date: string;
+  author: string;
+}
+
+export interface ActivityProject {
+  id: number;
+  name: string;
+  description: string;
+  repo_url: string;
+  category: string;
+  showcase: boolean;
+  languages: string[];
+  commits_7d: number;
+  commits_30d: number;
+  recent_commits: ActivityCommit[];
+  last_activity: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActivityStats {
+  id: number;
+  total_commits_30d: number;
+  active_projects: number;
+  top_languages: string[];
+  last_updated: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActivityFeedResponse {
+  last_updated: string;
+  projects: ActivityProject[];
+  stats: ActivityStats;
+}
+
+export interface ActivityProjectsResponse {
+  projects: ActivityProject[];
+}
+
+// Blog Types
+export interface BlogCommitRef {
+  sha: string;
+  message: string;
+  date: string;
+  project: string;
+}
+
+export interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  content: string;
+  content_html: string;
+  project_name: string;
+  tags: string[];
+  generated_from_commits: BlogCommitRef[];
+  cover_image_url?: string;
+  reading_time_minutes: number;
+  published: boolean;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPostListResponse {
+  posts: BlogPost[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface BlogGenerateRequest {
+  project_name: string;
+  commit_shas?: string[];
+  auto_select: boolean;
+}

@@ -398,3 +398,67 @@ export const timelineApi = {
     return response.milestones;
   },
 };
+
+// Blog API (Articles générés depuis commits)
+export const blogApi = {
+  // List published posts
+  getPosts: (page = 1, perPage = 10) =>
+    api.get<import('./types').BlogPostListResponse>('/api/v1/blog/posts', {
+      page: page.toString(),
+      per_page: perPage.toString(),
+    }),
+
+  // List all posts (admin)
+  getAllPosts: (page = 1, perPage = 10) =>
+    api.get<import('./types').BlogPostListResponse>('/api/v1/blog/posts', {
+      page: page.toString(),
+      per_page: perPage.toString(),
+      all: 'true',
+    }),
+
+  // Get single post by slug
+  getPost: (slug: string) =>
+    api.get<import('./types').BlogPost>(`/api/v1/blog/posts/${slug}`),
+
+  // Generate new post from project activity
+  generate: (projectName: string, autoSelect = true) =>
+    api.post<{ success: boolean; post: import('./types').BlogPost; message: string }>(
+      '/api/v1/blog/generate',
+      { project_name: projectName, auto_select: autoSelect }
+    ),
+
+  // Publish a post
+  publish: (id: number) =>
+    api.post<{ success: boolean; message: string }>(`/api/v1/blog/posts/${id}/publish`),
+
+  // Unpublish a post
+  unpublish: (id: number) =>
+    api.post<{ success: boolean; message: string }>(`/api/v1/blog/posts/${id}/unpublish`),
+
+  // Delete a post
+  delete: (id: number) =>
+    api.delete<{ success: boolean; message: string }>(`/api/v1/blog/posts/${id}`),
+};
+
+// Activity Feed API (Auto-sync from ProjectTracker)
+export const activityApi = {
+  // Get full activity feed
+  getFeed: (showcaseOnly = false) =>
+    api.get<import('./types').ActivityFeedResponse>('/api/v1/activity/feed', {
+      showcase: showcaseOnly.toString(),
+    }),
+
+  // Get projects only
+  getProjects: (showcaseOnly = false) =>
+    api.get<import('./types').ActivityProjectsResponse>('/api/v1/activity/projects', {
+      showcase: showcaseOnly.toString(),
+    }),
+
+  // Get stats only
+  getStats: () =>
+    api.get<import('./types').ActivityStats>('/api/v1/activity/stats'),
+
+  // Trigger manual refresh
+  refresh: () =>
+    api.post<{ status: string; message: string }>('/api/v1/activity/refresh'),
+};

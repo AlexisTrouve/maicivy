@@ -136,6 +136,12 @@ func main() {
 	githubOAuthService := services.NewGitHubOAuthService(db, redisClient)
 	githubSyncService := services.NewGitHubSyncService(db, redisClient)
 
+	// Repo scanner service (replaces activity feed service)
+	repoScanner := services.NewRepoScanner(redisClient, cfg.ReposDir)
+
+	// Blog generator service
+	blogGeneratorService := services.NewBlogGeneratorService(db, redisClient, aiService, nil)
+
 	// Timeline service (currently not used in routes but initialized for future use)
 	_ = services.NewTimelineService(db, redisClient)
 
@@ -153,6 +159,8 @@ func main() {
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
 	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
+	activityHandler := api.NewActivityHandler(repoScanner)
+	blogHandler := api.NewBlogHandler(blogGeneratorService)
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	swaggerHandler := api.NewSwaggerHandler()
@@ -201,6 +209,12 @@ func main() {
 	// Routes GitHub (Phase 5 - IMPLEMENTED)
 	githubHandler.RegisterRoutes(apiV1)
 
+	// Routes Activity Feed (Auto-sync from ProjectTracker)
+	activityHandler.RegisterRoutes(apiV1)
+
+	// Routes Blog (Articles générés depuis commits)
+	blogHandler.RegisterRoutes(apiV1)
+
 	// Routes Timeline (Phase 5 - IMPLEMENTED)
 	apiV1.Get("/timeline", timelineHandler.GetTimeline)
 	apiV1.Get("/timeline/categories", timelineHandler.GetCategories)
@@ -242,6 +256,8 @@ func main() {
 	} else {
 		log.Info().Msg("GitHub auto-sync job started")
 	}
+
+	// Note: Activity sync job removed - now using on-demand repo scanning
 
 	// Job 3: Letter generation worker (processes letter queue)
 	if letterGenerator != nil {
