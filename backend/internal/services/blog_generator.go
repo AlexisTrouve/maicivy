@@ -17,19 +17,19 @@ import (
 
 // BlogGeneratorService génère des articles de blog depuis les commits
 type BlogGeneratorService struct {
-	db        *gorm.DB
-	redis     *redis.Client
-	aiService *AIService
-	activityService *ActivityFeedService
+	db          *gorm.DB
+	redis       *redis.Client
+	aiService   *AIService
+	repoScanner *RepoScanner
 }
 
 // NewBlogGeneratorService crée une nouvelle instance
-func NewBlogGeneratorService(db *gorm.DB, redis *redis.Client, aiService *AIService, activityService *ActivityFeedService) *BlogGeneratorService {
+func NewBlogGeneratorService(db *gorm.DB, redis *redis.Client, aiService *AIService, repoScanner *RepoScanner) *BlogGeneratorService {
 	return &BlogGeneratorService{
-		db:              db,
-		redis:           redis,
-		aiService:       aiService,
-		activityService: activityService,
+		db:          db,
+		redis:       redis,
+		aiService:   aiService,
+		repoScanner: repoScanner,
 	}
 }
 
@@ -200,16 +200,20 @@ func (s *BlogGeneratorService) parseAIResponse(response string, projectName stri
 
 // GenerateFromRecentActivity génère un article depuis l'activité récente d'un projet
 func (s *BlogGeneratorService) GenerateFromRecentActivity(ctx context.Context, projectName string) (*models.BlogPost, error) {
-	// Récupérer le projet depuis l'activité
-	projects, err := s.activityService.GetAllProjects(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get projects: %w", err)
+	// Récupérer les projets via le scanner
+	if s.repoScanner == nil {
+		return nil, fmt.Errorf("repo scanner not available")
 	}
 
-	var targetProject *models.ActivityProject
-	for _, p := range projects {
-		if p.Name == projectName {
-			targetProject = &p
+	scanResult, err := s.repoScanner.Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan repos: %w", err)
+	}
+
+	var targetProject *ScannedProject
+	for i := range scanResult.Projects {
+		if scanResult.Projects[i].Name == projectName {
+			targetProject = &scanResult.Projects[i]
 			break
 		}
 	}

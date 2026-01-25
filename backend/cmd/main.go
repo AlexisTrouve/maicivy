@@ -140,7 +140,7 @@ func main() {
 	repoScanner := services.NewRepoScanner(redisClient, cfg.ReposDir)
 
 	// Blog generator service
-	blogGeneratorService := services.NewBlogGeneratorService(db, redisClient, aiService, nil)
+	blogGeneratorService := services.NewBlogGeneratorService(db, redisClient, aiService, repoScanner)
 
 	// Timeline service (currently not used in routes but initialized for future use)
 	_ = services.NewTimelineService(db, redisClient)
