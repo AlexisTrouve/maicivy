@@ -58,6 +58,9 @@ func RunAutoMigrations(db *gorm.DB) error {
 		{&models.AnalyticsEvent{}, "analytics_events"},
 		{&models.GitHubProfile{}, "github_profiles"},
 		{&models.GitHubRepository{}, "github_repositories"},
+		{&models.ActivityProject{}, "activity_projects"},
+		{&models.ActivityStats{}, "activity_stats"},
+		{&models.BlogPost{}, "blog_posts"},
 	}
 
 	for _, m := range otherModels {
