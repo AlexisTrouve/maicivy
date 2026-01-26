@@ -118,6 +118,8 @@ services:
       # Client-side: public URL
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       NODE_ENV: ${NODE_ENV:-development}
+      # Bind to all interfaces for healthcheck to work
+      HOSTNAME: 0.0.0.0
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
@@ -126,7 +128,7 @@ services:
     networks:
       - maicivy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
