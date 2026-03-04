@@ -86,11 +86,21 @@ body {
 
 /* ─── SECTION LABEL ──────────────────────────────────────── */
 .section { margin-bottom: 22px; }
+/* .ats-anchor : texte invisible mais lisible par ATS — évite le pb de letter-spacing
+   qui rend "E D U C A T I O N" au lieu de "Education" dans le flux PDF */
+.ats-anchor {
+  font-size: 0.1pt;
+  color: #1e293b;
+  display: block;
+  line-height: 0;
+  overflow: hidden;
+  height: 0;
+}
 .section-label {
   font-size: 6.5pt;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 2.5px;
+  letter-spacing: 0.8px; /* réduit : évite extraction lettre par lettre */
   color: #3b82f6;
   border-bottom: 1.5px solid #3b82f6;
   padding-bottom: 4px;
@@ -367,7 +377,7 @@ body {
     <!-- EXPÉRIENCES -->
     {{if .Experiences}}
     <div class="section">
-      <div class="section-label">{{index .Labels "experiences"}}</div>
+      <div class="section-label"><span class="ats-anchor">Professional Experience. Work History.</span>{{index .Labels "experiences"}}</div>
 
       {{range .Experiences}}
       <div class="exp-wrap">
@@ -505,7 +515,7 @@ body {
 
     <!-- EDUCATION (statique — Epitech Nantes 2017) -->
     <div class="section">
-      <div class="section-label">Education</div>
+      <div class="section-label"><span class="ats-anchor">Education. Academic Background.</span>Education</div>
       <div class="skill-group">
         <div class="skill-cat">Diplôme d'Ingénieur</div>
         <div style="font-size:8pt; font-weight:600; color:#1e293b;">Epitech Nantes</div>
