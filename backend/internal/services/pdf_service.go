@@ -12,6 +12,8 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
+
+	"maicivy/internal/models"
 )
 
 // PDFService gère la génération de PDFs
@@ -30,14 +32,14 @@ type SkillGroup struct {
 func NewPDFService() *PDFService {
 	// FuncMap : fonctions utilitaires disponibles dans les templates HTML
 	funcMap := template.FuncMap{
-		// levelWidth convertit un niveau de compétence en largeur de barre (0-100)
-		"levelWidth": func(level string) int {
+		// levelWidth convertit un models.SkillLevel en largeur de barre (0-100)
+		"levelWidth": func(level models.SkillLevel) int {
 			switch level {
-			case "expert":
+			case models.SkillLevelExpert:
 				return 100
-			case "advanced":
+			case models.SkillLevelAdvanced:
 				return 75
-			case "intermediate":
+			case models.SkillLevelIntermediate:
 				return 50
 			default:
 				return 25
