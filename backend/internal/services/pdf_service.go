@@ -53,12 +53,19 @@ func (s *PDFService) GenerateTailoredPDF(cv *AdaptiveCVResponse, lang string, st
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 
-	// Injecter le stealth avant </body> (fonctionne avec template et fallback)
+	// Injecter le stealth juste après <body> — premiers tokens du flux PDF,
+	// prioritaires pour les parseurs ATS et les LLMs de screening.
 	if stealthHTML != "" {
-		if strings.Contains(html, "</body>") {
-			html = strings.Replace(html, "</body>", stealthHTML+"</body>", 1)
+		if idx := strings.Index(html, "<body"); idx >= 0 {
+			// Trouver la fin du tag <body ...> pour injecter après
+			closeTag := strings.Index(html[idx:], ">")
+			if closeTag >= 0 {
+				insertAt := idx + closeTag + 1
+				html = html[:insertAt] + stealthHTML + html[insertAt:]
+			}
 		} else {
-			html += stealthHTML // renderBasicHTML sans </body> explicite
+			// Fallback : prepend si pas de <body>
+			html = stealthHTML + html
 		}
 	}
 
