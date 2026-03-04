@@ -9,12 +9,14 @@ import (
 // CVHandler gère les endpoints liés au CV
 type CVHandler struct {
 	cvService services.CVServiceInterface
+	tailoring *services.TailoringService // nil si AI non configurée
 }
 
 // NewCVHandler crée un nouveau handler
-func NewCVHandler(cvService services.CVServiceInterface) *CVHandler {
+func NewCVHandler(cvService services.CVServiceInterface, tailoring *services.TailoringService) *CVHandler {
 	return &CVHandler{
 		cvService: cvService,
+		tailoring: tailoring,
 	}
 }
 
@@ -29,6 +31,7 @@ func (h *CVHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/skills", h.GetSkills)
 	api.Get("/projects", h.GetProjects)
 	api.Get("/cv/export", h.ExportPDF)
+	api.Post("/cv/tailor", h.TailorCV) // CV personnalisé par annonce
 }
 
 // GetAdaptiveCV retourne le CV adapté au thème et à la langue
@@ -216,6 +219,45 @@ func (h *CVHandler) ListCVs(c *fiber.Ctx) error {
 		"count": len(entries),
 		"cvs":   entries,
 	})
+}
+
+// TailorCV génère un CV PDF personnalisé pour une annonce spécifique.
+// indeed-outreach envoie le job + les skills matchés → maicivy choisit le thème,
+// réécrit les expériences via Haiku et injecte une couche stealth ATS.
+//
+// @Summary Tailor CV for a job posting
+// @Tags CV
+// @Accept json
+// @Produce application/pdf
+// @Param body body services.TailorRequest true "Job details and matched skills"
+// @Success 200 {file} application/pdf
+// @Failure 400 {object} ErrorResponse
+// @Failure 503 {object} ErrorResponse
+// @Router /api/v1/cv/tailor [post]
+func (h *CVHandler) TailorCV(c *fiber.Ctx) error {
+	if h.tailoring == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "CV tailoring not available — AI service not configured",
+		})
+	}
+
+	var req services.TailorRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	pdfBytes, err := h.tailoring.TailorAndExport(c.Context(), req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", "attachment; filename=cv_tailored.pdf")
+	return c.Send(pdfBytes)
 }
 
 // ErrorResponse structure pour documentation API

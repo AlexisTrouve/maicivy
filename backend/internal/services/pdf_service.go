@@ -37,13 +37,37 @@ func NewPDFService() *PDFService {
 
 // GenerateCVPDF génère un PDF du CV
 func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte, error) {
-	// 1. Générer HTML depuis template avec la langue
+	html, err := s.renderCVHTML(cv, lang)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render HTML: %w", err)
+	}
+	return s.htmlToPDF(html)
+}
+
+// GenerateTailoredPDF génère un PDF avec une couche stealth injectée avant </body>.
+// Le stealthHTML est quasi-invisible visuellement mais présent dans le flux texte
+// du PDF — extrait par les parseurs ATS et lu par les LLMs de screening.
+func (s *PDFService) GenerateTailoredPDF(cv *AdaptiveCVResponse, lang string, stealthHTML string) ([]byte, error) {
 	html, err := s.renderCVHTML(cv, lang)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 
-	// 2. Configure chromedp allocator options selon l'environnement
+	// Injecter le stealth avant </body> (fonctionne avec template et fallback)
+	if stealthHTML != "" {
+		if strings.Contains(html, "</body>") {
+			html = strings.Replace(html, "</body>", stealthHTML+"</body>", 1)
+		} else {
+			html += stealthHTML // renderBasicHTML sans </body> explicite
+		}
+	}
+
+	return s.htmlToPDF(html)
+}
+
+// htmlToPDF : convertit du HTML en PDF via ChromeDP (Chromium headless)
+func (s *PDFService) htmlToPDF(html string) ([]byte, error) {
+	// Configure chromedp allocator options selon l'environnement
 	// Les flags container (--single-process, --disable-dev-shm-usage) causent des crashes sur Windows/macOS
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.DisableGPU,
@@ -70,11 +94,9 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte,
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer allocCancel()
 
-	// Create browser context
 	ctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
-	// Timeout pour génération PDF
 	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -110,7 +132,6 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte,
 			return chromedp.Evaluate(script, nil).Do(ctx)
 		}),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			// Générer PDF avec options pour préserver UTF-8
 			var err error
 			pdfBuffer, _, err = page.PrintToPDF().
 				WithPrintBackground(true).

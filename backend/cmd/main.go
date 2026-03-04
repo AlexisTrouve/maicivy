@@ -164,11 +164,20 @@ func main() {
 	profileDetector := services.NewProfileDetectorService(db, redisClient, clearbitClient, uaParser)
 
 	// PDF service for CV export (separate from letter PDF service)
-	_ = services.NewPDFService()
+	pdfService := services.NewPDFService()
+
+	// CV tailoring : personnalisation par annonce avec réécriture LLM + stealth ATS
+	var tailoringService *services.TailoringService
+	if aiService != nil {
+		tailoringService = services.NewTailoringService(cvService, aiService, pdfService)
+		log.Info().Msg("CV tailoring service initialized")
+	} else {
+		log.Warn().Msg("CV tailoring service not available — AI not configured")
+	}
 
 	// 8. Initialiser handlers
 	healthHandler := api.NewHealthHandler(db, redisClient)
-	cvHandler := api.NewCVHandler(cvService)
+	cvHandler := api.NewCVHandler(cvService, tailoringService)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
 	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
