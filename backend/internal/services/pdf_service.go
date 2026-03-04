@@ -277,6 +277,8 @@ func getLabels(lang string) map[string]string {
 			"theme":                "Thème",
 			"other_experiences":    "Autres expériences",
 			"other_projects":       "Autres projets",
+			"languages":            "Langues",
+			"soft_skills":          "Soft Skills",
 		},
 		"en": {
 			"cv":                   "Resume",
@@ -290,6 +292,8 @@ func getLabels(lang string) map[string]string {
 			"theme":                "Theme",
 			"other_experiences":    "Other experience",
 			"other_projects":       "Other projects",
+			"languages":            "Languages",
+			"soft_skills":          "Soft Skills",
 		},
 	}
 

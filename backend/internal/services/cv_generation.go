@@ -50,7 +50,8 @@ func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey strin
 // llmGenerationResponse est le format attendu en sortie du LLM
 type llmGenerationResponse struct {
 	JobTitle    string               `json:"job_title"`
-	Summary     string               `json:"summary"`     // 2-3 phrases, style "builder", few-shot enforced
+	Summary     string               `json:"summary"`  // 2-3 phrases, style "builder", few-shot enforced
+	Location    string               `json:"location"` // ville extraite de l'offre (pour stealth ATS)
 	Experiences []llmExpScore        `json:"experiences"`
 	Projects    []llmProjScore       `json:"projects"`
 	Skills      []llmSkillScoreEntry `json:"skills"`
@@ -213,6 +214,7 @@ func (s *CVGenerationService) GenerateDynamicCV(ctx context.Context, offer, lang
 	return &AdaptiveCVResponse{
 		Theme:       theme,
 		Summary:     llmResp.Summary,
+		Location:    llmResp.Location,
 		Experiences: scoredExps,
 		Skills:      scoredSkills,
 		Projects:    scoredProjects,
@@ -247,7 +249,11 @@ func (s *CVGenerationService) GenerateDynamicPDF(ctx context.Context, offer, lan
 	}
 
 	// Étape 3 : construire et injecter la couche stealth ATS
-	// buildStealthHTML est défini dans tailoring_service.go (même package)
+	// Si le LLM a extrait une ville depuis l'offre, on l'inclut dans les keywords stealth
+	// → l'ATS trouve "Paris", "Lyon" etc. même si c'est pas dans le CV visible
+	if cv.Location != "" {
+		topSkillNames = append(topSkillNames, cv.Location, "France", cv.Location+" France")
+	}
 	stealthHTML := buildStealthHTML(topSkillNames, lang)
 
 	return s.pdfService.GenerateTailoredPDF(cv, lang, stealthHTML)
@@ -380,6 +386,7 @@ Donne UNIQUEMENT ce JSON après ton analyse (sans markdown, sans explication):
 {
   "job_title": "...",
   "summary": "2-3 phrases max, style builder, few-shot ci-dessus",
+  "location": "ville mentionnée dans l'offre, ou vide si non précisée",
   "experiences": [{"slug":"...", "score": 90, "catchphrase":"...max 80 chars, top 3 seulement"},...],
   "projects": [{"slug":"...", "score": 85},...],
   "skills": [{"name":"...", "score": 95},...]
