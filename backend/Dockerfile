@@ -42,6 +42,7 @@ RUN apk add --no-cache \
     git \
     chromium \
     font-noto \
+    font-noto-cjk \
     ttf-dejavu \
     fontconfig
 
