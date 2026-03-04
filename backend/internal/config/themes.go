@@ -12,6 +12,26 @@ type CVTheme struct {
 // GetAvailableThemes retourne tous les thèmes configurés
 func GetAvailableThemes() map[string]CVTheme {
 	return map[string]CVTheme{
+		"ai": {
+			ID:          "ai",
+			Name:        "AI Engineer",
+			Description: "Focus sur LLMs, intégration IA, agents, MCP, fine-tuning",
+			Icon:        "\U0001F916",
+			TagWeights: map[string]float64{
+				"ai":          1.0,
+				"llm":         1.0,
+				"claude":      1.0,
+				"openai":      1.0,
+				"mcp":         0.9,
+				"agents":      0.9,
+				"rag":         0.9,
+				"python":      0.8,
+				"api":         0.7,
+				"automation":  0.7,
+				"ml":          0.8,
+				"fine-tuning": 0.8,
+			},
+		},
 		"backend": {
 			ID:          "backend",
 			Name:        "Backend Developer",

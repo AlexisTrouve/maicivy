@@ -23,6 +23,7 @@ func (h *CVHandler) RegisterRoutes(app *fiber.App) {
 	api := app.Group("/api/v1")
 
 	api.Get("/cv", h.GetAdaptiveCV)
+	api.Get("/cv/list", h.ListCVs)
 	api.Get("/cv/themes", h.GetThemes)
 	api.Get("/experiences", h.GetExperiences)
 	api.Get("/skills", h.GetSkills)
@@ -182,6 +183,39 @@ func (h *CVHandler) ExportPDF(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/pdf")
 	c.Set("Content-Disposition", "attachment; filename=cv_"+themeID+"_"+lang+".pdf")
 	return c.Send(pdfBytes)
+}
+
+// ListCVs retourne tous les CVs disponibles avec leurs URLs
+func (h *CVHandler) ListCVs(c *fiber.Ctx) error {
+	themes := h.cvService.GetAvailableThemes()
+	langs := []string{"fr", "en"}
+
+	type CVEntry struct {
+		Theme       string `json:"theme"`
+		ThemeName   string `json:"themeName"`
+		Lang        string `json:"lang"`
+		JSONURL     string `json:"jsonUrl"`
+		PDFURL      string `json:"pdfUrl"`
+	}
+
+	base := c.BaseURL()
+	entries := make([]CVEntry, 0, len(themes)*len(langs))
+	for _, theme := range themes {
+		for _, lang := range langs {
+			entries = append(entries, CVEntry{
+				Theme:     theme.ID,
+				ThemeName: theme.Name,
+				Lang:      lang,
+				JSONURL:   base + "/api/v1/cv?theme=" + theme.ID + "&lang=" + lang,
+				PDFURL:    base + "/api/v1/cv/export?theme=" + theme.ID + "&lang=" + lang,
+			})
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"count": len(entries),
+		"cvs":   entries,
+	})
 }
 
 // ErrorResponse structure pour documentation API
