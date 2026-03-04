@@ -50,6 +50,7 @@ func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey strin
 // llmGenerationResponse est le format attendu en sortie du LLM
 type llmGenerationResponse struct {
 	JobTitle    string               `json:"job_title"`
+	Summary     string               `json:"summary"`     // 2-3 phrases, style "builder", few-shot enforced
 	Experiences []llmExpScore        `json:"experiences"`
 	Projects    []llmProjScore       `json:"projects"`
 	Skills      []llmSkillScoreEntry `json:"skills"`
@@ -211,6 +212,7 @@ func (s *CVGenerationService) GenerateDynamicCV(ctx context.Context, offer, lang
 
 	return &AdaptiveCVResponse{
 		Theme:       theme,
+		Summary:     llmResp.Summary,
 		Experiences: scoredExps,
 		Skills:      scoredSkills,
 		Projects:    scoredProjects,
@@ -301,6 +303,17 @@ func (s *CVGenerationService) buildGenerationPrompt(
 
 Règle d'or : un recruteur intelligent préfère "développeur qui peut construire les outils de ce domaine" à "quelqu'un qui prétend être expert du domaine". Trouve l'angle qui tient en entretien.
 
+STYLE DU RÉSUMÉ — few shots obligatoires à respecter :
+Le summary doit sonner comme quelqu'un qui build des systèmes ambitieux et le sait.
+Pas de "passionné", "motivé", "dynamique", "résultats-driven". Jamais.
+Pattern : "Je construis [X concret] — [preuve chiffrée ou technique]. [Angle taillé pour cette offre]."
+
+Exemples (NE PAS copier, s'en inspirer pour le ton) :
+- Offre Rust backend → "Je construis des systèmes distribués qui tiennent — 43 microservices Rust en prod, architecture Actix-web à l'échelle. Votre stack backend, c'est mon terrain."
+- Offre AI/LLM → "Je construis des pipelines LLM qui vont en prod, pas en démo — de l'intégration Claude API au scoring adaptatif multi-modèle. L'IA générative comme brique d'architecture, pas comme gadget."
+- Offre robotique → "Je construis les systèmes qui font tourner les robots — vision 3D temps réel en C++, pipelines de détection, architectures embarquées. Pas l'opérateur : l'ingénieur derrière."
+- Offre hors domaine → rester honnête mais trouver l'angle transfert le plus fort, même style.
+
 `)
 
 
@@ -366,6 +379,7 @@ INSTRUCTIONS — raisonne d'abord, score ensuite :
 Donne UNIQUEMENT ce JSON après ton analyse (sans markdown, sans explication):
 {
   "job_title": "...",
+  "summary": "2-3 phrases max, style builder, few-shot ci-dessus",
   "experiences": [{"slug":"...", "score": 90, "catchphrase":"...max 80 chars, top 3 seulement"},...],
   "projects": [{"slug":"...", "score": 85},...],
   "skills": [{"name":"...", "score": 95},...]

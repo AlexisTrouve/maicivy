@@ -169,6 +169,20 @@ body {
   line-height: 1.4;
 }
 
+/* ─── SUMMARY ────────────────────────────────────────────── */
+.summary {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-left: 3px solid #3b82f6;
+  border-radius: 0 6px 6px 0;
+}
+.summary-text {
+  font-size: 8.5pt;
+  color: #334155;
+  line-height: 1.6;
+}
+
 /* ─── PILLS ──────────────────────────────────────────────── */
 .pills {
   display: flex;
@@ -341,6 +355,13 @@ body {
   <!-- ═══ MAIN ════════════════════════════════════════════ -->
   <div class="main">
 
+    <!-- SUMMARY (dynamique LLM, absent pour thèmes statiques) -->
+    {{if .Summary}}
+    <div class="summary">
+      <div class="summary-text">{{.Summary}}</div>
+    </div>
+    {{end}}
+
     <!-- EXPÉRIENCES -->
     {{if .Experiences}}
     <div class="section">
@@ -444,6 +465,17 @@ body {
       {{end}}
     </div>
     {{end}}
+
+    <!-- EDUCATION (statique — Epitech Nantes 2017) -->
+    <div class="section">
+      <div class="section-label">Education</div>
+      <div class="skill-group">
+        <div class="skill-cat">Diplôme d'Ingénieur</div>
+        <div style="font-size:8pt; font-weight:600; color:#1e293b;">Epitech Nantes</div>
+        <div style="font-size:7pt; color:#94a3b8; margin-top:2px;">2017 · Expert en Technologies de l'Information</div>
+      </div>
+    </div>
+
   </div><!-- .sidebar -->
 
   <!-- ═══ FOOTER ══════════════════════════════════════════ -->

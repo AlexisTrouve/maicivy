@@ -58,6 +58,7 @@ type ScoredProjectResponse struct {
 // AdaptiveCVResponse représente la réponse complète du CV adaptatif
 type AdaptiveCVResponse struct {
 	Theme       config.CVTheme             `json:"theme"`
+	Summary     string                     `json:"summary,omitempty"` // résumé dynamique généré par LLM (vide pour thèmes statiques)
 	Experiences []ScoredExperienceResponse `json:"experiences"`
 	Skills      []ScoredSkillResponse      `json:"skills"`
 	Projects    []ScoredProjectResponse    `json:"projects"`
