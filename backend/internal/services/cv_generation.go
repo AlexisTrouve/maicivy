@@ -297,7 +297,9 @@ func (s *CVGenerationService) buildGenerationPrompt(
 ) string {
 	var sb strings.Builder
 
-	sb.WriteString(`Tu es un expert senior en recrutement tech. Ton rôle : mettre honnêtement en valeur ce CV face à cette offre — sans inventer de compétences inexistantes, mais en valorisant intelligemment les vrais points forts.
+	sb.WriteString(`Tu es un chasseur de têtes senior spécialisé tech. Mission : trouver le meilleur angle pour vendre CE candidat à CETTE offre — pas en inventant des compétences, mais en identifiant l'angle inattendu qui fait qu'il est plus fort que les candidats évidents.
+
+Règle d'or : un recruteur intelligent préfère "développeur qui peut construire les outils de ce domaine" à "quelqu'un qui prétend être expert du domaine". Trouve l'angle qui tient en entretien.
 
 `)
 
@@ -344,28 +346,27 @@ func (s *CVGenerationService) buildGenerationPrompt(
 	}
 
 	sb.WriteString(`
-INSTRUCTIONS — raisonne étape par étape avant de scorer :
+INSTRUCTIONS — raisonne d'abord, score ensuite :
 
 <analysis>
-Étape 1 — Déconstruction de l'offre :
-- Quelles sont les compétences VRAIMENT requises (core vs nice-to-have) ?
-- Quel est le domaine métier exact ?
-- Quel niveau d'expérience est attendu ?
+1. DÉCODE L'OFFRE : Au-delà des mots-clés, qu'est-ce que cette boîte cherche VRAIMENT ?
+   (ex: "robotique agricole" = peut-être surtout besoin de quelqu'un qui code des systèmes embarqués fiables)
 
-Étape 2 — Mapping honnête :
-- Quelles expériences du CV matchent RÉELLEMENT (pas juste les mots-clés) ?
-- Quelles compétences sont transférables légitimement ?
-- Quelles expériences seraient difficiles à défendre en entretien technique ?
+2. TROUVE L'ANGLE FORT : Quelle est la vraie valeur ajoutée de ce candidat pour CE contexte ?
+   - Compétences directement applicables (score 70-100)
+   - Compétences transférables légitimement défendables en entretien (score 40-69)
+   - Hors sujet même avec bonne volonté (score 1-39)
 
-Étape 3 — Stratégie de scoring :
-- Top 3 expériences à mettre en avant + comment réécrire leur catchphrase
-- Compétences à scorer haut (vraiment pertinentes) vs moyen (transfert plausible) vs bas (hors sujet)
+3. STRATÉGIE CATCHPHRASE : Pour les 3 meilleures expériences, comment reformuler pour résonner
+   avec le vocabulaire de l'offre SANS mentir ? L'angle "je construis les outils" > "je fais le métier".
+
+4. TITRE JUSTE : Quel titre reflète honnêtement ce que ce candidat apporte à CE poste ?
 </analysis>
 
-Après ton analyse, donne UNIQUEMENT ce JSON (sans markdown):
+Donne UNIQUEMENT ce JSON après ton analyse (sans markdown, sans explication):
 {
   "job_title": "...",
-  "experiences": [{"slug":"...", "score": 90, "catchphrase":"...réécriture max 80 chars pour top 3"},...],
+  "experiences": [{"slug":"...", "score": 90, "catchphrase":"...max 80 chars, top 3 seulement"},...],
   "projects": [{"slug":"...", "score": 85},...],
   "skills": [{"name":"...", "score": 95},...]
 }`)
@@ -374,11 +375,11 @@ Après ton analyse, donne UNIQUEMENT ce JSON (sans markdown):
 }
 
 // callClaude envoie le prompt à Anthropic et retourne le texte brut de la réponse.
-// Sonnet 4.6 avec CoT : budget 8K tokens pour le raisonnement + JSON de sortie.
+// Haiku avec CoT inline : max_tokens 4000 pour raisonnement + JSON de sortie.
 func (s *CVGenerationService) callClaude(ctx context.Context, prompt string) (string, error) {
 	body := map[string]interface{}{
-		"model":      "claude-sonnet-4-6",
-		"max_tokens": 8000, // CoT (~5K) + JSON (~1.5K) + marge
+		"model":      "claude-haiku-4-5-20251001",
+		"max_tokens": 4000, // CoT (~2K) + JSON (~1.5K) + marge
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
