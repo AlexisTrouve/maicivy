@@ -175,9 +175,18 @@ func main() {
 		log.Warn().Msg("CV tailoring service not available — AI not configured")
 	}
 
+	// CV generation : CV dynamique depuis offre d'emploi (texte ou URL)
+	// Utilise le proxy Anthropic directement (même config que llm_scoring)
+	cvGenerationService := services.NewCVGenerationService(contentLoader, cfg.AnthropicBaseURL, cfg.AnthropicAPIKey)
+	if cvGenerationService != nil {
+		log.Info().Msg("CV generation service initialized")
+	} else {
+		log.Warn().Msg("CV generation service not available — Anthropic credentials not configured")
+	}
+
 	// 8. Initialiser handlers
 	healthHandler := api.NewHealthHandler(db, redisClient)
-	cvHandler := api.NewCVHandler(cvService, tailoringService)
+	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
 	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)

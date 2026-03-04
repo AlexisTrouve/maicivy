@@ -8,15 +8,17 @@ import (
 
 // CVHandler gère les endpoints liés au CV
 type CVHandler struct {
-	cvService services.CVServiceInterface
-	tailoring *services.TailoringService // nil si AI non configurée
+	cvService   services.CVServiceInterface
+	tailoring   *services.TailoringService    // nil si AI non configurée
+	generation  *services.CVGenerationService // nil si AI non configurée
 }
 
 // NewCVHandler crée un nouveau handler
-func NewCVHandler(cvService services.CVServiceInterface, tailoring *services.TailoringService) *CVHandler {
+func NewCVHandler(cvService services.CVServiceInterface, tailoring *services.TailoringService, generation *services.CVGenerationService) *CVHandler {
 	return &CVHandler{
-		cvService: cvService,
-		tailoring: tailoring,
+		cvService:  cvService,
+		tailoring:  tailoring,
+		generation: generation,
 	}
 }
 
@@ -31,7 +33,8 @@ func (h *CVHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/skills", h.GetSkills)
 	api.Get("/projects", h.GetProjects)
 	api.Get("/cv/export", h.ExportPDF)
-	api.Post("/cv/tailor", h.TailorCV) // CV personnalisé par annonce
+	api.Post("/cv/tailor", h.TailorCV)      // CV personnalisé par annonce (indeed-outreach)
+	api.Post("/cv/generate", h.GenerateCV)  // CV dynamique depuis offre d'emploi
 }
 
 // GetAdaptiveCV retourne le CV adapté au thème et à la langue
@@ -258,6 +261,60 @@ func (h *CVHandler) TailorCV(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/pdf")
 	c.Set("Content-Disposition", "attachment; filename=cv_tailored.pdf")
 	return c.Send(pdfBytes)
+}
+
+// GenerateCV génère un CV dynamique adapté à une offre d'emploi fournie.
+// L'offre peut être du texte brut ou une URL (auto-détectée par le préfixe "http").
+//
+// @Summary Generate dynamic CV from job offer
+// @Tags CV
+// @Accept json
+// @Produce json
+// @Param body body generateCVRequest true "Job offer text or URL"
+// @Success 200 {object} services.AdaptiveCVResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 503 {object} ErrorResponse
+// @Router /api/v1/cv/generate [post]
+func (h *CVHandler) GenerateCV(c *fiber.Ctx) error {
+	if h.generation == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "CV generation not available — AI service not configured",
+		})
+	}
+
+	var req generateCVRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if req.Offer == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "offer is required",
+		})
+	}
+
+	// Valeur par défaut pour la langue
+	lang := req.Lang
+	if lang == "" {
+		lang = "fr"
+	}
+
+	cv, err := h.generation.GenerateDynamicCV(c.Context(), req.Offer, lang)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(cv)
+}
+
+// generateCVRequest est le body attendu pour POST /cv/generate
+type generateCVRequest struct {
+	Offer string `json:"offer"` // texte brut ou URL de l'offre d'emploi
+	Lang  string `json:"lang"`  // "fr" ou "en", défaut "fr"
 }
 
 // ErrorResponse structure pour documentation API
