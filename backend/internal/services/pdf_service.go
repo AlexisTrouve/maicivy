@@ -217,25 +217,30 @@ func groupSkillsByCategory(skills []ScoredSkillResponse) []SkillGroup {
 func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, error) {
 	var buf strings.Builder
 
-	// Top 6 projets (déjà triés par score) — pré-calculé pour simplifier le template
+	// Top 6 projets en détail, le reste en mode compressé
+	const topN = 6
 	topProjects := cv.Projects
-	if len(topProjects) > 6 {
-		topProjects = topProjects[:6]
+	var otherProjects []ScoredProjectResponse
+	if len(cv.Projects) > topN {
+		topProjects = cv.Projects[:topN]
+		otherProjects = cv.Projects[topN:]
 	}
 
 	// Préparer les données avec les traductions + pré-processing
 	data := struct {
 		*AdaptiveCVResponse
-		Lang        string
-		Labels      map[string]string
-		TopProjects []ScoredProjectResponse
-		SkillGroups []SkillGroup
-		ProfileImg  template.URL // data URI base64 de la photo (vide si absent)
+		Lang          string
+		Labels        map[string]string
+		TopProjects   []ScoredProjectResponse
+		OtherProjects []ScoredProjectResponse // projets 7+ en format compact
+		SkillGroups   []SkillGroup
+		ProfileImg    template.URL // data URI base64 de la photo (vide si absent)
 	}{
 		AdaptiveCVResponse: cv,
 		Lang:               lang,
 		Labels:             getLabels(lang),
 		TopProjects:        topProjects,
+		OtherProjects:      otherProjects,
 		SkillGroups:        groupSkillsByCategory(cv.Skills),
 		ProfileImg:         s.profileImg,
 	}
