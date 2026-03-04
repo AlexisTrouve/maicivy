@@ -20,10 +20,38 @@ type PDFService struct {
 	hasTemplates bool // true si des templates ont été chargés depuis le disque
 }
 
+// SkillGroup regroupe les compétences par catégorie pour le template
+type SkillGroup struct {
+	Category string
+	Skills   []ScoredSkillResponse
+}
+
 // NewPDFService crée une nouvelle instance
 func NewPDFService() *PDFService {
-	// Charger templates (à créer dans templates/cv/)
-	tmpl, err := template.ParseGlob("templates/cv/*.html")
+	// FuncMap : fonctions utilitaires disponibles dans les templates HTML
+	funcMap := template.FuncMap{
+		// levelWidth convertit un niveau de compétence en largeur de barre (0-100)
+		"levelWidth": func(level string) int {
+			switch level {
+			case "expert":
+				return 100
+			case "advanced":
+				return 75
+			case "intermediate":
+				return 50
+			default:
+				return 25
+			}
+		},
+		// scorePercent convertit un score float (0-1) en entier (0-100)
+		"scorePercent": func(score float64) int {
+			return int(score * 100)
+		},
+		// add additionne deux entiers (pour compteurs dans les templates)
+		"add": func(a, b int) int { return a + b },
+	}
+
+	tmpl, err := template.New("cv_base.html").Funcs(funcMap).ParseGlob("templates/cv/*.html")
 	if err != nil {
 		// Templates pas encore créés → fallback renderBasicHTML
 		return &PDFService{templates: nil, hasTemplates: false}
@@ -153,19 +181,50 @@ func (s *PDFService) htmlToPDF(html string) ([]byte, error) {
 	return pdfBuffer, nil
 }
 
+// groupSkillsByCategory regroupe les compétences par catégorie, triées par score DESC
+func groupSkillsByCategory(skills []ScoredSkillResponse) []SkillGroup {
+	order := []string{}
+	groups := map[string][]ScoredSkillResponse{}
+	for _, s := range skills {
+		cat := s.Category
+		if cat == "" {
+			cat = "Autres"
+		}
+		if _, exists := groups[cat]; !exists {
+			order = append(order, cat)
+		}
+		groups[cat] = append(groups[cat], s)
+	}
+	result := make([]SkillGroup, 0, len(order))
+	for _, cat := range order {
+		result = append(result, SkillGroup{Category: cat, Skills: groups[cat]})
+	}
+	return result
+}
+
 // renderCVHTML génère le HTML du CV depuis template
 func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, error) {
 	var buf strings.Builder
 
-	// Préparer les données avec les traductions
+	// Top 6 projets (déjà triés par score) — pré-calculé pour simplifier le template
+	topProjects := cv.Projects
+	if len(topProjects) > 6 {
+		topProjects = topProjects[:6]
+	}
+
+	// Préparer les données avec les traductions + pré-processing
 	data := struct {
 		*AdaptiveCVResponse
-		Lang   string
-		Labels map[string]string
+		Lang        string
+		Labels      map[string]string
+		TopProjects []ScoredProjectResponse
+		SkillGroups []SkillGroup
 	}{
 		AdaptiveCVResponse: cv,
 		Lang:               lang,
 		Labels:             getLabels(lang),
+		TopProjects:        topProjects,
+		SkillGroups:        groupSkillsByCategory(cv.Skills),
 	}
 
 	// Utiliser template HTML si disponible, sinon fallback renderBasicHTML

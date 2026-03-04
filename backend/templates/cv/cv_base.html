@@ -1,225 +1,359 @@
 <!DOCTYPE html>
 <html lang="{{.Lang}}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Labels.cv}} - {{.Theme.Name}}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>CV — {{.Theme.Name}}</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Inter', 'Helvetica', sans-serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #1a1a1a;
-            background: white;
-            padding: 20px;
-        }
+body {
+  font-family: 'DejaVu Sans', 'Noto Sans', Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.5;
+  color: #1e293b;
+  background: white;
+  width: 210mm;
+}
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #2563eb;
-        }
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.page {
+  display: grid;
+  grid-template-columns: 1fr 72mm;
+  grid-template-rows: auto 1fr auto;
+  min-height: 297mm;
+}
 
-        .header h1 {
-            font-size: 28pt;
-            font-weight: 700;
-            color: #2563eb;
-            margin-bottom: 5px;
-        }
+/* ─── HEADER ─────────────────────────────────────────────── */
+.header {
+  grid-column: 1 / -1;
+  background: #0f172a;
+  color: white;
+  padding: 22px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-name {
+  font-size: 20pt;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.header-role {
+  font-size: 10.5pt;
+  color: #60a5fa;
+  font-weight: 500;
+  margin-top: 3px;
+}
+.header-contact {
+  text-align: right;
+  font-size: 7.5pt;
+  color: #94a3b8;
+  line-height: 2;
+}
+.header-contact a { color: #60a5fa; text-decoration: none; }
 
-        .header .theme {
-            font-size: 14pt;
-            color: #64748b;
-            font-weight: 500;
-        }
+/* ─── MAIN ───────────────────────────────────────────────── */
+.main {
+  padding: 22px 24px 22px 32px;
+  border-right: 1px solid #f1f5f9;
+}
+.sidebar {
+  background: #f8fafc;
+  padding: 22px 18px;
+}
 
-        .section {
-            margin-bottom: 25px;
-        }
+/* ─── SECTION LABEL ──────────────────────────────────────── */
+.section { margin-bottom: 22px; }
+.section-label {
+  font-size: 6.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #3b82f6;
+  border-bottom: 1.5px solid #3b82f6;
+  padding-bottom: 4px;
+  margin-bottom: 13px;
+}
 
-        .section-title {
-            font-size: 16pt;
-            font-weight: 700;
-            color: #2563eb;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+/* ─── EXPERIENCE ─────────────────────────────────────────── */
+.exp-wrap {
+  position: relative;
+  margin-bottom: 14px;
+  page-break-inside: avoid;
+}
 
-        .experience {
-            margin-bottom: 15px;
-            padding-left: 10px;
-            border-left: 3px solid #e2e8f0;
-        }
+/*
+  Stealth ATS : texte de keywords positionné derrière le panel visible.
+  - Couleur quasi-blanche (#f8fafc) sur fond blanc → invisible à l'oeil
+  - Taille 0.5pt → imperceptible même en zoomant
+  - Présent dans le flux texte PDF → extrait par ATS et LLMs de screening
+  - Position absolute z-index 0, card visible z-index 1 au-dessus
+*/
+.stealth {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  font-size: 0.5pt;
+  color: #f8fafc;
+  line-height: 1.2;
+  overflow: hidden;
+  padding: 2px;
+  pointer-events: none;
+  user-select: none;
+}
 
-        .experience-title {
-            font-size: 13pt;
-            font-weight: 600;
-            color: #1a1a1a;
-        }
+.exp-card {
+  position: relative;
+  z-index: 1;
+  background: white;
+  border-left: 3px solid #3b82f6;
+  padding: 11px 14px;
+  border-radius: 0 6px 6px 0;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+}
+.exp-card.minor {
+  border-left-color: #cbd5e1;
+}
 
-        .experience-company {
-            font-size: 11pt;
-            color: #2563eb;
-            font-weight: 500;
-        }
+.exp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.exp-title {
+  font-weight: 700;
+  font-size: 10pt;
+  color: #0f172a;
+}
+.exp-company {
+  font-size: 8.5pt;
+  color: #3b82f6;
+  font-weight: 500;
+  margin-top: 1px;
+}
+.exp-dates {
+  font-size: 7.5pt;
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.exp-catch {
+  font-size: 8.5pt;
+  color: #475569;
+  font-style: italic;
+  margin-top: 5px;
+  line-height: 1.4;
+}
 
-        .experience-dates {
-            font-size: 10pt;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
+/* ─── PILLS ──────────────────────────────────────────────── */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 7px;
+}
+.pill {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 6.5pt;
+  font-weight: 600;
+  line-height: 1.6;
+}
 
-        .experience-description {
-            font-size: 10pt;
-            color: #334155;
-            margin-top: 5px;
-        }
+/* ─── PROJECTS ───────────────────────────────────────────── */
+.proj-wrap {
+  position: relative;
+  margin-bottom: 10px;
+  page-break-inside: avoid;
+}
+.proj-card {
+  position: relative;
+  z-index: 1;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 9px 12px;
+}
+.proj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.proj-title {
+  font-weight: 600;
+  font-size: 9pt;
+  color: #0f172a;
+}
+.proj-catch {
+  font-size: 7.5pt;
+  color: #64748b;
+  margin-top: 3px;
+  line-height: 1.4;
+}
 
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
+/* ─── SKILLS SIDEBAR ─────────────────────────────────────── */
+.skill-group { margin-bottom: 18px; }
+.skill-cat {
+  font-size: 6.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  margin-bottom: 9px;
+}
+.skill-item { margin-bottom: 9px; }
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.skill-name {
+  font-size: 8pt;
+  font-weight: 600;
+  color: #1e293b;
+}
+.skill-lvl {
+  font-size: 6.5pt;
+  color: #94a3b8;
+}
+.bar {
+  height: 3px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 2px;
+}
 
-        .skill {
-            padding: 8px 12px;
-            background: #f1f5f9;
-            border-radius: 6px;
-            font-size: 10pt;
-        }
-
-        .skill-name {
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-
-        .skill-level {
-            font-size: 9pt;
-            color: #64748b;
-        }
-
-        .projects-list {
-            list-style: none;
-        }
-
-        .project {
-            margin-bottom: 12px;
-            padding-left: 10px;
-            border-left: 2px solid #e2e8f0;
-        }
-
-        .project-title {
-            font-size: 12pt;
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-
-        .project-description {
-            font-size: 10pt;
-            color: #334155;
-            margin-top: 3px;
-        }
-
-        .tags {
-            margin-top: 5px;
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #dbeafe;
-            color: #1e40af;
-            border-radius: 4px;
-            font-size: 9pt;
-            margin-right: 5px;
-            margin-top: 3px;
-        }
-
-        .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 9pt;
-            color: #94a3b8;
-        }
-    </style>
+/* ─── FOOTER ─────────────────────────────────────────────── */
+.footer {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 6.5pt;
+  color: #cbd5e1;
+  padding: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>Alexi - CV</h1>
-        <div class="theme">{{.Theme.Name}}</div>
-    </div>
+<div class="page">
 
+  <!-- ═══ HEADER ══════════════════════════════════════════ -->
+  <div class="header">
+    <div>
+      <div class="header-name">Alexi Trouvé</div>
+      <div class="header-role">{{.Theme.Name}}</div>
+    </div>
+    <div class="header-contact">
+      <div>alexi@etheryale.com</div>
+      <div>github.com/AlexisTrouve</div>
+      <div>maicivy.etheryale.com</div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN ════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- EXPÉRIENCES -->
     {{if .Experiences}}
     <div class="section">
-        <h2 class="section-title">{{.Labels.experiences}}</h2>
-        {{range .Experiences}}
-        <div class="experience">
-            <div class="experience-title">{{.Title}}</div>
-            <div class="experience-company">{{.Company}}</div>
-            <div class="experience-dates">
-                {{.StartDate.Format "Jan 2006"}} -
-                {{if .EndDate}}{{.EndDate.Format "Jan 2006"}}{{else}}{{$.Labels.present}}{{end}}
+      <div class="section-label">{{index .Labels "experiences"}}</div>
+
+      {{range .Experiences}}
+      <div class="exp-wrap">
+        {{/* Stealth layer : keywords de cette expérience derrière le panel */}}
+        <div class="stealth">{{.Title}} {{.Company}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}} {{.Description}}</div>
+
+        <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
+          <div class="exp-header">
+            <div>
+              <div class="exp-title">{{.Title}}</div>
+              <div class="exp-company">{{.Company}}</div>
             </div>
-            <div class="experience-description">{{.Description}}</div>
+            <div class="exp-dates">
+              {{.StartDate.Format "01/2006"}} —
+              {{if .EndDate}}{{.EndDate.Format "01/2006"}}{{else}}{{index $.Labels "present"}}{{end}}
+            </div>
+          </div>
+          {{if .Catchphrase}}<div class="exp-catch">{{.Catchphrase}}</div>{{end}}
+          {{if .Technologies}}
+          <div class="pills">{{range .Technologies}}<span class="pill">{{.}}</span>{{end}}</div>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+    <!-- PROJETS (top 6, pré-calculé côté Go) -->
+    {{if .TopProjects}}
+    <div class="section">
+      <div class="section-label">{{index .Labels "projects"}}</div>
+
+      {{range .TopProjects}}
+      <div class="proj-wrap">
+        {{/* Stealth layer : keywords du projet derrière le panel */}}
+        <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{.Description}} {{.Catchphrase}}</div>
+
+        <div class="proj-card">
+          <div class="proj-row">
+            <div class="proj-title">{{.Title}}</div>
             {{if .Technologies}}
-            <div class="tags">
-                {{range .Technologies}}
-                <span class="tag">{{.}}</span>
-                {{end}}
-            </div>
+            <div class="pills">{{range .Technologies}}<span class="pill">{{.}}</span>{{end}}</div>
             {{end}}
+          </div>
+          {{if .Catchphrase}}<div class="proj-catch">{{.Catchphrase}}</div>{{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+  </div><!-- .main -->
+
+  <!-- ═══ SIDEBAR ═════════════════════════════════════════ -->
+  <div class="sidebar">
+    {{if .SkillGroups}}
+    <div class="section">
+      <div class="section-label">{{index .Labels "skills"}}</div>
+
+      {{range .SkillGroups}}
+      <div class="skill-group">
+        <div class="skill-cat">{{.Category}}</div>
+        {{range .Skills}}
+        <div class="skill-item">
+          <div class="skill-row">
+            <span class="skill-name">{{.Name}}</span>
+            <span class="skill-lvl">{{.YearsExperience}}{{index $.Labels "yr"}}</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: {{levelWidth .Level}}%;"></div>
+          </div>
         </div>
         {{end}}
+      </div>
+      {{end}}
     </div>
     {{end}}
+  </div><!-- .sidebar -->
 
-    {{if .Skills}}
-    <div class="section">
-        <h2 class="section-title">{{.Labels.skills}}</h2>
-        <div class="skills-grid">
-            {{range .Skills}}
-            <div class="skill">
-                <div class="skill-name">{{.Name}}</div>
-                <div class="skill-level">{{.Level}} - {{.YearsExperience}} {{$.Labels.years}}</div>
-            </div>
-            {{end}}
-        </div>
-    </div>
-    {{end}}
+  <!-- ═══ FOOTER ══════════════════════════════════════════ -->
+  <div class="footer">
+    {{index .Labels "generated_on"}} {{.GeneratedAt.Format "02/01/2006"}} · {{.Theme.Name}}
+  </div>
 
-    {{if .Projects}}
-    <div class="section">
-        <h2 class="section-title">{{.Labels.projects}}</h2>
-        <ul class="projects-list">
-            {{range .Projects}}
-            <li class="project">
-                <div class="project-title">{{.Title}}</div>
-                <div class="project-description">{{.Description}}</div>
-                {{if .Technologies}}
-                <div class="tags">
-                    {{range .Technologies}}
-                    <span class="tag">{{.}}</span>
-                    {{end}}
-                </div>
-                {{end}}
-            </li>
-            {{end}}
-        </ul>
-    </div>
-    {{end}}
-
-    <div class="footer">
-        {{.Labels.generated_on}} {{.GeneratedAt.Format "02/01/2006 15:04"}} - {{.Labels.theme}}: {{.Theme.ID}}
-    </div>
+</div><!-- .page -->
 </body>
 </html>
