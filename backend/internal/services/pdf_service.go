@@ -52,6 +52,23 @@ func NewPDFService() *PDFService {
 		},
 		// add additionne deux entiers (pour compteurs dans les templates)
 		"add": func(a, b int) int { return a + b },
+		// chunkWords découpe un texte en phrases de max N mots séparées par ". "
+		// Évite les paragraphes > 40 mots qui triggent les warnings ATS
+		"chunkWords": func(text string, maxWords int) string {
+			words := strings.Fields(text)
+			if len(words) == 0 {
+				return ""
+			}
+			var chunks []string
+			for i := 0; i < len(words); i += maxWords {
+				end := i + maxWords
+				if end > len(words) {
+					end = len(words)
+				}
+				chunks = append(chunks, strings.Join(words[i:end], " "))
+			}
+			return strings.Join(chunks, ". ")
+		},
 	}
 
 	tmpl, err := template.New("cv_base.html").Funcs(funcMap).ParseGlob("templates/cv/*.html")

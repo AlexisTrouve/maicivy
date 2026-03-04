@@ -372,7 +372,7 @@ body {
       {{range .Experiences}}
       <div class="exp-wrap">
         {{/* Stealth layer : keywords de cette expérience derrière le panel */}}
-        <div class="stealth">{{.Title}} {{.Company}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}} {{.Description}}</div>
+        <div class="stealth">{{.Title}} {{.Company}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}}. {{chunkWords .Description 30}}</div>
 
         <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
           <div class="exp-header">
@@ -403,7 +403,7 @@ body {
       {{range .TopProjects}}
       <div class="proj-wrap">
         {{/* Stealth layer : keywords du projet derrière le panel */}}
-        <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{.Description}} {{.Catchphrase}}</div>
+        <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}}. {{chunkWords .Description 30}}</div>
 
         <div class="proj-card">
           <div class="proj-row">
@@ -423,7 +423,7 @@ body {
         {{range .OtherProjects}}
         <div class="mini-proj">
           {{/* Stealth : contenu derrière le panel, même technique que exp-card */}}
-          <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{.Description}}</div>
+          <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{chunkWords .Description 30}}</div>
           <div class="mini-proj-content">
             <div class="mini-proj-title">{{.Title}}</div>
             {{if .Catchphrase}}<div class="mini-proj-catch">{{.Catchphrase}}</div>{{end}}
