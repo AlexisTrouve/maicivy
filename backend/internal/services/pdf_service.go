@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -15,7 +16,8 @@ import (
 
 // PDFService gère la génération de PDFs
 type PDFService struct {
-	templates *template.Template
+	templates    *template.Template
+	hasTemplates bool // true si des templates ont été chargés depuis le disque
 }
 
 // NewPDFService crée une nouvelle instance
@@ -23,12 +25,13 @@ func NewPDFService() *PDFService {
 	// Charger templates (à créer dans templates/cv/)
 	tmpl, err := template.ParseGlob("templates/cv/*.html")
 	if err != nil {
-		// Si templates pas encore créés, utiliser template par défaut
-		tmpl = template.New("cv_base.html")
+		// Templates pas encore créés → fallback renderBasicHTML
+		return &PDFService{templates: nil, hasTemplates: false}
 	}
 
 	return &PDFService{
-		templates: tmpl,
+		templates:    tmpl,
+		hasTemplates: true,
 	}
 }
 
@@ -40,17 +43,24 @@ func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte,
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 
-	// 2. Configure chromedp allocator options for container environment
+	// 2. Configure chromedp allocator options selon l'environnement
+	// Les flags container (--single-process, --disable-dev-shm-usage) causent des crashes sur Windows/macOS
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.DisableGPU,
-		chromedp.NoSandbox, // Required for running in container as non-root
 		chromedp.Headless,
-		chromedp.Flag("disable-dev-shm-usage", true), // Overcome limited /dev/shm in containers
-		chromedp.Flag("disable-setuid-sandbox", true),
-		chromedp.Flag("single-process", true),
 	)
 
-	// Check for custom Chrome path (Alpine uses chromium-browser)
+	// Flags spécifiques aux conteneurs Linux (pas sur Windows/macOS)
+	if runtime.GOOS == "linux" {
+		opts = append(opts,
+			chromedp.NoSandbox,
+			chromedp.Flag("disable-dev-shm-usage", true),
+			chromedp.Flag("disable-setuid-sandbox", true),
+			chromedp.Flag("single-process", true),
+		)
+	}
+
+	// Custom Chrome path: CHROME_PATH > Alpine chromium-browser > défaut
 	if chromePath := os.Getenv("CHROME_PATH"); chromePath != "" {
 		opts = append(opts, chromedp.ExecPath(chromePath))
 	} else if _, err := os.Stat("/usr/bin/chromium-browser"); err == nil {
@@ -130,10 +140,13 @@ func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, 
 		Labels:             getLabels(lang),
 	}
 
-	// Vérifier si template existe
+	// Utiliser template HTML si disponible, sinon fallback renderBasicHTML
+	if !s.hasTemplates {
+		return s.renderBasicHTML(cv, lang), nil
+	}
+
 	tmpl := s.templates.Lookup("cv_base.html")
 	if tmpl == nil {
-		// Utiliser template basique si pas trouvé
 		return s.renderBasicHTML(cv, lang), nil
 	}
 
@@ -154,8 +167,11 @@ func getLabels(lang string) map[string]string {
 			"projects":             "Projets",
 			"present":              "Présent",
 			"years":                "ans",
+			"yr":                   "a",
 			"generated_on":         "Généré le",
 			"theme":                "Thème",
+			"other_experiences":    "Autres expériences",
+			"other_projects":       "Autres projets",
 		},
 		"en": {
 			"cv":                   "Resume",
@@ -164,8 +180,11 @@ func getLabels(lang string) map[string]string {
 			"projects":             "Projects",
 			"present":              "Present",
 			"years":                "years",
+			"yr":                   "y",
 			"generated_on":         "Generated on",
 			"theme":                "Theme",
+			"other_experiences":    "Other experience",
+			"other_projects":       "Other projects",
 		},
 	}
 
@@ -174,6 +193,13 @@ func getLabels(lang string) map[string]string {
 	}
 	return labels["fr"] // Default to French
 }
+
+// scoreThreshold détermine si une expérience/skill est "pertinent" (rendu détaillé vs compact)
+const scoreThreshold = 0.1
+
+// maxDetailedProjectsPDF : top N projets en détail, le reste en section "Autres projets"
+// Les projets arrivent déjà triés par score LLM DESC dans AdaptiveCVResponse
+const maxDetailedProjectsPDF = 6
 
 // renderBasicHTML génère un HTML simple si template pas disponible
 func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse, lang string) string {
@@ -186,11 +212,18 @@ func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse, lang string) string
     <meta charset="UTF-8">
     <title>` + labels["cv"] + ` - ` + cv.Theme.Name + `</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        h1 { color: #2563eb; }
-        h2 { color: #1e40af; margin-top: 20px; }
-        .section { margin-bottom: 20px; }
-        .item { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid #e2e8f0; }
+        body { font-family: Arial, sans-serif; padding: 20px; color: #1a1a2e; line-height: 1.5; }
+        h1 { color: #2563eb; margin-bottom: 4px; }
+        h2 { color: #1e40af; margin-top: 24px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        h3 { color: #475569; font-size: 0.9em; margin-top: 16px; margin-bottom: 6px; }
+        .section { margin-bottom: 16px; }
+        .item { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid #3b82f6; }
+        .item-minor { margin-bottom: 4px; padding-left: 10px; border-left: 2px solid #e2e8f0; color: #64748b; font-size: 0.9em; }
+        .skill-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .skill-tag { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 8px; font-size: 0.85em; }
+        .skill-tag-minor { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 8px; font-size: 0.8em; color: #94a3b8; }
+        .dates { color: #64748b; font-size: 0.9em; }
+        .tech { color: #6366f1; font-size: 0.85em; }
     </style>
 </head>
 <body>
@@ -198,41 +231,105 @@ func (s *PDFService) renderBasicHTML(cv *AdaptiveCVResponse, lang string) string
     <p>` + cv.Theme.Description + `</p>
 `)
 
-	// Expériences
+	// Expériences — pertinentes en détail, autres en compact
 	if len(cv.Experiences) > 0 {
 		buf.WriteString(`<div class="section"><h2>` + labels["experiences"] + `</h2>`)
+		hasMinor := false
 		for _, exp := range cv.Experiences {
-			buf.WriteString(fmt.Sprintf(`<div class="item">
-				<strong>%s</strong> - %s<br>
-				%s
-			</div>`, exp.Title, exp.Company, exp.Description))
+			if exp.Score > scoreThreshold {
+				dates := formatDate(exp.StartDate.Format("01/2006"))
+				if exp.EndDate != nil {
+					dates += " - " + exp.EndDate.Format("01/2006")
+				} else {
+					dates += " - " + labels["present"]
+				}
+				buf.WriteString(fmt.Sprintf(`<div class="item">
+					<strong>%s</strong> - %s <span class="dates">(%s)</span><br>
+					%s`, exp.Title, exp.Company, dates, exp.Description))
+				if len(exp.Technologies) > 0 {
+					buf.WriteString(`<br><span class="tech">` + strings.Join(exp.Technologies, ", ") + `</span>`)
+				}
+				buf.WriteString(`</div>`)
+			} else {
+				hasMinor = true
+			}
+		}
+		if hasMinor {
+			buf.WriteString(`<h3>` + labels["other_experiences"] + `</h3>`)
+			for _, exp := range cv.Experiences {
+				if exp.Score <= scoreThreshold {
+					dates := exp.StartDate.Format("2006")
+					if exp.EndDate != nil {
+						dates += "-" + exp.EndDate.Format("2006")
+					}
+					buf.WriteString(fmt.Sprintf(`<div class="item-minor">
+						<strong>%s</strong> - %s (%s)
+					</div>`, exp.Title, exp.Company, dates))
+				}
+			}
 		}
 		buf.WriteString(`</div>`)
 	}
 
-	// Skills
+	// Skills — pertinentes en tags visuels, autres en liste compacte
 	if len(cv.Skills) > 0 {
 		buf.WriteString(`<div class="section"><h2>` + labels["skills"] + `</h2>`)
+		buf.WriteString(`<div class="skill-grid">`)
+		hasMinor := false
 		for _, skill := range cv.Skills {
-			buf.WriteString(fmt.Sprintf(`<div class="item">
-				<strong>%s</strong> - %s (%d %s)
-			</div>`, skill.Name, skill.Level, skill.YearsExperience, labels["years"]))
+			if skill.Score > scoreThreshold {
+				buf.WriteString(fmt.Sprintf(`<span class="skill-tag"><strong>%s</strong> · %s · %d%s</span>`,
+					skill.Name, skill.Level, skill.YearsExperience, labels["yr"]))
+			} else {
+				hasMinor = true
+			}
+		}
+		buf.WriteString(`</div>`)
+		if hasMinor {
+			buf.WriteString(`<div class="skill-grid" style="margin-top:4px;">`)
+			for _, skill := range cv.Skills {
+				if skill.Score <= scoreThreshold {
+					buf.WriteString(fmt.Sprintf(`<span class="skill-tag-minor">%s</span>`, skill.Name))
+				}
+			}
+			buf.WriteString(`</div>`)
 		}
 		buf.WriteString(`</div>`)
 	}
 
-	// Projets
+	// Projets — top maxDetailedProjectsPDF en détail (déjà triés par score LLM DESC),
+	// le reste en section "Autres projets" compacte
 	if len(cv.Projects) > 0 {
 		buf.WriteString(`<div class="section"><h2>` + labels["projects"] + `</h2>`)
-		for _, project := range cv.Projects {
+		detailCount := maxDetailedProjectsPDF
+		if detailCount > len(cv.Projects) {
+			detailCount = len(cv.Projects)
+		}
+		for _, project := range cv.Projects[:detailCount] {
 			buf.WriteString(fmt.Sprintf(`<div class="item">
 				<strong>%s</strong><br>
-				%s
-			</div>`, project.Title, project.Description))
+				%s`, project.Title, project.Description))
+			if len(project.Technologies) > 0 {
+				buf.WriteString(`<br><span class="tech">` + strings.Join(project.Technologies, ", ") + `</span>`)
+			}
+			buf.WriteString(`</div>`)
+		}
+		hasMinor := len(cv.Projects) > detailCount
+		if hasMinor {
+			buf.WriteString(`<h3>` + labels["other_projects"] + `</h3>`)
+			for _, project := range cv.Projects[detailCount:] {
+				buf.WriteString(fmt.Sprintf(`<div class="item-minor">
+					<strong>%s</strong> — %s
+				</div>`, project.Title, project.Catchphrase))
+			}
 		}
 		buf.WriteString(`</div>`)
 	}
 
 	buf.WriteString(`</body></html>`)
 	return buf.String()
+}
+
+func formatDate(d string) string {
+	return d // placeholder for custom formatting
 }

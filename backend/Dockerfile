@@ -60,6 +60,8 @@ COPY --from=builder /app/migrations ./migrations
 # Copy templates (for PDF generation)
 COPY --from=builder /app/templates ./templates
 
+# Content markdown files are mounted via docker-compose volume
+
 # Change ownership
 RUN chown -R app:app /app
 

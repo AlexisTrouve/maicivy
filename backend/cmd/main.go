@@ -14,6 +14,7 @@ import (
 
 	"maicivy/internal/api"
 	"maicivy/internal/config"
+	"maicivy/internal/content"
 	"maicivy/internal/database"
 	"maicivy/internal/jobs"
 	"maicivy/internal/middleware"
@@ -84,8 +85,20 @@ func main() {
 	trackingMW := middleware.NewTracking(db, redisClient)
 	app.Use(trackingMW.Handler())
 
-	// 7. Initialiser services (needed for analytics middleware)
-	cvService := services.NewCVService(db, redisClient)
+	// 7. Charger le contenu markdown (source de vérité pour le CV)
+	contentDir := os.Getenv("CONTENT_DIR")
+	if contentDir == "" {
+		contentDir = "../content" // fallback dev local
+	}
+	contentLoader := content.NewLoader(contentDir)
+	if err := contentLoader.Load(); err != nil {
+		log.Fatal().Err(err).Str("dir", contentDir).Msg("Failed to load content from markdown files")
+	}
+
+	// 8. Initialiser services (needed for analytics middleware)
+	// LLM scoring via proxy Anthropic (optionnel — fallback tag-weight si non configuré)
+	llmScoring := services.NewLLMScoringService(cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, redisClient)
+	cvService := services.NewCVService(contentLoader, redisClient, llmScoring)
 	analyticsService := services.NewAnalyticsService(db, redisClient)
 
 	// 8. Analytics middleware (après tracking pour avoir visitor_id)

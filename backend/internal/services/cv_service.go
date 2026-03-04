@@ -8,27 +8,32 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 
 	"maicivy/internal/config"
+	"maicivy/internal/content"
 	"maicivy/internal/models"
 )
 
+// maxDetailedProjects est le nombre max de projets affichés en détail dans le CV/PDF
+const maxDetailedProjects = 6
+
 // CVService gère la logique métier du CV
 type CVService struct {
-	db             *gorm.DB
+	contentLoader  *content.Loader
 	redis          *redis.Client
 	scoringService *CVScoringService
 	l10nHelper     *LocalizationHelper
+	llmScoring     *LLMScoringService // nil si non configuré
 }
 
 // NewCVService crée une nouvelle instance
-func NewCVService(db *gorm.DB, redisClient *redis.Client) *CVService {
+func NewCVService(contentLoader *content.Loader, redisClient *redis.Client, llmScoring *LLMScoringService) *CVService {
 	return &CVService{
-		db:             db,
+		contentLoader:  contentLoader,
 		redis:          redisClient,
 		scoringService: NewCVScoringService(),
 		l10nHelper:     NewLocalizationHelper(),
+		llmScoring:     llmScoring,
 	}
 }
 
@@ -81,22 +86,10 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 		}
 	}
 
-	// 3. Cache miss - récupérer depuis DB
-	var experiences []models.Experience
-	var skills []models.Skill
-	var projects []models.Project
-
-	if err := s.db.Order("start_date DESC").Find(&experiences).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch experiences: %w", err)
-	}
-
-	if err := s.db.Find(&skills).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch skills: %w", err)
-	}
-
-	if err := s.db.Find(&projects).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch projects: %w", err)
-	}
+	// 3. Cache miss - récupérer depuis le content loader
+	experiences := s.contentLoader.GetExperiences()
+	skills := s.contentLoader.GetSkills()
+	projects := s.contentLoader.GetProjects()
 
 	// 4. Scorer et filtrer selon thème
 	scoredExp := s.scoringService.ScoreExperiences(experiences, theme)
@@ -113,8 +106,11 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 		})
 	}
 
-	// Sort experiences by start date (most recent first)
+	// Sort experiences: score DESC, puis date DESC en tiebreaker
 	sort.Slice(filteredExperiences, func(i, j int) bool {
+		if filteredExperiences[i].Score != filteredExperiences[j].Score {
+			return filteredExperiences[i].Score > filteredExperiences[j].Score
+		}
 		return filteredExperiences[i].StartDate.After(filteredExperiences[j].StartDate)
 	})
 
@@ -136,6 +132,25 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 		})
 	}
 
+	// Remplacer les scores projets par les scores LLM si disponibles (1 seul call, cache 6h)
+	if s.llmScoring != nil {
+		if llmScores, err := s.llmScoring.ScoreProjectsForTheme(ctx, projects, theme); err == nil {
+			for i := range filteredProjects {
+				slug := toSlug(filteredProjects[i].Title)
+				if score, ok := llmScores[slug]; ok {
+					// Normaliser 1-100 → 0.0-1.0
+					filteredProjects[i].Score = float64(score) / 100.0
+				}
+			}
+		}
+		// Erreur LLM → on garde les scores tag-weight (fallback silencieux)
+	}
+
+	// Trier les projets par score LLM (ou tag-weight si LLM indispo)
+	sort.Slice(filteredProjects, func(i, j int) bool {
+		return filteredProjects[i].Score > filteredProjects[j].Score
+	})
+
 	// 6. Construire réponse
 	response := &AdaptiveCVResponse{
 		Theme:       *theme,
@@ -156,29 +171,17 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 
 // GetAllExperiences retourne toutes les expériences
 func (s *CVService) GetAllExperiences(ctx context.Context) ([]models.Experience, error) {
-	var experiences []models.Experience
-	if err := s.db.Order("start_date DESC").Find(&experiences).Error; err != nil {
-		return nil, err
-	}
-	return experiences, nil
+	return s.contentLoader.GetExperiences(), nil
 }
 
 // GetAllSkills retourne toutes les compétences
 func (s *CVService) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
-	var skills []models.Skill
-	if err := s.db.Order("years_experience DESC").Find(&skills).Error; err != nil {
-		return nil, err
-	}
-	return skills, nil
+	return s.contentLoader.GetSkills(), nil
 }
 
 // GetAllProjects retourne tous les projets
 func (s *CVService) GetAllProjects(ctx context.Context) ([]models.Project, error) {
-	var projects []models.Project
-	if err := s.db.Order("featured DESC, created_at DESC").Find(&projects).Error; err != nil {
-		return nil, err
-	}
-	return projects, nil
+	return s.contentLoader.GetProjects(), nil
 }
 
 // GetAvailableThemes retourne la liste des thèmes disponibles

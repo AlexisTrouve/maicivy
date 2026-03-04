@@ -149,36 +149,36 @@ func (s *CVScoringService) CalculateProjectScore(project models.Project, theme *
 		}
 	}
 
-	// Bonus si projet featured
-	if project.Featured {
-		score += 0.3
-	}
-
-	// Bonus si catégorie correspond
-	if strings.Contains(strings.ToLower(project.Category), strings.ToLower(theme.ID)) {
-		score += 0.4
-	}
-
-	// Normaliser le score
+	// Normaliser d'abord le score des tags
 	if matchedTags > 0 {
 		score = score / float64(len(theme.TagWeights))
+	}
+
+	// Appliquer les bonus APRÈS normalisation pour qu'ils ne soient pas écrasés
+	if project.Featured {
+		score += 0.15
+	}
+	if strings.Contains(strings.ToLower(project.Category), strings.ToLower(theme.ID)) {
+		score += 0.2
 	}
 
 	return score
 }
 
 // ScoreExperiences score et trie une liste d'expériences
+// Retourne TOUTES les expériences, triées par score (les plus pertinentes en premier)
 func (s *CVScoringService) ScoreExperiences(experiences []models.Experience, theme *config.CVTheme) []ScoredExperience {
 	scored := make([]ScoredExperience, 0, len(experiences))
 
 	for _, exp := range experiences {
 		score := s.CalculateExperienceScore(exp, theme)
-		if score > 0 { // Garder seulement items pertinents
-			scored = append(scored, ScoredExperience{
-				Experience: exp,
-				Score:      score,
-			})
+		if score == 0 {
+			score = 0.1
 		}
+		scored = append(scored, ScoredExperience{
+			Experience: exp,
+			Score:      score,
+		})
 	}
 
 	// Trier par score décroissant
@@ -187,17 +187,19 @@ func (s *CVScoringService) ScoreExperiences(experiences []models.Experience, the
 }
 
 // ScoreSkills score et trie une liste de compétences
+// Retourne TOUTES les skills, triées par score (les plus pertinentes en premier)
 func (s *CVScoringService) ScoreSkills(skills []models.Skill, theme *config.CVTheme) []ScoredSkill {
 	scored := make([]ScoredSkill, 0, len(skills))
 
 	for _, skill := range skills {
 		score := s.CalculateSkillScore(skill, theme)
-		if score > 0 {
-			scored = append(scored, ScoredSkill{
-				Skill: skill,
-				Score: score,
-			})
+		if score == 0 {
+			score = 0.1
 		}
+		scored = append(scored, ScoredSkill{
+			Skill: skill,
+			Score: score,
+		})
 	}
 
 	// Trier par score décroissant

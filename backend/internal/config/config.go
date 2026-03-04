@@ -32,9 +32,12 @@ type Config struct {
 	RedisPassword string
 	RedisDB       int
 
-	// API Keys (pour Phase 3)
-	ClaudeAPIKey string
-	OpenAIAPIKey string
+	// API Keys
+	ClaudeAPIKey    string
+	OpenAIAPIKey    string
+	// Proxy Anthropic (vendor proxy interne)
+	AnthropicBaseURL string
+	AnthropicAPIKey  string
 
 	// Activity Feed (ProjectTracker)
 	ActivityFeedURL string
@@ -71,8 +74,10 @@ func Load() (*Config, error) {
 		RedisDB:       getEnvAsInt("REDIS_DB", 0),
 
 		// API Keys
-		ClaudeAPIKey: getEnv("CLAUDE_API_KEY", ""),
-		OpenAIAPIKey: getEnv("OPENAI_API_KEY", ""),
+		ClaudeAPIKey:     getEnv("CLAUDE_API_KEY", ""),
+		OpenAIAPIKey:     getEnv("OPENAI_API_KEY", ""),
+		AnthropicBaseURL: getEnv("ANTHROPIC_BASE_URL", ""),
+		AnthropicAPIKey:  getEnv("ANTHROPIC_API_KEY", "sk-internal-dev"),
 
 		// Activity Feed
 		ActivityFeedURL: getEnv("ACTIVITY_FEED_URL", ""),

@@ -84,6 +84,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Repos scanner
       REPOS_DIR: /repos
+      CONTENT_DIR: /content
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -102,6 +103,7 @@ services:
     restart: unless-stopped
     volumes:
       - /home/debian:/repos:ro  # Accès lecture seule aux repos pour le scan
+      - ./content:/content:ro  # Fichiers markdown CV (source de vérité)
 
   # Frontend - Next.js
   frontend:
