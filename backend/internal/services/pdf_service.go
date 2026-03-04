@@ -19,7 +19,8 @@ import (
 // PDFService gère la génération de PDFs
 type PDFService struct {
 	templates    *template.Template
-	hasTemplates bool // true si des templates ont été chargés depuis le disque
+	hasTemplates bool       // true si des templates ont été chargés depuis le disque
+	profileImg   template.URL // data URI base64 de la photo de profil (vide si absent)
 }
 
 // SkillGroup regroupe les compétences par catégorie pour le template
@@ -59,9 +60,17 @@ func NewPDFService() *PDFService {
 		return &PDFService{templates: nil, hasTemplates: false}
 	}
 
+	// Charger la photo de profil en base64 pour l'embed dans le PDF.
+	// chromedp navigue sur about:blank — pas de serveur de fichiers, donc data URI obligatoire.
+	var profileImg template.URL
+	if imgData, err := os.ReadFile("templates/cv/profile.png"); err == nil {
+		profileImg = template.URL("data:image/png;base64," + base64.StdEncoding.EncodeToString(imgData))
+	}
+
 	return &PDFService{
 		templates:    tmpl,
 		hasTemplates: true,
+		profileImg:   profileImg,
 	}
 }
 
@@ -221,12 +230,14 @@ func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, 
 		Labels      map[string]string
 		TopProjects []ScoredProjectResponse
 		SkillGroups []SkillGroup
+		ProfileImg  template.URL // data URI base64 de la photo (vide si absent)
 	}{
 		AdaptiveCVResponse: cv,
 		Lang:               lang,
 		Labels:             getLabels(lang),
 		TopProjects:        topProjects,
 		SkillGroups:        groupSkillsByCategory(cv.Skills),
+		ProfileImg:         s.profileImg,
 	}
 
 	// Utiliser template HTML si disponible, sinon fallback renderBasicHTML

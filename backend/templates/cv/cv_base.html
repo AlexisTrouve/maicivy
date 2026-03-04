@@ -33,6 +33,21 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.profile-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 2px solid #3b82f6;
+  flex-shrink: 0;
 }
 .header-name {
   font-size: 20pt;
@@ -44,6 +59,12 @@ body {
   color: #60a5fa;
   font-weight: 500;
   margin-top: 3px;
+}
+.header-meta {
+  font-size: 7pt;
+  color: #64748b;
+  margin-top: 5px;
+  letter-spacing: 0.5px;
 }
 .header-contact {
   text-align: right;
@@ -252,9 +273,13 @@ body {
 
   <!-- ═══ HEADER ══════════════════════════════════════════ -->
   <div class="header">
-    <div>
-      <div class="header-name">Alexi Trouvé</div>
-      <div class="header-role">{{.Theme.Name}}</div>
+    <div class="header-left">
+      {{if .ProfileImg}}<img src="{{.ProfileImg}}" class="profile-photo" alt="Alexi Trouvé">{{end}}
+      <div>
+        <div class="header-name">Alexi Trouvé</div>
+        <div class="header-role">{{.Theme.Name}}</div>
+        <div class="header-meta">Remote · Epitech Nantes 2017</div>
+      </div>
     </div>
     <div class="header-contact">
       <div>alexistrouve.pro@gmail.com</div>
