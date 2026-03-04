@@ -39,7 +39,7 @@ func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey strin
 		contentLoader: contentLoader,
 		baseURL:       strings.TrimRight(baseURL, "/"),
 		apiKey:        apiKey,
-		httpClient:    &http.Client{Timeout: 30 * time.Second},
+		httpClient:    &http.Client{Timeout: 90 * time.Second}, // Sonnet + CoT = plus lent que Haiku
 		l10n:          NewLocalizationHelper(),
 		pdfService:    pdfService,
 	}
@@ -297,7 +297,10 @@ func (s *CVGenerationService) buildGenerationPrompt(
 ) string {
 	var sb strings.Builder
 
-	sb.WriteString("Tu es un expert en recrutement tech. Analyse cette offre d'emploi et adapte le CV.\n\n")
+	sb.WriteString(`Tu es un expert senior en recrutement tech. Ton rôle : mettre honnêtement en valeur ce CV face à cette offre — sans inventer de compétences inexistantes, mais en valorisant intelligemment les vrais points forts.
+
+`)
+
 
 	// Tronquer l'offre à 3000 chars — garde le prompt sous ~4K tokens
 	sb.WriteString("OFFRE D'EMPLOI:\n")
@@ -341,15 +344,28 @@ func (s *CVGenerationService) buildGenerationPrompt(
 	}
 
 	sb.WriteString(`
-INSTRUCTIONS:
-1. Score chaque item de 1 à 100 selon sa pertinence pour CETTE offre spécifique
-2. Pour les 3 meilleures expériences, réécris le catchphrase (max 80 chars) pour matcher le vocabulaire de l'offre
-3. Identifie le titre de poste recherché
+INSTRUCTIONS — raisonne étape par étape avant de scorer :
 
-Réponds UNIQUEMENT avec ce JSON (pas de markdown autour):
+<analysis>
+Étape 1 — Déconstruction de l'offre :
+- Quelles sont les compétences VRAIMENT requises (core vs nice-to-have) ?
+- Quel est le domaine métier exact ?
+- Quel niveau d'expérience est attendu ?
+
+Étape 2 — Mapping honnête :
+- Quelles expériences du CV matchent RÉELLEMENT (pas juste les mots-clés) ?
+- Quelles compétences sont transférables légitimement ?
+- Quelles expériences seraient difficiles à défendre en entretien technique ?
+
+Étape 3 — Stratégie de scoring :
+- Top 3 expériences à mettre en avant + comment réécrire leur catchphrase
+- Compétences à scorer haut (vraiment pertinentes) vs moyen (transfert plausible) vs bas (hors sujet)
+</analysis>
+
+Après ton analyse, donne UNIQUEMENT ce JSON (sans markdown):
 {
   "job_title": "...",
-  "experiences": [{"slug":"...", "score": 90, "catchphrase":"...optional rewrite"},...],
+  "experiences": [{"slug":"...", "score": 90, "catchphrase":"...réécriture max 80 chars pour top 3"},...],
   "projects": [{"slug":"...", "score": 85},...],
   "skills": [{"name":"...", "score": 95},...]
 }`)
@@ -357,12 +373,12 @@ Réponds UNIQUEMENT avec ce JSON (pas de markdown autour):
 	return sb.String()
 }
 
-// callClaude envoie le prompt au proxy Anthropic et retourne le texte brut de la réponse.
-// Même pattern que llm_scoring.go : max_tokens 2048 pour couvrir la réponse JSON complète.
+// callClaude envoie le prompt à Anthropic et retourne le texte brut de la réponse.
+// Sonnet 4.6 avec CoT : budget 8K tokens pour le raisonnement + JSON de sortie.
 func (s *CVGenerationService) callClaude(ctx context.Context, prompt string) (string, error) {
 	body := map[string]interface{}{
-		"model":      "claude-haiku-4-5-20251001",
-		"max_tokens": 2048,
+		"model":      "claude-sonnet-4-6",
+		"max_tokens": 8000, // CoT (~5K) + JSON (~1.5K) + marge
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
@@ -413,11 +429,20 @@ func (s *CVGenerationService) callClaude(ctx context.Context, prompt string) (st
 }
 
 // parseLLMResponse parse le JSON retourné par le LLM.
-// Robuste : strip les fences markdown (```json ... ```) si le modèle les ajoute malgré la consigne.
+// Avec CoT, le modèle produit <analysis>...</analysis> PUIS le JSON.
+// On prend le dernier bloc {...} pour ignorer tout raisonnement préalable.
 func (s *CVGenerationService) parseLLMResponse(text string) (*llmGenerationResponse, error) {
-	// Même stratégie que parseScoreJSON dans llm_scoring.go
 	text = strings.TrimSpace(text)
-	if idx := strings.Index(text, "{"); idx >= 0 {
+
+	// Chercher "job_title" pour trouver le début du JSON de sortie
+	// (plus fiable que le dernier "{" qui peut apparaître dans l'analyse)
+	if idx := strings.LastIndex(text, `"job_title"`); idx >= 0 {
+		// Reculer pour trouver le "{" qui précède job_title
+		if start := strings.LastIndex(text[:idx], "{"); start >= 0 {
+			text = text[start:]
+		}
+	} else if idx := strings.LastIndex(text, "{"); idx >= 0 {
+		// Fallback : dernier "{" si job_title introuvable
 		text = text[idx:]
 	}
 	if idx := strings.LastIndex(text, "}"); idx >= 0 {

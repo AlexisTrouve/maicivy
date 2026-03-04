@@ -56,7 +56,7 @@ func main() {
 		AppName:      "maicivy API",
 		ServerHeader: "Fiber",
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 120 * time.Second, // Sonnet 4.6 + CoT + ChromeDP PDF peuvent dépasser 10s
 		IdleTimeout:  120 * time.Second,
 		BodyLimit:    4 * 1024 * 1024, // 4MB max body size
 		ErrorHandler: customErrorHandler,
