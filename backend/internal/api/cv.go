@@ -301,6 +301,20 @@ func (h *CVHandler) GenerateCV(c *fiber.Ctx) error {
 		lang = "fr"
 	}
 
+	// Format PDF : génère le CV optimisé + injecte la couche stealth ATS
+	if req.Format == "pdf" {
+		pdfBytes, err := h.generation.GenerateDynamicPDF(c.Context(), req.Offer, lang)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		c.Set("Content-Type", "application/pdf")
+		c.Set("Content-Disposition", "attachment; filename=cv_dynamic_"+lang+".pdf")
+		return c.Send(pdfBytes)
+	}
+
+	// Format JSON (défaut) : retourne l'AdaptiveCVResponse pour affichage frontend
 	cv, err := h.generation.GenerateDynamicCV(c.Context(), req.Offer, lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -313,8 +327,9 @@ func (h *CVHandler) GenerateCV(c *fiber.Ctx) error {
 
 // generateCVRequest est le body attendu pour POST /cv/generate
 type generateCVRequest struct {
-	Offer string `json:"offer"` // texte brut ou URL de l'offre d'emploi
-	Lang  string `json:"lang"`  // "fr" ou "en", défaut "fr"
+	Offer  string `json:"offer"`  // texte brut ou URL de l'offre d'emploi
+	Lang   string `json:"lang"`   // "fr" ou "en", défaut "fr"
+	Format string `json:"format"` // "json" (défaut) ou "pdf" (avec stealth ATS)
 }
 
 // ErrorResponse structure pour documentation API

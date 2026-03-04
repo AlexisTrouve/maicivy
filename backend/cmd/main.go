@@ -177,7 +177,7 @@ func main() {
 
 	// CV generation : CV dynamique depuis offre d'emploi (texte ou URL)
 	// Utilise le proxy Anthropic directement (même config que llm_scoring)
-	cvGenerationService := services.NewCVGenerationService(contentLoader, cfg.AnthropicBaseURL, cfg.AnthropicAPIKey)
+	cvGenerationService := services.NewCVGenerationService(contentLoader, cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, pdfService)
 	if cvGenerationService != nil {
 		log.Info().Msg("CV generation service initialized")
 	} else {

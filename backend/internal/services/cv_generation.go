@@ -20,16 +20,18 @@ import (
 // CVGenerationService génère un CV dynamique tailoré à une offre d'emploi réelle.
 // Contrairement aux thèmes statiques (tag-weight), il analyse l'offre en entier
 // et retourne scores + catchphrases réécrites par le LLM pour matcher le vocabulaire exact.
+// Peut aussi générer un PDF avec couche stealth ATS intégrée via GenerateDynamicPDF.
 type CVGenerationService struct {
 	contentLoader *content.Loader
 	baseURL       string
 	apiKey        string
 	httpClient    *http.Client
 	l10n          *LocalizationHelper
+	pdfService    *PDFService // pour la génération PDF avec stealth ATS
 }
 
 // NewCVGenerationService crée une instance. Retourne nil si baseURL ou apiKey vides.
-func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey string) *CVGenerationService {
+func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey string, pdfService *PDFService) *CVGenerationService {
 	if baseURL == "" || apiKey == "" {
 		return nil
 	}
@@ -39,6 +41,7 @@ func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey strin
 		apiKey:        apiKey,
 		httpClient:    &http.Client{Timeout: 30 * time.Second},
 		l10n:          NewLocalizationHelper(),
+		pdfService:    pdfService,
 	}
 }
 
@@ -213,6 +216,39 @@ func (s *CVGenerationService) GenerateDynamicCV(ctx context.Context, offer, lang
 		Projects:    scoredProjects,
 		GeneratedAt: time.Now(),
 	}, nil
+}
+
+// GenerateDynamicPDF combine les deux optimisations en un seul appel :
+//  1. LLM score + réécrit les catchphrases pour l'offre (build)
+//  2. Injection couche stealth ATS à partir des top skills scorés (ultraopti)
+//
+// La couche stealth est quasi-invisible visuellement (7px, #e8e8e8) mais présente
+// dans le flux texte du PDF — lue par les parseurs ATS et les LLMs de screening.
+func (s *CVGenerationService) GenerateDynamicPDF(ctx context.Context, offer, lang string) ([]byte, error) {
+	if s.pdfService == nil {
+		return nil, fmt.Errorf("PDF service not available")
+	}
+
+	// Étape 1 : générer le CV optimisé (LLM scoring + catchphrases réécrites)
+	cv, err := s.GenerateDynamicCV(ctx, offer, lang)
+	if err != nil {
+		return nil, fmt.Errorf("generation failed: %w", err)
+	}
+
+	// Étape 2 : extraire les top skills pour la couche stealth ATS
+	// On prend les skills avec score >= 60% (pertinents pour l'offre), max 15
+	topSkillNames := make([]string, 0, 15)
+	for _, skill := range cv.Skills {
+		if skill.Score >= 0.60 && len(topSkillNames) < 15 {
+			topSkillNames = append(topSkillNames, skill.Name)
+		}
+	}
+
+	// Étape 3 : construire et injecter la couche stealth ATS
+	// buildStealthHTML est défini dans tailoring_service.go (même package)
+	stealthHTML := buildStealthHTML(topSkillNames, lang)
+
+	return s.pdfService.GenerateTailoredPDF(cv, lang, stealthHTML)
 }
 
 // fetchURLContent récupère le texte brut d'une URL en strippant les balises HTML.
