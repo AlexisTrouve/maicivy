@@ -82,6 +82,9 @@ services:
       # API Keys (to be set in .env)
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Proxy Anthropic (LLM scoring + CV generation)
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       # Repos scanner
       REPOS_DIR: /repos
       CONTENT_DIR: /content
