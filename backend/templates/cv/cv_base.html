@@ -377,6 +377,7 @@ body {
     <!-- SUMMARY (dynamique LLM, absent pour thèmes statiques) -->
     {{if .Summary}}
     <div class="summary">
+      {{if .StealthText}}<span class="ats-anchor">{{.StealthText}}</span>{{end}}
       <div class="summary-text">{{.Summary}}</div>
     </div>
     {{end}}
@@ -535,10 +536,6 @@ body {
   <!-- ═══ FOOTER ══════════════════════════════════════════ -->
   <div class="footer">
     maicivy.etheryale.com
-    {{if .StealthText}}
-    <!-- ATS keywords : position:absolute + blanc sur blanc, même technique que per-card stealth -->
-    <div style="position:absolute;inset:0;z-index:0;color:#ffffff;background:#ffffff;font-size:7px;line-height:8px;overflow:hidden;padding:2px;pointer-events:none;user-select:none;">{{.StealthText}}</div>
-    {{end}}
   </div>
 
 </div><!-- .page -->
