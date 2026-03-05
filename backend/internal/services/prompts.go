@@ -91,10 +91,9 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "en effet", "ainsi", "notamment", "de surcroît", "par ailleurs",
 "je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus naturel)
 
-FORMAT EN-TÊTE — règle absolue :
-Chaque élément sur SA PROPRE LIGNE. Jamais de " - " comme séparateur dans l'en-tête.
-Pas "Alexis Trouve - alexis@mail.com - +33 6..." sur une seule ligne.
-Une information = une ligne.
+FORMAT — règle absolue :
+Jamais de " - " nulle part dans la lettre — ni dans l'en-tête, ni dans le corps.
+En-tête : une information = une ligne. Corps : utilise "—" (tiret long) pour les pauses, ou reformule en phrase complète.
 
 PROFIL :
 - Nom : %s | %s %s | %s | %s
@@ -253,10 +252,9 @@ STRICTLY FORBIDDEN WORDS AND PHRASES:
 "I am writing to express my interest", "cross-functional", "stakeholders",
 "I believe I would be a great fit", "moreover", "furthermore", "in summary"
 
-HEADER FORMAT — absolute rule:
-Each element on ITS OWN LINE. Never use " - " as a separator in the header.
-Not "Alexis Trouve - alexis@mail.com - +33 6..." on a single line.
-One piece of information = one line.
+FORMAT — absolute rule:
+Never use " - " anywhere in the letter — not in the header, not in the body.
+Header: one piece of information = one line. Body: use "—" (em-dash) for pauses, or rephrase as a full sentence.
 
 PROFILE:
 - Name: %s | %s %s | %s | %s

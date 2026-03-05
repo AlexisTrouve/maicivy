@@ -194,6 +194,10 @@ func cleanLetterContent(content string) string {
 	header := content[:splitIdx]
 	body := content[splitIdx:]
 
+	// Dans le corps : remplacer les " - " résiduels par "—" (tiret long)
+	// Le modèle utilise parfois " - " comme pause stylistique — on le corrige en em-dash
+	body = strings.ReplaceAll(body, " - ", " — ")
+
 	return cleanHeaderDashes(header) + body
 }
 
