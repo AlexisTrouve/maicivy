@@ -128,13 +128,12 @@ body {
   inset: 0;
   z-index: 0;
   font-size: 7px;
-  /* blanc sur blanc : même couleur que le fond des cards (#ffffff)
-     → invisible mais glyphes correctement encodés dans le PDF stream
-     (pas d'opacity trick qui corrompt le ToUnicode mapping de Chromium) */
+  /* blanc sur blanc : invisible mais glyphes correctement encodés dans le PDF stream.
+     PAS d'overflow:hidden — ça clippe aussi le texte dans le stream PDF de Chromium,
+     ce qui ferait disparaître les termes ATS qui dépassent la hauteur de la card. */
   color: #ffffff;
   background: #ffffff;
   line-height: 8px;
-  overflow: hidden;
   padding: 2px;
   pointer-events: none;
   user-select: none;
