@@ -387,10 +387,8 @@ body {
 
       {{range $i, $exp := .Experiences}}
       <div class="exp-wrap">
-        {{/* Stealth layer : keywords de cette expérience derrière le panel (position:absolute → rendu dans flux PDF) */}}
-        {{/* Premier card : on injecte aussi les termes ATS universels + skills scorés par le LLM */}}
-        {{/* Premier card : termes ATS universels + skills LLM au DÉBUT du stealth (dans les bounds garantis) */}}
-        <div class="stealth">{{if eq $i 0}}{{$.StealthText}} Professional Experience. Work History. Software Development. Software Engineering. Systems Integration. Design Patterns. Data Structures. Performance Testing. Programming Skills. Application Development. Technical Leadership. Problem Solving. Code Review. Agile Development. {{end}}{{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}}</div>
+        {{/* Stealth layer : keywords de l'expérience + termes ATS universels au début (bounds garantis) */}}
+        <div class="stealth">Software Development. Software Engineering. Systems Integration. Design Patterns. Data Structures. Performance Testing. Programming Skills. Application Development. Technical Leadership. Problem Solving. Code Review. Agile Development. Professional Experience. Work History. {{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}}</div>
 
         <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
           <div class="exp-header">
