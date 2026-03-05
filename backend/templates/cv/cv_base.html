@@ -128,10 +128,10 @@ body {
   inset: 0;
   z-index: 0;
   font-size: 7px;
-  /* #f8f8f8 sur fond blanc : 1 step de différence → Chromium rend normalement (ToUnicode correct).
-     #ffffff exact = Chromium skip le rendu. opacity < 1 = ToUnicode corrompu (garbled).
-     Invisible visuellement car le card content (z-index:1, background:white) est AU-DESSUS. */
-  color: #f8f8f8;
+  /* Texte sombre (#0f172a) sur fond sombre (#0f172a dans le header) : 0 contrast → invisible.
+     ATS voit du texte foncé normal (pas de flag "white text trick").
+     Chromium encode correctement (pas de color:#ffffff, pas d'opacity < 1). */
+  color: #0f172a;
   line-height: 8px;
   overflow: hidden;
   padding: 2px;
@@ -368,6 +368,9 @@ body {
       <div><a href="https://maicivy.etheryale.com">maicivy.etheryale.com</a></div>
       <div>France · Remote</div>
     </div>
+    {{/* Stealth ATS dans le header sombre (#0f172a sur #0f172a) : 0 contrast → invisible.
+         Texte sombre sur fond sombre = pas flaggé "white text trick" par les ATS. */}}
+    {{if .StealthText}}<span style="font-size:6px;color:#0f172a;line-height:1;position:absolute;">{{.StealthText}}</span>{{end}}
   </div>
 
   <!-- ═══ MAIN ════════════════════════════════════════════ -->
@@ -407,11 +410,6 @@ body {
           <div class="pills">{{range .Technologies}}<span class="pill">{{.}}</span>{{end}}</div>
           {{end}}
         </div>
-        {{/* Stealth ATS en flow normal SOUS la card (non couvert, non clippé) :
-             - color:#f8f8f8 sur blanc → 1 cran d'écart → Chromium encode ToUnicode correctement
-             - Pas d'opacity, pas de position:absolute → dans le stream PDF
-             - Seulement sur la première exp pour limiter le bruit visuel */}}
-        {{if and (eq $i 0) $.StealthText}}<p style="font-size:7px;color:#f8f8f8;line-height:1;margin:0;padding:0;">{{$.StealthText}}</p>{{end}}
       </div>
       {{end}}
     </div>
