@@ -108,11 +108,11 @@ func buildStealthHTML(skills []string, lang string) string {
 		)
 	}
 
-	// Font-size:5pt + opacity:0.01 : invisible à l'œil mais glyphes correctement embarqués
-	// dans le stream PDF par Chromium. À 0.5pt, le sous-ensemble de police est corrompu
-	// (Chromium tronque les glyphes), ce qui donne du texte illisible à l'extraction ATS.
+	// Font-size:6px + opacity:0.01 : invisible à l'œil mais glyphes correctement embarqués
+	// dans le stream PDF par Chromium. En dessous de ~5px, le sous-ensemble de police est
+	// corrompu (Chromium tronque les glyphes) → texte illisible à l'extraction ATS.
 	return fmt.Sprintf(
-		`<div style="font-size:5pt;color:#1e293b;opacity:0.01;line-height:6pt;margin:0;padding:0;">%s</div>`,
+		`<div style="font-size:6px;color:#1e293b;opacity:0.01;line-height:7px;margin:0;padding:0;">%s</div>`,
 		text,
 	)
 }

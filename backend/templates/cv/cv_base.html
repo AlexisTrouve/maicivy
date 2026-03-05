@@ -89,12 +89,13 @@ body {
 /* .ats-anchor : texte invisible mais lisible par ATS — évite le pb de letter-spacing
    qui rend "E D U C A T I O N" au lieu de "Education" dans le flux PDF */
 .ats-anchor {
-  font-size: 0.1pt;
+  font-size: 6px;
   color: #1e293b;
+  opacity: 0.01; /* quasi-invisible mais glyphes dans le stream PDF */
   display: block;
-  line-height: 0;
-  overflow: hidden;
-  height: 0;
+  line-height: 6px;
+  margin: 0;
+  padding: 0;
 }
 .section-label {
   font-size: 6.5pt;
@@ -125,9 +126,9 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  font-size: 0.5pt;
+  font-size: 6px; /* assez grand pour que Chromium embarque les glyphes correctement dans le stream PDF */
   color: #1e293b; /* noir — ATS ne flag pas le texte "caché" */
-  line-height: 1.2;
+  line-height: 7px;
   overflow: hidden;
   padding: 2px;
   pointer-events: none;
