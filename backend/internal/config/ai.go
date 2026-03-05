@@ -34,7 +34,7 @@ func LoadAIConfig() *AIConfig {
 		AnthropicAPIKey:      os.Getenv("ANTHROPIC_API_KEY"),
 		OpenAIAPIKey:         os.Getenv("OPENAI_API_KEY"),
 		PrimaryProvider:      getEnvOrDefault("AI_PRIMARY_PROVIDER", "claude"),
-		ClaudeModel:          getEnvOrDefault("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+		ClaudeModel:          getEnvOrDefault("CLAUDE_MODEL", "claude-opus-4-6"),
 		OpenAIModel:          getEnvOrDefault("OPENAI_MODEL", "gpt-4o"),
 		MaxRequestsPerMinute: getEnvAsIntOrDefault("AI_MAX_REQUESTS_PER_MIN", 10),
 		MaxTokensPerRequest:  getEnvAsIntOrDefault("AI_MAX_TOKENS", 4000),

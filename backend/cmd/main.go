@@ -139,7 +139,7 @@ func main() {
 	// Letter generator service (combines AI, scraper, PDF)
 	var letterGenerator *services.LetterGenerator
 	if aiService != nil && scraper != nil {
-		letterGenerator = services.NewLetterGenerator(aiService, scraper, pdfLetterService, userProfile)
+		letterGenerator = services.NewLetterGenerator(aiService, scraper, pdfLetterService, userProfile, contentLoader)
 		log.Info().Msg("Letter generator service initialized")
 	} else {
 		log.Warn().Msg("Letter generator service not initialized - AI or scraper missing")

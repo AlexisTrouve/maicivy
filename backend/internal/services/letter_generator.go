@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"maicivy/internal/content"
 	"maicivy/internal/models"
 )
 
@@ -23,12 +24,17 @@ func NewLetterGenerator(
 	scraper *CompanyScraper,
 	pdf *PDFLetterService,
 	profile models.UserProfile,
+	contentLoader *content.Loader, // pour injecter les projets dans le prompt
 ) *LetterGenerator {
+	projects := []models.Project{}
+	if contentLoader != nil {
+		projects = contentLoader.GetProjects()
+	}
 	return &LetterGenerator{
 		aiService:     ai,
 		scraper:       scraper,
 		pdfService:    pdf,
-		promptBuilder: NewPromptBuilder(profile),
+		promptBuilder: NewPromptBuilder(profile, projects),
 	}
 }
 

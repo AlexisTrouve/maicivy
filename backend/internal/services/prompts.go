@@ -10,10 +10,11 @@ import (
 
 type PromptBuilder struct {
 	userProfile models.UserProfile
+	projects    []models.Project // projets perso — injectés dans le prompt
 }
 
-func NewPromptBuilder(profile models.UserProfile) *PromptBuilder {
-	return &PromptBuilder{userProfile: profile}
+func NewPromptBuilder(profile models.UserProfile, projects []models.Project) *PromptBuilder {
+	return &PromptBuilder{userProfile: profile, projects: projects}
 }
 
 // BuildMotivationPrompt : prompt pour lettre de motivation professionnelle
@@ -53,12 +54,16 @@ OFFRE D'EMPLOI (utilise ce contexte pour adapter la lettre au poste précis):
 		objet = "Candidature au poste mentionné dans l'offre d'emploi"
 	}
 
-	template := `Tu es un expert en rédaction de lettres de motivation professionnelles.
+	// Section projets — toujours injectée
+	projectsSection := pb.buildProjectsSection()
+
+	template := `Tu es un expert en conversion commerciale B2B freelance tech.
+
+MISSION : Écrire une lettre qui CONVAINC le décideur de travailler avec Alexis en mission freelance — que l'offre soit pour un CDI ou un freelance, l'objectif est le même : convertir en mission.
 
 PROFIL DU CANDIDAT:
 - Nom: %s
-- Adresse: %s
-- Code postal, Ville: %s %s
+- Adresse: %s %s, %s
 - Email: %s
 - Téléphone: %s
 - Résumé: %s
@@ -66,61 +71,74 @@ PROFIL DU CANDIDAT:
 - Années d'expérience: %d ans
 - Compétences clés: %s
 
-PARCOURS PROFESSIONNEL DÉTAILLÉ:
+PARCOURS PROFESSIONNEL:
+%s
+
+PROJETS PERSONNELS RÉALISÉS (preuves concrètes de compétence):
 %s
 
 ENTREPRISE CIBLE:
 - Nom: %s
 - Secteur: %s
 - Description: %s
-- Technologies utilisées: %s
+- Technologies: %s
 - Taille: %s
 %s
-DATE DU JOUR (pour la lettre):
-%s
+DATE DU JOUR: %s
+
+ARGUMENTS FREELANCE À UTILISER (intègre-les naturellement, pas en liste):
+• ÉCONOMIQUE : pas de charges patronales (~42%% du brut économisés), pas de mutuelle, pas de congés payés, pas d'onboarding à financer
+• FLEXIBILITÉ : mission à durée définie, prolongeable ou arrêtable, charge adaptable aux phases du projet
+• ZÉRO RISQUE RH : pas de période d'essai incertaine, pas de procédure de licenciement, pas d'engagement long terme
+• VITESSE : disponibilité immédiate, pas de préavis à attendre, opérationnel dès le premier jour
+• PERFORMANCE : un freelance senior livre vite et bien — pas de montée en compétence à gérer, résultats mesurables
+
+EMPATHIE DÉCIDEUR — tu dois comprendre et verbaliser leur réalité :
+• Recruter en CDI = 6-12 mois de risque financier (si ça ne matche pas, procédure longue et coûteuse)
+• Budget RH contraint, pression des directions, projets qui évoluent
+• Peur de se tromper sur un profil, de payer cher quelqu'un qui déçoit
+• Besoin de résultats rapides, pas d'excuses ni de ramping
+• La mission freelance résout tous ces problèmes — c'est ce que la lettre doit démontrer
 
 TÂCHE:
-Rédige une lettre de motivation professionnelle, convaincante et authentique pour postuler chez %s.
+Rédige une lettre qui positionne Alexis Trouve comme LA solution à leur problème, via une mission freelance. Pas une candidature classique — une proposition de valeur.
 
 INSTRUCTIONS:
-1. COMMENCE OBLIGATOIREMENT par l'en-tête complet au format français classique (aligné à gauche):
-   - Nom complet du candidat
-   - Adresse
-   - Code postal et ville
+1. EN-TÊTE obligatoire au format français classique (aligné à gauche):
+   - Nom complet
+   - Adresse, code postal et ville
    - Email
    - Téléphone
    - Ligne vide
-   - Date du jour (utilise celle fournie ci-dessus)
+   - Date (utilise celle fournie)
    - Ligne vide
    - Nom de l'entreprise
-   - [Adresse si connue, sinon laisser vide]
    - Ligne vide
    - "Objet : %s"
    - Ligne vide
 
-2. Structure classique ensuite (introduction, corps, conclusion)
-3. Ton professionnel mais pas rigide
-4. UTILISE des exemples CONCRETS du parcours du candidat (projets, achievements, métriques)
-5. Si une offre est fournie : adresse DIRECTEMENT les compétences et missions demandées, cite le vocabulaire de l'offre
-6. Montre un intérêt sincère pour l'entreprise (culture, projets, technologies)
-7. Cite des réalisations spécifiques avec des chiffres quand disponibles
-8. Longueur: 350-450 mots (sans compter l'en-tête)
-9. Format: paragraphes bien structurés (pas de bullet points)
-10. TERMINE par "Cordialement," suivi du nom du candidat
+2. INTRODUCTION : accroche empathique — montre que tu comprends LEUR contexte et LEUR besoin. Pas "je vous écris pour..." — commence par eux, pas par toi.
 
-EXEMPLES DE BON STYLE:
-- "Chez [entreprise précédente], j'ai [réalisation concrète avec métrique], ce qui m'a préparé à..."
-- "Mon expérience en [technologie] où j'ai [achievement] correspond parfaitement à vos besoins en..."
+3. CORPS : pitch de la mission concrète, pas du CV. Propose explicitement une mission freelance. Intègre 1-2 arguments économiques ou de flexibilité de manière fluide. Cite 2-3 projets/réalisations spécifiques qui prouvent la compétence sur leur cas précis.
 
-N'invente PAS de faits sur l'entreprise. Utilise les informations du parcours du candidat.
+4. Si une offre est fournie : adresse directement les missions demandées, réutilise leur vocabulaire, montre que tu as lu et compris.
 
-Génère la lettre maintenant (AVEC l'en-tête complet):`
+5. CONCLUSION : appel à l'action direct — propose un échange rapide pour cadrer la mission. Pas de formule creuse.
+
+6. TON : direct, confiant, empathique. Jamais servile ni corporate. Comme quelqu'un qui sait ce qu'il vaut et qui propose une solution — pas quelqu'un qui supplie.
+
+7. Longueur : 350-450 mots hors en-tête. Paragraphes, pas de bullet points dans la lettre.
+
+8. TERMINE par "Cordialement," suivi du nom.
+
+N'invente PAS de faits sur l'entreprise. Utilise uniquement les infos fournies.
+
+Génère la lettre maintenant (AVEC l'en-tête complet) :`
 
 	return fmt.Sprintf(
 		template,
 		pb.userProfile.Name,
-		pb.userProfile.Address,
-		pb.userProfile.PostalCode, pb.userProfile.City,
+		pb.userProfile.PostalCode, pb.userProfile.City, pb.userProfile.Address,
 		pb.userProfile.Email,
 		pb.userProfile.Phone,
 		pb.userProfile.Summary,
@@ -128,6 +146,7 @@ Génère la lettre maintenant (AVEC l'en-tête complet):`
 		pb.userProfile.Experience,
 		strings.Join(pb.userProfile.Skills, ", "),
 		experiencesSection,
+		projectsSection,
 		company.Name,
 		company.Industry,
 		company.Description,
@@ -138,6 +157,25 @@ Génère la lettre maintenant (AVEC l'en-tête complet):`
 		company.Name,
 		objet,
 	)
+}
+
+// buildProjectsSection construit la section projets pour le prompt
+// Format compact : titre | techs | catchphrase — chaque projet = 1 ligne
+func (pb *PromptBuilder) buildProjectsSection() string {
+	if len(pb.projects) == 0 {
+		return "Aucun projet disponible."
+	}
+
+	var sb strings.Builder
+	for _, p := range pb.projects {
+		techs := strings.Join(p.Technologies, ", ")
+		status := ""
+		if p.InProgress {
+			status = " [en cours]"
+		}
+		sb.WriteString(fmt.Sprintf("• %s%s [%s] — %s\n", p.Title, status, techs, p.Catchphrase))
+	}
+	return sb.String()
 }
 
 // buildExperiencesSection construit la section des expériences pour le prompt
@@ -182,12 +220,16 @@ JOB OFFER (use this context to tailor the letter to the specific position):
 		subject = "Application for the advertised position"
 	}
 
-	template := `You are an expert in writing professional cover letters.
+	// Projects section — always injected
+	projectsSection := pb.buildProjectsSection()
+
+	template := `You are a B2B freelance tech conversion specialist.
+
+MISSION: Write a letter that CONVINCES the decision-maker to work with Alexis as a freelance contractor — whether the offer is for a full-time role or freelance, the goal is the same: convert it into a mission.
 
 CANDIDATE PROFILE:
 - Name: %s
-- Address: %s
-- Postal Code, City: %s %s
+- Address: %s %s, %s
 - Email: %s
 - Phone: %s
 - Summary: %s
@@ -195,61 +237,74 @@ CANDIDATE PROFILE:
 - Years of Experience: %d years
 - Key Skills: %s
 
-DETAILED PROFESSIONAL BACKGROUND:
+PROFESSIONAL BACKGROUND:
+%s
+
+PERSONAL PROJECTS (concrete proof of skills):
 %s
 
 TARGET COMPANY:
 - Name: %s
 - Industry: %s
 - Description: %s
-- Technologies Used: %s
+- Technologies: %s
 - Size: %s
 %s
-CURRENT DATE (for the letter):
-%s
+CURRENT DATE: %s
+
+FREELANCE ARGUMENTS TO USE (weave them naturally, not as a list):
+• ECONOMIC: no employer payroll taxes (~30%% savings on total compensation), no benefits overhead, no onboarding costs
+• FLEXIBILITY: fixed-duration mission, extendable or stoppable, workload adaptable to project phases
+• ZERO HR RISK: no uncertain trial period, no termination procedure, no long-term commitment
+• SPEED: immediate availability, no notice period, operational from day one
+• PERFORMANCE: a senior freelancer delivers fast — no ramp-up, measurable results
+
+DECISION-MAKER EMPATHY — understand and verbalize their reality:
+• Hiring full-time = 6-12 months of financial risk (if it doesn't work, a long and costly process)
+• Tight HR budget, shifting priorities, projects that evolve
+• Fear of making a wrong hire, of paying a lot for someone who underdelivers
+• Need for fast results, not excuses or onboarding delays
+• A freelance mission solves all of this — that's what the letter must demonstrate
 
 TASK:
-Write a professional, compelling, and authentic cover letter to apply at %s.
+Write a letter that positions Alexis Trouve as THE solution to their problem, via a freelance mission. Not a classic application — a value proposition.
 
 INSTRUCTIONS:
-1. START OBLIGATORILY with the complete header in classic English format (left-aligned):
-   - Full name of the candidate
-   - Address
-   - Postal code and city
+1. HEADER — mandatory, classic English format (left-aligned):
+   - Full name
+   - Address, postal code and city
    - Email
    - Phone
    - Blank line
-   - Current date (use the one provided above)
+   - Date (use the one provided)
    - Blank line
    - Company name
-   - [Address if known, otherwise leave blank]
    - Blank line
    - "Subject: %s"
    - Blank line
 
-2. Classic structure afterwards (introduction, body, conclusion)
-3. Professional but not rigid tone
-4. USE CONCRETE examples from the candidate's background (projects, achievements, metrics)
-5. If a job offer is provided: directly address the required skills and missions, use the vocabulary from the offer
-6. Show sincere interest in the company (culture, projects, technologies)
-7. Cite specific achievements with numbers when available
-8. Length: 350-450 words (excluding header)
-9. Format: well-structured paragraphs (no bullet points)
-10. END with "Sincerely," followed by the candidate's name
+2. OPENING: empathetic hook — show you understand THEIR context and THEIR need. Don't start with "I am writing to..." — start with them, not yourself.
 
-EXAMPLES OF GOOD STYLE:
-- "At [previous company], I [concrete achievement with metric], which prepared me to..."
-- "My experience in [technology] where I [achievement] aligns perfectly with your needs in..."
+3. BODY: pitch the mission, not the CV. Explicitly propose a freelance mission. Weave in 1-2 economic or flexibility arguments naturally. Reference 2-3 specific projects/achievements that prove your competence for their exact case.
 
-Do NOT invent facts about the company. Use information from the candidate's background.
+4. If a job offer is provided: directly address the stated responsibilities, reuse their vocabulary, show you read and understood it.
+
+5. CLOSING: direct call to action — propose a quick conversation to scope the mission. No empty phrases.
+
+6. TONE: direct, confident, empathetic. Never servile or corporate. Like someone who knows their value and is proposing a solution — not someone begging for a job.
+
+7. Length: 350-450 words excluding header. Paragraphs, no bullet points in the letter itself.
+
+8. END with "Sincerely," followed by the name.
+
+Do NOT invent facts about the company. Use only the information provided.
 
 Generate the letter now (WITH the complete header):`
 
 	return fmt.Sprintf(
 		template,
 		pb.userProfile.Name,
-		pb.userProfile.Address,
-		pb.userProfile.PostalCode, pb.userProfile.City,
+		pb.userProfile.PostalCode, pb.userProfile.City, pb.userProfile.Address,
 		pb.userProfile.Email,
 		pb.userProfile.Phone,
 		pb.userProfile.Summary,
@@ -257,6 +312,7 @@ Generate the letter now (WITH the complete header):`
 		pb.userProfile.Experience,
 		strings.Join(pb.userProfile.Skills, ", "),
 		experiencesSection,
+		projectsSection,
 		company.Name,
 		company.Industry,
 		company.Description,
