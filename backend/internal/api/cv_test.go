@@ -73,21 +73,21 @@ func TestGetCV_DefaultTheme(t *testing.T) {
 			Name:        "Full-Stack Developer",
 			Description: "Full-stack development",
 		},
-		Experiences: []models.Experience{
-			{
+		Experiences: []services.ScoredExperienceResponse{
+			{Experience: models.Experience{
 				Title:        "Full-Stack Dev",
 				Company:      "TechCorp",
 				Tags:         pq.StringArray{"go", "react"},
 				Technologies: pq.StringArray{"go", "react"},
 				StartDate:    now.AddDate(-2, 0, 0),
-			},
+			}},
 		},
-		Skills: []models.Skill{
-			{Name: "Go", Level: models.SkillLevelExpert},
-			{Name: "React", Level: models.SkillLevelAdvanced},
+		Skills: []services.ScoredSkillResponse{
+			{Skill: models.Skill{Name: "Go", Level: models.SkillLevelExpert}},
+			{Skill: models.Skill{Name: "React", Level: models.SkillLevelAdvanced}},
 		},
-		Projects: []models.Project{
-			{Title: "maicivy", Technologies: pq.StringArray{"go", "react"}},
+		Projects: []services.ScoredProjectResponse{
+			{Project: models.Project{Title: "maicivy", Technologies: pq.StringArray{"go", "react"}}},
 		},
 		GeneratedAt: now,
 	}
@@ -134,21 +134,21 @@ func TestGetCV_BackendTheme(t *testing.T) {
 				"postgresql": 0.9,
 			},
 		},
-		Experiences: []models.Experience{
-			{
+		Experiences: []services.ScoredExperienceResponse{
+			{Experience: models.Experience{
 				Title:        "Backend Dev",
 				Company:      "BackendCorp",
 				Tags:         pq.StringArray{"go", "postgresql"},
 				Technologies: pq.StringArray{"go", "postgresql"},
 				Category:     "backend",
 				StartDate:    now.AddDate(-3, 0, 0),
-			},
+			}},
 		},
-		Skills: []models.Skill{
-			{Name: "Go", Level: models.SkillLevelExpert, Category: "backend"},
-			{Name: "PostgreSQL", Level: models.SkillLevelAdvanced, Category: "database"},
+		Skills: []services.ScoredSkillResponse{
+			{Skill: models.Skill{Name: "Go", Level: models.SkillLevelExpert, Category: "backend"}},
+			{Skill: models.Skill{Name: "PostgreSQL", Level: models.SkillLevelAdvanced, Category: "database"}},
 		},
-		Projects:    []models.Project{},
+		Projects: []services.ScoredProjectResponse{},
 		GeneratedAt: now,
 	}
 
@@ -374,11 +374,11 @@ func BenchmarkGetCV(b *testing.B) {
 			ID:   "backend",
 			Name: "Backend",
 		},
-		Experiences: []models.Experience{
-			{Title: "Backend Dev", Company: "Test", StartDate: time.Now()},
+		Experiences: []services.ScoredExperienceResponse{
+			{Experience: models.Experience{Title: "Backend Dev", Company: "Test", StartDate: time.Now()}},
 		},
-		Skills:      []models.Skill{},
-		Projects:    []models.Project{},
+		Skills:   []services.ScoredSkillResponse{},
+		Projects: []services.ScoredProjectResponse{},
 		GeneratedAt: time.Now(),
 	}
 

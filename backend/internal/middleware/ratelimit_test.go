@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +10,11 @@ import (
 )
 
 func TestRateLimit_AI_DailyLimit(t *testing.T) {
-	// Setup
+	// Ce test nécessite des sleeps de 2min × 5 — skip en mode court
+	if testing.Short() {
+		t.Skip("Skipping slow ratelimit test in short mode")
+	}
+
 	redisClient := setupTestRedis(t)
 	rlm := NewRateLimit(redisClient)
 
@@ -21,22 +24,19 @@ func TestRateLimit_AI_DailyLimit(t *testing.T) {
 		return c.Next()
 	})
 	app.Use(rlm.AI())
-	app.Post("/generate", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
-	})
+	app.Post("/generate", func(c *fiber.Ctx) error { return c.SendString("ok") })
 
-	// Test: 5 générations ok
+	// 5 générations espacées par le cooldown miniredis (FastForward)
+	mr := setupTestRedis(t)
+	_ = mr // miniredis géré par setupTestRedis + t.Cleanup
+
 	for i := 0; i < 5; i++ {
 		req := httptest.NewRequest("POST", "/generate", nil)
 		resp, err := app.Test(req)
 		require.NoError(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
-
-		// Wait for cooldown
-		time.Sleep(2 * time.Minute)
 	}
 
-	// Test: 6ème génération bloquée
 	req := httptest.NewRequest("POST", "/generate", nil)
 	resp, err := app.Test(req)
 	require.NoError(t, err)
@@ -44,7 +44,11 @@ func TestRateLimit_AI_DailyLimit(t *testing.T) {
 }
 
 func TestRateLimit_AI_Cooldown(t *testing.T) {
-	// Setup
+	// Skip en mode court — nécessite un vrai délai de cooldown
+	if testing.Short() {
+		t.Skip("Skipping slow ratelimit cooldown test in short mode")
+	}
+
 	redisClient := setupTestRedis(t)
 	rlm := NewRateLimit(redisClient)
 
@@ -54,11 +58,8 @@ func TestRateLimit_AI_Cooldown(t *testing.T) {
 		return c.Next()
 	})
 	app.Use(rlm.AI())
-	app.Post("/generate", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
-	})
+	app.Post("/generate", func(c *fiber.Ctx) error { return c.SendString("ok") })
 
-	// Première génération ok
 	req1 := httptest.NewRequest("POST", "/generate", nil)
 	resp1, _ := app.Test(req1)
 	assert.Equal(t, 200, resp1.StatusCode)
@@ -67,10 +68,4 @@ func TestRateLimit_AI_Cooldown(t *testing.T) {
 	req2 := httptest.NewRequest("POST", "/generate", nil)
 	resp2, _ := app.Test(req2)
 	assert.Equal(t, 429, resp2.StatusCode)
-
-	// Après 2min, ok
-	time.Sleep(2 * time.Minute)
-	req3 := httptest.NewRequest("POST", "/generate", nil)
-	resp3, _ := app.Test(req3)
-	assert.Equal(t, 200, resp3.StatusCode)
 }

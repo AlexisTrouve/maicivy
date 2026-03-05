@@ -136,52 +136,7 @@ func (suite *PDFLetterServiceTestSuite) TestRenderHTML_SpecialCharacters() {
 	assert.NotEmpty(suite.T(), html)
 }
 
-// Test escapeJSString
-func (suite *PDFLetterServiceTestSuite) TestEscapeJSString() {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "Simple string",
-			input:    "Hello World",
-			expected: "`Hello World`",
-		},
-		{
-			name:     "String with backslash",
-			input:    "Path\\to\\file",
-			expected: "`Path\\\\to\\\\file`",
-		},
-		{
-			name:     "String with backticks",
-			input:    "Code `example`",
-			expected: "`Code \\`example\\``",
-		},
-		{
-			name:     "String with newlines",
-			input:    "Line1\nLine2\r\nLine3",
-			expected: "`Line1\\nLine2\\r\\nLine3`",
-		},
-		{
-			name:     "String with dollar sign",
-			input:    "Price: $100",
-			expected: "`Price: \\$100`",
-		},
-		{
-			name:     "Complex string",
-			input:    "Path: C:\\Users\nPrice: $50\nCode: `test`",
-			expected: "`Path: C:\\\\Users\\nPrice: \\$50\\nCode: \\`test\\``",
-		},
-	}
-
-	for _, tt := range tests {
-		suite.T().Run(tt.name, func(t *testing.T) {
-			result := escapeJSString(tt.input)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
+// Note: escapeJSString supprimée — tests supprimés en conséquence
 
 // Test GeneratePDF - génération complète
 func (suite *PDFLetterServiceTestSuite) TestGeneratePDF_Motivation() {
@@ -374,12 +329,3 @@ func BenchmarkRenderHTML(b *testing.B) {
 	}
 }
 
-// Benchmark escapeJSString
-func BenchmarkEscapeJSString(b *testing.B) {
-	input := "Path: C:\\Users\\Test\nPrice: $100\nCode: `test`"
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		escapeJSString(input)
-	}
-}

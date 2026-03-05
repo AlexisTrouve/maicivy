@@ -137,7 +137,10 @@ func TestAnalyticsService_GetRealtimeStats(t *testing.T) {
 	visitor1 := uuid.New()
 	visitor2 := uuid.New()
 
-	redisClient.SAdd(ctx, "analytics:realtime:visitors", visitor1.String(), visitor2.String())
+	// Le service utilise un sorted set (ZADD) pour les visiteurs temps réel
+	now := float64(time.Now().Unix())
+	redisClient.ZAdd(ctx, "analytics:realtime:visitors", redis.Z{Score: now, Member: visitor1.String()})
+	redisClient.ZAdd(ctx, "analytics:realtime:visitors", redis.Z{Score: now, Member: visitor2.String()})
 
 	// Simuler visiteurs uniques aujourd'hui
 	today := time.Now().Format("2006-01-02")
@@ -218,10 +221,9 @@ func TestAnalyticsService_MarkVisitorActive(t *testing.T) {
 	err := service.MarkVisitorActive(ctx, visitorID)
 	require.NoError(t, err)
 
-	// Vérifier dans Redis Set
-	isMember, err := redisClient.SIsMember(ctx, "analytics:realtime:visitors", visitorID.String()).Result()
-	require.NoError(t, err)
-	assert.True(t, isMember)
+	// Le service utilise un sorted set — vérifier via ZScore
+	_, err = redisClient.ZScore(ctx, "analytics:realtime:visitors", visitorID.String()).Result()
+	assert.NoError(t, err, "visitorID doit être présent dans le sorted set realtime:visitors")
 }
 
 func TestAnalyticsService_GetStats(t *testing.T) {

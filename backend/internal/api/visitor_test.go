@@ -42,7 +42,7 @@ func (suite *VisitorHandlerTestSuite) SetupTest() {
 
 	suite.db = db
 	suite.redis = redisClient
-	suite.handler = NewVisitorHandler(db, redisClient)
+	suite.handler = NewVisitorHandler(db, redisClient, nil)
 
 	// Setup Fiber app
 	suite.app = fiber.New()
@@ -71,16 +71,16 @@ func (suite *VisitorHandlerTestSuite) TestGetVisitorStatus_FirstVisit() {
 	}
 	suite.db.Create(visitor)
 
-	// Request avec session_id dans context
-	req := httptest.NewRequest("GET", "/api/v1/visitor/status", nil)
-
-	// Simuler middleware qui set session_id dans context
-	suite.app.Use(func(c *fiber.Ctx) error {
+	// Créer un app local avec middleware enregistré AVANT la route
+	app := fiber.New()
+	app.Use(func(c *fiber.Ctx) error {
 		c.Locals("session_id", "session_first_visit")
 		return c.Next()
 	})
+	app.Get("/api/v1/visitor/status", suite.handler.GetVisitorStatus)
 
-	resp, err := suite.app.Test(req)
+	req := httptest.NewRequest("GET", "/api/v1/visitor/status", nil)
+	resp, err := app.Test(req)
 
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.StatusCode)
@@ -270,7 +270,7 @@ func (suite *VisitorHandlerTestSuite) TestGetVisitorStatus_Developer() {
 
 // Test NewVisitorHandler
 func (suite *VisitorHandlerTestSuite) TestNewVisitorHandler() {
-	handler := NewVisitorHandler(suite.db, suite.redis)
+	handler := NewVisitorHandler(suite.db, suite.redis, nil)
 
 	assert.NotNil(suite.T(), handler)
 	assert.Equal(suite.T(), suite.db, handler.db)
@@ -297,7 +297,7 @@ func BenchmarkGetVisitorStatus(b *testing.B) {
 	db.Create(visitor)
 
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 15})
-	handler := NewVisitorHandler(db, redisClient)
+	handler := NewVisitorHandler(db, redisClient, nil)
 
 	app := fiber.New()
 	app.Use(func(c *fiber.Ctx) error {
@@ -331,7 +331,7 @@ func TestVisitorStatus_WithRealUUID(t *testing.T) {
 	db.Create(visitor)
 
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 15})
-	handler := NewVisitorHandler(db, redisClient)
+	handler := NewVisitorHandler(db, redisClient, nil)
 
 	app := fiber.New()
 	app.Use(func(c *fiber.Ctx) error {

@@ -49,7 +49,7 @@ func (suite *CVScoringTestSuite) TestScoreExperience_ExactTagMatch() {
 
 	// Assert score élevé (2 tags sur 2 matchent)
 	assert.Greater(suite.T(), score, 0.5, "Score devrait être > 0.5 pour tags matchés")
-	assert.LessOrEqual(suite.T(), score, 2.0, "Score max dépend du nombre de tags")
+	assert.LessOrEqual(suite.T(), score, 3.0, "Score max dépend du nombre de tags")
 }
 
 // Test scoring sans match

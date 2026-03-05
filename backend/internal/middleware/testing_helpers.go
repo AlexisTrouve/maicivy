@@ -1,5 +1,3 @@
-//go:build testing
-
 package middleware
 
 import (
@@ -43,6 +41,11 @@ func setupTestDB(t *testing.T) (*gorm.DB, *redis.Client) {
 	redisClient := setupMiniredis(t)
 
 	return db, redisClient
+}
+
+// setupTestRedis alias de setupMiniredis — utilisé par ratelimit_test.go
+func setupTestRedis(t *testing.T) *redis.Client {
+	return setupMiniredis(t)
 }
 
 // setupMiniredis initialise un miniredis (Redis mock en mémoire) pour les tests

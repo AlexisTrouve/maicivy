@@ -9,7 +9,9 @@ import (
 
 // BaseModel contient les champs communs à tous les models
 type BaseModel struct {
-	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	// default:gen_random_uuid() retiré : incompatible avec SQLite en tests.
+	// L'UUID est généré par le hook BeforeCreate — pas besoin de default SQL.
+	ID        uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

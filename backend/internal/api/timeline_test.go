@@ -165,7 +165,7 @@ func TestGetTimeline(t *testing.T) {
 		var prevDate time.Time
 		for i, event := range events {
 			e := event.(map[string]interface{})
-			currentDate, _ := time.Parse(time.RFC3339, e["start_date"].(string))
+			currentDate, _ := time.Parse(time.RFC3339, e["startDate"].(string))
 
 			if i > 0 {
 				// La date actuelle doit être <= la date précédente
@@ -189,10 +189,10 @@ func TestGetTimeline(t *testing.T) {
 		data := result["data"].(map[string]interface{})
 		stats := data["stats"].(map[string]interface{})
 
-		assert.Equal(t, float64(2), stats["total_experiences"])
-		assert.Equal(t, float64(2), stats["total_projects"])
-		assert.NotNil(t, stats["categories_breakdown"])
-		assert.NotNil(t, stats["top_technologies"])
+		assert.Equal(t, float64(2), stats["totalExperiences"])
+		assert.Equal(t, float64(2), stats["totalProjects"])
+		assert.NotNil(t, stats["categoriesBreakdown"])
+		assert.NotNil(t, stats["topTechnologies"])
 	})
 }
 
@@ -295,10 +295,10 @@ func TestTimelineEventTypes(t *testing.T) {
 		assert.Contains(t, []string{"experience", "project"}, e["type"])
 		assert.NotEmpty(t, e["title"])
 		assert.NotEmpty(t, e["subtitle"])
-		assert.NotEmpty(t, e["start_date"])
+		assert.NotEmpty(t, e["startDate"])
 		assert.NotEmpty(t, e["category"])
 		assert.NotNil(t, e["tags"])
-		assert.NotNil(t, e["is_current"])
+		assert.NotNil(t, e["isCurrent"])
 
 		// Vérifier le format de l'ID
 		idStr := e["id"].(string)
@@ -341,7 +341,7 @@ func TestTimelineFilterByDate(t *testing.T) {
 		from, _ := time.Parse("2006-01-02", fromDate)
 		for _, event := range events {
 			e := event.(map[string]interface{})
-			eventDate, _ := time.Parse(time.RFC3339, e["start_date"].(string))
+			eventDate, _ := time.Parse(time.RFC3339, e["startDate"].(string))
 			assert.True(t, eventDate.After(from) || eventDate.Equal(from),
 				"Event date should be >= from date")
 		}

@@ -127,16 +127,4 @@ func TestCompanyScraper_GuessDomainFromName(t *testing.T) {
 	}
 }
 
-func TestCompanyScraper_EnrichViaAPIs_NoAPIKey(t *testing.T) {
-	cfg := &config.ScraperConfig{
-		// No API key
-		Timeout: 10 * time.Second,
-	}
-
-	scraper := NewCompanyScraper(cfg, nil)
-	ctx := context.Background()
-
-	_, err := scraper.enrichViaAPIs(ctx, "TestCompany")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no API key configured")
-}
+// Note: enrichViaAPIs supprimée — test supprimé en conséquence

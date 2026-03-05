@@ -19,7 +19,7 @@ func TestLetterQueueService_EnqueueJob(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, err := service.EnqueueJob("visitor-123", "Google", "Software Engineer", "backend")
+	jobID, err := service.EnqueueJob("visitor-123", "Google", "Software Engineer", "backend", "fr")
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, jobID)
@@ -39,7 +39,7 @@ func TestLetterQueueService_GetJobStatus(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
 	job, err := service.GetJobStatus(jobID)
 
@@ -61,7 +61,7 @@ func TestLetterQueueService_UpdateJobStatus(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
 	err := service.UpdateJobStatus(jobID, JobStatusProcessing, 50)
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestLetterQueueService_CompleteJob(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
 	uuid1 := uuid.New()
 	uuid2 := uuid.New()
@@ -107,7 +107,7 @@ func TestLetterQueueService_FailJob(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
 	errMsg := "API timeout"
 	err := service.FailJob(jobID, errMsg)
@@ -129,8 +129,8 @@ func TestLetterQueueService_PopJob(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID1, _ := service.EnqueueJob("visitor-123", "Google", "", "")
-	jobID2, _ := service.EnqueueJob("visitor-456", "Meta", "", "")
+	jobID1, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
+	jobID2, _ := service.EnqueueJob("visitor-456", "Meta", "", "", "")
 
 	// Pop first job (FIFO)
 	poppedID, err := service.PopJob()
@@ -157,12 +157,13 @@ func TestLetterQueueService_RetryJob(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
-	// Marquer comme failed
+	// Simuler le flow réel : pop → process → fail
+	service.PopJob()
 	service.FailJob(jobID, "Temporary error")
 
-	// Retry
+	// Retry : re-enqueue le job
 	err := service.RetryJob(jobID)
 	assert.NoError(t, err)
 
@@ -170,7 +171,7 @@ func TestLetterQueueService_RetryJob(t *testing.T) {
 	assert.Equal(t, JobStatusQueued, job.Status)
 	assert.Equal(t, 1, job.RetryCount)
 
-	// Vérifier que le job est de nouveau dans la queue
+	// Après pop + retry, queue doit avoir 1 item
 	queueLength, _ := service.GetQueueLength()
 	assert.Equal(t, int64(1), queueLength)
 }
@@ -185,7 +186,7 @@ func TestLetterQueueService_MaxRetriesReached(t *testing.T) {
 
 	service := NewLetterQueueService(redisClient)
 
-	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "")
+	jobID, _ := service.EnqueueJob("visitor-123", "Google", "", "", "")
 
 	job, _ := service.GetJobStatus(jobID)
 	job.RetryCount = 3 // Max retries
@@ -232,9 +233,9 @@ func TestLetterQueueService_GetQueueLength(t *testing.T) {
 	assert.Equal(t, int64(0), length)
 
 	// Enqueue 3 jobs
-	service.EnqueueJob("visitor-1", "Google", "", "")
-	service.EnqueueJob("visitor-2", "Meta", "", "")
-	service.EnqueueJob("visitor-3", "Amazon", "", "")
+	service.EnqueueJob("visitor-1", "Google", "", "", "")
+	service.EnqueueJob("visitor-2", "Meta", "", "", "")
+	service.EnqueueJob("visitor-3", "Amazon", "", "", "")
 
 	length, err = service.GetQueueLength()
 	assert.NoError(t, err)

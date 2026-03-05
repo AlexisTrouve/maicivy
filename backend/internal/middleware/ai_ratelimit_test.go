@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -51,7 +52,7 @@ func TestAIRateLimit_DailyLimitExceeded(t *testing.T) {
 	// Simuler 5 générations déjà faites
 	sessionID := "limited-session"
 	dailyKey := "ratelimit:ai:" + sessionID + ":daily"
-	redisClient.Set(mr.Ctx(), dailyKey, "5", 24*time.Hour)
+	redisClient.Set(context.Background(), dailyKey, "5", 24*time.Hour)
 
 	app := fiber.New()
 
@@ -84,7 +85,7 @@ func TestAIRateLimit_CooldownActive(t *testing.T) {
 	// Activer cooldown
 	sessionID := "cooldown-session"
 	cooldownKey := "ratelimit:ai:" + sessionID + ":cooldown"
-	redisClient.Set(mr.Ctx(), cooldownKey, "1", 2*time.Minute)
+	redisClient.Set(context.Background(), cooldownKey, "1", 2*time.Minute)
 
 	app := fiber.New()
 
@@ -140,10 +141,10 @@ func TestIncrementAIRateLimit(t *testing.T) {
 	dailyKey := "ratelimit:ai:test-session:daily"
 	cooldownKey := "ratelimit:ai:test-session:cooldown"
 
-	dailyCount, _ := redisClient.Get(mr.Ctx(), dailyKey).Result()
+	dailyCount, _ := redisClient.Get(context.Background(), dailyKey).Result()
 	assert.Equal(t, "1", dailyCount)
 
-	cooldownExists, _ := redisClient.Exists(mr.Ctx(), cooldownKey).Result()
+	cooldownExists, _ := redisClient.Exists(context.Background(), cooldownKey).Result()
 	assert.Equal(t, int64(1), cooldownExists)
 }
 
