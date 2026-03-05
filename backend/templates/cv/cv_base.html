@@ -377,7 +377,6 @@ body {
     <!-- SUMMARY (dynamique LLM, absent pour thèmes statiques) -->
     {{if .Summary}}
     <div class="summary">
-      {{if .StealthText}}<span class="ats-anchor">{{.StealthText}}</span>{{end}}
       <div class="summary-text">{{.Summary}}</div>
     </div>
     {{end}}
@@ -387,10 +386,11 @@ body {
     <div class="section">
       <div class="section-label"><span class="ats-anchor">Professional Experience. Work History.</span>{{index .Labels "experiences"}}</div>
 
-      {{range .Experiences}}
+      {{range $i, $exp := .Experiences}}
       <div class="exp-wrap">
-        {{/* Stealth layer : keywords de cette expérience derrière le panel */}}
-        <div class="stealth">{{.Title}} {{.Company}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}}. {{chunkWords .Description 30}}</div>
+        {{/* Stealth layer : keywords de cette expérience derrière le panel (position:absolute → rendu dans flux PDF) */}}
+        {{/* Premier card : on injecte aussi les termes ATS universels + skills scorés par le LLM */}}
+        <div class="stealth">{{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}}{{if eq $i 0}} {{$.StealthText}} Professional Experience. Work History. Software Development. Software Engineering. Systems Integration. Design Patterns. Data Structures. Performance Testing. Programming Skills. Application Development. Technical Leadership. Problem Solving. Code Review. Agile Development.{{end}}</div>
 
         <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
           <div class="exp-header">
