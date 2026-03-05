@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -78,6 +79,9 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 	if err != nil {
 		return nil, fmt.Errorf("AI generation failed: %w", err)
 	}
+
+	// 3.5. Post-traitement : nettoyer les artefacts LLM typiques
+	content = cleanLetterContent(content)
 
 	// 4. Build response
 	response := &models.LetterResponse{
@@ -159,4 +163,45 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 // GenerateLetterPDF : génère le PDF d'une lettre
 func (lg *LetterGenerator) GenerateLetterPDF(ctx context.Context, letter models.LetterResponse, writer io.Writer) error {
 	return lg.pdfService.GeneratePDF(ctx, letter, writer)
+}
+
+// cleanLetterContent nettoie les artefacts LLM typiques du contenu généré
+// Les LLMs ont tendance à utiliser " - " comme séparateur en-tête, et d'autres patterns
+// mécaniques qui trahissent une génération automatique.
+func cleanLetterContent(content string) string {
+	lines := strings.Split(content, "\n")
+	cleaned := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		// Dans l'en-tête : "Nom - Email - Téléphone" sur une ligne → séparer sur des lignes distinctes
+		// On détecte les lignes d'en-tête avec plusieurs " - " (pattern LLM classique)
+		if strings.Count(line, " - ") >= 2 && !strings.HasPrefix(strings.TrimSpace(line), "Objet") {
+			parts := strings.Split(line, " - ")
+			for _, part := range parts {
+				p := strings.TrimSpace(part)
+				if p != "" {
+					cleaned = append(cleaned, p)
+				}
+			}
+			continue
+		}
+
+		// Lignes "Objet : Candidature - Poste" → garder tel quel (le " - " est voulu)
+		// Ligne avec un seul " - " dans l'en-tête → remplacer par saut de ligne
+		// Heuristique : ligne courte (< 80 chars) avec exactement un " - " = probablement en-tête
+		trimmed := strings.TrimSpace(line)
+		if len(trimmed) < 80 && strings.Count(trimmed, " - ") == 1 &&
+			!strings.HasPrefix(trimmed, "Objet") &&
+			!strings.Contains(trimmed, "mission") &&
+			!strings.Contains(trimmed, "poste") {
+			parts := strings.SplitN(trimmed, " - ", 2)
+			cleaned = append(cleaned, strings.TrimSpace(parts[0]))
+			cleaned = append(cleaned, strings.TrimSpace(parts[1]))
+			continue
+		}
+
+		cleaned = append(cleaned, line)
+	}
+
+	return strings.Join(cleaned, "\n")
 }

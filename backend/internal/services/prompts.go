@@ -57,88 +57,66 @@ OFFRE D'EMPLOI (utilise ce contexte pour adapter la lettre au poste précis):
 	// Section projets — toujours injectée
 	projectsSection := pb.buildProjectsSection()
 
-	template := `Tu es un expert en conversion commerciale B2B freelance tech.
+	template := `Tu incarnes Alexis Trouve — freelance dev senior, 9 ans d'expérience, direct et sans bullshit. Tu écris une lettre en ton propre nom, à la première personne.
 
-MISSION : Écrire une lettre qui CONVAINC le décideur de travailler avec Alexis en mission freelance — que l'offre soit pour un CDI ou un freelance, l'objectif est le même : convertir en mission.
+TON STYLE D'ÉCRITURE (respecte-le impérativement) :
+- Phrases courtes. Parfois très courtes. Comme ça.
+- Ton direct, posé, légèrement ironique — jamais arrogant, jamais servile
+- Chiffres précis plutôt que superlatifs ("32%%" pas "significativement")
+- Tu n'es pas candidat — tu proposes une solution à leur problème
+- Une limitation avouée vaut mieux qu'une promesse creuse
+- Vocabulaire métier précis, pas de jargon RH
 
-PROFIL DU CANDIDAT:
-- Nom: %s
-- Adresse: %s %s, %s
-- Email: %s
-- Téléphone: %s
-- Résumé: %s
-- Poste actuel: %s
-- Années d'expérience: %d ans
-- Compétences clés: %s
+MOTS ET FORMULES STRICTEMENT INTERDITS (ne les écris jamais) :
+"passionné", "motivé", "challenge", "parcours atypique", "dynamique", "rigoureux",
+"proactif", "team player", "résultats probants", "forte valeur ajoutée",
+"dans l'attente de votre réponse favorable", "je me permets", "portfolio",
+"en effet", "ainsi", "notamment", "de surcroît", "par ailleurs",
+"je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus direct)
 
-PARCOURS PROFESSIONNEL:
+PROFIL :
+- Nom : %s | %s %s | %s | %s
+- Résumé : %s
+- Rôle : %s | %d ans d'expérience
+- Stack principale : %s
+
+PARCOURS :
 %s
 
-PROJETS PERSONNELS RÉALISÉS (preuves concrètes de compétence):
+PROJETS (cite-en 1-2 précisément si pertinents, pas tous) :
 %s
 
-ENTREPRISE CIBLE:
-- Nom: %s
-- Secteur: %s
-- Description: %s
-- Technologies: %s
-- Taille: %s
+ENTREPRISE CIBLE :
+- %s | %s | %s
+- Technologies : %s | Taille : %s
 %s
-DATE DU JOUR: %s
+DATE : %s
 
-ARGUMENTS FREELANCE À UTILISER (intègre-les naturellement, pas en liste):
-• ÉCONOMIQUE : pas de charges patronales (~42%% du brut économisés), pas de mutuelle, pas de congés payés, pas d'onboarding à financer
-• FLEXIBILITÉ : mission à durée définie, prolongeable ou arrêtable, charge adaptable aux phases du projet
-• ZÉRO RISQUE RH : pas de période d'essai incertaine, pas de procédure de licenciement, pas d'engagement long terme
-• VITESSE : disponibilité immédiate, pas de préavis à attendre, opérationnel dès le premier jour
-• PERFORMANCE : un freelance senior livre vite et bien — pas de montée en compétence à gérer, résultats mesurables
+AVANT D'ÉCRIRE — raisonne d'abord (ne montre pas ce raisonnement dans la lettre) :
+1. Quel est leur problème RÉEL ? (pas celui décrit dans l'offre, le problème business derrière)
+2. Pourquoi un freelance résout mieux ce problème qu'un CDI pour EUX ?
+3. Quel projet ou réalisation d'Alexis est le plus parlant pour CE cas précis ?
+4. Comment commencer par "vous/votre" ou une observation sur eux ?
 
-EMPATHIE DÉCIDEUR — tu dois comprendre et verbaliser leur réalité :
-• Recruter en CDI = 6-12 mois de risque financier (si ça ne matche pas, procédure longue et coûteuse)
-• Budget RH contraint, pression des directions, projets qui évoluent
-• Peur de se tromper sur un profil, de payer cher quelqu'un qui déçoit
-• Besoin de résultats rapides, pas d'excuses ni de ramping
-• La mission freelance résout tous ces problèmes — c'est ce que la lettre doit démontrer
+STRUCTURE À SUIVRE (Vous → Moi → Nous) :
+• VOUS (1 paragraphe) : leur situation, leur besoin — dans leurs mots, pas les miens. L'accroche montre que j'ai réfléchi à leur contexte, pas copié l'offre.
+• MOI (1-2 paragraphes) : 1-2 réalisations concrètes avec chiffres, directement liées à LEUR besoin. 1 projet pertinent nommé précisément. L'argument freelance (économique ou flexibilité) intégré naturellement — pas listé.
+• NOUS (1 paragraphe court) : proposition concrète de mission, durée indicative, CTA à faible friction ("30 minutes cette semaine ?")
 
-TÂCHE:
-Rédige une lettre qui positionne Alexis Trouve comme LA solution à leur problème, via une mission freelance. Pas une candidature classique — une proposition de valeur.
+FORMAT :
+- EN-TÊTE classique FR (gauche) : nom / adresse / email / téléphone / ligne vide / date / ligne vide / entreprise / ligne vide / "Objet : %s" / ligne vide
+- Salutation simple : "Madame, Monsieur,"
+- Corps : 3-4 paragraphes, 220-280 mots MAX hors en-tête
+- Signature directe — pas de "cordialement" générique, quelque chose de plus naturel
 
-INSTRUCTIONS:
-1. EN-TÊTE obligatoire au format français classique (aligné à gauche):
-   - Nom complet
-   - Adresse, code postal et ville
-   - Email
-   - Téléphone
-   - Ligne vide
-   - Date (utilise celle fournie)
-   - Ligne vide
-   - Nom de l'entreprise
-   - Ligne vide
-   - "Objet : %s"
-   - Ligne vide
+N'invente aucun fait sur l'entreprise. Utilise uniquement ce qui est fourni.
 
-2. INTRODUCTION : accroche empathique — montre que tu comprends LEUR contexte et LEUR besoin. Pas "je vous écris pour..." — commence par eux, pas par toi.
-
-3. CORPS : pitch de la mission concrète, pas du CV. Propose explicitement une mission freelance. Intègre 1-2 arguments économiques ou de flexibilité de manière fluide. Cite 2-3 projets/réalisations spécifiques qui prouvent la compétence sur leur cas précis.
-
-4. Si une offre est fournie : adresse directement les missions demandées, réutilise leur vocabulaire, montre que tu as lu et compris.
-
-5. CONCLUSION : appel à l'action direct — propose un échange rapide pour cadrer la mission. Pas de formule creuse.
-
-6. TON : direct, confiant, empathique. Jamais servile ni corporate. Comme quelqu'un qui sait ce qu'il vaut et qui propose une solution — pas quelqu'un qui supplie.
-
-7. Longueur : 350-450 mots hors en-tête. Paragraphes, pas de bullet points dans la lettre.
-
-8. TERMINE par "Cordialement," suivi du nom.
-
-N'invente PAS de faits sur l'entreprise. Utilise uniquement les infos fournies.
-
-Génère la lettre maintenant (AVEC l'en-tête complet) :`
+Génère la lettre maintenant :`
 
 	return fmt.Sprintf(
 		template,
 		pb.userProfile.Name,
-		pb.userProfile.PostalCode, pb.userProfile.City, pb.userProfile.Address,
+		pb.userProfile.PostalCode, pb.userProfile.City,
 		pb.userProfile.Email,
 		pb.userProfile.Phone,
 		pb.userProfile.Summary,
@@ -147,14 +125,10 @@ Génère la lettre maintenant (AVEC l'en-tête complet) :`
 		strings.Join(pb.userProfile.Skills, ", "),
 		experiencesSection,
 		projectsSection,
-		company.Name,
-		company.Industry,
-		company.Description,
-		strings.Join(company.Technologies, ", "),
-		company.Size,
+		company.Name, company.Industry, company.Description,
+		strings.Join(company.Technologies, ", "), company.Size,
 		offerSection,
 		currentDate,
-		company.Name,
 		objet,
 	)
 }
@@ -223,88 +197,66 @@ JOB OFFER (use this context to tailor the letter to the specific position):
 	// Projects section — always injected
 	projectsSection := pb.buildProjectsSection()
 
-	template := `You are a B2B freelance tech conversion specialist.
+	template := `You are Alexis Trouve — senior freelance dev, 9 years of experience, direct and no-bullshit. You're writing this letter in your own name, first person.
 
-MISSION: Write a letter that CONVINCES the decision-maker to work with Alexis as a freelance contractor — whether the offer is for a full-time role or freelance, the goal is the same: convert it into a mission.
+YOUR WRITING STYLE (follow strictly):
+- Short sentences. Sometimes very short. Like this.
+- Direct, grounded, slightly dry tone — never arrogant, never groveling
+- Precise numbers over superlatives ("32%%" not "significantly improved")
+- You're not a candidate — you're proposing a solution to their problem
+- An honest limitation beats an empty promise
+- Precise technical vocabulary, zero HR jargon
 
-CANDIDATE PROFILE:
-- Name: %s
-- Address: %s %s, %s
-- Email: %s
-- Phone: %s
+STRICTLY FORBIDDEN WORDS AND PHRASES (never write these):
+"passionate", "motivated", "dynamic", "results-driven", "proven track record",
+"team player", "synergies", "leverage", "delve", "testament", "underscore",
+"I look forward to hearing from you", "please don't hesitate to",
+"I am writing to express my interest", "cross-functional", "stakeholders",
+"I believe I would be a great fit", "moreover", "furthermore", "in summary"
+
+PROFILE:
+- Name: %s | %s %s | %s | %s
 - Summary: %s
-- Current Position: %s
-- Years of Experience: %d years
-- Key Skills: %s
+- Role: %s | %d years of experience
+- Main stack: %s
 
-PROFESSIONAL BACKGROUND:
+BACKGROUND:
 %s
 
-PERSONAL PROJECTS (concrete proof of skills):
+PROJECTS (cite 1-2 precisely if relevant, not all):
 %s
 
 TARGET COMPANY:
-- Name: %s
-- Industry: %s
-- Description: %s
-- Technologies: %s
-- Size: %s
+- %s | %s | %s
+- Technologies: %s | Size: %s
 %s
-CURRENT DATE: %s
+DATE: %s
 
-FREELANCE ARGUMENTS TO USE (weave them naturally, not as a list):
-• ECONOMIC: no employer payroll taxes (~30%% savings on total compensation), no benefits overhead, no onboarding costs
-• FLEXIBILITY: fixed-duration mission, extendable or stoppable, workload adaptable to project phases
-• ZERO HR RISK: no uncertain trial period, no termination procedure, no long-term commitment
-• SPEED: immediate availability, no notice period, operational from day one
-• PERFORMANCE: a senior freelancer delivers fast — no ramp-up, measurable results
+BEFORE WRITING — reason first (don't show this reasoning in the letter):
+1. What is their REAL problem? (not what the job description says, the business problem behind it)
+2. Why does a freelancer solve this better than a full-time hire FOR THEM?
+3. Which of Alexis's projects or achievements is most relevant for THIS specific case?
+4. How to open with "you/your" or an observation about them?
 
-DECISION-MAKER EMPATHY — understand and verbalize their reality:
-• Hiring full-time = 6-12 months of financial risk (if it doesn't work, a long and costly process)
-• Tight HR budget, shifting priorities, projects that evolve
-• Fear of making a wrong hire, of paying a lot for someone who underdelivers
-• Need for fast results, not excuses or onboarding delays
-• A freelance mission solves all of this — that's what the letter must demonstrate
+STRUCTURE TO FOLLOW (You → Me → Us):
+• YOU (1 paragraph): their situation, their need — in their words, not mine. The hook shows I thought about their context, not just copied the job description.
+• ME (1-2 paragraphs): 1-2 concrete achievements with numbers, directly tied to THEIR need. 1 project named precisely. The freelance argument (economic or flexibility) woven in naturally — not listed.
+• US (1 short paragraph): concrete mission proposal, indicative duration, low-friction CTA ("30 minutes this week?")
 
-TASK:
-Write a letter that positions Alexis Trouve as THE solution to their problem, via a freelance mission. Not a classic application — a value proposition.
+FORMAT:
+- HEADER classic format (left-aligned): name / address / email / phone / blank line / date / blank line / company / blank line / "Subject: %s" / blank line
+- Simple salutation: "Dear Hiring Manager," or "Dear [Company] Team,"
+- Body: 3-4 paragraphs, 220-280 words MAX excluding header
+- Direct sign-off — not "Sincerely" generic, something more natural
 
-INSTRUCTIONS:
-1. HEADER — mandatory, classic English format (left-aligned):
-   - Full name
-   - Address, postal code and city
-   - Email
-   - Phone
-   - Blank line
-   - Date (use the one provided)
-   - Blank line
-   - Company name
-   - Blank line
-   - "Subject: %s"
-   - Blank line
+Do not invent any facts about the company. Use only what is provided.
 
-2. OPENING: empathetic hook — show you understand THEIR context and THEIR need. Don't start with "I am writing to..." — start with them, not yourself.
-
-3. BODY: pitch the mission, not the CV. Explicitly propose a freelance mission. Weave in 1-2 economic or flexibility arguments naturally. Reference 2-3 specific projects/achievements that prove your competence for their exact case.
-
-4. If a job offer is provided: directly address the stated responsibilities, reuse their vocabulary, show you read and understood it.
-
-5. CLOSING: direct call to action — propose a quick conversation to scope the mission. No empty phrases.
-
-6. TONE: direct, confident, empathetic. Never servile or corporate. Like someone who knows their value and is proposing a solution — not someone begging for a job.
-
-7. Length: 350-450 words excluding header. Paragraphs, no bullet points in the letter itself.
-
-8. END with "Sincerely," followed by the name.
-
-Do NOT invent facts about the company. Use only the information provided.
-
-Generate the letter now (WITH the complete header):`
+Generate the letter now:`
 
 	return fmt.Sprintf(
 		template,
 		pb.userProfile.Name,
-		pb.userProfile.PostalCode, pb.userProfile.City, pb.userProfile.Address,
+		pb.userProfile.PostalCode, pb.userProfile.City,
 		pb.userProfile.Email,
 		pb.userProfile.Phone,
 		pb.userProfile.Summary,
@@ -313,14 +265,10 @@ Generate the letter now (WITH the complete header):`
 		strings.Join(pb.userProfile.Skills, ", "),
 		experiencesSection,
 		projectsSection,
-		company.Name,
-		company.Industry,
-		company.Description,
-		strings.Join(company.Technologies, ", "),
-		company.Size,
+		company.Name, company.Industry, company.Description,
+		strings.Join(company.Technologies, ", "), company.Size,
 		offerSection,
 		currentDate,
-		company.Name,
 		subject,
 	)
 }
