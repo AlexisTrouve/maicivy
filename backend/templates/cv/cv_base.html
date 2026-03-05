@@ -387,8 +387,9 @@ body {
 
       {{range $i, $exp := .Experiences}}
       <div class="exp-wrap">
-        {{/* Stealth layer : keywords de l'expérience + termes ATS universels au début (bounds garantis) */}}
-        <div class="stealth">Software Development. Software Engineering. Systems Integration. Design Patterns. Data Structures. Performance Testing. Programming Skills. Application Development. Technical Leadership. Problem Solving. Code Review. Agile Development. Professional Experience. Work History. {{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}}</div>
+        {{/* Stealth : description overflow → extraite par ATS (la card blanche couvre seulement le haut).
+             Termes ATS APRÈS la description pour qu'ils débordent hors de la card et soient dans le stream PDF. */}}
+        <div class="stealth">{{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}} Software Development. Software Engineering. Systems Integration. Design Patterns. Data Structures. Performance Testing. Programming Skills. Application Development. Technical Leadership. Problem Solving. Code Review. Agile Development. Professional Experience. Work History.</div>
 
         <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
           <div class="exp-header">
