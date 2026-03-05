@@ -89,11 +89,12 @@ body {
 /* .ats-anchor : texte invisible mais lisible par ATS — évite le pb de letter-spacing
    qui rend "E D U C A T I O N" au lieu de "Education" dans le flux PDF */
 .ats-anchor {
-  font-size: 6px;
-  color: #1e293b;
-  opacity: 0.01; /* quasi-invisible mais glyphes dans le stream PDF */
+  font-size: 7px;
+  /* même couleur que le fond (#f8fafc = fond de page) → invisible visuellement
+     mais glyphes correctement encodés dans le PDF stream sans opacity trick */
+  color: #f8fafc;
   display: block;
-  line-height: 6px;
+  line-height: 7px;
   margin: 0;
   padding: 0;
 }
@@ -126,9 +127,13 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  font-size: 6px; /* assez grand pour que Chromium embarque les glyphes correctement dans le stream PDF */
-  color: #1e293b; /* noir — ATS ne flag pas le texte "caché" */
-  line-height: 7px;
+  font-size: 7px;
+  /* blanc sur blanc : même couleur que le fond des cards (#ffffff)
+     → invisible mais glyphes correctement encodés dans le PDF stream
+     (pas d'opacity trick qui corrompt le ToUnicode mapping de Chromium) */
+  color: #ffffff;
+  background: #ffffff;
+  line-height: 8px;
   overflow: hidden;
   padding: 2px;
   pointer-events: none;
@@ -345,6 +350,16 @@ body {
 </head>
 <body>
 <div class="page">
+
+  <!-- ═══ ATS STEALTH STRIP ══════════════════════════════════
+       Texte couleur = fond (#0f172a sur #0f172a) → invisible visuellement
+       mais glyphes correctement encodés dans le stream PDF (pas d'opacity trick
+       qui corrompt le ToUnicode mapping de Chromium).
+       Injecté depuis Go via {{.StealthText}} → universalATSTerms + skills scorés.
+  ════════════════════════════════════════════════════════ -->
+  {{if .StealthText}}
+  <div style="background:#0f172a;color:#0f172a;font-size:7px;line-height:8px;padding:1px 8px;margin:0;font-family:inherit;">{{.StealthText}}</div>
+  {{end}}
 
   <!-- ═══ HEADER ══════════════════════════════════════════ -->
   <div class="header">

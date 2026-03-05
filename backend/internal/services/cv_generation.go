@@ -258,7 +258,7 @@ func (s *CVGenerationService) GenerateDynamicPDF(ctx context.Context, offer, lan
 	if cv.Location != "" {
 		topSkillNames = append(topSkillNames, cv.Location, "France", cv.Location+" France")
 	}
-	stealthHTML := buildStealthHTML(topSkillNames, lang)
+	stealthHTML := buildStealthText(topSkillNames, lang)
 
 	return s.pdfService.GenerateTailoredPDF(cv, lang, stealthHTML)
 }

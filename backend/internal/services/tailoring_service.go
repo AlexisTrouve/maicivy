@@ -71,7 +71,7 @@ func pickTheme(matchedSkills []string) string {
 	return best
 }
 
-// buildStealthHTML : génère un bloc HTML quasi-invisible pour l'optimisation ATS/LLM.
+// buildStealthText : génère un bloc HTML quasi-invisible pour l'optimisation ATS/LLM.
 //
 // Technique : texte gris très clair (7px, #e8e8e8) sur fond blanc.
 // - Invisible visuellement (pas détectable comme "white text")
@@ -86,34 +86,27 @@ var universalATSTerms = []string{
 	"Problem Solving", "Code Review", "Agile Development",
 }
 
-func buildStealthHTML(skills []string, lang string) string {
+// buildStealthText retourne le texte brut pour le strip ATS.
+// Plus de HTML — le template l'affiche en couleur-fond (#0f172a sur #0f172a),
+// invisible visuellement mais glyphes correctement encodés dans le stream PDF.
+func buildStealthText(skills []string, lang string) string {
 	// Combiner les skills scorés + les termes ATS universels
 	allTerms := append(skills, universalATSTerms...)
 	skillsStr := strings.Join(allTerms, ", ")
 
-	var text string
 	if lang == "en" {
-		text = fmt.Sprintf(
+		return fmt.Sprintf(
 			"Professional Experience. Work History. Education: Epitech Nantes 2017. "+
 				"Technical expertise: %s. "+
 				"Demonstrated proficiency with successful project delivery and measurable outcomes.",
 			skillsStr,
 		)
-	} else {
-		text = fmt.Sprintf(
-			"Professional Experience. Work History. Education: Epitech Nantes 2017. "+
-				"Compétences techniques : %s. "+
-				"Expertise confirmée avec des projets livrés et des résultats mesurables dans les domaines requis.",
-			skillsStr,
-		)
 	}
-
-	// Font-size:6px + opacity:0.01 : invisible à l'œil mais glyphes correctement embarqués
-	// dans le stream PDF par Chromium. En dessous de ~5px, le sous-ensemble de police est
-	// corrompu (Chromium tronque les glyphes) → texte illisible à l'extraction ATS.
 	return fmt.Sprintf(
-		`<div style="font-size:6px;color:#1e293b;opacity:0.01;line-height:7px;margin:0;padding:0;">%s</div>`,
-		text,
+		"Professional Experience. Work History. Education: Epitech Nantes 2017. "+
+			"Compétences techniques : %s. "+
+			"Expertise confirmée avec des projets livrés et des résultats mesurables dans les domaines requis.",
+		skillsStr,
 	)
 }
 
@@ -193,7 +186,7 @@ func (s *TailoringService) TailorAndExport(ctx context.Context, req TailorReques
 	}
 
 	// Couche stealth : quasi-invisible visuellement, lue par les parseurs ATS et LLMs
-	stealthHTML := buildStealthHTML(req.MatchedSkills, lang)
+	stealthHTML := buildStealthText(req.MatchedSkills, lang)
 
 	// Générer le PDF avec injection du stealth avant </body>
 	pdfBytes, err := s.pdfService.GenerateTailoredPDF(cv, lang, stealthHTML)

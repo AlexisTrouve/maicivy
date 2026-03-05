@@ -91,40 +91,23 @@ func NewPDFService() *PDFService {
 	}
 }
 
-// GenerateCVPDF génère un PDF du CV
+// GenerateCVPDF génère un PDF du CV (sans stealth ATS)
 func (s *PDFService) GenerateCVPDF(cv *AdaptiveCVResponse, lang string) ([]byte, error) {
-	html, err := s.renderCVHTML(cv, lang)
+	html, err := s.renderCVHTML(cv, lang, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 	return s.htmlToPDF(html)
 }
 
-// GenerateTailoredPDF génère un PDF avec une couche stealth injectée avant </body>.
-// Le stealthHTML est quasi-invisible visuellement mais présent dans le flux texte
-// du PDF — extrait par les parseurs ATS et lu par les LLMs de screening.
-func (s *PDFService) GenerateTailoredPDF(cv *AdaptiveCVResponse, lang string, stealthHTML string) ([]byte, error) {
-	html, err := s.renderCVHTML(cv, lang)
+// GenerateTailoredPDF génère un PDF avec une couche stealth ATS.
+// stealthText : texte brut transmis au template → rendu en couleur-fond (#0f172a sur #0f172a)
+// → invisible visuellement, glyphes correctement encodés dans le stream PDF.
+func (s *PDFService) GenerateTailoredPDF(cv *AdaptiveCVResponse, lang string, stealthText string) ([]byte, error) {
+	html, err := s.renderCVHTML(cv, lang, stealthText)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
-
-	// Injecter le stealth juste après <body> — premiers tokens du flux PDF,
-	// prioritaires pour les parseurs ATS et les LLMs de screening.
-	if stealthHTML != "" {
-		if idx := strings.Index(html, "<body"); idx >= 0 {
-			// Trouver la fin du tag <body ...> pour injecter après
-			closeTag := strings.Index(html[idx:], ">")
-			if closeTag >= 0 {
-				insertAt := idx + closeTag + 1
-				html = html[:insertAt] + stealthHTML + html[insertAt:]
-			}
-		} else {
-			// Fallback : prepend si pas de <body>
-			html = stealthHTML + html
-		}
-	}
-
 	return s.htmlToPDF(html)
 }
 
@@ -230,8 +213,11 @@ func groupSkillsByCategory(skills []ScoredSkillResponse) []SkillGroup {
 	return result
 }
 
-// renderCVHTML génère le HTML du CV depuis template
-func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, error) {
+// renderCVHTML génère le HTML du CV depuis template.
+// stealthText : texte brut à afficher dans le strip ATS (vide = strip omis).
+// Transmis au template via {{.StealthText}} — rendu en couleur fond, invisible visuellement
+// mais correctement encodé dans le stream PDF (pas d'opacity qui corrompt le ToUnicode).
+func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang, stealthText string) (string, error) {
 	var buf strings.Builder
 
 	// Top 6 projets en détail, le reste en mode compressé
@@ -252,6 +238,7 @@ func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, 
 		OtherProjects []ScoredProjectResponse // projets 7+ en format compact
 		SkillGroups   []SkillGroup
 		ProfileImg    template.URL // data URI base64 de la photo (vide si absent)
+		StealthText   string       // termes ATS injectés en couleur-fond (invisible)
 	}{
 		AdaptiveCVResponse: cv,
 		Lang:               lang,
@@ -260,6 +247,7 @@ func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang string) (string, 
 		OtherProjects:      otherProjects,
 		SkillGroups:        groupSkillsByCategory(cv.Skills),
 		ProfileImg:         s.profileImg,
+		StealthText:        stealthText,
 	}
 
 	// Utiliser template HTML si disponible, sinon fallback renderBasicHTML
