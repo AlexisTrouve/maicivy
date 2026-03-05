@@ -108,11 +108,11 @@ func buildStealthHTML(skills []string, lang string) string {
 		)
 	}
 
-	// Couleur #1e293b (quasi-noir) — ATS ne flag pas le texte "caché" comme avec du blanc.
-	// PAS de height:1px ni overflow:hidden : Chromium clippe le contenu → absent du flux PDF.
-	// line-height:1pt + font-size:0.5pt = bloc de ~0.35mm, invisible à l'œil mais dans le stream.
+	// Font-size:5pt + opacity:0.01 : invisible à l'œil mais glyphes correctement embarqués
+	// dans le stream PDF par Chromium. À 0.5pt, le sous-ensemble de police est corrompu
+	// (Chromium tronque les glyphes), ce qui donne du texte illisible à l'extraction ATS.
 	return fmt.Sprintf(
-		`<div style="font-size:0.5pt;color:#1e293b;line-height:1pt;margin:0;padding:0;">%s</div>`,
+		`<div style="font-size:5pt;color:#1e293b;opacity:0.01;line-height:6pt;margin:0;padding:0;">%s</div>`,
 		text,
 	)
 }

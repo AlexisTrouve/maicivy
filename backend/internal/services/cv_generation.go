@@ -211,9 +211,13 @@ func (s *CVGenerationService) GenerateDynamicCV(ctx context.Context, offer, lang
 		Icon:        "🎯",
 	}
 
+	// Post-processing summary : les " — " LLM deviennent "." (plus ATS-safe, meilleur rendu)
+	summary := strings.ReplaceAll(llmResp.Summary, " — ", ". ")
+	summary = strings.ReplaceAll(summary, " —", ".")
+
 	return &AdaptiveCVResponse{
 		Theme:       theme,
-		Summary:     llmResp.Summary,
+		Summary:     summary,
 		Location:    llmResp.Location,
 		Experiences: scoredExps,
 		Skills:      scoredSkills,
