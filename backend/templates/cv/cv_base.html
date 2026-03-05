@@ -90,8 +90,8 @@ body {
    qui rend "E D U C A T I O N" au lieu de "Education" dans le flux PDF */
 .ats-anchor {
   font-size: 7px;
-  /* même couleur que le fond (#f8fafc = fond de page) → invisible visuellement
-     mais glyphes correctement encodés dans le PDF stream sans opacity trick */
+  /* #f8fafc (fond de page) → quasi-invisible mais color ≠ bg strict → Chromium encode correctement.
+     PAS d'opacity (corrompt ToUnicode) ni color exact du fond (Chromium skip le rendu). */
   color: #f8fafc;
   display: block;
   line-height: 7px;
@@ -128,12 +128,12 @@ body {
   inset: 0;
   z-index: 0;
   font-size: 7px;
-  /* blanc sur blanc : invisible mais glyphes correctement encodés dans le PDF stream.
-     PAS d'overflow:hidden — ça clippe aussi le texte dans le stream PDF de Chromium,
-     ce qui ferait disparaître les termes ATS qui dépassent la hauteur de la card. */
-  color: #ffffff;
-  background: #ffffff;
+  /* #f8f8f8 sur fond blanc : 1 step de différence → Chromium rend normalement (ToUnicode correct).
+     #ffffff exact = Chromium skip le rendu. opacity < 1 = ToUnicode corrompu (garbled).
+     Invisible visuellement car le card content (z-index:1, background:white) est AU-DESSUS. */
+  color: #f8f8f8;
   line-height: 8px;
+  overflow: hidden;
   padding: 2px;
   pointer-events: none;
   user-select: none;
