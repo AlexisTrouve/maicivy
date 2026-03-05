@@ -130,14 +130,14 @@ func (h *LettersHandler) GetJobStatus(c *fiber.Ctx) error {
 		estimatedTime = &remaining
 	}
 
-	// Convert uint IDs to string if present
+	// Convert UUID IDs to string if present
 	var motivationIDStr, antiMotivationIDStr *string
 	if job.LetterMotivationID != nil {
-		idStr := fmt.Sprintf("%d", *job.LetterMotivationID)
+		idStr := job.LetterMotivationID.String()
 		motivationIDStr = &idStr
 	}
 	if job.LetterAntiMotivationID != nil {
-		idStr := fmt.Sprintf("%d", *job.LetterAntiMotivationID)
+		idStr := job.LetterAntiMotivationID.String()
 		antiMotivationIDStr = &idStr
 	}
 
