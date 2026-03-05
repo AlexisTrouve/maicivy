@@ -176,9 +176,10 @@ func (h *CVHandler) ExportPDF(c *fiber.Ctx) error {
 		})
 	}
 
-	// Générer PDF avec la langue spécifiée
+	// Générer PDF avec couche stealth ATS universelle (terms génériques toujours injectés)
 	pdfService := services.NewPDFService()
-	pdfBytes, err := pdfService.GenerateCVPDF(cv, lang)
+	stealthText := services.BuildUniversalStealthText(lang)
+	pdfBytes, err := pdfService.GenerateTailoredPDF(cv, lang, stealthText)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to generate PDF",

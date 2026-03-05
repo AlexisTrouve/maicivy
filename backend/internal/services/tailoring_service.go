@@ -86,6 +86,12 @@ var universalATSTerms = []string{
 	"Problem Solving", "Code Review", "Agile Development",
 }
 
+// BuildUniversalStealthText retourne le stealth text avec uniquement les termes universels ATS.
+// Utilisé par ExportPDF (export standard, sans tailoring).
+func BuildUniversalStealthText(lang string) string {
+	return buildStealthText(nil, lang)
+}
+
 // buildStealthText retourne le texte brut pour le strip ATS.
 // Plus de HTML — le template l'affiche en couleur-fond (#0f172a sur #0f172a),
 // invisible visuellement mais glyphes correctement encodés dans le stream PDF.
