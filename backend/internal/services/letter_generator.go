@@ -165,43 +165,68 @@ func (lg *LetterGenerator) GenerateLetterPDF(ctx context.Context, letter models.
 	return lg.pdfService.GeneratePDF(ctx, letter, writer)
 }
 
-// cleanLetterContent nettoie les artefacts LLM typiques du contenu généré
-// Les LLMs ont tendance à utiliser " - " comme séparateur en-tête, et d'autres patterns
-// mécaniques qui trahissent une génération automatique.
+// cleanLetterContent nettoie les artefacts LLM typiques du contenu généré.
+// Stratégie : séparer l'en-tête du corps (salutation = marqueur), puis
+// appliquer le nettoyage des " - " uniquement dans l'en-tête où ils n'ont pas leur place.
 func cleanLetterContent(content string) string {
-	lines := strings.Split(content, "\n")
-	cleaned := make([]string, 0, len(lines))
+	// Trouver la salutation qui sépare en-tête et corps
+	salutations := []string{
+		"Madame, Monsieur",
+		"Madame,\nMonsieur",
+		"Dear Hiring Manager",
+		"Dear ",
+		"To Whom It May Concern",
+	}
+
+	splitIdx := -1
+	for _, sal := range salutations {
+		idx := strings.Index(content, sal)
+		if idx != -1 && (splitIdx == -1 || idx < splitIdx) {
+			splitIdx = idx
+		}
+	}
+
+	// Pas de salutation trouvée → nettoyage minimal sur tout le contenu
+	if splitIdx == -1 {
+		return cleanHeaderDashes(content)
+	}
+
+	header := content[:splitIdx]
+	body := content[splitIdx:]
+
+	return cleanHeaderDashes(header) + body
+}
+
+// cleanHeaderDashes split les lignes d'en-tête qui contiennent " - " en lignes séparées.
+// "Alexis Trouve - alexis@mail.com - +33 6..." → 3 lignes distinctes.
+// Les lignes "Objet :" sont préservées telles quelles.
+func cleanHeaderDashes(header string) string {
+	lines := strings.Split(header, "\n")
+	out := make([]string, 0, len(lines)+4)
 
 	for _, line := range lines {
-		// Dans l'en-tête : "Nom - Email - Téléphone" sur une ligne → séparer sur des lignes distinctes
-		// On détecte les lignes d'en-tête avec plusieurs " - " (pattern LLM classique)
-		if strings.Count(line, " - ") >= 2 && !strings.HasPrefix(strings.TrimSpace(line), "Objet") {
-			parts := strings.Split(line, " - ")
-			for _, part := range parts {
-				p := strings.TrimSpace(part)
+		trimmed := strings.TrimSpace(line)
+
+		// Préserver les lignes Objet — le " - " peut y être stylistique
+		if strings.HasPrefix(trimmed, "Objet") || strings.HasPrefix(trimmed, "Subject") {
+			out = append(out, line)
+			continue
+		}
+
+		// Ligne avec au moins un " - " → splitter en autant de lignes que nécessaire
+		if strings.Contains(trimmed, " - ") {
+			parts := strings.Split(trimmed, " - ")
+			for _, p := range parts {
+				p = strings.TrimSpace(p)
 				if p != "" {
-					cleaned = append(cleaned, p)
+					out = append(out, p)
 				}
 			}
 			continue
 		}
 
-		// Lignes "Objet : Candidature - Poste" → garder tel quel (le " - " est voulu)
-		// Ligne avec un seul " - " dans l'en-tête → remplacer par saut de ligne
-		// Heuristique : ligne courte (< 80 chars) avec exactement un " - " = probablement en-tête
-		trimmed := strings.TrimSpace(line)
-		if len(trimmed) < 80 && strings.Count(trimmed, " - ") == 1 &&
-			!strings.HasPrefix(trimmed, "Objet") &&
-			!strings.Contains(trimmed, "mission") &&
-			!strings.Contains(trimmed, "poste") {
-			parts := strings.SplitN(trimmed, " - ", 2)
-			cleaned = append(cleaned, strings.TrimSpace(parts[0]))
-			cleaned = append(cleaned, strings.TrimSpace(parts[1]))
-			continue
-		}
-
-		cleaned = append(cleaned, line)
+		out = append(out, line)
 	}
 
-	return strings.Join(cleaned, "\n")
+	return strings.Join(out, "\n")
 }

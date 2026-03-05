@@ -91,6 +91,11 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "en effet", "ainsi", "notamment", "de surcroît", "par ailleurs",
 "je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus naturel)
 
+FORMAT EN-TÊTE — règle absolue :
+Chaque élément sur SA PROPRE LIGNE. Jamais de " - " comme séparateur dans l'en-tête.
+Pas "Alexis Trouve - alexis@mail.com - +33 6..." sur une seule ligne.
+Une information = une ligne.
+
 PROFIL :
 - Nom : %s | %s %s | %s | %s
 - Résumé : %s
@@ -247,6 +252,11 @@ STRICTLY FORBIDDEN WORDS AND PHRASES:
 "I look forward to hearing from you", "please don't hesitate to",
 "I am writing to express my interest", "cross-functional", "stakeholders",
 "I believe I would be a great fit", "moreover", "furthermore", "in summary"
+
+HEADER FORMAT — absolute rule:
+Each element on ITS OWN LINE. Never use " - " as a separator in the header.
+Not "Alexis Trouve - alexis@mail.com - +33 6..." on a single line.
+One piece of information = one line.
 
 PROFILE:
 - Name: %s | %s %s | %s | %s
