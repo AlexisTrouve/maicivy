@@ -10,6 +10,7 @@ import (
 type GenerateLetterRequest struct {
 	CompanyName string `json:"company_name" validate:"required,min=2,max=200"`
 	JobTitle    string `json:"job_title,omitempty" validate:"omitempty,min=2,max=200"` // Optionnel
+	JobOffer    string `json:"job_offer,omitempty" validate:"omitempty,max=5000"`       // Texte brut de l'offre d'emploi (optionnel)
 	Theme       string `json:"theme,omitempty" validate:"omitempty,oneof=backend frontend fullstack devops data ai"`
 	Lang        string `json:"lang,omitempty" validate:"omitempty,oneof=fr en"` // Langue: fr (défaut) ou en
 }

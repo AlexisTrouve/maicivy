@@ -17,20 +17,41 @@ func NewPromptBuilder(profile models.UserProfile) *PromptBuilder {
 }
 
 // BuildMotivationPrompt : prompt pour lettre de motivation professionnelle
-func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang string) string {
-	if lang == "en" {
-		return pb.buildMotivationPromptEN(company)
+// jobOffer est optionnel — si fourni, le prompt inclut l'offre pour une lettre tailorée
+func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang string, jobOffer ...string) string {
+	offer := ""
+	if len(jobOffer) > 0 {
+		offer = jobOffer[0]
 	}
-	return pb.buildMotivationPromptFR(company)
+	if lang == "en" {
+		return pb.buildMotivationPromptEN(company, offer)
+	}
+	return pb.buildMotivationPromptFR(company, offer)
 }
 
 // buildMotivationPromptFR : prompt français pour lettre de motivation
-func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo) string {
+func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo, jobOffer string) string {
 	// Construire la section expériences détaillées
 	experiencesSection := pb.buildExperiencesSection()
 
 	// Formater la date en français (ex: "Tourtenay, le 5 janvier 2026")
 	currentDate := formatFrenchDate(time.Now())
+
+	// Section offre d'emploi — vide si candidature spontanée
+	offerSection := ""
+	objet := "Candidature spontanée"
+	if jobOffer != "" {
+		// Tronquer l'offre à 2000 chars pour garder le prompt raisonnable
+		truncated := jobOffer
+		if len(truncated) > 2000 {
+			truncated = truncated[:2000] + "..."
+		}
+		offerSection = fmt.Sprintf(`
+OFFRE D'EMPLOI (utilise ce contexte pour adapter la lettre au poste précis):
+%s
+`, truncated)
+		objet = "Candidature au poste mentionné dans l'offre d'emploi"
+	}
 
 	template := `Tu es un expert en rédaction de lettres de motivation professionnelles.
 
@@ -54,7 +75,7 @@ ENTREPRISE CIBLE:
 - Description: %s
 - Technologies utilisées: %s
 - Taille: %s
-
+%s
 DATE DU JOUR (pour la lettre):
 %s
 
@@ -74,13 +95,13 @@ INSTRUCTIONS:
    - Nom de l'entreprise
    - [Adresse si connue, sinon laisser vide]
    - Ligne vide
-   - "Objet : Candidature spontanée"
+   - "Objet : %s"
    - Ligne vide
 
 2. Structure classique ensuite (introduction, corps, conclusion)
 3. Ton professionnel mais pas rigide
 4. UTILISE des exemples CONCRETS du parcours du candidat (projets, achievements, métriques)
-5. Mets en avant l'alignement entre les compétences du candidat et les besoins probables de l'entreprise
+5. Si une offre est fournie : adresse DIRECTEMENT les compétences et missions demandées, cite le vocabulaire de l'offre
 6. Montre un intérêt sincère pour l'entreprise (culture, projets, technologies)
 7. Cite des réalisations spécifiques avec des chiffres quand disponibles
 8. Longueur: 350-450 mots (sans compter l'en-tête)
@@ -112,8 +133,10 @@ Génère la lettre maintenant (AVEC l'en-tête complet):`
 		company.Description,
 		strings.Join(company.Technologies, ", "),
 		company.Size,
+		offerSection,
 		currentDate,
 		company.Name,
+		objet,
 	)
 }
 
@@ -137,12 +160,27 @@ func (pb *PromptBuilder) buildExperiencesSection() string {
 }
 
 // buildMotivationPromptEN : prompt anglais pour lettre de motivation
-func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo) string {
+func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo, jobOffer string) string {
 	// Build detailed experiences section
 	experiencesSection := pb.buildExperiencesSection()
 
 	// Format date in English (ex: "Tourtenay, January 5, 2026")
 	currentDate := formatEnglishDate(time.Now())
+
+	// Job offer section — empty for spontaneous application
+	offerSection := ""
+	subject := "Spontaneous Application"
+	if jobOffer != "" {
+		truncated := jobOffer
+		if len(truncated) > 2000 {
+			truncated = truncated[:2000] + "..."
+		}
+		offerSection = fmt.Sprintf(`
+JOB OFFER (use this context to tailor the letter to the specific position):
+%s
+`, truncated)
+		subject = "Application for the advertised position"
+	}
 
 	template := `You are an expert in writing professional cover letters.
 
@@ -166,7 +204,7 @@ TARGET COMPANY:
 - Description: %s
 - Technologies Used: %s
 - Size: %s
-
+%s
 CURRENT DATE (for the letter):
 %s
 
@@ -186,13 +224,13 @@ INSTRUCTIONS:
    - Company name
    - [Address if known, otherwise leave blank]
    - Blank line
-   - "Subject: Application for Position"
+   - "Subject: %s"
    - Blank line
 
 2. Classic structure afterwards (introduction, body, conclusion)
 3. Professional but not rigid tone
 4. USE CONCRETE examples from the candidate's background (projects, achievements, metrics)
-5. Highlight alignment between candidate's skills and company's likely needs
+5. If a job offer is provided: directly address the required skills and missions, use the vocabulary from the offer
 6. Show sincere interest in the company (culture, projects, technologies)
 7. Cite specific achievements with numbers when available
 8. Length: 350-450 words (excluding header)
@@ -224,8 +262,10 @@ Generate the letter now (WITH the complete header):`
 		company.Description,
 		strings.Join(company.Technologies, ", "),
 		company.Size,
+		offerSection,
 		currentDate,
 		company.Name,
+		subject,
 	)
 }
 

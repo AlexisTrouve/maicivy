@@ -26,6 +26,7 @@ type LetterJob struct {
 	VisitorID   string    `json:"visitor_id"`    // Session ID du visiteur
 	CompanyName string    `json:"company_name"`
 	JobTitle    string    `json:"job_title,omitempty"`
+	JobOffer    string    `json:"job_offer,omitempty"` // Texte brut de l'offre d'emploi
 	Theme       string    `json:"theme,omitempty"`
 	Lang        string    `json:"lang"` // Langue: fr ou en
 	Status      JobStatus `json:"status"`
@@ -62,7 +63,7 @@ func NewLetterQueueService(redis *redis.Client) *LetterQueueService {
 }
 
 // EnqueueJob ajoute un job dans la queue
-func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle, theme, lang string) (string, error) {
+func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle, theme, lang string, jobOffer ...string) (string, error) {
 	jobID := uuid.New().String()
 
 	// Default lang to fr if empty
@@ -70,11 +71,18 @@ func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle,
 		lang = "fr"
 	}
 
+	// Extraire l'offre d'emploi optionnelle (variadic)
+	offer := ""
+	if len(jobOffer) > 0 {
+		offer = jobOffer[0]
+	}
+
 	job := LetterJob{
 		JobID:       jobID,
 		VisitorID:   visitorID,
 		CompanyName: companyName,
 		JobTitle:    jobTitle,
+		JobOffer:    offer,
 		Theme:       theme,
 		Lang:        lang,
 		Status:      JobStatusQueued,

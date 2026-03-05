@@ -60,7 +60,7 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 	var prompt string
 	switch req.LetterType {
 	case models.LetterTypeMotivation:
-		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo, lang)
+		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo, lang, req.JobOffer)
 	case models.LetterTypeAntiMotivation:
 		prompt = lg.promptBuilder.BuildAntiMotivationPrompt(*companyInfo, lang)
 	default:
@@ -95,10 +95,16 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 }
 
 // GenerateDualLetters : génère les 2 lettres en parallèle
-func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string, lang string) (*models.LetterResponse, *models.LetterResponse, error) {
+// jobOffer est optionnel — si fourni, la lettre de motivation est tailorée pour l'offre
+func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string, lang string, jobOffer ...string) (*models.LetterResponse, *models.LetterResponse, error) {
 	// Default lang to fr if empty
 	if lang == "" {
 		lang = "fr"
+	}
+
+	offer := ""
+	if len(jobOffer) > 0 {
+		offer = jobOffer[0]
 	}
 
 	type result struct {
@@ -109,17 +115,18 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 	motivationChan := make(chan result, 1)
 	antiMotivationChan := make(chan result, 1)
 
-	// Generate motivation letter
+	// Generate motivation letter (tailorée si offre fournie)
 	go func() {
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,
 			LetterType:  models.LetterTypeMotivation,
 			Lang:        lang,
+			JobOffer:    offer,
 		})
 		motivationChan <- result{letter, err}
 	}()
 
-	// Generate anti-motivation letter
+	// Generate anti-motivation letter (humour — pas besoin de l'offre)
 	go func() {
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,

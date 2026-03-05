@@ -150,7 +150,7 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 20)
 
 	// Use lang from job (defaults to "fr" in GenerateDualLetters if empty)
-	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName, job.Lang)
+	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName, job.Lang, job.JobOffer)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to generate letters: %w", err)
 	}

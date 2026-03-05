@@ -75,7 +75,7 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 	}
 
 	// Enqueue job
-	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme, lang)
+	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme, lang, req.JobOffer)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to enqueue generation job",

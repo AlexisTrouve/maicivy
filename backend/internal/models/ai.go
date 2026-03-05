@@ -21,6 +21,7 @@ type LetterRequest struct {
 	LetterType  LetterType  `json:"letter_type" validate:"required,oneof=motivation anti_motivation"`
 	UserProfile UserProfile `json:"user_profile,omitempty"`
 	Lang        string      `json:"lang" validate:"omitempty,oneof=fr en"` // Langue: fr ou en
+	JobOffer    string      `json:"job_offer,omitempty"`                   // Texte brut de l'offre (optionnel)
 }
 
 // ExperienceDetail : détail d'une expérience professionnelle pour les prompts
