@@ -28,7 +28,8 @@ type LetterJob struct {
 	JobTitle    string    `json:"job_title,omitempty"`
 	JobOffer    string    `json:"job_offer,omitempty"` // Texte brut de l'offre d'emploi
 	Theme       string    `json:"theme,omitempty"`
-	Lang        string    `json:"lang"` // Langue: fr ou en
+	Lang        string    `json:"lang"`            // Langue: fr ou en
+	Model       string    `json:"model,omitempty"` // Override modèle Claude ("" = défaut Haiku, "claude-opus-4-6" = owner)
 	Status      JobStatus `json:"status"`
 	Progress    int       `json:"progress"` // 0-100
 
@@ -63,7 +64,9 @@ func NewLetterQueueService(redis *redis.Client) *LetterQueueService {
 }
 
 // EnqueueJob ajoute un job dans la queue
-func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle, theme, lang string, jobOffer ...string) (string, error) {
+// model : override du modèle Claude ("" = défaut Haiku, "claude-opus-4-6" = owner Opus)
+// jobOffer : texte brut de l'offre d'emploi (optionnel, variadic)
+func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle, theme, lang, model string, jobOffer ...string) (string, error) {
 	jobID := uuid.New().String()
 
 	// Default lang to fr if empty
@@ -85,6 +88,7 @@ func (s *LetterQueueService) EnqueueJob(visitorID, companyName string, jobTitle,
 		JobOffer:    offer,
 		Theme:       theme,
 		Lang:        lang,
+		Model:       model,
 		Status:      JobStatusQueued,
 		Progress:    0,
 		CreatedAt:   time.Now(),

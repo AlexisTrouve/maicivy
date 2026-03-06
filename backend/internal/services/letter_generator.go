@@ -74,8 +74,8 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 		return nil, fmt.Errorf("unknown letter type: %s", req.LetterType)
 	}
 
-	// 3. Generate text via AI
-	content, metrics, err := lg.aiService.GenerateText(ctx, prompt)
+	// 3. Generate text via AI (model override si précisé dans la requête)
+	content, metrics, err := lg.aiService.GenerateTextWithModel(ctx, prompt, req.Model)
 	if err != nil {
 		return nil, fmt.Errorf("AI generation failed: %w", err)
 	}
@@ -105,8 +105,9 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 }
 
 // GenerateDualLetters : génère les 2 lettres en parallèle
-// jobOffer est optionnel — si fourni, la lettre de motivation est tailorée pour l'offre
-func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string, lang string, jobOffer ...string) (*models.LetterResponse, *models.LetterResponse, error) {
+// model : override Claude ("" = défaut config, "claude-opus-4-6" = owner)
+// jobOffer : texte de l'offre (optionnel, variadic)
+func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName string, lang string, model string, jobOffer ...string) (*models.LetterResponse, *models.LetterResponse, error) {
 	// Default lang to fr if empty
 	if lang == "" {
 		lang = "fr"
@@ -125,23 +126,25 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 	motivationChan := make(chan result, 1)
 	antiMotivationChan := make(chan result, 1)
 
-	// Generate motivation letter (tailorée si offre fournie)
+	// Generate motivation letter (tailorée si offre fournie, modèle propagé)
 	go func() {
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,
 			LetterType:  models.LetterTypeMotivation,
 			Lang:        lang,
 			JobOffer:    offer,
+			Model:       model,
 		})
 		motivationChan <- result{letter, err}
 	}()
 
-	// Generate anti-motivation letter (humour — pas besoin de l'offre)
+	// Generate anti-motivation letter (humour — pas besoin de l'offre, même modèle)
 	go func() {
 		letter, err := lg.GenerateLetter(ctx, models.LetterRequest{
 			CompanyName: companyName,
 			LetterType:  models.LetterTypeAntiMotivation,
 			Lang:        lang,
+			Model:       model,
 		})
 		antiMotivationChan <- result{letter, err}
 	}()

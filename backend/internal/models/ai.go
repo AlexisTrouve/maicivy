@@ -22,6 +22,7 @@ type LetterRequest struct {
 	UserProfile UserProfile `json:"user_profile,omitempty"`
 	Lang        string      `json:"lang" validate:"omitempty,oneof=fr en"` // Langue: fr ou en
 	JobOffer    string      `json:"job_offer,omitempty"`                   // Texte brut de l'offre (optionnel)
+	Model       string      `json:"model,omitempty"`                       // Override du modèle Claude (optionnel, usage interne)
 }
 
 // ExperienceDetail : détail d'une expérience professionnelle pour les prompts

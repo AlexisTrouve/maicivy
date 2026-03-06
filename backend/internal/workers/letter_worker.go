@@ -149,8 +149,8 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 	// 1. Générer les deux lettres en parallèle (20-80% progress)
 	w.queueService.UpdateJobStatus(job.JobID, services.JobStatusProcessing, 20)
 
-	// Use lang from job (defaults to "fr" in GenerateDualLetters if empty)
-	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName, job.Lang, job.JobOffer)
+	// Passer lang, model et jobOffer depuis le job (model="" = Haiku par défaut, "claude-opus-4-6" = owner)
+	motivationLetter, antiMotivationLetter, err := w.letterGenerator.GenerateDualLetters(ctx, job.CompanyName, job.Lang, job.Model, job.JobOffer)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to generate letters: %w", err)
 	}

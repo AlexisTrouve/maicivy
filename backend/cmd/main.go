@@ -188,7 +188,7 @@ func main() {
 	healthHandler := api.NewHealthHandler(db, redisClient)
 	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
-	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService, letterGenerator)
+	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService, letterGenerator, aiConfig.OwnerAPIKey)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
 	activityHandler := api.NewActivityHandler(repoScanner)
 	blogHandler := api.NewBlogHandler(blogGeneratorService)
@@ -218,8 +218,10 @@ func main() {
 	// Rate limit AI uniquement sur /generate (utilise le bon middleware avec incrémentation après succès)
 	aiRateLimitMW := middleware.AIRateLimit(middleware.AIRateLimitConfig{
 		Redis:            redisClient,
-		MaxPerDay:        5,
+		MaxPerDay:        5,   // 5 générations/jour par session
+		MaxPerDayPerIP:   3,   // 3 générations/jour par IP (anti-bypass incognito)
 		CooldownDuration: 2 * time.Minute,
+		OwnerAPIKey:      aiConfig.OwnerAPIKey, // bypass total pour l'owner
 	})
 	lettersGroup.Post("/generate", aiRateLimitMW, lettersHandler.GenerateLetter)
 	lettersGroup.Get("/job/:jobId", lettersHandler.GetJobStatus)

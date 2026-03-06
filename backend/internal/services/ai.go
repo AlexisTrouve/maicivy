@@ -74,9 +74,16 @@ func NewAIService(cfg *config.AIConfig, metrics MetricsRecorder) (*AIService, er
 	return svc, nil
 }
 
-// GenerateText : génère du texte avec fallback automatique
+// GenerateText : génère du texte avec fallback automatique (modèle par défaut)
 func (s *AIService) GenerateText(ctx context.Context, prompt string) (string, *models.AIMetrics, error) {
-	// Rate limiting
+	return s.GenerateTextWithModel(ctx, prompt, "")
+}
+
+// GenerateTextWithModel : génère du texte avec override de modèle optionnel
+// model="" → utilise s.config.ClaudeModel (défaut Haiku)
+// model="claude-opus-4-6" → force Opus pour l'owner par exemple
+func (s *AIService) GenerateTextWithModel(ctx context.Context, prompt, model string) (string, *models.AIMetrics, error) {
+	// Rate limiting interne (par minute)
 	if err := s.rateLimiter.Wait(ctx); err != nil {
 		return "", nil, fmt.Errorf("rate limit: %w", err)
 	}
@@ -89,7 +96,7 @@ func (s *AIService) GenerateText(ctx context.Context, prompt string) (string, *m
 
 	// Tenter provider primaire
 	if s.config.PrimaryProvider == "claude" && s.claudeClient != nil {
-		text, metrics, err = s.generateWithClaude(ctx, prompt)
+		text, metrics, err = s.generateWithClaude(ctx, prompt, model)
 		if err == nil {
 			return text, metrics, nil
 		}
@@ -108,11 +115,19 @@ func (s *AIService) GenerateText(ctx context.Context, prompt string) (string, *m
 }
 
 // generateWithClaude : génération via Claude
-func (s *AIService) generateWithClaude(ctx context.Context, prompt string) (string, *models.AIMetrics, error) {
+// model="" → utilise s.config.ClaudeModel (défaut)
+// model!="" → override le modèle pour cette requête (ex: "claude-opus-4-6" pour l'owner)
+func (s *AIService) generateWithClaude(ctx context.Context, prompt, model string) (string, *models.AIMetrics, error) {
+	// Résoudre le modèle effectif
+	effectiveModel := model
+	if effectiveModel == "" {
+		effectiveModel = s.config.ClaudeModel
+	}
+
 	start := time.Now()
 	metrics := &models.AIMetrics{
 		Provider: "claude",
-		Model:    s.config.ClaudeModel,
+		Model:    effectiveModel,
 	}
 
 	// Context avec timeout
@@ -131,7 +146,7 @@ func (s *AIService) generateWithClaude(ctx context.Context, prompt string) (stri
 		}
 
 		resp, err = s.claudeClient.Messages.New(ctx, anthropic.MessageNewParams{
-			Model:     anthropic.Model(s.config.ClaudeModel),
+			Model:     anthropic.Model(effectiveModel),
 			MaxTokens: int64(s.config.MaxTokensPerRequest),
 			Messages: []anthropic.MessageParam{
 				anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),

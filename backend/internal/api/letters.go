@@ -23,15 +23,17 @@ type LettersHandler struct {
 	redis           *redis.Client
 	queueService    services.LetterQueueServiceInterface
 	letterGenerator *services.LetterGenerator // pour la génération PDF
+	ownerAPIKey     string                    // clé secrète owner → tier Opus
 }
 
 // NewLettersHandler crée une nouvelle instance du handler
-func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService services.LetterQueueServiceInterface, letterGenerator *services.LetterGenerator) *LettersHandler {
+func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService services.LetterQueueServiceInterface, letterGenerator *services.LetterGenerator, ownerAPIKey string) *LettersHandler {
 	return &LettersHandler{
 		db:              db,
 		redis:           redis,
 		queueService:    queueService,
 		letterGenerator: letterGenerator,
+		ownerAPIKey:     ownerAPIKey,
 	}
 }
 
@@ -76,8 +78,15 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 		})
 	}
 
-	// Enqueue job
-	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme, lang, req.JobOffer)
+	// Sélection du modèle : owner (X-Owner-Key valide) → Opus, visiteur → Haiku
+	// is_owner est positionné par le middleware AIRateLimit en cas de header valide
+	model := "claude-haiku-4-5-20251001"
+	if isOwner, _ := c.Locals("is_owner").(bool); isOwner {
+		model = "claude-opus-4-6"
+	}
+
+	// Enqueue job avec le modèle sélectionné
+	jobID, err := h.queueService.EnqueueJob(sessionID, req.CompanyName, req.JobTitle, req.Theme, lang, model, req.JobOffer)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to enqueue generation job",
