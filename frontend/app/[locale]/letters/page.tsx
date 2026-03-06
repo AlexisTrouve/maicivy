@@ -1,12 +1,13 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { LetterGenerator } from '@/components/letters/LetterGenerator';
+import { MessageGenerator } from '@/components/letters/MessageGenerator';
+import { AccessGate } from '@/components/letters/AccessGate';
+import { LettersTabs } from '@/components/letters/LettersTabs';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
-import { AccessGate } from '@/components/letters/AccessGate';
 
-// Metadata is now generated dynamically via generateMetadata
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
   const resolvedParams = params instanceof Promise ? await params : params;
   const locale = resolvedParams.locale || 'en';
@@ -23,7 +24,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function LettersPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
-  // Handle both Promise and non-Promise params (Next.js 14.2+ compatibility)
   const resolvedParams = params instanceof Promise ? await params : params;
   const t = await getTranslations({ locale: resolvedParams.locale, namespace: 'letters' });
 
@@ -40,9 +40,12 @@ export default async function LettersPage({ params }: { params: Promise<{ locale
           </p>
         </div>
 
-        {/* Access Gate + Generator */}
+        {/* Access Gate + Tabs */}
         <AccessGate>
-          <LetterGenerator />
+          <LettersTabs
+            letterGenerator={<LetterGenerator />}
+            messageGenerator={<MessageGenerator />}
+          />
         </AccessGate>
       </div>
     </div>

@@ -189,6 +189,7 @@ func main() {
 	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
 	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService, letterGenerator, aiConfig.OwnerAPIKey)
+	messagesHandler := api.NewMessagesHandler(db, redisClient, letterGenerator, aiConfig.OwnerAPIKey)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
 	activityHandler := api.NewActivityHandler(repoScanner)
 	blogHandler := api.NewBlogHandler(blogGeneratorService)
@@ -231,6 +232,10 @@ func main() {
 	lettersGroup.Get("/ratelimit/status", lettersHandler.GetRateLimitStatus)
 	lettersGroup.Get("/:id/pdf", lettersHandler.DownloadPDF)
 	lettersGroup.Get("/:id", lettersHandler.GetLetter) // Must be last (catch-all)
+
+	// Routes Messages plateforme (Malt, LinkedIn...) — génération sync
+	messagesGroup := apiV1.Group("/messages")
+	messagesGroup.Post("/generate", aiRateLimitMW, messagesHandler.GenerateMessage)
 
 	// Routes Analytics (Phase 4 - IMPLEMENTED)
 	analyticsHandler.RegisterRoutes(app)

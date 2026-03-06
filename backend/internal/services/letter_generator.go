@@ -164,6 +164,26 @@ func (lg *LetterGenerator) GenerateDualLetters(ctx context.Context, companyName 
 	return motivationResult.letter, antiMotivationResult.letter, nil
 }
 
+// GeneratePlatformMessage : génère un message court pour Malt/LinkedIn/Upwork (sync)
+// Retourne le contenu nettoyé + les métriques AI
+func (lg *LetterGenerator) GeneratePlatformMessage(ctx context.Context, req models.PlatformMessageRequest, model string) (string, models.AIMetrics, error) {
+	prompt := lg.promptBuilder.BuildPlatformMessagePrompt(req)
+
+	text, metricsPtr, err := lg.aiService.GenerateTextWithModel(ctx, prompt, model)
+	if err != nil {
+		return "", models.AIMetrics{}, fmt.Errorf("platform message generation failed: %w", err)
+	}
+
+	// Post-traitement minimal : supprimer les " - " résiduels
+	text = strings.ReplaceAll(text, " - ", " — ")
+
+	metrics := models.AIMetrics{}
+	if metricsPtr != nil {
+		metrics = *metricsPtr
+	}
+	return text, metrics, nil
+}
+
 // GenerateLetterPDF : génère le PDF d'une lettre
 func (lg *LetterGenerator) GenerateLetterPDF(ctx context.Context, letter models.LetterResponse, writer io.Writer) error {
 	return lg.pdfService.GeneratePDF(ctx, letter, writer)

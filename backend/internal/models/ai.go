@@ -61,6 +61,23 @@ type LetterResponse struct {
 	EstimatedCost float64     `json:"estimated_cost"`
 }
 
+// PlatformMessageRequest : requête de génération de message plateforme (Malt, LinkedIn...)
+type PlatformMessageRequest struct {
+	Mission  string `json:"mission" validate:"required,min=20"`   // Description de la mission copiée-collée
+	Platform string `json:"platform" validate:"omitempty,oneof=malt linkedin upwork"` // Plateforme cible
+	TJM      int    `json:"tjm" validate:"omitempty,min=50,max=5000"` // Tarif journalier en euros
+	Lang     string `json:"lang" validate:"omitempty,oneof=fr en"`
+}
+
+// PlatformMessageResponse : message généré prêt à envoyer
+type PlatformMessageResponse struct {
+	Content       string  `json:"content"`
+	Platform      string  `json:"platform"`
+	TokensUsed    int     `json:"tokens_used"`
+	EstimatedCost float64 `json:"estimated_cost"`
+	Model         string  `json:"model"`
+}
+
 // AIMetrics : métriques de coût et usage
 type AIMetrics struct {
 	Provider       string

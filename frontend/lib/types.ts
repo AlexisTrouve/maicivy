@@ -131,6 +131,22 @@ export interface GenerateLetterRequest {
 
 export interface GenerateLetterResponse extends GeneratedLetters {}
 
+// Platform message (Malt, LinkedIn, Upwork...)
+export interface GeneratePlatformMessageRequest {
+  mission: string;   // description de la mission copiée-collée
+  platform?: 'malt' | 'linkedin' | 'upwork';
+  tjm?: number;      // tarif journalier en euros
+  lang?: string;
+}
+
+export interface PlatformMessageResponse {
+  content: string;
+  platform: string;
+  tokens_used: number;
+  estimated_cost: number;
+  model: string;
+}
+
 export interface VisitorStatus {
   visitCount: number;
   hasAccess: boolean;

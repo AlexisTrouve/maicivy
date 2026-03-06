@@ -462,3 +462,9 @@ export const activityApi = {
   refresh: () =>
     api.post<{ status: string; message: string }>('/api/v1/activity/refresh'),
 };
+
+// Messages plateforme (Malt, LinkedIn, Upwork...)
+export const messagesApi = {
+  generate: (data: import('./types').GeneratePlatformMessageRequest) =>
+    api.post<import('./types').PlatformMessageResponse>('/api/v1/messages/generate', data),
+};
