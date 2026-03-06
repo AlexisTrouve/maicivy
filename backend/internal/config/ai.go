@@ -35,7 +35,7 @@ func LoadAIConfig() *AIConfig {
 		AnthropicAPIKey:      os.Getenv("ANTHROPIC_API_KEY"),
 		OpenAIAPIKey:         os.Getenv("OPENAI_API_KEY"),
 		PrimaryProvider:      getEnvOrDefault("AI_PRIMARY_PROVIDER", "claude"),
-		OwnerAPIKey:          os.Getenv("OWNER_API_KEY"),
+		OwnerAPIKey:          os.Getenv("MAICIVY_OWNER_API_KEY"),
 		ClaudeModel:          getEnvOrDefault("CLAUDE_MODEL", "claude-haiku-4-5-20251001"), // Haiku par défaut pour les visiteurs
 		OpenAIModel:          getEnvOrDefault("OPENAI_MODEL", "gpt-4o"),
 		MaxRequestsPerMinute: getEnvAsIntOrDefault("AI_MAX_REQUESTS_PER_MIN", 10),
