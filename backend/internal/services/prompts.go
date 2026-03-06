@@ -91,9 +91,11 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "en effet", "ainsi", "notamment", "de surcroît", "par ailleurs",
 "je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus naturel)
 
-FORMAT — règle absolue :
-Jamais de " - " nulle part dans la lettre — ni dans l'en-tête, ni dans le corps.
-En-tête : une information = une ligne. Corps : utilise "—" (tiret long) pour les pauses, ou reformule en phrase complète.
+FORMAT — règles absolues :
+- Jamais de " - " nulle part dans la lettre.
+- La ligne "Objet :" contient uniquement l'objet, sans tiret ni précision de poste après. Ex: "Objet : Candidature spontanée" ou "Objet : Proposition de mission freelance". Pas de " — Développeur Go Senior" après.
+- En-tête : une information = une ligne.
+- Corps : "—" (tiret long) pour les pauses rythmiques uniquement, avec parcimonie.
 
 PROFIL :
 - Nom : %s | %s %s | %s | %s
@@ -252,9 +254,11 @@ STRICTLY FORBIDDEN WORDS AND PHRASES:
 "I am writing to express my interest", "cross-functional", "stakeholders",
 "I believe I would be a great fit", "moreover", "furthermore", "in summary"
 
-FORMAT — absolute rule:
-Never use " - " anywhere in the letter — not in the header, not in the body.
-Header: one piece of information = one line. Body: use "—" (em-dash) for pauses, or rephrase as a full sentence.
+FORMAT — absolute rules:
+- Never use " - " anywhere in the letter.
+- The "Subject:" line contains only the subject, no dash or job title appended after. Ex: "Subject: Spontaneous Application" or "Subject: Freelance Mission Proposal". No " — Senior Go Developer" after.
+- Header: one piece of information = one line.
+- Body: "—" (em-dash) for rhythmic pauses only, used sparingly.
 
 PROFILE:
 - Name: %s | %s %s | %s | %s

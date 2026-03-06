@@ -211,9 +211,21 @@ func cleanHeaderDashes(header string) string {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		// Préserver les lignes Objet — le " - " peut y être stylistique
+		// Lignes Objet/Subject : supprimer tout ce qui suit un " — " ou " - "
+		// "Objet : Dev Go Senior — APIs Payments" → "Objet : Candidature"
+		// Le LLM surcharge souvent l'objet avec le titre du poste via un tiret
 		if strings.HasPrefix(trimmed, "Objet") || strings.HasPrefix(trimmed, "Subject") {
-			out = append(out, line)
+			cleaned := trimmed
+			for _, sep := range []string{" — ", " - "} {
+				if idx := strings.Index(cleaned, sep); idx != -1 {
+					before := strings.TrimSpace(cleaned[:idx])
+					// Garder seulement si la partie avant contient bien "Objet :"
+					if strings.Contains(before, ":") {
+						cleaned = before
+					}
+				}
+			}
+			out = append(out, cleaned)
 			continue
 		}
 
