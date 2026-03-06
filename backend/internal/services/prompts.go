@@ -29,22 +29,31 @@ func NewPromptBuilder(profile models.UserProfile, projects []models.Project) *Pr
 }
 
 // BuildMotivationPrompt : prompt pour lettre de motivation professionnelle
+// model : modèle effectif (ex: "claude-haiku-4-5-20251001") — sert à choisir la variante du prompt
 // jobOffer est optionnel — si fourni, le prompt inclut l'offre pour une lettre tailorée
-func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang string, jobOffer ...string) string {
+func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang, model string, jobOffer ...string) string {
 	offer := ""
 	if len(jobOffer) > 0 {
 		offer = jobOffer[0]
 	}
 	if lang == "en" {
-		return pb.buildMotivationPromptEN(company, offer)
+		return pb.buildMotivationPromptEN(company, model, offer)
 	}
-	return pb.buildMotivationPromptFR(company, offer)
+	return pb.buildMotivationPromptFR(company, model, offer)
 }
 
-// buildMotivationPromptFR : routeur de version — délègue à la version active (PROMPT_VERSION env)
-func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo, jobOffer string) string {
+// isHaikuModel retourne true si le modèle est Haiku (prompt simplifié sans few-shot)
+func isHaikuModel(model string) bool {
+	return strings.Contains(model, "haiku") || model == ""
+}
+
+// buildMotivationPromptFR : routeur de version + modèle — délègue à la variante adéquate
+func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo, model, jobOffer string) string {
 	if motivationPromptVersion() == "v1" {
 		return pb.buildMotivationPromptFR_v1(company, jobOffer)
+	}
+	if isHaikuModel(model) {
+		return pb.buildMotivationPromptFR_v2_haiku(company, jobOffer)
 	}
 	return pb.buildMotivationPromptFR_v2(company, jobOffer)
 }
@@ -87,10 +96,13 @@ func (pb *PromptBuilder) buildExperiencesSection() string {
 	return sb.String()
 }
 
-// buildMotivationPromptEN : routeur de version — délègue à la version active (PROMPT_VERSION env)
-func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo, jobOffer string) string {
+// buildMotivationPromptEN : routeur de version + modèle
+func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo, model, jobOffer string) string {
 	if motivationPromptVersion() == "v1" {
 		return pb.buildMotivationPromptEN_v1(company, jobOffer)
+	}
+	if isHaikuModel(model) {
+		return pb.buildMotivationPromptEN_v2_haiku(company, jobOffer)
 	}
 	return pb.buildMotivationPromptEN_v2(company, jobOffer)
 }

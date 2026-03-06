@@ -187,7 +187,7 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 		CompanyName:  job.CompanyName,
 		LetterType:   models.LetterTypeMotivation,
 		Content:      motivationLetter.Content,
-		AIModel:      motivationLetter.Provider,
+		AIModel:      motivationLetter.Model, // modèle effectif (ex: "claude-opus-4-6"), pas le provider
 		TokensUsed:   motivationLetter.TokensUsed,
 		GenerationMS: int(time.Since(startTime).Milliseconds()),
 		CompanyInfo:  string(companyInfoJSON),
@@ -206,7 +206,7 @@ func (w *LetterWorker) generateLetters(job *services.LetterJob) (uuid.UUID, uuid
 		CompanyName:  job.CompanyName,
 		LetterType:   models.LetterTypeAntiMotivation,
 		Content:      antiMotivationLetter.Content,
-		AIModel:      antiMotivationLetter.Provider,
+		AIModel:      antiMotivationLetter.Model, // modèle effectif
 		TokensUsed:   antiMotivationLetter.TokensUsed,
 		GenerationMS: int(time.Since(startTime).Milliseconds()),
 		CompanyInfo:  string(companyInfoJSON),

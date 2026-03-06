@@ -67,7 +67,7 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 	var prompt string
 	switch req.LetterType {
 	case models.LetterTypeMotivation:
-		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo, lang, req.JobOffer)
+		prompt = lg.promptBuilder.BuildMotivationPrompt(*companyInfo, lang, req.Model, req.JobOffer)
 	case models.LetterTypeAntiMotivation:
 		prompt = lg.promptBuilder.BuildAntiMotivationPrompt(*companyInfo, lang)
 	default:
@@ -90,6 +90,7 @@ func (lg *LetterGenerator) GenerateLetter(ctx context.Context, req models.Letter
 		CompanyInfo:   *companyInfo,
 		GeneratedAt:   time.Now(),
 		Provider:      metrics.Provider,
+		Model:         metrics.Model,
 		TokensUsed:    metrics.TotalTokens,
 		EstimatedCost: metrics.EstimatedCost,
 	}
@@ -201,7 +202,29 @@ func cleanLetterContent(content string) string {
 	// Le modèle utilise parfois " - " comme pause stylistique — on le corrige en em-dash
 	body = strings.ReplaceAll(body, " - ", " — ")
 
+	// Typographie française : espace insécable avant ? et ! si absente
+	// Ex: "cette semaine?" → "cette semaine ?"
+	body = fixFrenchPunctuation(body)
+
 	return cleanHeaderDashes(header) + body
+}
+
+// fixFrenchPunctuation ajoute une espace avant ? et ! si absente (typographie française)
+// Ne touche pas aux URLs (? suivi de lettres/= est une query string)
+func fixFrenchPunctuation(s string) string {
+	var b strings.Builder
+	runes := []rune(s)
+	for i, r := range runes {
+		if (r == '?' || r == '!') && i > 0 {
+			prev := runes[i-1]
+			// Ajouter espace seulement si : pas déjà un espace et pas dans une URL (pas précédé de = & /)
+			if prev != ' ' && prev != '=' && prev != '&' && prev != '/' {
+				b.WriteRune(' ')
+			}
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 // cleanHeaderDashes split les lignes d'en-tête qui contiennent " - " en lignes séparées.
