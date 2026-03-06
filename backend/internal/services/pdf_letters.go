@@ -73,8 +73,17 @@ func (s *PDFLetterService) renderHTML(letter models.LetterResponse) (string, err
 
 // htmlToPDF : convertit HTML en PDF via Chrome headless
 func (s *PDFLetterService) htmlToPDF(ctx context.Context, html string, writer io.Writer) error {
+	// --no-sandbox requis en environnement Docker (pas de namespaces PID/réseau disponibles)
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.Flag("no-sandbox", true),
+		chromedp.Flag("disable-setuid-sandbox", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
+	)
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
+	defer cancel()
+
 	// Create chromedp context
-	allocCtx, cancel := chromedp.NewContext(ctx)
+	allocCtx, cancel = chromedp.NewContext(allocCtx)
 	defer cancel()
 
 	// Timeout protection
