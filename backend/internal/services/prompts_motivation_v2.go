@@ -23,7 +23,7 @@ func (pb *PromptBuilder) buildMotivationPromptFR_v2(company models.CompanyInfo, 
 	currentDate := formatFrenchDate(time.Now())
 
 	offerSection := ""
-	objet := "Candidature spontanée"
+	objet := "Proposition de mission freelance"
 	mirrorVocabInstruction := ""
 	if jobOffer != "" {
 		truncated := jobOffer
@@ -121,6 +121,7 @@ STRUCTURE À SUIVRE (Vous → Moi → Nous) :
 
 FORMAT :
 - EN-TÊTE classique FR (gauche) : nom / adresse / email / téléphone / ligne vide / date / ligne vide / entreprise / ligne vide / "Objet : %s" / ligne vide
+- IMPORTANT : la ligne Objet est IMPOSÉE ci-dessus — ne pas la réécrire, ne pas l'adapter
 - Salutation simple : "Madame, Monsieur,"
 - Corps : 3-4 paragraphes, 220-280 mots MAX hors en-tête
 - Signature directe — pas de "cordialement" générique, quelque chose de plus naturel
@@ -156,7 +157,7 @@ func (pb *PromptBuilder) buildMotivationPromptEN_v2(company models.CompanyInfo, 
 	currentDate := formatEnglishDate(time.Now())
 
 	offerSection := ""
-	subject := "Spontaneous Application"
+	subject := "Freelance Mission Proposal"
 	mirrorVocabInstruction := ""
 	if jobOffer != "" {
 		truncated := jobOffer
@@ -254,6 +255,7 @@ STRUCTURE TO FOLLOW (You → Me → Us):
 
 FORMAT:
 - HEADER classic format (left-aligned): name / address / email / phone / blank line / date / blank line / company / blank line / "Subject: %s" / blank line
+- IMPORTANT: the Subject line is IMPOSED above — do not rewrite it, do not adapt it
 - Simple salutation: "Dear Hiring Manager," or "Dear [Company] Team,"
 - Body: 3-4 paragraphs, 220-280 words MAX excluding header
 - Direct sign-off — not "Sincerely" generic, something more natural
