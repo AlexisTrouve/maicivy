@@ -19,17 +19,19 @@ import (
 
 // LettersHandler handler pour les endpoints de génération de lettres
 type LettersHandler struct {
-	db           *gorm.DB
-	redis        *redis.Client
-	queueService services.LetterQueueServiceInterface
+	db              *gorm.DB
+	redis           *redis.Client
+	queueService    services.LetterQueueServiceInterface
+	letterGenerator *services.LetterGenerator // pour la génération PDF
 }
 
 // NewLettersHandler crée une nouvelle instance du handler
-func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService services.LetterQueueServiceInterface) *LettersHandler {
+func NewLettersHandler(db *gorm.DB, redis *redis.Client, queueService services.LetterQueueServiceInterface, letterGenerator *services.LetterGenerator) *LettersHandler {
 	return &LettersHandler{
-		db:           db,
-		redis:        redis,
-		queueService: queueService,
+		db:              db,
+		redis:           redis,
+		queueService:    queueService,
+		letterGenerator: letterGenerator,
 	}
 }
 
@@ -428,13 +430,30 @@ func (h *LettersHandler) DownloadPDF(c *fiber.Ctx) error {
 		h.db.Save(&letter)
 	}
 
-	// TODO: Générer ou servir le PDF (sera implémenté dans Doc 08)
-	// Pour l'instant, retourner le texte en tant que "PDF"
-	filename := fmt.Sprintf("lettre_%s_%s.txt", letter.LetterType, letter.CompanyName)
+	// Générer le PDF via ChromeDP si le générateur est disponible
+	if h.letterGenerator != nil {
+		letterResp := models.LetterResponse{
+			Content:     letter.Content,
+			Type:        letter.LetterType,
+			CompanyInfo: models.CompanyInfo{Name: letter.CompanyName},
+		}
 
+		c.Set("Content-Type", "application/pdf")
+		filename := fmt.Sprintf("lettre_%s_%s.pdf", letter.LetterType, letter.CompanyName)
+		c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+
+		if err := h.letterGenerator.GenerateLetterPDF(c.Context(), letterResp, c.Response().BodyWriter()); err != nil {
+			// Fallback texte si la génération PDF échoue
+			c.Set("Content-Type", "text/plain")
+			c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="lettre_%s_%s.txt"`, letter.LetterType, letter.CompanyName))
+			return c.SendString(letter.Content)
+		}
+		return nil
+	}
+
+	// Fallback si pas de générateur (ne devrait pas arriver en prod)
 	c.Set("Content-Type", "text/plain")
-	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="lettre_%s_%s.txt"`, letter.LetterType, letter.CompanyName))
 	return c.SendString(letter.Content)
 }
 

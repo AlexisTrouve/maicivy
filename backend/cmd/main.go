@@ -188,7 +188,7 @@ func main() {
 	healthHandler := api.NewHealthHandler(db, redisClient)
 	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
-	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService)
+	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService, letterGenerator)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
 	activityHandler := api.NewActivityHandler(repoScanner)
 	blogHandler := api.NewBlogHandler(blogGeneratorService)
