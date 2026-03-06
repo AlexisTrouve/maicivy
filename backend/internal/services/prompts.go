@@ -2,16 +2,22 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"maicivy/internal/models"
 )
 
-// MotivationPromptVersion contrôle la version active du prompt de motivation.
-// Changer cette constante pour basculer entre les versions sans toucher à la logique.
-// Versions disponibles : "v1" (original), "v2" (hook + mirror vocab + freelance economics + empathie décideur)
-const MotivationPromptVersion = "v2"
+// motivationPromptVersion retourne la version active depuis l'env var PROMPT_VERSION.
+// Valeurs : "v1" (original), "v2" (actif par défaut)
+// Switch sans rebuild : changer PROMPT_VERSION dans .env + docker compose restart backend
+func motivationPromptVersion() string {
+	if v := os.Getenv("PROMPT_VERSION"); v != "" {
+		return v
+	}
+	return "v2"
+}
 
 type PromptBuilder struct {
 	userProfile models.UserProfile
@@ -35,9 +41,9 @@ func (pb *PromptBuilder) BuildMotivationPrompt(company models.CompanyInfo, lang 
 	return pb.buildMotivationPromptFR(company, offer)
 }
 
-// buildMotivationPromptFR : routeur de version — délègue à la version active
+// buildMotivationPromptFR : routeur de version — délègue à la version active (PROMPT_VERSION env)
 func (pb *PromptBuilder) buildMotivationPromptFR(company models.CompanyInfo, jobOffer string) string {
-	if MotivationPromptVersion == "v1" {
+	if motivationPromptVersion() == "v1" {
 		return pb.buildMotivationPromptFR_v1(company, jobOffer)
 	}
 	return pb.buildMotivationPromptFR_v2(company, jobOffer)
@@ -81,9 +87,9 @@ func (pb *PromptBuilder) buildExperiencesSection() string {
 	return sb.String()
 }
 
-// buildMotivationPromptEN : routeur de version — délègue à la version active
+// buildMotivationPromptEN : routeur de version — délègue à la version active (PROMPT_VERSION env)
 func (pb *PromptBuilder) buildMotivationPromptEN(company models.CompanyInfo, jobOffer string) string {
-	if MotivationPromptVersion == "v1" {
+	if motivationPromptVersion() == "v1" {
 		return pb.buildMotivationPromptEN_v1(company, jobOffer)
 	}
 	return pb.buildMotivationPromptEN_v2(company, jobOffer)
