@@ -56,6 +56,7 @@ type LetterResponse struct {
 	CompanyInfo   CompanyInfo `json:"company_info"`
 	GeneratedAt   time.Time   `json:"generated_at"`
 	Provider      string      `json:"provider"` // "claude" ou "openai"
+	Model         string      `json:"model"`    // modèle effectif, ex: "claude-opus-4-6"
 	TokensUsed    int         `json:"tokens_used"`
 	EstimatedCost float64     `json:"estimated_cost"`
 }

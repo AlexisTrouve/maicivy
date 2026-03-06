@@ -183,7 +183,7 @@ func (s *AIService) generateWithClaude(ctx context.Context, prompt, model string
 	metrics.TokensInput = int(resp.Usage.InputTokens)
 	metrics.TokensOutput = int(resp.Usage.OutputTokens)
 	metrics.TotalTokens = metrics.TokensInput + metrics.TokensOutput
-	metrics.EstimatedCost = s.calculateClaudeCost(metrics.TokensInput, metrics.TokensOutput)
+	metrics.EstimatedCost = s.calculateClaudeCost(metrics.TokensInput, metrics.TokensOutput, effectiveModel)
 	metrics.Success = true
 
 	s.recordMetrics(metrics)
@@ -258,13 +258,21 @@ func (s *AIService) generateWithOpenAI(ctx context.Context, prompt string) (stri
 	return text, metrics, nil
 }
 
-// calculateClaudeCost : estime coût Claude
-func (s *AIService) calculateClaudeCost(inputTokens, outputTokens int) float64 {
-	// Claude 3.5 Sonnet pricing (Dec 2024)
-	// Input: $3/MTok, Output: $15/MTok
-	inputCost := float64(inputTokens) / 1_000_000 * 3.0
-	outputCost := float64(outputTokens) / 1_000_000 * 15.0
-	return inputCost + outputCost
+// calculateClaudeCost : estime coût Claude selon le modèle effectif
+func (s *AIService) calculateClaudeCost(inputTokens, outputTokens int, model string) float64 {
+	var inputRate, outputRate float64
+	switch model {
+	case "claude-haiku-4-5-20251001", "claude-haiku-4-5":
+		// Haiku : $0.80/$4 par MTok
+		inputRate, outputRate = 0.80, 4.0
+	case "claude-opus-4-6", "claude-opus-4-5":
+		// Opus : $15/$75 par MTok
+		inputRate, outputRate = 15.0, 75.0
+	default:
+		// Sonnet (fallback) : $3/$15 par MTok
+		inputRate, outputRate = 3.0, 15.0
+	}
+	return float64(inputTokens)/1_000_000*inputRate + float64(outputTokens)/1_000_000*outputRate
 }
 
 // calculateOpenAICost : estime coût OpenAI
