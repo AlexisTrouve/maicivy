@@ -123,7 +123,9 @@ AVANT D'ÉCRIRE — raisonne en silence (ne montre pas ce raisonnement) :
 
 STRUCTURE :
 - "Bonjour," (1 ligne)
-- 1 phrase d'accroche : leur problème précis reformulé — une observation qui montre qu'on a réfléchi à LEUR contexte
+- ACCROCHE (1 phrase MAX) : leur problème business précis, formulé comme une observation factuelle sur LEUR situation. Zéro "je", zéro "vous cherchez quelqu'un". Pas une généralité sur leur secteur. Un fait précis sur leur contexte qui montre qu'on a lu l'annonce.
+  Exemple du bon registre : "Un organisme de formation santé qui prépare ses AO à la main en 2026, c'est beaucoup de temps brûlé sur des tâches que l'IA peut absorber."
+  Exemple du mauvais registre : "Vous cherchez quelqu'un qui sait transformer des outils dispersés en pipeline cohérent."
 - 1-2 phrases : preuve concrète, projet nommé si possible
 - 1 phrase si gap : honnête, directe, avec contre-argument factuel
 - %s
