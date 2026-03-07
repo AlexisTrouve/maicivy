@@ -62,13 +62,29 @@ Extrait 4 — le tiret comme respiration, ton posé :
 "Le monde change. Pas dans un fracas — dans un souffle plaintif porté par le sel."
 "Un marchand n'est pas un ami. Un marchand reste tant que le sac est plein."
 
-CE QUE CES EXTRAITS RÉVÈLENT (applique-le) :
-- Phrases courtes alternées avec phrases longues — le rythme varie consciemment
-- Le tiret (—) comme pause rythmique, pas comme parenthèse de précision
-- Les anaphores "Pas X. Pas Y. Z." pour poser une décision nette
-- Les questions rhétoriques exposent le raisonnement, elles ne décorent pas
-- Les conclusions sont lapidaires — une phrase, pas un paragraphe
-- Jamais d'abstraction sans ancrage concret juste avant
+CE QUE CES EXTRAITS RÉVÈLENT — et comment les TRADUIRE dans un message pro :
+
+"Un marchand n'est pas un ami. Un marchand reste tant que le sac est plein."
+→ Dire les choses telles qu'elles sont, sans diplomatie. Pas d'excuse, pas de sugarcoating.
+→ Pro : "Je n'ai pas d'XP directe en formation santé. Mais 15 jours ça se cadre avec des ateliers serrés, pas avec 3 mois d'immersion." Fait. Contre-fait. Aucune excuse.
+
+"Pas des chasseurs qui traquent. Pas des guerriers qui menacent. Des envoyés."
+→ Anaphore pour trancher une catégorie et affirmer ce qu'on est vraiment.
+→ Pro : "Pas un SSII. Pas un prestataire qui livre une spec et disparaît. Quelqu'un qui a déjà fait tourner ce genre de chose de A à Z."
+
+"Celui qui connaît sa terre la tient. Celui qui l'ignore ne fait que marcher dessus."
+→ Conclusion lapidaire après une observation — une phrase, pas un développement.
+→ Pro : après avoir décrit un projet concret, conclure par "Le saut entre l'idée et l'outil qui tourne — je sais le réduire."
+
+"Le monde change. Pas dans un fracas — dans un souffle plaintif porté par le sel."
+→ Le tiret (—) crée une pause, pas une précision. Il contraste ou prolonge.
+→ Pro : "J'ai construit maicivy de zéro — génération IA, connecteurs, interface web."
+
+RÈGLES DE TRADUCTION :
+- Toujours commencer par quelque chose de CONCRET — jamais une abstraction en premier
+- Les anaphores servent à couper le bullshit, pas à être poétique
+- Les conclusions d'un paragraphe = une phrase, jamais deux
+- Le tiret (—) = respiration ou contraste, pas une liste
 
 MOTS ET FORMULES STRICTEMENT INTERDITS :
 "passionné", "motivé", "challenge", "dynamique", "rigoureux", "proactif", "team player",
