@@ -71,17 +71,21 @@ func (h *LettersHandler) GenerateLetter(c *fiber.Ctx) error {
 		sessionID = c.Cookies("maicivy_session")
 	}
 
-	if sessionID == "" {
+	// Owner bypass : X-Owner-Key valide → pas besoin de session visiteur.
+	// Permet l'accès server-to-server (ex: indeed-outreach) sans cookie.
+	model := "claude-haiku-4-5-20251001"
+	if h.ownerAPIKey != "" && c.Get("X-Owner-Key") == h.ownerAPIKey {
+		if sessionID == "" {
+			sessionID = "owner-internal" // session stable pour les appels internes
+		}
+		model = "claude-opus-4-6" // owner → Opus
+	} else if sessionID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Session requise",
 			"code":  "SESSION_REQUIRED",
 		})
-	}
-
-	// Sélection du modèle : owner (X-Owner-Key valide) → Opus, visiteur → Haiku
-	// is_owner est positionné par le middleware AIRateLimit en cas de header valide
-	model := "claude-haiku-4-5-20251001"
-	if isOwner, _ := c.Locals("is_owner").(bool); isOwner {
+	} else if isOwner, _ := c.Locals("is_owner").(bool); isOwner {
+		// is_owner positionné par le middleware AIRateLimit (header valide côté browser)
 		model = "claude-opus-4-6"
 	}
 
