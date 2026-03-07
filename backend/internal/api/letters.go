@@ -210,7 +210,7 @@ func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
 	}
 
 	if dbErr != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if dbErr == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Lettre non trouvée",
 				"code":  "LETTER_NOT_FOUND",
