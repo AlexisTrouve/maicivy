@@ -178,33 +178,38 @@ func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
 		})
 	}
 
-	// Récupérer session ID pour vérifier ownership
-	sessionID, ok := c.Locals("session_id").(string)
-	if !ok || sessionID == "" {
-		sessionID = c.Cookies("maicivy_session")
-	}
-	if sessionID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Session requise",
-			"code":  "SESSION_REQUIRED",
-		})
-	}
+	// Owner bypass : accès direct sans vérification de propriété
+	isOwner := h.ownerAPIKey != "" && c.Get("X-Owner-Key") == h.ownerAPIKey
 
-	// Récupérer le visiteur
-	var visitor models.Visitor
-	result := h.db.Where("session_id = ?", sessionID).First(&visitor)
-	if result.Error != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Visiteur non trouvé",
-			"code":  "VISITOR_NOT_FOUND",
-		})
-	}
-
-	// Récupérer la lettre
 	var letter models.GeneratedLetter
-	result = h.db.Where("id = ? AND visitor_id = ?", letterID, visitor.ID).First(&letter)
+	var dbErr error
+	if isOwner {
+		// Owner : fetch par ID seul, pas de vérification visiteur
+		dbErr = h.db.Where("id = ?", letterID).First(&letter).Error
+	} else {
+		// Visiteur : vérifier ownership via session
+		sessionID, ok := c.Locals("session_id").(string)
+		if !ok || sessionID == "" {
+			sessionID = c.Cookies("maicivy_session")
+		}
+		if sessionID == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Session requise",
+				"code":  "SESSION_REQUIRED",
+			})
+		}
 
-	if result.Error != nil {
+		var visitor models.Visitor
+		if err := h.db.Where("session_id = ?", sessionID).First(&visitor).Error; err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Visiteur non trouvé",
+				"code":  "VISITOR_NOT_FOUND",
+			})
+		}
+		dbErr = h.db.Where("id = ? AND visitor_id = ?", letterID, visitor.ID).First(&letter).Error
+	}
+
+	if dbErr != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Lettre non trouvée",
@@ -214,7 +219,7 @@ func (h *LettersHandler) GetLetter(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Database error",
 			"code":    "DB_ERROR",
-			"details": result.Error.Error(),
+			"details": dbErr.Error(),
 		})
 	}
 
