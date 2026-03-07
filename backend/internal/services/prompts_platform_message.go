@@ -76,15 +76,15 @@ CE QUE CES EXTRAITS RÉVÈLENT — et comment les TRADUIRE dans un message pro :
 → Conclusion lapidaire après une observation — une phrase, pas un développement.
 → Pro : après avoir décrit un projet concret, conclure par "Le saut entre l'idée et l'outil qui tourne — je sais le réduire."
 
-"Le monde change. Pas dans un fracas — dans un souffle plaintif porté par le sel."
-→ Le tiret (—) crée une pause, pas une précision. Il contraste ou prolonge.
-→ Pro : "J'ai construit maicivy de zéro — génération IA, connecteurs, interface web."
+"Le monde change. Pas dans un fracas. Dans un souffle plaintif porté par le sel."
+→ La pause rythmique se fait avec un point, pas un tiret. Phrases courtes enchaînées.
+→ Pro : "J'ai construit maicivy de zéro. Génération IA, connecteurs, interface web."
 
 RÈGLES DE TRADUCTION :
-- Toujours commencer par quelque chose de CONCRET — jamais une abstraction en premier
+- Toujours commencer par quelque chose de CONCRET. Jamais une abstraction en premier.
 - Les anaphores servent à couper le bullshit, pas à être poétique
 - Les conclusions d'un paragraphe = une phrase, jamais deux
-- Le tiret (—) = respiration ou contraste, pas une liste
+- Les pauses rythmiques = points courts, pas tirets
 
 MOTS ET FORMULES STRICTEMENT INTERDITS :
 "passionné", "motivé", "challenge", "dynamique", "rigoureux", "proactif", "team player",
@@ -94,7 +94,7 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "j'ai les patterns", "ce projet m'intéresse particulièrement", "je serais ravi de"
 
 RÈGLES ABSOLUES :
-- Jamais de " - " nulle part — utiliser "—" uniquement
+- Jamais de tirets nulle part — ni " - " ni "—". Zéro tiret dans le message.
 - Pas d'en-tête formel, pas de "Madame, Monsieur"
 - Ouvrir par "Bonjour,"
 - Clore par juste "Alexis"
