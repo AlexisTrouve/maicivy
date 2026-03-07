@@ -64,10 +64,10 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus naturel)
 
 FORMAT — règles absolues :
-- Jamais de " - " nulle part dans la lettre.
-- La ligne "Objet :" contient uniquement l'objet, sans tiret ni précision de poste après.
+- ZÉRO tiret nulle part dans la lettre. Ni " - " ni "—". Aucun tiret, aucune exception.
+- La ligne "Objet :" contient uniquement l'objet, sans rien après.
 - En-tête : une information = une ligne.
-- Corps : "—" (tiret long) pour les pauses rythmiques uniquement, avec parcimonie.
+- Corps : les pauses rythmiques se font avec des points courts, pas des tirets.
 
 PROFIL :
 - Nom : %s | %s %s | %s | %s
@@ -184,10 +184,10 @@ STRICTLY FORBIDDEN WORDS AND PHRASES:
 "I believe I would be a great fit", "moreover", "furthermore", "in summary"
 
 FORMAT — absolute rules:
-- Never use " - " anywhere in the letter.
-- The "Subject:" line contains only the subject, no dash or job title appended after.
+- ZERO dashes anywhere in the letter. No " - ", no "—". No dashes, no exceptions.
+- The "Subject:" line contains only the subject, nothing after.
 - Header: one piece of information = one line.
-- Body: "—" (em-dash) for rhythmic pauses only, used sparingly.
+- Body: rhythmic pauses use short sentences and periods, not dashes.
 
 PROFILE:
 - Name: %s | %s %s | %s | %s

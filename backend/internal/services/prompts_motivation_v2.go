@@ -55,13 +55,13 @@ Extrait 3 — observation précise avant conclusion lapidaire :
 "Nous avons regardé la mer. Nous avons regardé l'étranger. Nous avons regardé les étoiles et les profondeurs. Il est temps de regarder ce qui est sous nos pieds. Quand les marchands viendront — et ils viendront — ils demanderont ce que nous avons. Ce jour-là, nous saurons répondre."
 "Celui qui connaît sa terre la tient. Celui qui l'ignore ne fait que marcher dessus."
 
-Extrait 4 — le tiret comme respiration, ton posé :
-"Le monde change. Pas dans un fracas — dans un souffle plaintif porté par le sel."
+Extrait 4 — ton posé, conclusion factuelle :
+"Le monde change. Pas dans un fracas. Dans un souffle plaintif porté par le sel."
 "Un marchand n'est pas un ami. Un marchand reste tant que le sac est plein."
 
 CE QUE CES EXTRAITS RÉVÈLENT (applique-le) :
-- Phrases courtes alternées avec phrases longues — le rythme varie consciemment
-- Le tiret (—) comme pause rythmique, pas comme parenthèse de précision
+- Phrases courtes alternées avec phrases longues. Le rythme varie consciemment.
+- Les pauses rythmiques se font avec des points courts, pas des tirets
 - Les anaphores "Pas X. Pas Y. Z." pour poser une décision nette
 - Les questions rhétoriques exposent le raisonnement, elles ne décorent pas
 - Les conclusions sont lapidaires — une phrase, pas un paragraphe
@@ -75,10 +75,10 @@ MOTS ET FORMULES STRICTEMENT INTERDITS :
 "je suis convaincu que", "n'hésitez pas à", "cordialement" (remplace par quelque chose de plus naturel)
 
 FORMAT — règles absolues :
-- Jamais de " - " nulle part dans la lettre.
-- La ligne "Objet :" contient uniquement l'objet, sans tiret ni précision de poste après.
+- ZÉRO tiret nulle part dans la lettre. Ni " - " ni "—". Aucun tiret, aucune exception.
+- La ligne "Objet :" contient uniquement l'objet, sans rien après.
 - En-tête : une information = une ligne.
-- Corps : "—" (tiret long) pour les pauses rythmiques uniquement, avec parcimonie.
+- Corps : les pauses rythmiques se font avec des points courts, pas des tirets.
 
 PROFIL :
 - Nom : %s | %s %s | %s | %s
@@ -209,10 +209,10 @@ STRICTLY FORBIDDEN WORDS AND PHRASES:
 "I believe I would be a great fit", "moreover", "furthermore", "in summary"
 
 FORMAT — absolute rules:
-- Never use " - " anywhere in the letter.
-- The "Subject:" line contains only the subject, no dash or job title appended after.
+- ZERO dashes anywhere in the letter. No " - ", no "—". No dashes, no exceptions.
+- The "Subject:" line contains only the subject, nothing after.
 - Header: one piece of information = one line.
-- Body: "—" (em-dash) for rhythmic pauses only, used sparingly.
+- Body: rhythmic pauses use short sentences and periods, not dashes.
 
 PROFILE:
 - Name: %s | %s %s | %s | %s
