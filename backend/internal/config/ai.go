@@ -8,10 +8,11 @@ import (
 
 type AIConfig struct {
 	// Providers
-	AnthropicAPIKey string
-	OpenAIAPIKey    string
-	PrimaryProvider string // "claude" ou "openai"
-	OwnerAPIKey     string // Clé secrète owner → tier premium (Opus)
+	AnthropicAPIKey  string
+	AnthropicBaseURL string // Proxy URL (ex: https://ai.etheryale.com)
+	OpenAIAPIKey     string
+	PrimaryProvider  string // "claude" ou "openai"
+	OwnerAPIKey      string // Clé secrète owner → tier premium (Opus)
 
 	// Models
 	ClaudeModel string
@@ -33,6 +34,7 @@ type AIConfig struct {
 func LoadAIConfig() *AIConfig {
 	return &AIConfig{
 		AnthropicAPIKey:      os.Getenv("ANTHROPIC_API_KEY"),
+		AnthropicBaseURL:     os.Getenv("ANTHROPIC_BASE_URL"),
 		OpenAIAPIKey:         os.Getenv("OPENAI_API_KEY"),
 		PrimaryProvider:      getEnvOrDefault("AI_PRIMARY_PROVIDER", "claude"),
 		OwnerAPIKey:          os.Getenv("MAICIVY_OWNER_API_KEY"),

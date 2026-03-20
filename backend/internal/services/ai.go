@@ -58,11 +58,15 @@ func NewAIService(cfg *config.AIConfig, metrics MetricsRecorder) (*AIService, er
 		metricsRecorder: metrics,
 	}
 
-	// Initialize Claude client
+	// Initialize Claude client (supporte proxy via AnthropicBaseURL)
 	if cfg.AnthropicAPIKey != "" {
-		client := anthropic.NewClient(
+		opts := []option.RequestOption{
 			option.WithAPIKey(cfg.AnthropicAPIKey),
-		)
+		}
+		if cfg.AnthropicBaseURL != "" {
+			opts = append(opts, option.WithBaseURL(cfg.AnthropicBaseURL))
+		}
+		client := anthropic.NewClient(opts...)
 		svc.claudeClient = &client
 	}
 
