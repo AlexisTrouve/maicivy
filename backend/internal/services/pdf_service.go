@@ -121,14 +121,14 @@ func (s *PDFService) htmlToPDF(html string) ([]byte, error) {
 	)
 
 	// Flags spécifiques aux conteneurs Linux (pas sur Windows/macOS)
-	// Notes: --single-process crashe Chromium récent; SwiftShader requis car pas de GPU dans le container
+	// --no-zygote : corrige "Failed global descriptor lookup" sur Chromium 140+ en container
+	// --single-process crashe Chromium récent, ne pas remettre
 	if runtime.GOOS == "linux" {
 		opts = append(opts,
 			chromedp.NoSandbox,
 			chromedp.Flag("disable-dev-shm-usage", true),
 			chromedp.Flag("disable-setuid-sandbox", true),
-			chromedp.Flag("use-angle", "swiftshader"),
-			chromedp.Flag("disable-gpu-sandbox", true),
+			chromedp.Flag("no-zygote", true),
 		)
 	}
 
