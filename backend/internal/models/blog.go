@@ -72,3 +72,23 @@ type BlogGenerateRequest struct {
 	CommitSHAs  []string `json:"commit_shas,omitempty"`
 	AutoSelect  bool     `json:"auto_select"` // Si true, sélectionne automatiquement les commits récents significatifs
 }
+
+// BlogCreateRequest représente une demande de création d'article directe (ex: WanMira)
+type BlogCreateRequest struct {
+	Title         string   `json:"title"`
+	Summary       string   `json:"summary"`
+	Content       string   `json:"content"`         // Markdown
+	ProjectName   string   `json:"project_name"`
+	Tags          []string `json:"tags"`
+	CoverImageURL string   `json:"cover_image_url,omitempty"`
+	Publish       bool     `json:"publish"`          // Si true, publie immédiatement
+}
+
+// BlogUpdateRequest représente une demande de mise à jour d'article
+type BlogUpdateRequest struct {
+	Title         *string  `json:"title,omitempty"`
+	Summary       *string  `json:"summary,omitempty"`
+	Content       *string  `json:"content,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	CoverImageURL *string  `json:"cover_image_url,omitempty"`
+}

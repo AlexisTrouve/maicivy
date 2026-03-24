@@ -397,3 +397,100 @@ func (s *BlogGeneratorService) UnpublishPost(ctx context.Context, postID uint) e
 func (s *BlogGeneratorService) DeletePost(ctx context.Context, postID uint) error {
 	return s.db.Delete(&models.BlogPost{}, postID).Error
 }
+
+// CreatePost crée un article directement depuis du contenu fourni (API externe, WanMira, etc.)
+func (s *BlogGeneratorService) CreatePost(ctx context.Context, req models.BlogCreateRequest) (*models.BlogPost, error) {
+	if req.Title == "" || req.Content == "" {
+		return nil, fmt.Errorf("title and content are required")
+	}
+
+	// Générer le slug depuis le titre
+	postSlug := slug.Make(req.Title)
+	if postSlug == "" {
+		postSlug = fmt.Sprintf("post-%d", time.Now().Unix())
+	}
+
+	// Vérifier l'unicité du slug, ajouter un suffix si besoin
+	var count int64
+	s.db.Model(&models.BlogPost{}).Where("slug = ?", postSlug).Count(&count)
+	if count > 0 {
+		postSlug = fmt.Sprintf("%s-%d", postSlug, time.Now().Unix())
+	}
+
+	// Convertir markdown → HTML
+	contentHTML := markdownToHTML(req.Content)
+
+	// Calculer le temps de lecture
+	wordCount := len(strings.Fields(req.Content))
+	readingTime := wordCount / 200
+	if readingTime < 1 {
+		readingTime = 1
+	}
+
+	now := time.Now()
+	post := &models.BlogPost{
+		Slug:               postSlug,
+		Title:              req.Title,
+		Summary:            req.Summary,
+		Content:            req.Content,
+		ContentHTML:        contentHTML,
+		ProjectName:        req.ProjectName,
+		Tags:               req.Tags,
+		CoverImageURL:      req.CoverImageURL,
+		ReadingTimeMinutes: readingTime,
+		Published:          req.Publish,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	if req.Publish {
+		post.PublishedAt = &now
+	}
+
+	if err := s.db.Create(post).Error; err != nil {
+		return nil, fmt.Errorf("failed to save blog post: %w", err)
+	}
+
+	log.Info().Str("slug", post.Slug).Bool("published", post.Published).Msg("Blog post created via API")
+	return post, nil
+}
+
+// UpdatePost met à jour un article existant
+func (s *BlogGeneratorService) UpdatePost(ctx context.Context, postID uint, req models.BlogUpdateRequest) (*models.BlogPost, error) {
+	var post models.BlogPost
+	if err := s.db.First(&post, postID).Error; err != nil {
+		return nil, fmt.Errorf("post not found: %w", err)
+	}
+
+	if req.Title != nil {
+		post.Title = *req.Title
+		post.Slug = slug.Make(*req.Title)
+	}
+	if req.Summary != nil {
+		post.Summary = *req.Summary
+	}
+	if req.Content != nil {
+		post.Content = *req.Content
+		post.ContentHTML = markdownToHTML(*req.Content)
+		// Recalculer le temps de lecture
+		wordCount := len(strings.Fields(*req.Content))
+		post.ReadingTimeMinutes = wordCount / 200
+		if post.ReadingTimeMinutes < 1 {
+			post.ReadingTimeMinutes = 1
+		}
+	}
+	if len(req.Tags) > 0 {
+		post.Tags = req.Tags
+	}
+	if req.CoverImageURL != nil {
+		post.CoverImageURL = *req.CoverImageURL
+	}
+
+	post.UpdatedAt = time.Now()
+
+	if err := s.db.Save(&post).Error; err != nil {
+		return nil, fmt.Errorf("failed to update blog post: %w", err)
+	}
+
+	return &post, nil
+}

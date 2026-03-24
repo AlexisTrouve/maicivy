@@ -46,6 +46,8 @@ func (h *BlogHandler) RegisterRoutes(router fiber.Router) {
 
 	// Admin routes — protégées par X-Owner-Key
 	admin := blog.Group("", h.ownerOnly)
+	admin.Post("/posts", h.CreatePost)
+	admin.Put("/posts/:id", h.UpdatePost)
 	admin.Post("/generate", h.GeneratePost)
 	admin.Post("/posts/:id/publish", h.PublishPost)
 	admin.Post("/posts/:id/unpublish", h.UnpublishPost)
@@ -104,6 +106,64 @@ func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(post)
+}
+
+// CreatePost crée un article directement depuis du contenu fourni
+// POST /api/v1/blog/posts
+// Body: {"title": "...", "summary": "...", "content": "markdown...", "tags": [...], "publish": true}
+func (h *BlogHandler) CreatePost(c *fiber.Ctx) error {
+	var req models.BlogCreateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "invalid_request",
+			"message": err.Error(),
+		})
+	}
+
+	post, err := h.blogService.CreatePost(c.Context(), req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "create_failed",
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"post":    post,
+	})
+}
+
+// UpdatePost met à jour un article existant
+// PUT /api/v1/blog/posts/:id
+func (h *BlogHandler) UpdatePost(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid_id",
+		})
+	}
+
+	var req models.BlogUpdateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "invalid_request",
+			"message": err.Error(),
+		})
+	}
+
+	post, err := h.blogService.UpdatePost(c.Context(), uint(id), req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "update_failed",
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"post":    post,
+	})
 }
 
 // GeneratePost génère un nouvel article depuis les commits
