@@ -121,20 +121,21 @@ func (s *PDFService) htmlToPDF(html string) ([]byte, error) {
 	)
 
 	// Flags spécifiques aux conteneurs Linux (pas sur Windows/macOS)
-	// --no-zygote : corrige "Failed global descriptor lookup" sur Chromium 140+ en container
-	// --single-process crashe Chromium récent, ne pas remettre
+	// --single-process : requis pour Chromium ~120 en container (Debian Bookworm)
 	if runtime.GOOS == "linux" {
 		opts = append(opts,
 			chromedp.NoSandbox,
 			chromedp.Flag("disable-dev-shm-usage", true),
 			chromedp.Flag("disable-setuid-sandbox", true),
-			chromedp.Flag("no-zygote", true),
+			chromedp.Flag("single-process", true),
 		)
 	}
 
-	// Custom Chrome path: CHROME_PATH > Alpine chromium-browser > défaut
+	// Custom Chrome path: CHROME_PATH > Debian /usr/bin/chromium > Alpine chromium-browser > défaut
 	if chromePath := os.Getenv("CHROME_PATH"); chromePath != "" {
 		opts = append(opts, chromedp.ExecPath(chromePath))
+	} else if _, err := os.Stat("/usr/bin/chromium"); err == nil {
+		opts = append(opts, chromedp.ExecPath("/usr/bin/chromium"))
 	} else if _, err := os.Stat("/usr/bin/chromium-browser"); err == nil {
 		opts = append(opts, chromedp.ExecPath("/usr/bin/chromium-browser"))
 	}

@@ -1,14 +1,14 @@
 # ============================================
-# Stage 1: Builder
+# Stage 1: Builder (Debian Bookworm / glibc)
 # ============================================
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24-bookworm AS builder
 
 # Build arguments
 ARG BUILD_DATE
 ARG VCS_REF
 
 # Install build dependencies
-RUN apk add --no-cache git gcc musl-dev
+RUN apt-get update && apt-get install -y --no-install-recommends git gcc && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ COPY . .
 # Update go.sum with any new dependencies
 RUN go mod tidy
 
-# Build binary
+# Build binary (CGO pour sqlite, glibc runtime)
 RUN CGO_ENABLED=1 GOOS=linux go build \
     -ldflags="-w -s -X main.version=${VCS_REF} -X main.buildDate=${BUILD_DATE}" \
     -a -installsuffix cgo \
@@ -30,27 +30,27 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
     ./cmd/main.go
 
 # ============================================
-# Stage 2: Runtime
+# Stage 2: Runtime (Debian Bookworm)
+# Alpine auto-update avait tiré Chromium 146 qui crashe sur kernels VPS.
+# Debian Bookworm = Chromium ~120, stable en headless container.
 # ============================================
-# alpine:latest avait Chromium 146 qui crashe sur kernels VPS (syscalls manquants)
-# alpine:3.19 = Chromium ~120, dernière version stable confirmée en container headless
-FROM alpine:3.19
+FROM debian:bookworm-slim
 
 # Install runtime dependencies including Chromium and fonts for PDF generation
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tzdata \
     curl \
     git \
     chromium \
-    font-noto \
-    font-noto-cjk \
-    ttf-dejavu \
-    fontconfig
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-dejavu \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN addgroup -g 1000 app && \
-    adduser -D -u 1000 -G app app
+RUN groupadd -g 1000 app && useradd -u 1000 -g app -m app
 
 WORKDIR /app
 
