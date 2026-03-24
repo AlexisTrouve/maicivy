@@ -106,6 +106,10 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    # Requis pour Chromium headless : les renderer processes ont besoin des syscalls
+    # bloqués par le seccomp default de Docker (clone3, sched_getscheduler, etc.)
+    security_opt:
+      - seccomp:unconfined
     volumes:
       - /home/debian:/repos:ro  # Accès lecture seule aux repos pour le scan
       - ./content:/content:ro  # Fichiers markdown CV (source de vérité)
