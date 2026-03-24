@@ -1,7 +1,9 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -10,6 +12,7 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+	"github.com/yuin/goldmark"
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"
@@ -154,6 +157,49 @@ Format de réponse (JSON):
 }`, projectName, commitList.String())
 }
 
+// aiArticleResponse structure JSON retournée par Claude
+type aiArticleResponse struct {
+	Title   string   `json:"title"`
+	Summary string   `json:"summary"`
+	Content string   `json:"content"`
+	Tags    []string `json:"tags"`
+}
+
+// extractJSON extrait le premier bloc JSON d'une réponse (gère les blocs ```json```)
+func extractJSON(response string) string {
+	// Chercher un bloc ```json ... ```
+	if start := strings.Index(response, "```json"); start >= 0 {
+		inner := response[start+7:]
+		if end := strings.Index(inner, "```"); end >= 0 {
+			return strings.TrimSpace(inner[:end])
+		}
+	}
+	// Chercher un bloc ``` ... ```
+	if start := strings.Index(response, "```"); start >= 0 {
+		inner := response[start+3:]
+		if end := strings.Index(inner, "```"); end >= 0 {
+			return strings.TrimSpace(inner[:end])
+		}
+	}
+	// Chercher le premier { ... } englobant
+	if start := strings.Index(response, "{"); start >= 0 {
+		if end := strings.LastIndex(response, "}"); end > start {
+			return response[start : end+1]
+		}
+	}
+	return response
+}
+
+// markdownToHTML convertit du markdown en HTML via goldmark
+func markdownToHTML(md string) string {
+	var buf bytes.Buffer
+	if err := goldmark.Convert([]byte(md), &buf); err != nil {
+		log.Warn().Err(err).Msg("Failed to convert markdown to HTML, returning raw content")
+		return md
+	}
+	return buf.String()
+}
+
 // parseAIResponse parse la réponse de l'IA et crée un BlogPost
 func (s *BlogGeneratorService) parseAIResponse(response string, projectName string, commits []models.CommitRef) *models.BlogPost {
 	// Valeurs par défaut si parsing échoue
@@ -162,9 +208,28 @@ func (s *BlogGeneratorService) parseAIResponse(response string, projectName stri
 	content := response
 	tags := []string{projectName, "development"}
 
-	// Essayer de parser le JSON de la réponse
-	// TODO: Parser JSON proprement avec encoding/json
-	// Pour l'instant, utiliser les valeurs extraites ou par défaut
+	// Parser le JSON de la réponse Claude
+	jsonStr := extractJSON(response)
+	var parsed aiArticleResponse
+	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
+		log.Warn().Err(err).Msg("Failed to parse AI response as JSON, using defaults")
+	} else {
+		if parsed.Title != "" {
+			title = parsed.Title
+		}
+		if parsed.Summary != "" {
+			summary = parsed.Summary
+		}
+		if parsed.Content != "" {
+			content = parsed.Content
+		}
+		if len(parsed.Tags) > 0 {
+			tags = parsed.Tags
+		}
+	}
+
+	// Convertir markdown → HTML
+	contentHTML := markdownToHTML(content)
 
 	// Générer le slug
 	postSlug := slug.Make(title)
@@ -186,7 +251,7 @@ func (s *BlogGeneratorService) parseAIResponse(response string, projectName stri
 		Title:                title,
 		Summary:              summary,
 		Content:              content,
-		ContentHTML:          "", // TODO: Convertir markdown → HTML
+		ContentHTML:          contentHTML,
 		ProjectName:          projectName,
 		Tags:                 tags,
 		GeneratedFromCommits: commits,

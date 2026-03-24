@@ -192,7 +192,7 @@ func main() {
 	messagesHandler := api.NewMessagesHandler(db, redisClient, letterGenerator, aiConfig.OwnerAPIKey)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
 	activityHandler := api.NewActivityHandler(repoScanner)
-	blogHandler := api.NewBlogHandler(blogGeneratorService)
+	blogHandler := api.NewBlogHandler(blogGeneratorService, aiConfig.OwnerAPIKey)
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	swaggerHandler := api.NewSwaggerHandler()

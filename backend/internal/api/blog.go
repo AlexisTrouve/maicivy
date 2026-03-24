@@ -2,6 +2,7 @@ package api
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -12,13 +13,26 @@ import (
 // BlogHandler gère les endpoints API du blog
 type BlogHandler struct {
 	blogService *services.BlogGeneratorService
+	ownerAPIKey string
 }
 
 // NewBlogHandler crée une nouvelle instance
-func NewBlogHandler(blogService *services.BlogGeneratorService) *BlogHandler {
+func NewBlogHandler(blogService *services.BlogGeneratorService, ownerAPIKey string) *BlogHandler {
 	return &BlogHandler{
 		blogService: blogService,
+		ownerAPIKey: ownerAPIKey,
 	}
+}
+
+// ownerOnly middleware qui vérifie la clé owner (X-Owner-Key header)
+func (h *BlogHandler) ownerOnly(c *fiber.Ctx) error {
+	if h.ownerAPIKey == "" || c.Get("X-Owner-Key") != h.ownerAPIKey {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "unauthorized",
+			"message": "Valid X-Owner-Key header required",
+		})
+	}
+	return c.Next()
 }
 
 // RegisterRoutes enregistre les routes du blog
@@ -30,11 +44,12 @@ func (h *BlogHandler) RegisterRoutes(router fiber.Router) {
 	blog.Get("/posts/:slug", h.GetPost)
 	blog.Get("/feed.xml", h.GetRSSFeed)
 
-	// Admin routes (TODO: add auth middleware)
-	blog.Post("/generate", h.GeneratePost)
-	blog.Post("/posts/:id/publish", h.PublishPost)
-	blog.Post("/posts/:id/unpublish", h.UnpublishPost)
-	blog.Delete("/posts/:id", h.DeletePost)
+	// Admin routes — protégées par X-Owner-Key
+	admin := blog.Group("", h.ownerOnly)
+	admin.Post("/generate", h.GeneratePost)
+	admin.Post("/posts/:id/publish", h.PublishPost)
+	admin.Post("/posts/:id/unpublish", h.UnpublishPost)
+	admin.Delete("/posts/:id", h.DeletePost)
 }
 
 // ListPosts retourne la liste des articles publiés
@@ -115,10 +130,17 @@ func (h *BlogHandler) GeneratePost(c *fiber.Ctx) error {
 		// Générer depuis l'activité récente
 		post, err = h.blogService.GenerateFromRecentActivity(c.Context(), req.ProjectName)
 	} else {
-		// TODO: Implémenter la génération depuis des commits spécifiques
-		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-			"error": "specific_commits_not_implemented",
-		})
+		// Générer depuis des commits spécifiques
+		var commits []models.CommitRef
+		for _, sha := range req.CommitSHAs {
+			commits = append(commits, models.CommitRef{
+				SHA:     sha,
+				Message: sha, // Le message sera enrichi par le service si dispo
+				Date:    time.Now().Format(time.RFC3339),
+				Project: req.ProjectName,
+			})
+		}
+		post, err = h.blogService.GenerateFromCommits(c.Context(), req.ProjectName, commits)
 	}
 
 	if err != nil {
