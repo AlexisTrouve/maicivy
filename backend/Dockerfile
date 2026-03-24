@@ -32,7 +32,9 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 # ============================================
 # Stage 2: Runtime
 # ============================================
-FROM alpine:latest
+# alpine:latest avait Chromium 146 qui crashe sur kernels VPS (syscalls manquants)
+# alpine:3.19 = Chromium ~120, dernière version stable confirmée en container headless
+FROM alpine:3.19
 
 # Install runtime dependencies including Chromium and fonts for PDF generation
 RUN apk add --no-cache \
