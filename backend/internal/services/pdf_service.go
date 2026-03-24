@@ -121,12 +121,12 @@ func (s *PDFService) htmlToPDF(html string) ([]byte, error) {
 	)
 
 	// Flags spécifiques aux conteneurs Linux (pas sur Windows/macOS)
+	// --single-process retiré : crashe Chromium dans les containers récents
 	if runtime.GOOS == "linux" {
 		opts = append(opts,
 			chromedp.NoSandbox,
 			chromedp.Flag("disable-dev-shm-usage", true),
 			chromedp.Flag("disable-setuid-sandbox", true),
-			chromedp.Flag("single-process", true),
 		)
 	}
 
