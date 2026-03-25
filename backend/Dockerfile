@@ -67,8 +67,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier headless-shell 120 depuis l'image officielle chromedp
-COPY --from=headless-chrome /headless-shell /usr/bin/headless-shell
+# Copier headless-shell + ses .so depuis l'image officielle chromedp
+# Le binaire est /headless-shell/headless-shell dans l'image source
+COPY --from=headless-chrome /headless-shell /opt/headless-shell
+RUN chmod +x /opt/headless-shell/headless-shell && \
+    ln -s /opt/headless-shell/headless-shell /usr/bin/headless-shell && \
+    echo "/opt/headless-shell" > /etc/ld.so.conf.d/headless-shell.conf && ldconfig
 
 # Create non-root user
 RUN groupadd -g 1000 app && useradd -u 1000 -g app -m app

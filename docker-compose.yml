@@ -78,7 +78,7 @@ services:
       SERVER_PORT: 8080
       SERVER_ENV: ${SERVER_ENV:-development}
       # Chrome for PDF generation (headless-shell 120, stable sur VPS)
-      CHROME_PATH: /usr/bin/headless-shell
+      CHROME_PATH: /opt/headless-shell/headless-shell
       # API Keys (to be set in .env)
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
