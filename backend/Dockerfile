@@ -1,4 +1,11 @@
 # ============================================
+# Stage 0: Headless Chrome 120 (stable en containers VPS)
+# Alpine et Debian ont tous les deux Chromium 146 qui crashe sur kernels restreints.
+# chromedp/headless-shell:120 est le binaire officiel testé pour headless en container.
+# ============================================
+FROM chromedp/headless-shell:120.0.6099.109 AS headless-chrome
+
+# ============================================
 # Stage 1: Builder (Debian Bookworm / glibc)
 # ============================================
 FROM golang:1.24-bookworm AS builder
@@ -36,18 +43,32 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 # ============================================
 FROM debian:bookworm-slim
 
-# Install runtime dependencies including Chromium and fonts for PDF generation
+# Install runtime dependencies (pas de chromium system — on utilise headless-shell 120)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tzdata \
     curl \
     git \
-    chromium \
     fonts-noto \
     fonts-noto-cjk \
     fonts-dejavu \
     fontconfig \
+    libglib2.0-0 \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
+
+# Copier headless-shell 120 depuis l'image officielle chromedp
+COPY --from=headless-chrome /headless-shell /usr/bin/headless-shell
 
 # Create non-root user
 RUN groupadd -g 1000 app && useradd -u 1000 -g app -m app
