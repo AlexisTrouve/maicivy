@@ -3,7 +3,7 @@
 # Alpine et Debian ont tous les deux Chromium 146 qui crashe sur kernels restreints.
 # chromedp/headless-shell:120 est le binaire officiel testé pour headless en container.
 # ============================================
-FROM chromedp/headless-shell:120.0.6099.109 AS headless-chrome
+FROM chromedp/headless-shell:123.0.6312.58 AS headless-chrome
 
 # ============================================
 # Stage 1: Builder (Debian Bookworm / glibc)
