@@ -24,11 +24,19 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
 
   return (
     <article className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600">
-      {/* Cover image placeholder */}
-      <div className="h-48 bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 flex items-center justify-center">
-        <div className="text-4xl font-bold text-blue-500/30 dark:text-blue-400/30">
-          {post.project_name.slice(0, 2).toUpperCase()}
-        </div>
+      {/* Cover image — SVG/image si dispo, sinon placeholder gradient */}
+      <div className="h-48 bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 flex items-center justify-center overflow-hidden">
+        {post.cover_image_url ? (
+          <img
+            src={post.cover_image_url}
+            alt={post.title}
+            className="w-full h-full object-contain p-4"
+          />
+        ) : (
+          <div className="text-4xl font-bold text-blue-500/30 dark:text-blue-400/30">
+            {post.project_name.slice(0, 2).toUpperCase()}
+          </div>
+        )}
       </div>
 
       <div className="p-6">
