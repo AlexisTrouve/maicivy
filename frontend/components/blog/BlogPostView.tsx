@@ -49,6 +49,17 @@ export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
           ))}
         </div>
 
+        {/* Cover image — affichée en header si présente */}
+        {post.cover_image_url && (
+          <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 p-4">
+            <img
+              src={post.cover_image_url}
+              alt={post.title}
+              className="w-full max-h-80 object-contain"
+            />
+          </div>
+        )}
+
         {/* Title */}
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
           {post.title}
