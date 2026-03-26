@@ -19,6 +19,7 @@ export function Header() {
     { name: t('cv'), href: '/cv' },
     { name: t('letters'), href: '/letters' },
     { name: t('analytics'), href: '/analytics' },
+    { name: t('blog'), href: '/blog' },
   ];
 
   return (
