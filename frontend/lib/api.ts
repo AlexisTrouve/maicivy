@@ -102,8 +102,9 @@ export class ApiClient {
 
   /**
    * GET request
+   * fetchOptions permet de passer des options fetch supplémentaires (ex: cache: 'no-store')
    */
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  async get<T>(endpoint: string, params?: Record<string, string>, fetchOptions?: RequestInit): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
 
     if (params) {
@@ -114,6 +115,7 @@ export class ApiClient {
 
     return this.fetchWithRetry<T>(url.toString(), {
       method: 'GET',
+      ...fetchOptions,
     });
   }
 
@@ -400,13 +402,17 @@ export const timelineApi = {
 };
 
 // Blog API (Articles générés depuis commits)
+// cache: 'no-store' sur tous les calls — le contenu change côté DB sans rebuild Next.js,
+// le cache fetch SSR servirait des versions stales jusqu'au prochain restart du container.
+const NO_CACHE: RequestInit = { cache: 'no-store' };
+
 export const blogApi = {
   // List published posts
   getPosts: (page = 1, perPage = 10) =>
     api.get<import('./types').BlogPostListResponse>('/api/v1/blog/posts', {
       page: page.toString(),
       per_page: perPage.toString(),
-    }),
+    }, NO_CACHE),
 
   // List all posts (admin)
   getAllPosts: (page = 1, perPage = 10) =>
@@ -414,11 +420,11 @@ export const blogApi = {
       page: page.toString(),
       per_page: perPage.toString(),
       all: 'true',
-    }),
+    }, NO_CACHE),
 
   // Get single post by slug
   getPost: (slug: string) =>
-    api.get<import('./types').BlogPost>(`/api/v1/blog/posts/${slug}`),
+    api.get<import('./types').BlogPost>(`/api/v1/blog/posts/${slug}`, undefined, NO_CACHE),
 
   // Generate new post from project activity
   generate: (projectName: string, autoSelect = true) =>
