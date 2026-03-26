@@ -12,10 +12,13 @@ interface BlogCardProps {
 export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+    // toLocaleString avec timezone auto-détectée par le browser
+    return date.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
