@@ -13,6 +13,10 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
+	"github.com/alecthomas/chroma/v2/styles"
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"
@@ -190,10 +194,27 @@ func extractJSON(response string) string {
 	return response
 }
 
-// markdownToHTML convertit du markdown en HTML via goldmark
+// markdownParser est l'instance goldmark configurée avec toutes les extensions
+var markdownParser = goldmark.New(
+	goldmark.WithExtensions(
+		// GFM : tables, strikethrough, autolinks, task lists
+		extension.GFM,
+		// Syntax highlighting via chroma (thème github)
+		highlighting.NewHighlighting(
+			highlighting.WithStyle(styles.Get("github").Name),
+			highlighting.WithGuessLanguage(true),
+		),
+	),
+	goldmark.WithRendererOptions(
+		// Autorise le HTML brut dans le markdown (utile pour les embeds)
+		html.WithUnsafe(),
+	),
+)
+
+// markdownToHTML convertit du markdown en HTML via goldmark avec extensions GFM + highlighting
 func markdownToHTML(md string) string {
 	var buf bytes.Buffer
-	if err := goldmark.Convert([]byte(md), &buf); err != nil {
+	if err := markdownParser.Convert([]byte(md), &buf); err != nil {
 		log.Warn().Err(err).Msg("Failed to convert markdown to HTML, returning raw content")
 		return md
 	}
