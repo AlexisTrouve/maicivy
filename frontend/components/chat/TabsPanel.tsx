@@ -4,13 +4,15 @@ import { DefaultFiche } from './DefaultFiche';
 import { ProjectFiche } from './ProjectFiche';
 import { ProjectListFiche } from './ProjectListFiche';
 import { SkillsFiche } from './SkillsFiche';
+import { BlogFiche } from './BlogFiche';
+import { BlogListFiche } from './BlogListFiche';
 
 // Un onglet représente une fiche ouverte dans le panel droit.
 // panelType correspond aux types de fiches existants.
 export interface Tab {
-  id: string;           // clé unique : "project:aria", "skills", "experience", "projects"
-  label: string;        // "Aria", "Skills", "Expérience", "Projets"
-  panelType: 'project' | 'project_list' | 'skills' | 'experience';
+  id: string;           // clé unique : "project:aria", "skills", "experience", "projects", "blog:slug"
+  label: string;        // "Aria", "Skills", "Expérience", "Projets", titre article
+  panelType: 'project' | 'project_list' | 'skills' | 'experience' | 'blog' | 'blog_list';
   data: unknown;
 }
 
@@ -34,6 +36,12 @@ function FicheContent({ tab }: { tab: Tab }) {
     case 'experience':
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return <SkillsFiche data={tab.data as any} />;
+    case 'blog':
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return <BlogFiche data={tab.data as any} />;
+    case 'blog_list':
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return <BlogListFiche data={tab.data as any} />;
     default:
       return null;
   }

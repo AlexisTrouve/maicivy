@@ -43,12 +43,13 @@ type ChatMessage struct {
 type ChatService struct {
 	client    *anthropic.Client
 	portfolio *PortfolioService
-	model     string // modèle par défaut
+	blog      *BlogGeneratorService // pour les tools show_blog_*
+	model     string                // modèle par défaut
 }
 
 // NewChatService crée un ChatService avec le client Anthropic configuré.
 // Utilise ChatAPIKey si défini, sinon fallback sur AnthropicAPIKey.
-func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService) *ChatService {
+func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService, blog *BlogGeneratorService) *ChatService {
 	apiKey := cfg.ChatAPIKey
 	if apiKey == "" {
 		apiKey = cfg.AnthropicAPIKey
@@ -64,6 +65,7 @@ func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService) *ChatServ
 	return &ChatService{
 		client:    &client,
 		portfolio: portfolio,
+		blog:      blog,
 		model:     "claude-haiku-4-5-20251001", // modèle par défaut (visiteurs)
 	}
 }
@@ -240,7 +242,23 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 			"Affiche le profil freelance (bio, TJM, expériences) dans le panel droit. Appelle ce tool quand l'utilisateur veut en savoir plus sur le parcours d'Alexi.",
 			emptySchema),
 
-		// --- Tool de tip (affiche un conseil contextuel persistant dans la barre latérale) ---
+		// --- Tools blog (affichent un article ou la liste dans le panel droit) ---
+		makeTool("show_blog_article",
+			"Affiche un article de blog dans le panel droit. Utilise ce tool quand l'utilisateur parle d'un article ou demande à en voir un spécifique.",
+			anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"slug": map[string]interface{}{
+						"type":        "string",
+						"description": "Slug de l'article (ex: building-a-persistent-multi-agent-ide)",
+					},
+				},
+				Required: []string{"slug"},
+			}),
+		makeTool("show_blog_list",
+			"Affiche la liste des articles de blog récents dans le panel droit. Utilise ce tool quand l'utilisateur demande les articles ou le blog.",
+			emptySchema),
+
+		// --- Tool de tip (affiche un conseil contextuel persistant dans la barre latérale gauche) ---
 		makeTool("add_tip",
 			"Affiche un conseil contextuel persistant dans la barre latérale. Utilise-le pour donner des insights courts qui restent visibles pendant la conversation.",
 			anthropic.ToolInputSchemaParam{
@@ -313,6 +331,30 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	case "show_experience":
 		return s.portfolio.GetExperience(), nil
 
+	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit
+	case "show_blog_article":
+		inputMap, ok := input.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid input for show_blog_article")
+		}
+		postSlug, ok := inputMap["slug"].(string)
+		if !ok || postSlug == "" {
+			return nil, fmt.Errorf("missing slug")
+		}
+		post, err := s.blog.GetPostBySlug(context.Background(), postSlug)
+		if err != nil {
+			return map[string]string{"error": fmt.Sprintf("Article '%s' non trouvé", postSlug)}, nil
+		}
+		return post, nil
+
+	// show_blog_list — liste les articles publiés récents pour le panel droit
+	case "show_blog_list":
+		resp, err := s.blog.GetPublishedPosts(context.Background(), 1, 10)
+		if err != nil {
+			return map[string]string{"error": "Impossible de récupérer les articles"}, nil
+		}
+		return resp, nil
+
 	// add_tip — pas de logique backend, le frontend gère l'affichage via le tool_result
 	case "add_tip":
 		return map[string]bool{"ok": true}, nil
@@ -334,6 +376,8 @@ Tu as deux types de tools :
    - show_projects() → quand l'utilisateur veut voir les projets ou demande un aperçu
    - show_skills() → quand la conversation porte sur les compétences techniques
    - show_experience() → quand l'utilisateur veut en savoir plus sur le parcours d'Alexi
+   - show_blog_article(slug) → quand l'utilisateur veut voir un article de blog spécifique
+   - show_blog_list() → quand l'utilisateur parle du blog ou demande les derniers articles
 
 2. **Tools de données** (get_*, list_*) → pour récupérer des infos et synthétiser une réponse textuelle.
 

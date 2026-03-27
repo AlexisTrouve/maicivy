@@ -264,7 +264,7 @@ func main() {
 
 	// Routes Chat portfolio (interface conversationnelle avec tool_use)
 	portfolioService := services.NewPortfolioService()
-	chatService := services.NewChatService(aiConfig, portfolioService)
+	chatService := services.NewChatService(aiConfig, portfolioService, blogGeneratorService)
 	chatHandler := api.NewChatHandler(chatService, aiConfig.OwnerAPIKey)
 	chatGroup := apiV1.Group("/chat")
 	chatGroup.Post("/stream", aiRateLimitMW, chatHandler.StreamChat)

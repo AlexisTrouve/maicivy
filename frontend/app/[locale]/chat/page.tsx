@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ChatPanel } from '@/components/chat/ChatPanel';
-import { CenterZone } from '@/components/chat/CenterZone';
+import { LeftPanel } from '@/components/chat/LeftPanel';
 import { RightPanel } from '@/components/chat/RightPanel';
 import { Tab } from '@/components/chat/TabsPanel';
 import { Tip } from '@/components/chat/TipBar';
@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
 
 // MAX_TABS : on garde seulement 4 onglets, le plus ancien est éjecté si overflow
 const MAX_TABS = 4;
-// MAX_TIPS : on garde 2 tips max (FIFO)
-const MAX_TIPS = 2;
+// MAX_TIPS : on garde 3 tips max dans le LeftPanel (FIFO)
+const MAX_TIPS = 3;
 
 // Calcule le label d'un onglet depuis le panelType + les données
 function tabLabel(panelType: Tab['panelType'], data: unknown): string {
@@ -23,6 +23,12 @@ function tabLabel(panelType: Tab['panelType'], data: unknown): string {
   if (panelType === 'project_list') return 'Projets';
   if (panelType === 'skills') return 'Skills';
   if (panelType === 'experience') return 'Expérience';
+  if (panelType === 'blog' && data && typeof data === 'object' && 'title' in data) {
+    // Truncate le titre pour l'onglet
+    const title = String((data as { title: string }).title);
+    return title.length > 20 ? title.slice(0, 20) + '…' : title;
+  }
+  if (panelType === 'blog_list') return 'Blog';
   return 'Fiche';
 }
 
@@ -30,6 +36,9 @@ export default function ChatPage() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [tips, setTips] = useState<Tip[]>([]);
+
+  // Message externe déclenché depuis LeftPanel (hint click)
+  const [externalMessage, setExternalMessage] = useState<string | null>(null);
 
   // pushTab : ouvre ou met à jour un onglet selon sa clé.
   // Si la clé existe déjà → update les data en place.
@@ -39,12 +48,10 @@ export default function ChatPage() {
     setTabs((prev) => {
       const existingIdx = prev.findIndex((t) => t.id === key);
       if (existingIdx !== -1) {
-        // Update les data de l'onglet existant (ex : réponse plus fraîche)
         const updated = [...prev];
         updated[existingIdx] = { ...updated[existingIdx], data, label };
         return updated;
       }
-      // Nouvel onglet — prepend et cap à MAX_TABS
       const newTab: Tab = { id: key, label, panelType, data };
       return [newTab, ...prev].slice(0, MAX_TABS);
     });
@@ -57,7 +64,6 @@ export default function ChatPage() {
       // --- Fiches projet ---
       case 'get_project':
       case 'show_project': {
-        // Clé unique par projet (ex: "project:aria")
         const projectName =
           data && typeof data === 'object' && 'name' in data
             ? String((data as { name: string }).name).toLowerCase()
@@ -84,7 +90,20 @@ export default function ChatPage() {
         pushTab('experience', 'experience', data);
         break;
 
-      // --- Tips latéraux (FIFO max 2) ---
+      // --- Article de blog ---
+      case 'show_blog_article': {
+        const blogData = data as { slug?: string; title?: string } | null;
+        const slug = blogData?.slug ?? 'article';
+        pushTab(`blog:${slug}`, 'blog', data);
+        break;
+      }
+
+      // --- Liste des articles de blog ---
+      case 'show_blog_list':
+        pushTab('blog_list', 'blog_list', data);
+        break;
+
+      // --- Tips latéraux dans LeftPanel (FIFO max 3) ---
       case 'add_tip': {
         const tipData = data as { text?: string; icon?: string } | null;
         if (!tipData?.text) break;
@@ -93,7 +112,6 @@ export default function ChatPage() {
           text: tipData.text,
           icon: tipData.icon,
         };
-        // FIFO : on garde les MAX_TIPS derniers
         setTips((prev) => [...prev, newTip].slice(-MAX_TIPS));
         break;
       }
@@ -120,24 +138,42 @@ export default function ChatPage() {
     });
   }, []);
 
+  // Clic sur un hint → déclenche l'envoi dans ChatPanel via externalMessage
+  const handleHintClick = useCallback((message: string) => {
+    setExternalMessage(message);
+  }, []);
+
+  // Reset externalMessage après envoi (callback depuis ChatPanel)
+  const handleExternalMessageSent = useCallback(() => {
+    setExternalMessage(null);
+  }, []);
+
   return (
     // Hauteur = 100vh - hauteur header (64px = h-16)
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
-      {/* Panel gauche : chat (40%) */}
-      <div className="w-[40%] border-r flex flex-col">
-        <ChatPanel onToolResult={handleToolResult} />
+      {/* LeftPanel : tips + hints (20%) */}
+      <div className="w-[20%] shrink-0">
+        <LeftPanel
+          tips={tips}
+          onTipClose={handleTipClose}
+          onHintClick={handleHintClick}
+        />
       </div>
 
-      {/* Zone centrale réservée (20%) */}
-      <CenterZone />
+      {/* ChatPanel au centre (40%) */}
+      <div className="w-[40%] border-x flex flex-col shrink-0">
+        <ChatPanel
+          onToolResult={handleToolResult}
+          externalMessage={externalMessage}
+          onExternalMessageSent={handleExternalMessageSent}
+        />
+      </div>
 
-      {/* Panel droit : tips + onglets (40%) */}
+      {/* RightPanel : onglets fiches (40%) */}
       <div className="w-[40%] border-l">
         <RightPanel
-          tips={tips}
           tabs={tabs}
           activeTabId={activeTabId}
-          onTipClose={handleTipClose}
           onTabClick={handleTabClick}
           onTabClose={handleTabClose}
         />

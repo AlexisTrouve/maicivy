@@ -14,9 +14,13 @@ type DisplayItem =
 interface ChatPanelProps {
   // Remonte les données tool_result pour mettre à jour le panel droit
   onToolResult: (toolName: string, data: unknown) => void;
+  // Message déclenché depuis l'extérieur (ex: clic sur un hint)
+  externalMessage?: string | null;
+  // Callback appelé après envoi du message externe pour reset le state parent
+  onExternalMessageSent?: () => void;
 }
 
-export function ChatPanel({ onToolResult }: ChatPanelProps) {
+export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent }: ChatPanelProps) {
   const [items, setItems] = useState<DisplayItem[]>([]);
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -34,11 +38,11 @@ export function ChatPanel({ onToolResult }: ChatPanelProps) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [items, streamingText]);
 
-  const sendMessage = useCallback(async () => {
-    const msg = input.trim();
+  // sendMessageWithText — logique d'envoi découplée de l'état input.
+  // Appelée par sendMessage (via input) et par le trigger externe (hint click).
+  const sendMessageWithText = useCallback(async (msg: string) => {
     if (!msg || isStreaming) return;
 
-    setInput('');
     setIsStreaming(true);
     setStreamingText('');
 
@@ -104,9 +108,27 @@ export function ChatPanel({ onToolResult }: ChatPanelProps) {
       },
       abortRef.current.signal,
     );
-  }, [input, isStreaming, history, onToolResult]);
+  }, [isStreaming, history, onToolResult]);
 
-  // Envoyer avec Cmd/Ctrl+Entrée ou Entrée seul (Shift+Entrée = saut de ligne)
+  // sendMessage — wrapper qui lit input et le réinitialise après envoi
+  const sendMessage = useCallback(() => {
+    const msg = input.trim();
+    if (!msg) return;
+    setInput('');
+    sendMessageWithText(msg);
+  }, [input, sendMessageWithText]);
+
+  // Trigger externe : hint click → envoie un message dans le chat
+  useEffect(() => {
+    if (externalMessage && !isStreaming) {
+      sendMessageWithText(externalMessage);
+      onExternalMessageSent?.();
+    }
+    // On ne dépend pas de isStreaming pour éviter un double envoi
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalMessage]);
+
+  // Envoyer avec Entrée seul (Shift+Entrée = saut de ligne)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
