@@ -85,6 +85,7 @@ services:
       # Proxy Anthropic (LLM scoring + CV generation)
       ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      CHAT_API_KEY: ${CHAT_API_KEY}
       # Owner API key — bypass session/rate-limit pour appels server-to-server (ex: indeed-outreach)
       MAICIVY_OWNER_API_KEY: ${MAICIVY_OWNER_API_KEY}
       # Repos scanner
