@@ -277,12 +277,27 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 	}
 }
 
+// parseInput décode l'input tool (json.RawMessage ou map) en map[string]interface{}
+func parseInput(input interface{}) (map[string]interface{}, bool) {
+	// Cas normal : l'SDK passe un json.RawMessage ([]byte) — on le décode
+	if raw, ok := input.(json.RawMessage); ok {
+		var m map[string]interface{}
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil, false
+		}
+		return m, true
+	}
+	// Fallback : parfois déjà décodé en map
+	m, ok := input.(map[string]interface{})
+	return m, ok
+}
+
 // executeTool appelle la méthode PortfolioService correspondante
 func (s *ChatService) executeTool(name string, input interface{}) (interface{}, error) {
 	switch name {
 	case "get_project":
 		// Extraire le paramètre "name" depuis l'input
-		inputMap, ok := input.(map[string]interface{})
+		inputMap, ok := parseInput(input)
 		if !ok {
 			return nil, fmt.Errorf("invalid input for get_project")
 		}
@@ -308,7 +323,7 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	// Tools d'affichage — même logique que les tools de données,
 	// mais le frontend réagit à leur tool_result pour updater le panel droit.
 	case "show_project":
-		inputMap, ok := input.(map[string]interface{})
+		inputMap, ok := parseInput(input)
 		if !ok {
 			return nil, fmt.Errorf("invalid input for show_project")
 		}
@@ -333,7 +348,7 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 
 	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit
 	case "show_blog_article":
-		inputMap, ok := input.(map[string]interface{})
+		inputMap, ok := parseInput(input)
 		if !ok {
 			return nil, fmt.Errorf("invalid input for show_blog_article")
 		}
