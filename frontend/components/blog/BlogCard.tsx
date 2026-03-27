@@ -23,7 +23,8 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
   };
 
   return (
-    <article className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600">
+    <Link href={`/${locale}/blog/${post.slug}`} className="block">
+    <article className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer">
       {/* Cover image — SVG/image si dispo, sinon placeholder gradient */}
       <div className="h-48 bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 flex items-center justify-center overflow-hidden">
         {post.cover_image_url ? (
@@ -57,7 +58,7 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
 
         {/* Title */}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          <Link href={`/${locale}/blog/${post.slug}`}>{post.title}</Link>
+          {post.title}
         </h2>
 
         {/* Summary */}
@@ -77,5 +78,6 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
         </div>
       </div>
     </article>
+    </Link>
   );
 }
