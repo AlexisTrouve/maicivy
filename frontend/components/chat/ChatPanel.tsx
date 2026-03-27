@@ -24,13 +24,14 @@ export function ChatPanel({ onToolResult }: ChatPanelProps) {
   // Accumulateur pour le texte assistant en cours de streaming
   const [streamingText, setStreamingText] = useState('');
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Scroll auto vers le bas à chaque nouveau contenu
+  // Scroll le container du chat vers le bas — sans toucher à la window
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [items, streamingText]);
 
   const sendMessage = useCallback(async () => {
@@ -116,7 +117,7 @@ export function ChatPanel({ onToolResult }: ChatPanelProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Zone messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <p className="text-lg font-medium mb-2">👋 Bonjour !</p>
@@ -148,7 +149,6 @@ export function ChatPanel({ onToolResult }: ChatPanelProps) {
           </div>
         )}
 
-        <div ref={bottomRef} />
       </div>
 
       {/* Zone input */}
