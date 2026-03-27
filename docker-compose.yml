@@ -145,7 +145,11 @@ services:
       retries: 5
       start_period: 45s
     restart: unless-stopped
-    # Note: volume mounts removed for production (built app is in container)
+    volumes:
+      # WanMira écrit les SVGs directement sur le VPS — volume mount pour qu'ils soient
+      # visibles dans le container sans rebuild
+      - ./frontend/public/blog:/app/public/blog
+    # Note: seul public/blog/ est monté en volume, le reste est dans l'image buildée
 
 volumes:
   postgres-data:
