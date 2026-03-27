@@ -262,6 +262,13 @@ func main() {
 	apiV1.Get("/profile/detect", profileHandler.GetDetect)
 	apiV1.Get("/profile/current", profileHandler.GetCurrentProfile)
 
+	// Routes Chat portfolio (interface conversationnelle avec tool_use)
+	portfolioService := services.NewPortfolioService()
+	chatService := services.NewChatService(aiConfig, portfolioService)
+	chatHandler := api.NewChatHandler(chatService, aiConfig.OwnerAPIKey)
+	chatGroup := apiV1.Group("/chat")
+	chatGroup.Post("/stream", aiRateLimitMW, chatHandler.StreamChat)
+
 	// Routes Visitor (Tracking & Access Gate)
 	apiV1.Get("/visitors/check", visitorHandler.CheckVisitorStatus)
 	apiV1.Get("/visitor/status", visitorHandler.GetVisitorStatus)

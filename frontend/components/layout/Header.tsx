@@ -18,6 +18,7 @@ export function Header() {
     { name: t('home'), href: '/' },
     { name: t('cv'), href: '/cv' },
     { name: t('letters'), href: '/letters' },
+    { name: t('chat'), href: '/chat' },
     { name: t('analytics'), href: '/analytics' },
     { name: t('blog'), href: '/blog' },
   ];
