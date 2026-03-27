@@ -16,19 +16,24 @@ export default function ChatPage() {
   // Met à jour le panel droit selon le tool utilisé
   const handleToolResult = useCallback((toolName: string, data: unknown) => {
     switch (toolName) {
+      // Tools de données — mettent aussi à jour le panel
       case 'get_project':
+      case 'show_project':
         setActivePanel('project');
         setPanelData(data);
         break;
       case 'list_projects':
+      case 'show_projects':
         setActivePanel('project_list');
         setPanelData(data);
         break;
       case 'list_skills':
+      case 'show_skills':
         setActivePanel('skills');
         setPanelData(data);
         break;
       case 'get_experience':
+      case 'show_experience':
         setActivePanel('experience');
         setPanelData(data);
         break;

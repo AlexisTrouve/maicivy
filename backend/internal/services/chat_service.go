@@ -200,35 +200,45 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 		return anthropic.ToolUnionParam{OfTool: &p}
 	}
 
-	return []anthropic.ToolUnionParam{
-		makeTool(
-			"get_project",
-			"Récupère les détails complets d'un projet du portfolio (stack, features, stats). Utilise ce tool quand l'utilisateur demande des infos sur un projet spécifique.",
-			anthropic.ToolInputSchemaParam{
-				Properties: map[string]interface{}{
-					"name": map[string]interface{}{
-						"type":        "string",
-						"description": "Nom du projet (ex: aria, maicivy, cogesco, liveconf, freelance-dashboard)",
-					},
-				},
-				Required: []string{"name"},
+	projectNameSchema := anthropic.ToolInputSchemaParam{
+		Properties: map[string]interface{}{
+			"name": map[string]interface{}{
+				"type":        "string",
+				"description": "Nom du projet (ex: aria, maicivy, cogesco, liveconf, freelance-dashboard)",
 			},
-		),
-		makeTool(
-			"list_projects",
-			"Liste tous les projets du portfolio avec leurs informations de base. Utilise ce tool quand l'utilisateur demande à voir les projets ou un aperçu général.",
-			anthropic.ToolInputSchemaParam{Properties: map[string]interface{}{}},
-		),
-		makeTool(
-			"list_skills",
-			"Liste les compétences techniques d'Alexi groupées par catégorie (Languages, Backend, Frontend, Data, AI/ML, Infra).",
-			anthropic.ToolInputSchemaParam{Properties: map[string]interface{}{}},
-		),
-		makeTool(
-			"get_experience",
-			"Retourne la bio, le headline freelance, le TJM et les expériences professionnelles d'Alexi.",
-			anthropic.ToolInputSchemaParam{Properties: map[string]interface{}{}},
-		),
+		},
+		Required: []string{"name"},
+	}
+	emptySchema := anthropic.ToolInputSchemaParam{Properties: map[string]interface{}{}}
+
+	return []anthropic.ToolUnionParam{
+		// --- Tools de données (récupération) ---
+		makeTool("get_project",
+			"Récupère les détails complets d'un projet (stack, features, stats). Usage interne pour synthétiser une réponse.",
+			projectNameSchema),
+		makeTool("list_projects",
+			"Liste tous les projets avec infos de base. Usage interne pour synthétiser une réponse.",
+			emptySchema),
+		makeTool("list_skills",
+			"Récupère les compétences techniques groupées par catégorie. Usage interne.",
+			emptySchema),
+		makeTool("get_experience",
+			"Récupère la bio, TJM et expériences professionnelles. Usage interne.",
+			emptySchema),
+
+		// --- Tools d'affichage (poussent une fiche dans le panel droit de l'UI) ---
+		makeTool("show_project",
+			"Affiche la fiche détaillée d'un projet dans le panel droit de l'interface. Appelle ce tool dès que l'utilisateur veut voir ou en savoir plus sur un projet spécifique.",
+			projectNameSchema),
+		makeTool("show_projects",
+			"Affiche la liste de tous les projets dans le panel droit. Appelle ce tool quand l'utilisateur veut voir les projets disponibles.",
+			emptySchema),
+		makeTool("show_skills",
+			"Affiche les compétences techniques dans le panel droit. Appelle ce tool quand la conversation porte sur les skills.",
+			emptySchema),
+		makeTool("show_experience",
+			"Affiche le profil freelance (bio, TJM, expériences) dans le panel droit. Appelle ce tool quand l'utilisateur veut en savoir plus sur le parcours d'Alexi.",
+			emptySchema),
 	}
 }
 
@@ -260,6 +270,32 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	case "get_experience":
 		return s.portfolio.GetExperience(), nil
 
+	// Tools d'affichage — même logique que les tools de données,
+	// mais le frontend réagit à leur tool_result pour updater le panel droit.
+	case "show_project":
+		inputMap, ok := input.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid input for show_project")
+		}
+		projectName, ok := inputMap["name"].(string)
+		if !ok || projectName == "" {
+			return nil, fmt.Errorf("missing project name")
+		}
+		project, found := s.portfolio.GetProject(projectName)
+		if !found {
+			return map[string]string{"error": fmt.Sprintf("Projet '%s' non trouvé", projectName)}, nil
+		}
+		return project, nil
+
+	case "show_projects":
+		return s.portfolio.ListProjects(), nil
+
+	case "show_skills":
+		return s.portfolio.ListSkills(), nil
+
+	case "show_experience":
+		return s.portfolio.GetExperience(), nil
+
 	default:
 		return nil, fmt.Errorf("outil inconnu: %s", name)
 	}
@@ -269,10 +305,18 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 func systemPrompt() string {
 	return `Tu es l'assistant du portfolio d'Alexi, développeur freelance full-stack spécialisé en Go, Next.js et IA.
 
-Réponds aux questions sur ses projets, compétences et expériences.
-Utilise les tools disponibles pour récupérer des informations précises avant de répondre.
-Sois concis et factuel. Réponds dans la langue de l'utilisateur.
+Tu as deux types de tools :
 
-Quand tu utilises un tool, attends les résultats avant de formuler ta réponse.
-Ne répète pas les données brutes du tool — synthétise et présente-les de façon claire.`
+1. **Tools d'affichage** (show_*) — affichent une fiche dans le panel droit de l'interface web.
+   Utilise-les SYSTÉMATIQUEMENT dès que le sujet le permet :
+   - show_project(name) → quand l'utilisateur parle d'un projet spécifique
+   - show_projects() → quand l'utilisateur veut voir les projets ou demande un aperçu
+   - show_skills() → quand la conversation porte sur les compétences techniques
+   - show_experience() → quand l'utilisateur veut en savoir plus sur le parcours d'Alexi
+
+2. **Tools de données** (get_*, list_*) → pour récupérer des infos et synthétiser une réponse textuelle.
+
+Règle : appelle toujours un tool show_* en parallèle ou avant ta réponse textuelle.
+Ne réponds jamais "je n'ai pas de moyen d'afficher" — tu as les show_* pour ça.
+Sois concis. Réponds dans la langue de l'utilisateur.`
 }
