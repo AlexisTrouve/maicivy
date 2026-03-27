@@ -56,8 +56,10 @@ func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService) *ChatServ
 	opts := []option.RequestOption{
 		option.WithAPIKey(apiKey),
 	}
-	// Pas de proxy pour la clé dédiée — appel direct Anthropic
-	if cfg.ChatAPIKey == "" && cfg.AnthropicBaseURL != "" {
+	if cfg.ChatAPIKey != "" {
+		// Clé dédiée → forcer l'URL officielle Anthropic (override le ANTHROPIC_BASE_URL env var lu automatiquement par le SDK)
+		opts = append(opts, option.WithBaseURL("https://api.anthropic.com"))
+	} else if cfg.AnthropicBaseURL != "" {
 		opts = append(opts, option.WithBaseURL(cfg.AnthropicBaseURL))
 	}
 	client := anthropic.NewClient(opts...)
