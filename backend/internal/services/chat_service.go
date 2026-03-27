@@ -46,12 +46,18 @@ type ChatService struct {
 	model     string // modèle par défaut
 }
 
-// NewChatService crée un ChatService avec le client Anthropic configuré
+// NewChatService crée un ChatService avec le client Anthropic configuré.
+// Utilise ChatAPIKey si défini, sinon fallback sur AnthropicAPIKey.
 func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService) *ChatService {
-	opts := []option.RequestOption{
-		option.WithAPIKey(cfg.AnthropicAPIKey),
+	apiKey := cfg.ChatAPIKey
+	if apiKey == "" {
+		apiKey = cfg.AnthropicAPIKey
 	}
-	if cfg.AnthropicBaseURL != "" {
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
+	}
+	// Pas de proxy pour la clé dédiée — appel direct Anthropic
+	if cfg.ChatAPIKey == "" && cfg.AnthropicBaseURL != "" {
 		opts = append(opts, option.WithBaseURL(cfg.AnthropicBaseURL))
 	}
 	client := anthropic.NewClient(opts...)

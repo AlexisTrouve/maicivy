@@ -10,6 +10,7 @@ type AIConfig struct {
 	// Providers
 	AnthropicAPIKey  string
 	AnthropicBaseURL string // Proxy URL (ex: https://ai.etheryale.com)
+	ChatAPIKey       string // Clé dédiée à l'agent chat (indépendante du reste)
 	OpenAIAPIKey     string
 	PrimaryProvider  string // "claude" ou "openai"
 	OwnerAPIKey      string // Clé secrète owner → tier premium (Opus)
@@ -35,6 +36,7 @@ func LoadAIConfig() *AIConfig {
 	return &AIConfig{
 		AnthropicAPIKey:      os.Getenv("ANTHROPIC_API_KEY"),
 		AnthropicBaseURL:     os.Getenv("ANTHROPIC_BASE_URL"),
+		ChatAPIKey:           os.Getenv("CHAT_API_KEY"), // clé dédiée agent chat
 		OpenAIAPIKey:         os.Getenv("OPENAI_API_KEY"),
 		PrimaryProvider:      getEnvOrDefault("AI_PRIMARY_PROVIDER", "claude"),
 		OwnerAPIKey:          os.Getenv("MAICIVY_OWNER_API_KEY"),
