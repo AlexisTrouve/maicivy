@@ -30,7 +30,7 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
           <img
             src={post.cover_image_url}
             alt={post.title}
-            className="w-full h-full object-contain p-4"
+            className="w-full h-full object-cover"
           />
         ) : (
           <div className="text-4xl font-bold text-blue-500/30 dark:text-blue-400/30">
