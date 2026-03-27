@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/types';
 
@@ -10,6 +10,27 @@ interface BlogPostViewProps {
 }
 
 export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Fermer avec Escape
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setLightboxOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (lightboxOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxOpen, handleKeyDown]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
@@ -49,15 +70,44 @@ export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
           ))}
         </div>
 
-        {/* Cover image — affichée en header si présente */}
+        {/* Cover image — cliquable pour ouvrir en lightbox */}
         {post.cover_image_url && (
-          <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 p-4">
-            <img
-              src={post.cover_image_url}
-              alt={post.title}
-              className="w-full max-h-80 object-contain"
-            />
-          </div>
+          <>
+            <div
+              className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 cursor-zoom-in"
+              onClick={() => setLightboxOpen(true)}
+            >
+              <img
+                src={post.cover_image_url}
+                alt={post.title}
+                className="w-full max-h-80 object-contain"
+              />
+            </div>
+
+            {/* Lightbox */}
+            {lightboxOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+                onClick={() => setLightboxOpen(false)}
+              >
+                <img
+                  src={post.cover_image_url}
+                  alt={post.title}
+                  className="max-w-[90vw] max-h-[90vh] object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+                  onClick={() => setLightboxOpen(false)}
+                  aria-label="Fermer"
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Title */}
