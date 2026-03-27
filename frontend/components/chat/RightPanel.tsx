@@ -1,32 +1,36 @@
 'use client';
 
-import { DefaultFiche } from './DefaultFiche';
-import { ProjectFiche } from './ProjectFiche';
-import { ProjectListFiche } from './ProjectListFiche';
-import { SkillsFiche } from './SkillsFiche';
+import { TipBar, Tip } from './TipBar';
+import { TabsPanel, Tab } from './TabsPanel';
 
-export type ActivePanel = 'default' | 'project' | 'project_list' | 'skills' | 'experience';
-
+// RightPanel = barre de tips (max 2) + zone d'onglets (max 4)
+// Les tips compressent la zone de fiches — shrink-0 vs flex-1
 interface RightPanelProps {
-  activePanel: ActivePanel;
-  data: unknown;
+  tips: Tip[];
+  tabs: Tab[];
+  activeTabId: string | null;
+  onTipClose: (id: string) => void;
+  onTabClick: (id: string) => void;
+  onTabClose: (id: string) => void;
 }
 
-// RightPanel affiche la fiche contextuelle selon l'activePanel
-// La transition entre fiches est gérée par un simple re-render (pas de Framer Motion pour éviter la dépendance)
-export function RightPanel({ activePanel, data }: RightPanelProps) {
+export function RightPanel({ tips, tabs, activeTabId, onTipClose, onTabClick, onTabClose }: RightPanelProps) {
   return (
-    <div className="h-full overflow-y-auto">
-      {activePanel === 'default' && <DefaultFiche />}
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Tips en haut — shrink-0, compressent la zone de fiches */}
+      {tips.map((tip) => (
+        <TipBar key={tip.id} tip={tip} onClose={onTipClose} />
+      ))}
 
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {activePanel === 'project' && !!data && <ProjectFiche data={data as any} />}
-
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {activePanel === 'project_list' && !!data && <ProjectListFiche data={data as any} />}
-
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {(activePanel === 'skills' || activePanel === 'experience') && !!data && <SkillsFiche data={data as any} />}
+      {/* Zone d'onglets — prend le reste de l'espace */}
+      <div className="flex-1 overflow-hidden">
+        <TabsPanel
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabClick={onTabClick}
+          onTabClose={onTabClose}
+        />
+      </div>
     </div>
   );
 }

@@ -239,6 +239,23 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 		makeTool("show_experience",
 			"Affiche le profil freelance (bio, TJM, expériences) dans le panel droit. Appelle ce tool quand l'utilisateur veut en savoir plus sur le parcours d'Alexi.",
 			emptySchema),
+
+		// --- Tool de tip (affiche un conseil contextuel persistant dans la barre latérale) ---
+		makeTool("add_tip",
+			"Affiche un conseil contextuel persistant dans la barre latérale. Utilise-le pour donner des insights courts qui restent visibles pendant la conversation.",
+			anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"text": map[string]interface{}{
+						"type":        "string",
+						"description": "Texte du tip (court, ~100 chars max)",
+					},
+					"icon": map[string]interface{}{
+						"type":        "string",
+						"description": "Emoji optionnel (💡, 🚀, ⚡...)",
+					},
+				},
+				Required: []string{"text"},
+			}),
 	}
 }
 
@@ -296,6 +313,10 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	case "show_experience":
 		return s.portfolio.GetExperience(), nil
 
+	// add_tip — pas de logique backend, le frontend gère l'affichage via le tool_result
+	case "add_tip":
+		return map[string]bool{"ok": true}, nil
+
 	default:
 		return nil, fmt.Errorf("outil inconnu: %s", name)
 	}
@@ -315,6 +336,11 @@ Tu as deux types de tools :
    - show_experience() → quand l'utilisateur veut en savoir plus sur le parcours d'Alexi
 
 2. **Tools de données** (get_*, list_*) → pour récupérer des infos et synthétiser une réponse textuelle.
+
+3. **add_tip(text, icon?)** — affiche un conseil contextuel court dans la barre latérale (persiste jusqu'à fermeture).
+   Utilise-le pour des insights utiles liés au contexte : fait notable sur une tech, conseil pour contacter Alexi, info clé sur un projet.
+   Exemples : "💡 Go est la stack principale chez Alexi — backend très performant." / "🚀 Aria tourne en production depuis 6 mois sans interruption."
+   Max 100 caractères. N'en abuse pas — 1 tip par sujet majeur suffit.
 
 Règle : appelle toujours un tool show_* en parallèle ou avant ta réponse textuelle.
 Ne réponds jamais "je n'ai pas de moyen d'afficher" — tu as les show_* pour ça.
