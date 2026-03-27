@@ -157,16 +157,18 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
           ),
         )}
 
-        {/* Message assistant en cours de streaming */}
+        {/* Message assistant en cours de streaming — curseur clignotant */}
         {isStreaming && streamingText && (
-          <MessageBubble role="assistant" content={streamingText + '▋'} />
+          <MessageBubble role="assistant" content={streamingText} isStreaming />
         )}
 
-        {/* Indicateur de chargement quand Claude réfléchit (avant le premier texte) */}
+        {/* Indicateur de chargement — 3 points qui rebondissent en décalé */}
         {isStreaming && !streamingText && (
           <div className="flex justify-start">
-            <div className="bg-card border rounded-2xl rounded-bl-sm px-4 py-2.5">
-              <span className="text-muted-foreground text-sm animate-pulse">...</span>
+            <div className="bg-card border rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:300ms]" />
             </div>
           </div>
         )}

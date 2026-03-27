@@ -94,8 +94,8 @@ export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose }: TabsPan
         })}
       </div>
 
-      {/* Contenu de l'onglet actif */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Contenu de l'onglet actif — key force le remount + animation au changement d'onglet */}
+      <div key={activeTab.id} className="flex-1 overflow-y-auto animate-in slide-in-from-right-3 fade-in duration-200">
         <FicheContent tab={activeTab} />
       </div>
     </div>
