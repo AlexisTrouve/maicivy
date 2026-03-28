@@ -416,9 +416,28 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 
 	statsSection := ""
 	if statsErr == nil {
+		// Extraire les top langages réels (clés "c++17", "python", "rust", "node.js"...)
+		// pour donner à Claude des chiffres factuels par langage
+		type kv struct{ k string; v int }
+		var sorted []kv
+		for k, v := range stats.Stack {
+			sorted = append(sorted, kv{k, v})
+		}
+		for i := range sorted {
+			for j := i + 1; j < len(sorted); j++ {
+				if sorted[j].v > sorted[i].v { sorted[i], sorted[j] = sorted[j], sorted[i] }
+			}
+		}
+		top := ""
+		for i, item := range sorted {
+			if i >= 8 { break }
+			if i > 0 { top += ", " }
+			top += fmt.Sprintf("%s (%d projets)", item.k, item.v)
+		}
 		statsSection = fmt.Sprintf(`
-- Portfolio : %d projets, %d lignes de code, %d tests`,
-			stats.Projects, stats.TotalLOC, stats.TotalTests,
+- Portfolio : %d projets, %d lignes de code, %d tests
+- Top technologies par nombre de projets : %s`,
+			stats.Projects, stats.TotalLOC, stats.TotalTests, top,
 		)
 	}
 
