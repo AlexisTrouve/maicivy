@@ -1,7 +1,14 @@
 package services
 
-// PortfolioService fournit les données du portfolio d'Alexi (projets, skills, expérience).
-// Données stub hardcodées — pas de DB.
+import (
+	"context"
+	"fmt"
+	"strings"
+)
+
+// PortfolioService — source de vérité du portfolio d'Alexi.
+// Fetche les données LIVE depuis maiprofiles.etheryale.com avec cache TTL 5 min.
+// Plus de stubs hardcodés — tout vient de l'API.
 
 // StatItem représente une métrique affichable sur une fiche projet
 type StatItem struct {
@@ -15,27 +22,33 @@ type PortfolioEntry struct {
 	Title       string
 	Category    string
 	ShortDesc   string
+	LongDesc    string     // description.portfolio (Markdown complet)
 	KeyFeatures []string
 	TechStack   []string
 	Stats       []StatItem
 	SkillsTags  []string
+	Status      string
+	Tags        []string
 }
 
 // ExperienceData contient la bio et les expériences professionnelles
 type ExperienceData struct {
-	Bio        string
-	Headline   string
-	TJM        string
-	Dispo      string
+	Bio      string
+	BioFull  string
+	Headline string
+	TJM      string
+	Dispo    string
+	ExperienceYears int
 	Experience []ExperienceItem
+	Domains   []string
 }
 
 // ExperienceItem représente une expérience professionnelle
 type ExperienceItem struct {
-	Company  string
-	Role     string
-	Period   string
-	Summary  string
+	Company string
+	Role    string
+	Period  string
+	Summary string
 }
 
 // SkillCategory groupe des skills par catégorie
@@ -44,255 +57,215 @@ type SkillCategory struct {
 	Skills []string
 }
 
-// PortfolioService fournit les données du portfolio
+// GlobalStats agrège les métriques globales du portfolio
+type GlobalStats struct {
+	ProjectsCount int
+	TotalLOC      int
+	TotalTests    int
+	TopStack      []string // top 10 techs par usage
+}
+
+// PortfolioService wraps le client HTTP maiProFiles
 type PortfolioService struct {
-	projects map[string]PortfolioEntry
-	skills   []SkillCategory
-	exp      ExperienceData
+	client *MaiProFilesClient
 }
 
-// NewPortfolioService crée une instance avec les données stub
 func NewPortfolioService() *PortfolioService {
-	svc := &PortfolioService{}
-	svc.projects = svc.buildProjects()
-	svc.skills = svc.buildSkills()
-	svc.exp = svc.buildExperience()
-	return svc
+	return &PortfolioService{
+		client: NewMaiProFilesClient(),
+	}
 }
 
-// GetProject retourne les détails d'un projet par son nom (insensible à la casse)
+// GetProject retourne les détails complets d'un projet par son nom ou slug.
+// Stratégie : recherche par nom d'abord, puis match sur les résultats.
 func (s *PortfolioService) GetProject(name string) (PortfolioEntry, bool) {
-	// Cherche avec le nom exact d'abord
-	if p, ok := s.projects[name]; ok {
-		return p, true
+	ctx := context.Background()
+
+	// Tenter avec la liste complète pour trouver le bon ID
+	projects, err := s.client.ListProjects(ctx)
+	if err != nil {
+		return PortfolioEntry{}, false
 	}
-	// Fallback : cherche dans les titres/noms de façon insensible
-	lower := toLower(name)
-	for k, p := range s.projects {
-		if toLower(k) == lower || toLower(p.Title) == lower {
-			return p, true
+
+	lower := strings.ToLower(name)
+	var matchedID string
+
+	for _, p := range projects {
+		if strings.ToLower(p.ID) == lower ||
+			strings.ToLower(p.Name) == lower ||
+			strings.Contains(strings.ToLower(p.Name), lower) ||
+			strings.Contains(strings.ToLower(p.ID), lower) {
+			matchedID = p.ID
+			break
 		}
 	}
-	return PortfolioEntry{}, false
+
+	// Fallback : recherche par mot-clé via /search
+	if matchedID == "" {
+		results, err := s.client.Search(ctx, name)
+		if err == nil && len(results) > 0 {
+			matchedID = results[0].ID
+		}
+	}
+
+	if matchedID == "" {
+		return PortfolioEntry{}, false
+	}
+
+	// Récupère le détail complet (avec description.portfolio)
+	p, err := s.client.GetProject(ctx, matchedID)
+	if err != nil {
+		return PortfolioEntry{}, false
+	}
+
+	return mapProject(p), true
 }
 
-// ListProjects retourne tous les projets sous forme de slice
+// ListProjects retourne tous les projets
 func (s *PortfolioService) ListProjects() []PortfolioEntry {
-	list := make([]PortfolioEntry, 0, len(s.projects))
-	// Ordre déterministe
-	order := []string{"maicivy", "aria", "cogesco", "liveconf", "freelance-dashboard"}
-	for _, k := range order {
-		if p, ok := s.projects[k]; ok {
-			list = append(list, p)
-		}
+	projects, err := s.client.ListProjects(context.Background())
+	if err != nil {
+		return nil
 	}
-	return list
+	result := make([]PortfolioEntry, 0, len(projects))
+	for _, p := range projects {
+		result = append(result, mapProject(&p))
+	}
+	return result
 }
 
-// ListSkills retourne les skills groupés par catégorie
+// ListSkills retourne les skills groupés (strong / familiar / domains)
 func (s *PortfolioService) ListSkills() []SkillCategory {
-	return s.skills
+	profile, err := s.client.GetProfile(context.Background())
+	if err != nil {
+		return nil
+	}
+
+	cats := []SkillCategory{}
+	if len(profile.Skills.Strong) > 0 {
+		cats = append(cats, SkillCategory{Name: "Langages (maîtrisés)", Skills: profile.Skills.Strong})
+	}
+	if len(profile.Skills.Familiar) > 0 {
+		cats = append(cats, SkillCategory{Name: "Langages (familiers)", Skills: profile.Skills.Familiar})
+	}
+	if len(profile.Domains) > 0 {
+		cats = append(cats, SkillCategory{Name: "Domaines d'expertise", Skills: profile.Domains})
+	}
+	return cats
 }
 
-// GetExperience retourne la bio et l'expérience d'Alexi
+// GetExperience retourne la bio et l'expérience d'Alexi depuis /profile
 func (s *PortfolioService) GetExperience() ExperienceData {
-	return s.exp
+	profile, err := s.client.GetProfile(context.Background())
+	if err != nil {
+		return ExperienceData{}
+	}
+
+	return ExperienceData{
+		Bio:             profile.Bio.Short,
+		BioFull:         profile.Bio.Full,
+		Headline:        profile.Headline,
+		TJM:             "Sur demande",
+		Dispo:           "Disponible",
+		ExperienceYears: profile.ExperienceYears,
+		Domains:         profile.Domains,
+		// Les expériences pro détaillées ne sont pas dans /profile — champ vide pour l'instant
+		Experience: []ExperienceItem{},
+	}
 }
 
-// SearchProjects retourne les projets dont le titre/desc/stack contient le terme
-func (s *PortfolioService) SearchProjects(query string) []PortfolioEntry {
-	q := toLower(query)
-	var results []PortfolioEntry
-	for _, p := range s.projects {
-		if strContains(toLower(p.Title), q) ||
-			strContains(toLower(p.ShortDesc), q) ||
-			strContains(toLower(p.Category), q) ||
-			strContainsAny(p.TechStack, q) {
-			results = append(results, p)
+// GetStats retourne les stats globales du portfolio
+func (s *PortfolioService) GetStats() GlobalStats {
+	stats, err := s.client.GetStats(context.Background())
+	if err != nil {
+		return GlobalStats{}
+	}
+
+	// Top 10 techs par usage
+	type stackItem struct{ name string; count int }
+	var top []stackItem
+	for name, count := range stats.Stack {
+		top = append(top, stackItem{name, count})
+	}
+	// Tri simple (bubble, on a 100 items max)
+	for i := range top {
+		for j := i + 1; j < len(top); j++ {
+			if top[j].count > top[i].count {
+				top[i], top[j] = top[j], top[i]
+			}
 		}
 	}
-	return results
-}
+	topNames := make([]string, 0, 10)
+	for i, item := range top {
+		if i >= 10 { break }
+		topNames = append(topNames, fmt.Sprintf("%s (%d)", item.name, item.count))
+	}
 
-// --- Données stub ---
-
-func (s *PortfolioService) buildProjects() map[string]PortfolioEntry {
-	return map[string]PortfolioEntry{
-		"maicivy": {
-			Name:      "maicivy",
-			Title:     "maicivy — CV IA interactif",
-			Category:  "Full-Stack / AI",
-			ShortDesc: "Portfolio interactif avec génération de lettres de motivation, CV dynamique adaptatif, analytics temps réel et assistant IA conversationnel.",
-			KeyFeatures: []string{
-				"Génération de lettres de motivation personnalisées par IA (Claude Opus)",
-				"CV adaptatif selon le profil visiteur (backend / frontend / DevOps / AI)",
-				"Analytics temps réel WebSocket avec dashboard public",
-				"Stealth ATS : injection de mots-clés invisibles dans le PDF",
-				"Assistant chat avec tool_use (ce que tu utilises là !)",
-			},
-			TechStack:  []string{"Go", "Fiber", "Next.js", "TypeScript", "PostgreSQL", "Redis", "Claude API", "Docker"},
-			Stats:      []StatItem{{Label: "Lignes de code", Value: "~12k"}, {Label: "Endpoints API", Value: "25+"}, {Label: "Temps de réponse", Value: "< 200ms"}},
-			SkillsTags: []string{"Go", "Next.js", "Claude API", "SSE", "PostgreSQL", "Redis", "Docker"},
-		},
-		"aria": {
-			Name:      "aria",
-			Title:     "Aria — Agent IA autonome",
-			Category:  "AI / Agents",
-			ShortDesc: "Système multi-agent avec mémoire persistante, planification de tâches et exécution d'actions sur des outils externes (web, code, fichiers).",
-			KeyFeatures: []string{
-				"Boucle agentic avec tool_use (Claude)",
-				"Mémoire persistante par session (embeddings + vector store)",
-				"Orchestration multi-agents avec délégation",
-				"Outils : browser, terminal, filesystem, APIs",
-				"Interface web temps réel avec streaming SSE",
-			},
-			TechStack:  []string{"Go", "TypeScript", "Claude API", "pgvector", "Redis", "Docker"},
-			Stats:      []StatItem{{Label: "Tools disponibles", Value: "12"}, {Label: "Agents parallèles", Value: "jusqu'à 8"}, {Label: "Latence tool", Value: "< 50ms"}},
-			SkillsTags: []string{"AI Agents", "Claude API", "Tool Use", "Streaming", "pgvector"},
-		},
-		"cogesco": {
-			Name:      "cogesco",
-			Title:     "Cogesco — SEO IA",
-			Category:  "SaaS / AI",
-			ShortDesc: "Plateforme SaaS de génération de contenu SEO par IA : articles, cocons sémantiques, meta tags, optimisation automatique.",
-			KeyFeatures: []string{
-				"Génération d'articles SEO longs (2000-5000 mots) par IA",
-				"Cocons sémantiques : planification de maillage interne automatique",
-				"Scoring SEO en temps réel (readability, densité, structure)",
-				"Intégration CMS (WordPress, Webflow) via API",
-				"Dashboard multi-sites avec analytics SEO",
-			},
-			TechStack:  []string{"Go", "Next.js", "TypeScript", "PostgreSQL", "Redis", "Claude API", "OpenAI"},
-			Stats:      []StatItem{{Label: "Articles générés", Value: "50k+"}, {Label: "Sites clients", Value: "120+"}, {Label: "Uptime", Value: "99.9%"}},
-			SkillsTags: []string{"Go", "SaaS", "SEO", "Claude API", "Next.js", "PostgreSQL"},
-		},
-		"liveconf": {
-			Name:      "liveconf",
-			Title:     "LiveConf — Conférences live",
-			Category:  "Real-Time / Full-Stack",
-			ShortDesc: "Plateforme de conférences en ligne avec streaming vidéo, chat temps réel, Q&A interactif et tableau de bord speaker.",
-			KeyFeatures: []string{
-				"Streaming vidéo WebRTC P2P + fallback TURN",
-				"Chat temps réel avec WebSocket (10k+ connexions simultanées)",
-				"Q&A avec upvote et modération temps réel",
-				"Tableau de bord speaker : slides, timer, questions en attente",
-				"Replay automatique avec découpe par segment",
-			},
-			TechStack:  []string{"Go", "React", "WebRTC", "WebSocket", "Redis", "PostgreSQL", "FFmpeg"},
-			Stats:      []StatItem{{Label: "Connexions max", Value: "10k+"}, {Label: "Latence vidéo", Value: "< 300ms"}, {Label: "Événements live", Value: "500+"}},
-			SkillsTags: []string{"WebRTC", "WebSocket", "Go", "React", "Redis", "Streaming"},
-		},
-		"freelance-dashboard": {
-			Name:      "freelance-dashboard",
-			Title:     "Freelance Dashboard",
-			Category:  "Tooling / Productivity",
-			ShortDesc: "Dashboard de gestion freelance : suivi des missions, facturation, TJM tracker, pipeline commercial et reporting mensuel.",
-			KeyFeatures: []string{
-				"Pipeline commercial : prospects → devis → mission → facture",
-				"TJM tracker avec graphes de revenus mensuels",
-				"Génération de devis et factures PDF",
-				"Intégration Malt/LinkedIn pour synchroniser les leads",
-				"Alertes relances automatiques",
-			},
-			TechStack:  []string{"Next.js", "TypeScript", "PostgreSQL", "Prisma", "Tailwind"},
-			Stats:      []StatItem{{Label: "Missions trackées", Value: "50+"}, {Label: "CA suivi", Value: "> 200k€"}, {Label: "Temps gagné/mois", Value: "~4h"}},
-			SkillsTags: []string{"Next.js", "TypeScript", "PostgreSQL", "Prisma", "Tailwind"},
-		},
+	return GlobalStats{
+		ProjectsCount: stats.Projects,
+		TotalLOC:      stats.TotalLOC,
+		TotalTests:    stats.TotalTests,
+		TopStack:      topNames,
 	}
 }
 
-func (s *PortfolioService) buildSkills() []SkillCategory {
-	return []SkillCategory{
-		{
-			Name:   "Languages",
-			Skills: []string{"Go", "TypeScript", "JavaScript", "Python", "C++", "SQL"},
-		},
-		{
-			Name:   "Backend",
-			Skills: []string{"Fiber", "Gin", "Node.js", "REST", "gRPC", "WebSocket", "SSE"},
-		},
-		{
-			Name:   "Frontend",
-			Skills: []string{"Next.js", "React", "Tailwind CSS", "Framer Motion", "shadcn/ui"},
-		},
-		{
-			Name:   "Data & DB",
-			Skills: []string{"PostgreSQL", "Redis", "SQLite", "pgvector", "GORM", "Prisma"},
-		},
-		{
-			Name:   "AI / ML",
-			Skills: []string{"Claude API", "OpenAI API", "Tool Use", "RAG", "Embeddings", "Prompt Engineering"},
-		},
-		{
-			Name:   "Infra / DevOps",
-			Skills: []string{"Docker", "GitHub Actions", "Nginx", "Linux", "SSH", "Monitoring"},
-		},
+// SearchProjects recherche des projets par mot-clé (délègue à /search)
+func (s *PortfolioService) SearchProjects(query string) []PortfolioEntry {
+	results, err := s.client.Search(context.Background(), query)
+	if err != nil {
+		return nil
 	}
+	entries := make([]PortfolioEntry, 0, len(results))
+	for _, p := range results {
+		entries = append(entries, mapProject(&p))
+	}
+	return entries
 }
 
-func (s *PortfolioService) buildExperience() ExperienceData {
-	return ExperienceData{
-		Bio:      "Développeur freelance full-stack avec une spécialisation croissante en IA et systèmes agentiques. Je construis des produits complets — de l'API au frontend — avec une obsession pour la performance et l'expérience utilisateur.",
-		Headline: "Développeur Full-Stack & IA · Freelance",
-		TJM:      "600-800€/jour",
-		Dispo:    "Disponible",
-		Experience: []ExperienceItem{
-			{
-				Company: "Freelance",
-				Role:    "Développeur Full-Stack & IA",
-				Period:  "2022 — présent",
-				Summary: "Missions variées : SaaS B2B, outils IA, plateformes temps réel. Stack principale : Go + Next.js + Claude API.",
-			},
-			{
-				Company: "Startup SaaS",
-				Role:    "Lead Developer",
-				Period:  "2020 — 2022",
-				Summary: "Lead technique d'une startup SaaS B2B (10 → 120 clients). Architecture micro-services, CI/CD, recrutement junior.",
-			},
-			{
-				Company: "Agence Web",
-				Role:    "Développeur Full-Stack",
-				Period:  "2018 — 2020",
-				Summary: "Développement de projets clients variés (e-commerce, marketplaces, outils internes). Stack React + Node.js.",
-			},
-		},
+// --- Mapping API → types internes ---
+
+// mapProject convertit un MPFProject en PortfolioEntry
+func mapProject(p *MPFProject) PortfolioEntry {
+	stats := []StatItem{}
+	if p.Stats.LOC > 0 {
+		stats = append(stats, StatItem{Label: "Lignes de code", Value: fmt.Sprintf("%d", p.Stats.LOC)})
+	}
+	if p.Stats.Tests > 0 {
+		stats = append(stats, StatItem{Label: "Tests", Value: fmt.Sprintf("%d", p.Stats.Tests)})
+	}
+	if p.Stats.Modules > 0 {
+		stats = append(stats, StatItem{Label: "Modules", Value: fmt.Sprintf("%d", p.Stats.Modules)})
+	}
+
+	return PortfolioEntry{
+		Name:       p.ID,
+		Title:      p.Name,
+		Category:   p.Category,
+		ShortDesc:  p.Description.Short,
+		LongDesc:   p.Description.Portfolio,
+		TechStack:  p.Stack,
+		Stats:      stats,
+		SkillsTags: p.Tags,
+		Status:     p.Status,
+		Tags:       p.Tags,
 	}
 }
 
 // --- helpers ---
 
 func toLower(s string) string {
-	result := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c >= 'A' && c <= 'Z' {
-			c += 32
-		}
-		result[i] = c
-	}
-	return string(result)
+	return strings.ToLower(s)
 }
 
-// strContains vérifie si s contient sub (strings, distinct de la fonction contains de cv_scoring.go qui opère sur des slices)
+// strContains vérifie si s contient sub
 func strContains(s, sub string) bool {
-	if sub == "" {
-		return true
-	}
-	if len(sub) > len(s) {
-		return false
-	}
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(s, sub)
 }
 
 // strContainsAny vérifie si un élément de la liste contient sub
 func strContainsAny(list []string, sub string) bool {
 	for _, item := range list {
-		if strContains(toLower(item), sub) {
+		if strings.Contains(strings.ToLower(item), sub) {
 			return true
 		}
 	}

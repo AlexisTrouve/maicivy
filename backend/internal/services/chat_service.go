@@ -85,6 +85,9 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 	// Définir les tools disponibles pour Claude
 	tools := s.buildTools()
 
+	// Construire le prompt système avec les données live du profil
+	prompt := s.buildSystemPrompt(ctx)
+
 	// Boucle agentic (max 5 tours pour éviter les boucles infinies)
 	const maxTurns = 5
 	for turn := 0; turn < maxTurns; turn++ {
@@ -92,7 +95,7 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 			Model:     anthropic.Model(model),
 			MaxTokens: 1024,
 			System: []anthropic.TextBlockParam{
-				{Text: systemPrompt()},
+				{Text: prompt},
 			},
 			Messages: messages,
 			Tools:    tools, // []anthropic.ToolUnionParam
@@ -379,9 +382,48 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	}
 }
 
-// systemPrompt retourne le prompt système pour l'assistant portfolio
-func systemPrompt() string {
-	return `Tu es l'assistant du portfolio d'Alexi, développeur freelance full-stack spécialisé en Go, Next.js et IA.
+// buildSystemPrompt construit le prompt système avec les données live du profil.
+// Le profil est fetché depuis maiprofiles.etheryale.com (cache 5 min) — jamais hardcodé.
+func (s *ChatService) buildSystemPrompt(ctx context.Context) string {
+	// Fetch le profil live (cache TTL 5 min — quasi gratuit après le premier appel)
+	profile, err := s.portfolio.client.GetProfile(ctx)
+	stats, statsErr := s.portfolio.client.GetStats(ctx)
+
+	// Construire le contexte profil — uniquement ce que l'API confirme
+	profileSection := ""
+	if err == nil {
+		skillsStrong := joinStrings(profile.Skills.Strong)
+		skillsFamiliar := joinStrings(profile.Skills.Familiar)
+		domains := joinStrings(profile.Domains)
+		profileSection = fmt.Sprintf(`
+Profil live d'Alexi (source : maiprofiles.etheryale.com) :
+- Nom : %s
+- %s
+- Expérience : %d ans
+- Langages maîtrisés : %s
+- Langages familiers : %s
+- Domaines : %s
+- Bio : %s`,
+			profile.Name,
+			profile.Headline,
+			profile.ExperienceYears,
+			skillsStrong,
+			skillsFamiliar,
+			domains,
+			profile.Bio.Short,
+		)
+	}
+
+	statsSection := ""
+	if statsErr == nil {
+		statsSection = fmt.Sprintf(`
+- Portfolio : %d projets, %d lignes de code, %d tests`,
+			stats.Projects, stats.TotalLOC, stats.TotalTests,
+		)
+	}
+
+	return fmt.Sprintf(`Tu es l'assistant du portfolio d'Alexi.
+%s%s
 
 Tu as deux types de tools :
 
@@ -396,15 +438,22 @@ Tu as deux types de tools :
 
 2. **Tools de données** (get_*, list_*) → pour récupérer des infos et synthétiser une réponse textuelle.
 
-3. **add_tip(text, icon?)** — affiche un conseil contextuel court dans la barre latérale (persiste jusqu'à fermeture).
-   Utilise-le pour des insights utiles liés au contexte : fait notable sur une tech, conseil pour contacter Alexi, info clé sur un projet.
-   Exemples : "💡 Go est la stack principale chez Alexi — backend très performant." / "🚀 Aria tourne en production depuis 6 mois sans interruption."
-   Max 100 caractères. N'en abuse pas — 1 tip par sujet majeur suffit.
+3. **add_tip(text, icon?)** — insight court dans la barre latérale. Max 100 chars. 1 tip par sujet.
 
 **Règles strictes :**
 - Appelle toujours un tool show_* en parallèle ou avant ta réponse textuelle si le sujet s'y prête.
-- Ne réponds jamais "je n'ai pas de moyen d'afficher" — tu as les show_* pour ça.
-- **Honnêteté avant tout** : si une question porte sur quelque chose qui n'est PAS dans les données retournées par tes tools (une techno non listée, un projet inconnu, une info perso non disponible), dis-le clairement. Ne comble pas les trous avec des suppositions. "Je n'ai pas cette info" vaut mieux qu'une réponse inventée.
+- **Honnêteté avant tout** : si une info n'est pas dans tes tools, dis-le clairement. Ne complète pas avec des suppositions.
 - Ne parle que de ce que les tools te confirment. Les données des tools font foi.
-- Sois concis. Réponds dans la langue de l'utilisateur.`
+- Sois concis. Réponds dans la langue de l'utilisateur.`, profileSection, statsSection)
 }
+
+// joinStrings joint une slice de strings avec ", "
+func joinStrings(ss []string) string {
+	result := ""
+	for i, s := range ss {
+		if i > 0 { result += ", " }
+		result += s
+	}
+	return result
+}
+
