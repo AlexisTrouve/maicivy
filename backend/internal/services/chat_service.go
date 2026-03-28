@@ -245,6 +245,19 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 			"Affiche le profil freelance (bio, TJM, expériences) dans le panel droit. Appelle ce tool quand l'utilisateur veut en savoir plus sur le parcours d'Alexi.",
 			emptySchema),
 
+		// --- Tool de recherche de projets par mot-clé ---
+		makeTool("search_projects",
+			"Recherche des projets par mot-clé dans le nom, la stack, les tags et la description. Utilise ce tool quand l'utilisateur demande les projets liés à une techno ou un sujet (ex: 'projets C++', 'projets Rust', 'projets IA').",
+			anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "Mot-clé de recherche (ex: c++, rust, game engine, mcp)",
+					},
+				},
+				Required: []string{"query"},
+			}),
+
 		// --- Tools blog (affichent un article ou la liste dans le panel droit) ---
 		makeTool("show_blog_article",
 			"Affiche un article de blog dans le panel droit. Utilise ce tool quand l'utilisateur parle d'un article ou demande à en voir un spécifique.",
@@ -349,6 +362,19 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	case "show_experience":
 		return s.portfolio.GetExperience(), nil
 
+	// search_projects — recherche live dans maiprofiles via /search?q=
+	case "search_projects":
+		inputMap, ok := parseInput(input)
+		if !ok {
+			return nil, fmt.Errorf("invalid input for search_projects")
+		}
+		query, ok := inputMap["query"].(string)
+		if !ok || query == "" {
+			return nil, fmt.Errorf("missing query")
+		}
+		results := s.portfolio.SearchProjects(query)
+		return results, nil
+
 	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit
 	case "show_blog_article":
 		inputMap, ok := parseInput(input)
@@ -450,12 +476,13 @@ Tu as deux types de tools :
    Utilise-les SYSTÉMATIQUEMENT dès que le sujet le permet :
    - show_project(name) → quand l'utilisateur parle d'un projet spécifique
    - show_projects() → quand l'utilisateur veut voir les projets ou demande un aperçu
-   - show_skills() → quand la conversation porte sur les compétences techniques
+   - show_skills() → quand la conversation porte sur les skills
    - show_experience() → quand l'utilisateur veut en savoir plus sur le parcours d'Alexi
    - show_blog_article(slug) → quand l'utilisateur veut voir un article de blog spécifique
    - show_blog_list() → quand l'utilisateur parle du blog ou demande les derniers articles
 
-2. **Tools de données** (get_*, list_*) → pour récupérer des infos et synthétiser une réponse textuelle.
+2. **Tools de données** (get_*, list_*, search_*) → pour récupérer des infos et synthétiser une réponse.
+   - search_projects(query) → cherche les projets par techno ou sujet. Utilise OBLIGATOIREMENT ce tool quand l'utilisateur demande les projets liés à une techno (C++, Rust, IA, game engine...). Les résultats sont factuels — ne jamais spéculer sur quels projets utilisent quoi sans appeler ce tool.
 
 3. **add_tip(text, icon?)** — insight court dans la barre latérale. Max 100 chars. 1 tip par sujet.
 
