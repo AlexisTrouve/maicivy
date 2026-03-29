@@ -44,6 +44,11 @@ type Config struct {
 
 	// Repos Scanner (path to git repos directory)
 	ReposDir string
+
+	// Gitea Stats (clé read-only séparée pour les stats Git du CV)
+	GiteaStatsURL   string
+	GiteaStatsToken string
+	GiteaStatsUser  string
 }
 
 func Load() (*Config, error) {
@@ -84,6 +89,11 @@ func Load() (*Config, error) {
 
 		// Repos Scanner
 		ReposDir: getEnv("REPOS_DIR", "/repos"),
+
+		// Gitea Stats
+		GiteaStatsURL:   getEnv("GITEA_STATS_URL", "https://git.etheryale.com"),
+		GiteaStatsToken: getEnv("GITEA_STATS_TOKEN", ""),
+		GiteaStatsUser:  getEnv("GITEA_STATS_USER", "StillHammer"),
 	}
 
 	if err := cfg.Validate(); err != nil {

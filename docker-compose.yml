@@ -90,6 +90,10 @@ services:
       MAICIVY_OWNER_API_KEY: ${MAICIVY_OWNER_API_KEY}
       # Repos scanner
       REPOS_DIR: /repos
+      # Gitea Stats (read-only token pour section Git Stats du CV)
+      GITEA_STATS_URL: ${GITEA_STATS_URL:-https://git.etheryale.com}
+      GITEA_STATS_TOKEN: ${GITEA_STATS_TOKEN}
+      GITEA_STATS_USER: ${GITEA_STATS_USER:-StillHammer}
       CONTENT_DIR: /content
     ports:
       - "${BACKEND_PORT:-8080}:8080"

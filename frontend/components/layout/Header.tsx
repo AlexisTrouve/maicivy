@@ -21,6 +21,7 @@ export function Header() {
     { name: t('chat'), href: '/chat' },
     { name: t('analytics'), href: '/analytics' },
     { name: t('blog'), href: '/blog' },
+    { name: t('gitstats'), href: '/gitstats' },
   ];
 
   return (

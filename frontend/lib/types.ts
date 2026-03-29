@@ -541,3 +541,29 @@ export interface BlogGenerateRequest {
   commit_shas?: string[];
   auto_select: boolean;
 }
+
+// Git Stats Types (Gitea)
+export interface GitDayStat {
+  date: string;      // "2026-03-15"
+  commits: number;
+  additions: number;
+  deletions: number;
+}
+
+export interface GitRepoStat {
+  name: string;
+  description: string;
+  language: string;
+  stars: number;
+  updatedAt: string;
+}
+
+export interface GitStatsResponse {
+  daily: GitDayStat[];
+  repos: GitRepoStat[];
+  totalCommits: number;
+  totalAdded: number;
+  totalDeleted: number;
+  activeRepos: number;
+  period: string;
+}

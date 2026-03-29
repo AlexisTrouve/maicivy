@@ -184,6 +184,14 @@ func main() {
 		log.Warn().Msg("CV generation service not available — Anthropic credentials not configured")
 	}
 
+	// 7b. Gitea Stats Service
+	giteaStatsService := services.NewGiteaStatsService(redisClient, cfg.GiteaStatsURL, cfg.GiteaStatsToken, cfg.GiteaStatsUser)
+	if giteaStatsService != nil {
+		log.Info().Msg("Gitea stats service initialized")
+	} else {
+		log.Warn().Msg("Gitea stats service not available — GITEA_STATS_TOKEN not configured")
+	}
+
 	// 8. Initialiser handlers
 	healthHandler := api.NewHealthHandler(db, redisClient)
 	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
@@ -195,6 +203,7 @@ func main() {
 	blogHandler := api.NewBlogHandler(blogGeneratorService, aiConfig.OwnerAPIKey)
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
+	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService)
 	swaggerHandler := api.NewSwaggerHandler()
 	visitorHandler := api.NewVisitorHandler(db, redisClient, analyticsService)
 
@@ -213,6 +222,7 @@ func main() {
 
 	// Routes CV (Phase 2 - IMPLEMENTED)
 	cvHandler.RegisterRoutes(app)
+	gitStatsHandler.RegisterRoutes(app)
 
 	// Routes Letters avec rate limiting AI (Phase 3 - IMPLEMENTED)
 	lettersGroup := apiV1.Group("/letters")

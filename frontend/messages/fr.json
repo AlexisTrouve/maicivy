@@ -22,7 +22,8 @@
     "chat": "Chat",
     "analytics": "Analytics",
     "architecture": "Architecture",
-    "blog": "Blog"
+    "blog": "Blog",
+    "gitstats": "Git Stats"
   },
   "home": {
     "title": "CV Interactif Intelligent",
