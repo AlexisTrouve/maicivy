@@ -1,0 +1,199 @@
+<svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-size="28" font-weight="bold" text-anchor="middle" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif">
+    Slash Commands, LSP &amp; Teaching Agents to Read Code
+  </text>
+  
+  <!-- Divider line -->
+  <line x1="100" y1="60" x2="1100" y2="60" stroke="#38bdf8" stroke-width="2" opacity="0.3"/>
+  
+  <!-- Left section: Slash Commands -->
+  <g>
+    <!-- Container -->
+    <rect x="60" y="100" width="320" height="500" fill="#1e293b" stroke="#a78bfa" stroke-width="2" rx="8"/>
+    
+    <!-- Title -->
+    <text x="220" y="140" font-size="18" font-weight="bold" text-anchor="middle" fill="#a78bfa" font-family="system-ui, -apple-system, sans-serif">
+      Slash Commands
+    </text>
+    
+    <!-- Command icon -->
+    <circle cx="220" cy="200" r="35" fill="#a78bfa" opacity="0.1" stroke="#a78bfa" stroke-width="2"/>
+    <text x="220" y="210" font-size="24" text-anchor="middle" fill="#a78bfa" font-family="monospace">
+      /
+    </text>
+    
+    <!-- Feature list -->
+    <text x="90" y="280" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Quick actions
+    </text>
+    <text x="90" y="310" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • User interface
+    </text>
+    <text x="90" y="340" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Command palette
+    </text>
+    <text x="90" y="370" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Keyboard shortcuts
+    </text>
+    <text x="90" y="400" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Context aware
+    </text>
+    
+    <!-- Code example -->
+    <rect x="80" y="440" width="280" height="120" fill="#0f172a" stroke="#38bdf8" stroke-width="1" rx="4"/>
+    <text x="95" y="460" font-size="11" fill="#38bdf8" font-family="monospace">
+      /generate_docs
+    </text>
+    <text x="95" y="480" font-size="11" fill="#38bdf8" font-family="monospace">
+      /explain_code
+    </text>
+    <text x="95" y="500" font-size="11" fill="#38bdf8" font-family="monospace">
+      /refactor_function
+    </text>
+    <text x="95" y="520" font-size="11" fill="#38bdf8" font-family="monospace">
+      /find_bugs
+    </text>
+    <text x="95" y="540" font-size="11" fill="#38bdf8" font-family="monospace">
+      /optimize_perf
+    </text>
+  </g>
+  
+  <!-- Center section: LSP -->
+  <g>
+    <!-- Container -->
+    <rect x="440" y="100" width="320" height="500" fill="#1e293b" stroke="#2dd4bf" stroke-width="2" rx="8"/>
+    
+    <!-- Title -->
+    <text x="600" y="140" font-size="18" font-weight="bold" text-anchor="middle" fill="#2dd4bf" font-family="system-ui, -apple-system, sans-serif">
+      Language Server Protocol
+    </text>
+    
+    <!-- LSP icon -->
+    <circle cx="600" cy="200" r="35" fill="#2dd4bf" opacity="0.1" stroke="#2dd4bf" stroke-width="2"/>
+    <text x="600" y="215" font-size="20" text-anchor="middle" fill="#2dd4bf" font-family="monospace">
+      LSP
+    </text>
+    
+    <!-- Feature list -->
+    <text x="470" y="280" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Code analysis
+    </text>
+    <text x="470" y="310" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Hover information
+    </text>
+    <text x="470" y="340" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Jump to definition
+    </text>
+    <text x="470" y="370" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Diagnostics
+    </text>
+    <text x="470" y="400" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Auto-completion
+    </text>
+    
+    <!-- Protocol flow -->
+    <rect x="460" y="440" width="280" height="120" fill="#0f172a" stroke="#2dd4bf" stroke-width="1" rx="4"/>
+    <text x="475" y="460" font-size="11" fill="#2dd4bf" font-family="monospace">
+      initialize
+    </text>
+    <text x="475" y="480" font-size="11" fill="#2dd4bf" font-family="monospace">
+      textDocument/hover
+    </text>
+    <text x="475" y="500" font-size="11" fill="#2dd4bf" font-family="monospace">
+      textDocument/definition
+    </text>
+    <text x="475" y="520" font-size="11" fill="#2dd4bf" font-family="monospace">
+      textDocument/diagnostic
+    </text>
+    <text x="475" y="540" font-size="11" fill="#2dd4bf" font-family="monospace">
+      shutdown
+    </text>
+  </g>
+  
+  <!-- Right section: Code Understanding -->
+  <g>
+    <!-- Container -->
+    <rect x="820" y="100" width="320" height="500" fill="#1e293b" stroke="#38bdf8" stroke-width="2" rx="8"/>
+    
+    <!-- Title -->
+    <text x="980" y="140" font-size="18" font-weight="bold" text-anchor="middle" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif">
+      Agent Code Reading
+    </text>
+    
+    <!-- Brain/Agent icon -->
+    <circle cx="980" cy="200" r="35" fill="#38bdf8" opacity="0.1" stroke="#38bdf8" stroke-width="2"/>
+    <text x="980" y="215" font-size="24" text-anchor="middle" fill="#38bdf8" font-family="monospace">
+      ◆
+    </text>
+    
+    <!-- Feature list -->
+    <text x="850" y="280" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • AST parsing
+    </text>
+    <text x="850" y="310" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Semantic analysis
+    </text>
+    <text x="850" y="340" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Context awareness
+    </text>
+    <text x="850" y="370" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Type inference
+    </text>
+    <text x="850" y="400" font-size="14" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif">
+      • Pattern matching
+    </text>
+    
+    <!-- Processing pipeline -->
+    <rect x="840" y="440" width="280" height="120" fill="#0f172a" stroke="#38bdf8" stroke-width="1" rx="4"/>
+    <text x="855" y="460" font-size="11" fill="#38bdf8" font-family="monospace">
+      Parse → Analyze
+    </text>
+    <text x="855" y="480" font-size="11" fill="#38bdf8" font-family="monospace">
+      Understand → Context
+    </text>
+    <text x="855" y="500" font-size="11" fill="#38bdf8" font-family="monospace">
+      Infer → Generate
+    </text>
+    <text x="855" y="520" font-size="11" fill="#38bdf8" font-family="monospace">
+      Output → Execute
+    </text>
+    <text x="855" y="540" font-size="11" fill="#38bdf8" font-family="monospace">
+      Learn → Improve
+    </text>
+  </g>
+  
+  <!-- Connection arrows -->
+  <defs>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#a78bfa"/>
+    </marker>
+    <marker id="arrowhead-teal" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2dd4bf"/>
+    </marker>
+  </defs>
+  
+  <!-- Arrow: Slash Commands to LSP -->
+  <path d="M 380 350 L 440 350" stroke="#a78bfa" stroke-width="2" fill="none" marker-end="url(#arrowhead-purple)" opacity="0.6"/>
+  <text x="410" y="340" font-size="12" fill="#a78bfa" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">
+    triggers
+  </text>
+  
+  <!-- Arrow: LSP to Code Reading -->
+  <path d="M 760 350 L 820 350" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowhead-teal)" opacity="0.6"/>
+  <text x="790" y="340" font-size="12" fill="#2dd4bf" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">
+    powers
+  </text>
+  
+  <!-- Bottom integration text -->
+  <rect x="250" y="610" width="700" height="0" fill="transparent"/>
+  <text x="600" y="625" font-size="12" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif">
+    Unified workflow: User commands → Protocol communication → Intelligent code analysis
+  </text>
+</svg>
