@@ -26,7 +26,7 @@ export async function generateMetadata({
       title: titles[locale as keyof typeof titles] || titles.fr,
       description: descriptions[locale as keyof typeof descriptions] || descriptions.fr,
       type: 'website',
-      images: [`/api/og/activity?locale=${locale}`],
+      images: ['https://maiprofiles.etheryale.com/images/img_dbb0624c'],
     },
   };
 }

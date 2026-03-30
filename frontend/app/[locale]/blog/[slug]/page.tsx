@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.etheryale.com';
 
   return {
     title: post.title,
@@ -39,7 +39,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       tags: post.tags,
       images: [
         {
-          url: `/api/og/blog?slug=${post.slug}`,
+          // Utilise la cover du post si dispo, sinon image statique maiprofiles
+          url: post.cover_image_url || 'https://maiprofiles.etheryale.com/images/img_dbb0624c',
           width: 1200,
           height: 630,
           alt: post.title,
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       card: 'summary_large_image',
       title: post.title,
       description: post.summary,
-      images: [`${baseUrl}/api/og/blog?slug=${post.slug}`],
+      images: [post.cover_image_url || 'https://maiprofiles.etheryale.com/images/img_dbb0624c'],
     },
   };
 }

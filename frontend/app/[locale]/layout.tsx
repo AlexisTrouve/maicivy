@@ -35,7 +35,7 @@ export async function generateMetadata({
   const locale = resolvedParams.locale || 'fr';
   const messages = (await import(`@/messages/${locale}.json`)).default;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.etheryale.com';
 
   return {
     title: {
@@ -56,7 +56,8 @@ export async function generateMetadata({
       description: messages.metadata.description,
       images: [
         {
-          url: `/api/og?locale=${locale}`,
+          // Image statique hébergée sur maiprofiles (l'endpoint /api/og est routé vers le backend Go, pas Next.js)
+          url: 'https://maiprofiles.etheryale.com/images/img_dbb0624c',
           width: 1200,
           height: 630,
           alt: messages.metadata.title,
@@ -67,7 +68,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: messages.metadata.title,
       description: messages.metadata.description,
-      images: [`/api/og?locale=${locale}`],
+      images: ['https://maiprofiles.etheryale.com/images/img_dbb0624c'],
       creator: '@AlexisTrouve',
     },
     robots: {

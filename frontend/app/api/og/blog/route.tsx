@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
             fontSize: '16px',
           }}
         >
-          <span>maicivy.com/blog</span>
+          <span>maicivy.etheryale.com/blog</span>
           <span>Alexis Trouvé</span>
         </div>
       </div>

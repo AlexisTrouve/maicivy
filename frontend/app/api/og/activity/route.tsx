@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
             fontSize: '16px',
           }}
         >
-          <span>maicivy.com</span>
+          <span>maicivy.etheryale.com</span>
           <span style={{ color: '#334155' }}>|</span>
           <span>CV dynamique</span>
         </div>

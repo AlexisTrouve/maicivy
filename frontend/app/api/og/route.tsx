@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
             fontSize: '18px',
           }}
         >
-          <span>maicivy.com</span>
+          <span>maicivy.etheryale.com</span>
         </div>
       </div>
     ),
