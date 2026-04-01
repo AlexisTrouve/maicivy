@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -57,11 +58,8 @@ func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService, blog *Blo
 	opts := []option.RequestOption{
 		option.WithAPIKey(apiKey),
 	}
-	// Passer par le proxy uniquement si ChatAPIKey n'est PAS défini.
-	// Le proxy etheryale a une limite ~7300 tokens (input+output) qui fait crasher
-	// le chat dès que la conversation ou le system prompt devient un peu long.
-	// Avec ChatAPIKey → API Anthropic directe, sans limite arbitraire.
-	if cfg.AnthropicBaseURL != "" && cfg.ChatAPIKey == "" {
+	// Toujours passer par le proxy etheryale
+	if cfg.AnthropicBaseURL != "" {
 		opts = append(opts, option.WithBaseURL(cfg.AnthropicBaseURL))
 	}
 	client := anthropic.NewClient(opts...)
@@ -105,7 +103,15 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("ChatService: Claude API error")
-			eventCh <- ChatEvent{Type: ChatEventError, Message: fmt.Sprintf("Erreur API: %v", err)}
+			// Détecter une limite de taille atteinte (erreur proxy ou contexte trop long)
+			errMsg := err.Error()
+			userMsg := "Désolé, quelque chose s'est mal passé. Veuillez réessayer."
+			if strings.Contains(errMsg, "too large") || strings.Contains(errMsg, "token") ||
+				strings.Contains(errMsg, "context") || strings.Contains(errMsg, "limit") ||
+				strings.Contains(errMsg, "413") || strings.Contains(errMsg, "Request too large") {
+				userMsg = "Cette conversation est devenue trop longue. Commencez une nouvelle conversation pour continuer."
+			}
+			eventCh <- ChatEvent{Type: ChatEventError, Message: userMsg}
 			return
 		}
 
