@@ -86,28 +86,16 @@ type giteaCommit struct {
 			Date time.Time `json:"date"`
 		} `json:"author"`
 	} `json:"commit"`
-}
-
-// Gitea /stats/contributors retourne un tableau de contributeurs,
-// chaque contributeur a un tableau de "weeks" avec timestamp + additions/deletions/commits
-type giteaContributor struct {
-	Name  string            `json:"name"`
-	Weeks []giteaWeeklyData `json:"weeks"`
-}
-
-type giteaWeeklyData struct {
-	Week      int64 `json:"week"`      // unix timestamp du lundi de la semaine
-	Additions int   `json:"additions"`
-	Deletions int   `json:"deletions"`
-	Commits   int   `json:"commits"`
+	Stats struct {
+		Additions int `json:"additions"`
+		Deletions int `json:"deletions"`
+	} `json:"stats"`
 }
 
 // repoResult agrège les résultats d'un repo (pour le parallélisme)
 type repoResult struct {
 	repo    RepoStat
-	weeks   []giteaWeeklyData
 	commits []giteaCommit
-	err     error
 }
 
 // GetStats retourne les stats Git agrégées, avec cache Redis (2h)
@@ -179,15 +167,7 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 				},
 			}
 
-			// 1) Contributor stats pour additions/deletions par semaine
-			weeks, err := s.getContributorWeeks(ctx, r.Name)
-			if err != nil {
-				log.Debug().Err(err).Str("repo", r.Name).Msg("skip contributor stats")
-			} else {
-				res.weeks = weeks
-			}
-
-			// 2) Commits pour le day-by-day commit count
+			// Commits avec stats (additions/deletions) via ?stat=true
 			commits, err := s.listCommits(ctx, r.Name, sixMonthsAgo)
 			if err != nil {
 				log.Debug().Err(err).Str("repo", r.Name).Msg("skip commits")
@@ -200,9 +180,8 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 	}
 	wg.Wait()
 
-	// Agrégation
-	weeklyMap := make(map[string]*DayStat) // key = "2026-03-10" (lundi de la semaine)
-	dailyCommits := make(map[string]int)   // key = "2026-03-15" (date exacte du commit)
+	// Agrégation — additions/deletions directement depuis chaque commit (stat=true)
+	dailyMap := make(map[string]*DayStat)
 	var repoStats []RepoStat
 	activeRepos := 0
 
@@ -216,68 +195,14 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 			activeRepos++
 		}
 
-		// Commits par jour
 		for _, c := range res.commits {
 			date := c.Commit.Author.Date.Format("2006-01-02")
-			dailyCommits[date]++
-		}
-
-		// Additions/deletions par semaine (depuis contributor stats)
-		for _, w := range res.weeks {
-			weekTime := time.Unix(w.Week, 0)
-			if weekTime.Before(sixMonthsAgo) {
-				continue
+			if _, ok := dailyMap[date]; !ok {
+				dailyMap[date] = &DayStat{Date: date}
 			}
-			weekKey := weekTime.Format("2006-01-02")
-			if _, ok := weeklyMap[weekKey]; !ok {
-				weeklyMap[weekKey] = &DayStat{Date: weekKey}
-			}
-			weeklyMap[weekKey].Additions += w.Additions
-			weeklyMap[weekKey].Deletions += w.Deletions
-		}
-	}
-
-	// Fusionner : pour chaque jour avec des commits, ajouter les additions/deletions
-	// de la semaine correspondante (répartis uniformément)
-	dailyMap := make(map[string]*DayStat)
-
-	// D'abord, ajouter tous les jours avec des commits
-	for date, count := range dailyCommits {
-		dailyMap[date] = &DayStat{Date: date, Commits: count}
-	}
-
-	// Ensuite, répartir les additions/deletions par semaine sur les jours de commits de cette semaine
-	for weekKey, ws := range weeklyMap {
-		weekStart, _ := time.Parse("2006-01-02", weekKey)
-		weekEnd := weekStart.AddDate(0, 0, 7)
-
-		// Trouver les jours de commits dans cette semaine
-		var daysInWeek []string
-		for date := range dailyCommits {
-			d, _ := time.Parse("2006-01-02", date)
-			if !d.Before(weekStart) && d.Before(weekEnd) {
-				daysInWeek = append(daysInWeek, date)
-			}
-		}
-
-		if len(daysInWeek) == 0 {
-			// Pas de commits cette semaine mais des additions ? Mettre sur le lundi
-			if ws.Additions > 0 || ws.Deletions > 0 {
-				if _, ok := dailyMap[weekKey]; !ok {
-					dailyMap[weekKey] = &DayStat{Date: weekKey}
-				}
-				dailyMap[weekKey].Additions += ws.Additions
-				dailyMap[weekKey].Deletions += ws.Deletions
-			}
-			continue
-		}
-
-		// Répartir uniformément
-		addPerDay := ws.Additions / len(daysInWeek)
-		delPerDay := ws.Deletions / len(daysInWeek)
-		for _, date := range daysInWeek {
-			dailyMap[date].Additions += addPerDay
-			dailyMap[date].Deletions += delPerDay
+			dailyMap[date].Commits++
+			dailyMap[date].Additions += c.Stats.Additions
+			dailyMap[date].Deletions += c.Stats.Deletions
 		}
 	}
 
@@ -374,7 +299,7 @@ func (s *GiteaStatsService) listCommits(ctx context.Context, repoName string, si
 	page := 1
 
 	for {
-		path := fmt.Sprintf("/repos/%s/%s/commits?since=%s&page=%d&limit=50",
+		path := fmt.Sprintf("/repos/%s/%s/commits?sha=main&since=%s&stat=true&page=%d&limit=50",
 			s.username, repoName, since.Format(time.RFC3339), page)
 
 		data, err := s.doGet(ctx, path)
@@ -397,37 +322,3 @@ func (s *GiteaStatsService) listCommits(ctx context.Context, repoName string, si
 	return allCommits, nil
 }
 
-// getContributorWeeks retourne les weekly stats agrégés de tous les contributeurs d'un repo
-func (s *GiteaStatsService) getContributorWeeks(ctx context.Context, repoName string) ([]giteaWeeklyData, error) {
-	path := fmt.Sprintf("/repos/%s/%s/stats/contributors", s.username, repoName)
-	data, err := s.doGet(ctx, path)
-	if err != nil {
-		return nil, err
-	}
-
-	var contributors []giteaContributor
-	if err := json.Unmarshal(data, &contributors); err != nil {
-		return nil, fmt.Errorf("parse contributors %s: %w", repoName, err)
-	}
-
-	// Agréger toutes les semaines de tous les contributeurs
-	weekMap := make(map[int64]*giteaWeeklyData)
-	for _, c := range contributors {
-		for _, w := range c.Weeks {
-			if existing, ok := weekMap[w.Week]; ok {
-				existing.Additions += w.Additions
-				existing.Deletions += w.Deletions
-				existing.Commits += w.Commits
-			} else {
-				wCopy := w
-				weekMap[w.Week] = &wCopy
-			}
-		}
-	}
-
-	weeks := make([]giteaWeeklyData, 0, len(weekMap))
-	for _, w := range weekMap {
-		weeks = append(weeks, *w)
-	}
-	return weeks, nil
-}
