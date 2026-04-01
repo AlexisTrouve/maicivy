@@ -204,7 +204,7 @@ func (vh *VisitorHandler) Heartbeat(c *fiber.Ctx) error {
 			VisitorID: visitorUUID,
 			EventType: models.EventTypePageView,
 			PageURL:   req.PageURL,
-			EventData: "",
+			EventData: "{}",
 		}
 
 		// Ajouter event_data si présent
