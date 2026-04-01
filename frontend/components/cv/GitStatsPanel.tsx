@@ -10,15 +10,13 @@ import { motion } from 'framer-motion';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// Filtre les 6 derniers mois, exclut les jours avec >10K LOC (imports massifs, vendoring...)
-const LOC_THRESHOLD = 10_000;
-
+// Filtre les 6 derniers mois et formate les dates pour l'affichage
 function filterLast6Months(daily: GitDayStat[]) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
   return daily
-    .filter((d) => new Date(d.date) >= sixMonthsAgo && d.additions < LOC_THRESHOLD)
+    .filter((d) => new Date(d.date) >= sixMonthsAgo)
     .map((d) => ({
       ...d,
       label: new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),

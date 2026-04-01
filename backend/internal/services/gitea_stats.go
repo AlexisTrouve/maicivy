@@ -196,6 +196,10 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 		}
 
 		for _, c := range res.commits {
+			// Exclure les commits massifs (imports, vendoring, migrations)
+			if c.Stats.Additions > 10000 {
+				continue
+			}
 			date := c.Commit.Author.Date.Format("2006-01-02")
 			if _, ok := dailyMap[date]; !ok {
 				dailyMap[date] = &DayStat{Date: date}
