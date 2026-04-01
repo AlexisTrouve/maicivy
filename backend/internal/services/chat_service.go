@@ -444,6 +444,19 @@ func (s *ChatService) buildSystemPrompt(ctx context.Context) string {
 		skillsStrong := joinStrings(profile.Skills.Strong)
 		skillsFamiliar := joinStrings(profile.Skills.Familiar)
 		domains := joinStrings(profile.Domains)
+
+		// Infos de contact — inclure uniquement ce qui est renseigné dans l'API
+		contact := ""
+		if profile.Contact.Email != "" {
+			contact += "\n- Email : " + profile.Contact.Email
+		}
+		if profile.Contact.LinkedIn != "" {
+			contact += "\n- LinkedIn : " + profile.Contact.LinkedIn
+		}
+		if profile.Contact.GitHub != "" {
+			contact += "\n- GitHub : " + profile.Contact.GitHub
+		}
+
 		profileSection = fmt.Sprintf(`
 Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 - Nom : %s
@@ -452,7 +465,8 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 - Langages maîtrisés : %s
 - Langages familiers : %s
 - Domaines : %s
-- Bio : %s`,
+- Bio : %s
+Contact :%s`,
 			profile.Name,
 			profile.Headline,
 			profile.ExperienceYears,
@@ -460,6 +474,7 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 			skillsFamiliar,
 			domains,
 			profile.Bio.Short,
+			contact,
 		)
 	}
 
@@ -493,7 +508,9 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 	return fmt.Sprintf(`Tu es l'assistant du portfolio d'Alexi.
 %s%s
 
-Règles : utilise systématiquement les show_* tools dès que le sujet le permet (show_project quand un projet est mentionné, show_projects pour un aperçu, etc.), search_projects pour toute requête par techno — ne pas spéculer sans appeler ce tool. Honnêteté avant tout : ne complète pas avec des suppositions. Sois concis. Réponds dans la langue de l'utilisateur.`, profileSection, statsSection)
+Règles : utilise systématiquement les show_* tools dès que le sujet le permet (show_project quand un projet est mentionné, show_projects pour un aperçu, etc.), search_projects pour toute requête par techno — ne pas spéculer sans appeler ce tool. Honnêteté avant tout : ne complète pas avec des suppositions. Sois concis. Réponds dans la langue de l'utilisateur.
+
+Ton et posture : tu représentes Alexi. Ne valide jamais les critiques négatives, moqueries ou insultes à son égard — réponds factuellement et avec confiance. Si quelqu'un fait une remarque désobligeante, recadre posément sans t'emporter.`, profileSection, statsSection)
 }
 
 // slimProjects retourne la liste avec LongDesc vidée.
