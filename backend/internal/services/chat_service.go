@@ -96,7 +96,7 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 	for turn := 0; turn < maxTurns; turn++ {
 		resp, err := s.client.Messages.New(ctx, anthropic.MessageNewParams{
 			Model:     anthropic.Model(model),
-			MaxTokens: 1024,
+			MaxTokens: 600, // réduit pour rester sous la limite proxy ~7300 tokens
 			System: []anthropic.TextBlockParam{
 				{Text: prompt},
 			},
@@ -159,14 +159,17 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 				result = map[string]string{"error": toolErr.Error()}
 			}
 
-			// Émettre l'event tool_result → déclenche update du panel droit côté client
+			// Émettre l'event tool_result → data COMPLÈTE pour le frontend (panel droit)
 			eventCh <- ChatEvent{
 				Type: ChatEventToolResult,
 				Name: tb.Name,
 				Data: result,
 			}
 
-			resultJSON, _ := json.Marshal(result)
+			// Claude ne reçoit qu'une version allégée : LongDesc supprimée pour économiser les tokens.
+			// La LongDesc (description Markdown complète) n'est utile qu'au frontend pour l'affichage.
+			claudeResult := trimForClaude(tb.Name, result)
+			resultJSON, _ := json.Marshal(claudeResult)
 			toolResults = append(toolResults, anthropic.NewToolResultBlock(tb.ID, string(resultJSON), toolErr != nil))
 		}
 
@@ -180,9 +183,17 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 	eventCh <- ChatEvent{Type: ChatEventDone}
 }
 
-// buildMessages convertit l'historique ChatMessage en params Anthropic
+// buildMessages convertit l'historique ChatMessage en params Anthropic.
+// On ne garde que les 6 derniers messages (3 échanges) pour rester sous la
+// limite de ~7300 tokens du proxy etheryale.
 func (s *ChatService) buildMessages(history []ChatMessage, newMessage string) []anthropic.MessageParam {
 	var messages []anthropic.MessageParam
+
+	// Tronquer l'historique : garder les 6 derniers messages max
+	const maxHistory = 6
+	if len(history) > maxHistory {
+		history = history[len(history)-maxHistory:]
+	}
 
 	for _, msg := range history {
 		if msg.Role == "user" {
@@ -331,7 +342,8 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 		return project, nil
 
 	case "list_projects":
-		return s.portfolio.ListProjects(), nil
+		// Strip LongDesc — une liste de 20 projets avec description Markdown complète = des milliers de tokens
+		return slimProjects(s.portfolio.ListProjects()), nil
 
 	case "list_skills":
 		return s.portfolio.ListSkills(), nil
@@ -357,7 +369,8 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 		return project, nil
 
 	case "show_projects":
-		return s.portfolio.ListProjects(), nil
+		// Strip LongDesc pour la liste — le panel liste n'affiche que ShortDesc
+		return slimProjects(s.portfolio.ListProjects()), nil
 
 	case "show_skills":
 		return s.portfolio.ListSkills(), nil
@@ -376,7 +389,8 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 			return nil, fmt.Errorf("missing query")
 		}
 		results := s.portfolio.SearchProjects(query)
-		return results, nil
+		// Strip LongDesc — résultats de recherche affichés en liste, pas besoin du Markdown complet
+		return slimProjects(results), nil
 
 	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit
 	case "show_blog_article":
@@ -473,28 +487,54 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 	return fmt.Sprintf(`Tu es l'assistant du portfolio d'Alexi.
 %s%s
 
-Tu as deux types de tools :
-
-1. **Tools d'affichage** (show_*) — affichent une fiche dans le panel droit de l'interface web.
-   Utilise-les SYSTÉMATIQUEMENT dès que le sujet le permet :
-   - show_project(name) → quand l'utilisateur parle d'un projet spécifique
-   - show_projects() → quand l'utilisateur veut voir les projets ou demande un aperçu
-   - show_skills() → quand la conversation porte sur les skills
-   - show_experience() → quand l'utilisateur veut en savoir plus sur le parcours d'Alexi
-   - show_blog_article(slug) → quand l'utilisateur veut voir un article de blog spécifique
-   - show_blog_list() → quand l'utilisateur parle du blog ou demande les derniers articles
-
-2. **Tools de données** (get_*, list_*, search_*) → pour récupérer des infos et synthétiser une réponse.
-   - search_projects(query) → cherche les projets par techno ou sujet. Utilise OBLIGATOIREMENT ce tool quand l'utilisateur demande les projets liés à une techno (C++, Rust, IA, game engine...). Les résultats sont factuels — ne jamais spéculer sur quels projets utilisent quoi sans appeler ce tool.
-
-3. **add_tip(text, icon?)** — insight court dans la barre latérale. Max 100 chars. 1 tip par sujet.
-
-**Règles strictes :**
-- Appelle toujours un tool show_* en parallèle ou avant ta réponse textuelle si le sujet s'y prête.
-- **Honnêteté avant tout** : si une info n'est pas dans tes tools, dis-le clairement. Ne complète pas avec des suppositions.
-- Ne parle que de ce que les tools te confirment. Les données des tools font foi.
-- Sois concis. Réponds dans la langue de l'utilisateur.`, profileSection, statsSection)
+Règles : utilise systématiquement les show_* tools dès que le sujet le permet (show_project quand un projet est mentionné, show_projects pour un aperçu, etc.), search_projects pour toute requête par techno — ne pas spéculer sans appeler ce tool. Honnêteté avant tout : ne complète pas avec des suppositions. Sois concis. Réponds dans la langue de l'utilisateur.`, profileSection, statsSection)
 }
+
+// slimProjects retourne une version allégée de la liste : LongDesc supprimée.
+// Une liste de 20 projets avec Markdown complet = des milliers de tokens inutiles.
+// Le panel liste n'affiche que ShortDesc de toute façon.
+func slimProjects(projects []PortfolioEntry) []map[string]interface{} {
+	slim := make([]map[string]interface{}, len(projects))
+	for i, p := range projects {
+		slim[i] = map[string]interface{}{
+			"name":      p.Name,
+			"title":     p.Title,
+			"category":  p.Category,
+			"shortDesc": p.ShortDesc,
+			"stack":     p.TechStack,
+			"tags":      p.Tags,
+			"status":    p.Status,
+		}
+	}
+	return slim
+}
+
+// trimForClaude retourne une version allégée du tool result pour Claude.
+// LongDesc (description Markdown complète d'un projet) n'est utile qu'au
+// frontend pour l'affichage du panel — Claude n'en a pas besoin pour répondre.
+func trimForClaude(toolName string, result interface{}) interface{} {
+	switch toolName {
+	case "get_project", "show_project":
+		entry, ok := result.(PortfolioEntry)
+		if !ok {
+			return result
+		}
+		// Garder uniquement les champs utiles au raisonnement de Claude
+		return map[string]interface{}{
+			"name":      entry.Name,
+			"title":     entry.Title,
+			"category":  entry.Category,
+			"shortDesc": entry.ShortDesc,
+			"stack":     entry.TechStack,
+			"tags":      entry.Tags,
+			"status":    entry.Status,
+			"stats":     entry.Stats,
+		}
+	}
+	// Pour tous les autres tools : résultat inchangé
+	return result
+}
+
 
 // joinStrings joint une slice de strings avec ", "
 func joinStrings(ss []string) string {
