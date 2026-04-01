@@ -23,16 +23,41 @@ function filterLast6Months(daily: GitDayStat[]) {
     }));
 }
 
-// Stat card en haut
-function StatCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+// Animation variants pour les sections qui apparaissent au scroll
+const sectionVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0 },
+};
+
+// Stat card avec stagger animation
+function StatCard({ label, value, color, index }: { label: string; value: string | number; color: string; index: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={sectionVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: 'easeOut' }}
       className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-gray-700"
     >
       <div className={`text-3xl font-bold ${color}`}>{value.toLocaleString()}</div>
       <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{label}</div>
+    </motion.div>
+  );
+}
+
+// Wrapper pour les charts — apparaît au scroll avec slide-up
+function ChartSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      variants={sectionVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
+      className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+    >
+      {children}
     </motion.div>
   );
 }
@@ -93,23 +118,24 @@ export default function GitStatsPanel() {
     );
   };
 
+  const kpis = [
+    { label: 'Commits (6 mois)', value: stats.totalCommits, color: 'text-blue-600' },
+    { label: 'Lignes ajoutées', value: stats.totalAdded, color: 'text-green-600' },
+    { label: 'Lignes supprimées', value: stats.totalDeleted, color: 'text-red-500' },
+    { label: 'Repos actifs', value: stats.activeRepos, color: 'text-purple-600' },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* KPI cards */}
+      {/* KPI cards — stagger animation */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Commits (6 mois)" value={stats.totalCommits} color="text-blue-600" />
-        <StatCard label="Lignes ajoutées" value={stats.totalAdded} color="text-green-600" />
-        <StatCard label="Lignes supprimées" value={stats.totalDeleted} color="text-red-500" />
-        <StatCard label="Repos actifs" value={stats.activeRepos} color="text-purple-600" />
+        {kpis.map((kpi, i) => (
+          <StatCard key={kpi.label} index={i} {...kpi} />
+        ))}
       </div>
 
       {/* Commits par jour — area chart */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-      >
+      <ChartSection>
         <h3 className="text-lg font-semibold mb-4">Commits par jour</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={daily}>
@@ -135,15 +161,10 @@ export default function GitStatsPanel() {
             />
           </AreaChart>
         </ResponsiveContainer>
-      </motion.div>
+      </ChartSection>
 
       {/* Lignes ajoutées/supprimées par jour */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-      >
+      <ChartSection delay={0.1}>
         <h3 className="text-lg font-semibold mb-4">Lignes de code par jour</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={daily}>
@@ -183,22 +204,21 @@ export default function GitStatsPanel() {
             />
           </AreaChart>
         </ResponsiveContainer>
-      </motion.div>
+      </ChartSection>
 
       {/* Repos actifs — liste compacte */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-      >
+      <ChartSection delay={0.15}>
         <h3 className="text-lg font-semibold mb-4">
           Repositories ({stats.repos.length})
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {stats.repos.map((repo) => (
-            <div
+          {stats.repos.map((repo, i) => (
+            <motion.div
               key={repo.name}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: i * 0.03 }}
               className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600"
             >
               <div className="flex-1 min-w-0">
@@ -212,10 +232,10 @@ export default function GitStatsPanel() {
               {repo.stars > 0 && (
                 <span className="text-xs text-yellow-500">★ {repo.stars}</span>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
-      </motion.div>
+      </ChartSection>
     </div>
   );
 }
