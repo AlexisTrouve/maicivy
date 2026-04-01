@@ -67,6 +67,12 @@ type GitStatsResponse struct {
 	Period       string     `json:"period"`
 }
 
+// gitStatsCache — structure persistée en Redis, contient les données + le timestamp du dernier fetch
+type gitStatsCache struct {
+	Response  GitStatsResponse `json:"response"`
+	FetchedAt time.Time        `json:"fetchedAt"` // dernier fetch réussi
+}
+
 // --- Types Gitea API ---
 
 type giteaRepo struct {
@@ -98,49 +104,145 @@ type repoResult struct {
 	commits []giteaCommit
 }
 
-// GetStats retourne les stats Git agrégées, avec cache Redis (2h)
+const (
+	cacheKey       = "gitstats:v3"
+	// Intervalle minimum entre deux fetches incrémentaux
+	minFetchInterval = 30 * time.Minute
+)
+
+// GetStats retourne les stats Git agrégées avec cache incrémental.
+// - Si le cache a moins de 30 min → retourne tel quel
+// - Si le cache a plus de 30 min → fetch incrémental (seulement les nouveaux commits)
+// - Si pas de cache → full fetch
 func (s *GiteaStatsService) GetStats(ctx context.Context) (*GitStatsResponse, error) {
-	cacheKey := "gitstats:v2"
-
-	if s.redis != nil {
-		cached, err := s.redis.Get(ctx, cacheKey).Result()
-		if err == nil {
-			var resp GitStatsResponse
-			if json.Unmarshal([]byte(cached), &resp) == nil {
-				return &resp, nil
-			}
-		}
+	if s.redis == nil {
+		return s.fullFetch(ctx)
 	}
 
-	// Context avec timeout de 2 minutes pour le fetch complet
-	fetchCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	resp, err := s.fetchAllStats(fetchCtx)
+	// Charger le cache existant
+	cached, err := s.loadCache(ctx)
 	if err != nil {
-		return nil, err
+		// Pas de cache → full fetch
+		log.Info().Msg("gitstats: no cache, doing full fetch")
+		return s.fullFetchAndCache(ctx)
 	}
 
-	if s.redis != nil {
-		if data, err := json.Marshal(resp); err == nil {
-			s.redis.Set(ctx, cacheKey, data, 2*time.Hour)
-		}
+	// Cache assez récent → retourner directement
+	if time.Since(cached.FetchedAt) < minFetchInterval {
+		return &cached.Response, nil
+	}
+
+	// Cache périmé → fetch incrémental depuis le dernier fetch
+	log.Info().
+		Time("lastFetch", cached.FetchedAt).
+		Msg("gitstats: incremental fetch")
+
+	resp, err := s.incrementalFetch(ctx, cached)
+	if err != nil {
+		// En cas d'erreur, retourner le cache stale plutôt que rien
+		log.Warn().Err(err).Msg("gitstats: incremental fetch failed, returning stale cache")
+		return &cached.Response, nil
 	}
 
 	return resp, nil
 }
 
-// fetchAllStats agrège les stats depuis tous les repos en parallèle
-// Utilise /stats/contributors (1 appel/repo) au lieu de fetcher chaque commit detail
-func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsResponse, error) {
+// fullFetchAndCache fait un full fetch et persiste en cache
+func (s *GiteaStatsService) fullFetchAndCache(ctx context.Context) (*GitStatsResponse, error) {
+	resp, err := s.fullFetch(ctx)
+	if err != nil {
+		return nil, err
+	}
+	s.saveCache(ctx, resp)
+	return resp, nil
+}
+
+// fullFetch récupère toutes les stats depuis 6 mois (premier appel ou reset)
+func (s *GiteaStatsService) fullFetch(ctx context.Context) (*GitStatsResponse, error) {
+	fetchCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	sixMonthsAgo := time.Now().AddDate(0, -6, 0)
+	return s.fetchStats(fetchCtx, sixMonthsAgo)
+}
+
+// incrementalFetch ne récupère que les commits depuis le dernier fetch,
+// puis merge avec les données cachées
+func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitStatsCache) (*GitStatsResponse, error) {
+	fetchCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	// Fetch seulement depuis le dernier fetch (avec 1h de marge pour les commits en retard)
+	since := cached.FetchedAt.Add(-1 * time.Hour)
+	newData, err := s.fetchStats(fetchCtx, since)
+	if err != nil {
+		return nil, err
+	}
+
+	// Merger : prendre les daily existants du cache, remplacer/ajouter les jours mis à jour
+	dailyMap := make(map[string]*DayStat)
+
+	// Cutoff : virer les données > 6 mois du cache
+	sixMonthsAgo := time.Now().AddDate(0, -6, 0).Format("2006-01-02")
+	for i := range cached.Response.Daily {
+		d := &cached.Response.Daily[i]
+		if d.Date >= sixMonthsAgo {
+			dc := *d
+			dailyMap[d.Date] = &dc
+		}
+	}
+
+	// Écraser avec les données fraîches (les jours fetchés depuis `since`)
+	for i := range newData.Daily {
+		d := &newData.Daily[i]
+		dailyMap[d.Date] = d
+	}
+
+	// Reconstruire la slice triée
+	daily := make([]DayStat, 0, len(dailyMap))
+	for _, d := range dailyMap {
+		daily = append(daily, *d)
+	}
+	sort.Slice(daily, func(i, j int) bool {
+		return daily[i].Date < daily[j].Date
+	})
+
+	totalCommits, totalAdded, totalDeleted := 0, 0, 0
+	for _, d := range daily {
+		totalCommits += d.Commits
+		totalAdded += d.Additions
+		totalDeleted += d.Deletions
+	}
+
+	// Repos : prendre la liste fraîche (elle est rapide à fetcher)
+	resp := &GitStatsResponse{
+		Daily:        daily,
+		Repos:        newData.Repos,
+		TotalCommits: totalCommits,
+		TotalAdded:   totalAdded,
+		TotalDeleted: totalDeleted,
+		ActiveRepos:  newData.ActiveRepos,
+		Period:       "6months",
+	}
+
+	s.saveCache(ctx, resp)
+
+	log.Info().
+		Int("newDays", len(newData.Daily)).
+		Int("totalDays", len(daily)).
+		Msg("gitstats: incremental merge done")
+
+	return resp, nil
+}
+
+// fetchStats fait le vrai travail : fetch repos + commits depuis `since`, agrège
+func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*GitStatsResponse, error) {
 	repos, err := s.listRepos(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list repos: %w", err)
 	}
 
-	log.Info().Int("repos", len(repos)).Msg("gitea stats: fetching contributor stats")
-
-	sixMonthsAgo := time.Now().AddDate(0, -6, 0)
+	log.Info().Int("repos", len(repos)).Time("since", since).Msg("gitstats: fetching commits")
 
 	// Fetch en parallèle (max 5 goroutines)
 	sem := make(chan struct{}, 5)
@@ -167,8 +269,7 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 				},
 			}
 
-			// Commits avec stats (additions/deletions) via ?stat=true
-			commits, err := s.listCommits(ctx, r.Name, sixMonthsAgo)
+			commits, err := s.listCommits(ctx, r.Name, since)
 			if err != nil {
 				log.Debug().Err(err).Str("repo", r.Name).Msg("skip commits")
 			} else {
@@ -180,14 +281,14 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 	}
 	wg.Wait()
 
-	// Agrégation — additions/deletions directement depuis chaque commit (stat=true)
+	// Agrégation
 	dailyMap := make(map[string]*DayStat)
 	var repoStats []RepoStat
 	activeRepos := 0
 
 	for _, res := range results {
 		if res.repo.Name == "" {
-			continue // empty/fork skipped
+			continue
 		}
 		repoStats = append(repoStats, res.repo)
 
@@ -210,7 +311,6 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 		}
 	}
 
-	// Convertir en slice triée
 	daily := make([]DayStat, 0, len(dailyMap))
 	for _, d := range dailyMap {
 		daily = append(daily, *d)
@@ -232,7 +332,7 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 		Int("deleted", totalDeleted).
 		Int("repos", len(repoStats)).
 		Int("active", activeRepos).
-		Msg("gitea stats: done")
+		Msg("gitstats: fetch done")
 
 	return &GitStatsResponse{
 		Daily:        daily,
@@ -243,6 +343,31 @@ func (s *GiteaStatsService) fetchAllStats(ctx context.Context) (*GitStatsRespons
 		ActiveRepos:  activeRepos,
 		Period:       "6months",
 	}, nil
+}
+
+// --- Cache Redis ---
+
+func (s *GiteaStatsService) loadCache(ctx context.Context) (*gitStatsCache, error) {
+	data, err := s.redis.Get(ctx, cacheKey).Result()
+	if err != nil {
+		return nil, err
+	}
+	var cached gitStatsCache
+	if err := json.Unmarshal([]byte(data), &cached); err != nil {
+		return nil, err
+	}
+	return &cached, nil
+}
+
+func (s *GiteaStatsService) saveCache(ctx context.Context, resp *GitStatsResponse) {
+	cached := gitStatsCache{
+		Response:  *resp,
+		FetchedAt: time.Now(),
+	}
+	if data, err := json.Marshal(cached); err == nil {
+		// Pas de TTL — le cache persiste et se met à jour incrémentalement
+		s.redis.Set(ctx, cacheKey, data, 0)
+	}
 }
 
 // --- Appels API Gitea ---
@@ -325,4 +450,3 @@ func (s *GiteaStatsService) listCommits(ctx context.Context, repoName string, si
 
 	return allCommits, nil
 }
-
