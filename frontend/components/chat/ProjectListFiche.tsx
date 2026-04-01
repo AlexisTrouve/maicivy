@@ -33,7 +33,7 @@ export function ProjectListFiche({ data }: ProjectListFicheProps) {
               {project.ShortDesc}
             </p>
             <div className="flex flex-wrap gap-1">
-              {project.TechStack.slice(0, 4).map((tech) => (
+              {(project.TechStack ?? []).slice(0, 4).map((tech) => (
                 <span
                   key={tech}
                   className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-xs"
@@ -41,9 +41,9 @@ export function ProjectListFiche({ data }: ProjectListFicheProps) {
                   {tech}
                 </span>
               ))}
-              {project.TechStack.length > 4 && (
+              {(project.TechStack ?? []).length > 4 && (
                 <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-xs">
-                  +{project.TechStack.length - 4}
+                  +{(project.TechStack ?? []).length - 4}
                 </span>
               )}
             </div>

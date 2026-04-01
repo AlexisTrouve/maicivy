@@ -519,15 +519,17 @@ COMPORTEMENT CRITIQUE — à respecter impérativement :
 - Tu n'es pas là pour faire plaisir — tu es là pour représenter Alexi avec précision et dignité.`, profileSection, statsSection)
 }
 
-// slimProjects retourne la liste avec LongDesc vidée.
+// slimProjects retourne la liste avec LongDesc vidée, en filtrant les entrées vides.
 // On garde la struct PortfolioEntry pour ne pas changer les noms de champs
 // attendus par le frontend (pas de json tags → Go PascalCase).
-// Une liste de 20 projets avec Markdown complet = des milliers de tokens inutiles.
 func slimProjects(projects []PortfolioEntry) []PortfolioEntry {
-	slim := make([]PortfolioEntry, len(projects))
-	for i, p := range projects {
-		slim[i] = p
-		slim[i].LongDesc = "" // strip — le panel liste n'affiche que ShortDesc
+	slim := make([]PortfolioEntry, 0, len(projects))
+	for _, p := range projects {
+		if p.Name == "" { // ignorer les entrées vides/corrompues de l'API
+			continue
+		}
+		p.LongDesc = "" // strip — le panel liste n'affiche que ShortDesc
+		slim = append(slim, p)
 	}
 	return slim
 }
