@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, Area, AreaChart,
 } from 'recharts';
 import { GitDayStat, GitStatsResponse } from '@/lib/types';
@@ -10,29 +10,17 @@ import { motion } from 'framer-motion';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// Agrège les stats par semaine pour un graphique lisible sur 6 mois
-function aggregateWeekly(daily: GitDayStat[]) {
-  const weeks: { week: string; commits: number; additions: number; deletions: number }[] = [];
-  let current = { week: '', commits: 0, additions: 0, deletions: 0 };
+// Filtre les 6 derniers mois et formate les dates pour l'affichage
+function filterLast6Months(daily: GitDayStat[]) {
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  for (const day of daily) {
-    const d = new Date(day.date);
-    // Lundi de la semaine
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    const weekLabel = monday.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-
-    if (weekLabel !== current.week) {
-      if (current.week) weeks.push({ ...current });
-      current = { week: weekLabel, commits: 0, additions: 0, deletions: 0 };
-    }
-    current.commits += day.commits;
-    current.additions += day.additions;
-    current.deletions += day.deletions;
-  }
-  if (current.week) weeks.push(current);
-
-  return weeks;
+  return daily
+    .filter((d) => new Date(d.date) >= sixMonthsAgo)
+    .map((d) => ({
+      ...d,
+      label: new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+    }));
 }
 
 // Stat card en haut
@@ -87,7 +75,7 @@ export default function GitStatsPanel() {
     );
   }
 
-  const weekly = aggregateWeekly(stats.daily);
+  const daily = filterLast6Months(stats.daily);
 
   // Tooltip custom
   const ChartTooltip = ({ active, payload, label }: any) => {
@@ -115,16 +103,16 @@ export default function GitStatsPanel() {
         <StatCard label="Repos actifs" value={stats.activeRepos} color="text-purple-600" />
       </div>
 
-      {/* Commits par semaine — line chart */}
+      {/* Commits par jour — area chart */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
         className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
       >
-        <h3 className="text-lg font-semibold mb-4">Commits par semaine</h3>
+        <h3 className="text-lg font-semibold mb-4">Commits par jour</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={weekly}>
+          <AreaChart data={daily}>
             <defs>
               <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -132,7 +120,7 @@ export default function GitStatsPanel() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-            <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#9ca3af" interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
             <Tooltip content={<ChartTooltip />} />
             <Area
@@ -140,48 +128,60 @@ export default function GitStatsPanel() {
               dataKey="commits"
               name="Commits"
               stroke="#3b82f6"
-              strokeWidth={2.5}
+              strokeWidth={2}
               fill="url(#commitGrad)"
-              dot={{ r: 3, fill: '#3b82f6' }}
-              activeDot={{ r: 5 }}
+              dot={false}
+              activeDot={{ r: 4 }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Lignes ajoutées/supprimées par semaine */}
+      {/* Lignes ajoutées/supprimées par jour */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
       >
-        <h3 className="text-lg font-semibold mb-4">Lignes de code par semaine</h3>
+        <h3 className="text-lg font-semibold mb-4">Lignes de code par jour</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={weekly}>
+          <AreaChart data={daily}>
+            <defs>
+              <linearGradient id="addGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="delGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-            <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#9ca3af" interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
             <Tooltip content={<ChartTooltip />} />
-            <Line
+            <Area
               type="monotone"
               dataKey="additions"
               name="Ajoutées"
               stroke="#22c55e"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: '#22c55e' }}
-              activeDot={{ r: 5 }}
+              strokeWidth={2}
+              fill="url(#addGrad)"
+              dot={false}
+              activeDot={{ r: 4 }}
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="deletions"
               name="Supprimées"
               stroke="#ef4444"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: '#ef4444' }}
-              activeDot={{ r: 5 }}
+              strokeWidth={2}
+              fill="url(#delGrad)"
+              dot={false}
+              activeDot={{ r: 4 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </motion.div>
 
