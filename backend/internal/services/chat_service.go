@@ -57,8 +57,11 @@ func NewChatService(cfg *config.AIConfig, portfolio *PortfolioService, blog *Blo
 	opts := []option.RequestOption{
 		option.WithAPIKey(apiKey),
 	}
-	// Toujours passer par le proxy etheryale (même avec la clé dédiée)
-	if cfg.AnthropicBaseURL != "" {
+	// Passer par le proxy uniquement si ChatAPIKey n'est PAS défini.
+	// Le proxy etheryale a une limite ~7300 tokens (input+output) qui fait crasher
+	// le chat dès que la conversation ou le system prompt devient un peu long.
+	// Avec ChatAPIKey → API Anthropic directe, sans limite arbitraire.
+	if cfg.AnthropicBaseURL != "" && cfg.ChatAPIKey == "" {
 		opts = append(opts, option.WithBaseURL(cfg.AnthropicBaseURL))
 	}
 	client := anthropic.NewClient(opts...)
