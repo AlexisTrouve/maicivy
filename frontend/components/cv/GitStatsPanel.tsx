@@ -10,19 +10,17 @@ import { motion } from 'framer-motion';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// Filtre les 6 derniers mois, cap les gros commits (>10K LOC) pour lisser les courbes
-const LOC_CAP = 10_000;
+// Filtre les 6 derniers mois, exclut les jours avec >10K LOC (imports massifs, vendoring...)
+const LOC_THRESHOLD = 10_000;
 
 function filterLast6Months(daily: GitDayStat[]) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
   return daily
-    .filter((d) => new Date(d.date) >= sixMonthsAgo)
+    .filter((d) => new Date(d.date) >= sixMonthsAgo && d.additions < LOC_THRESHOLD)
     .map((d) => ({
       ...d,
-      additions: Math.min(d.additions, LOC_CAP),
-      deletions: Math.min(d.deletions, LOC_CAP),
       label: new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
     }));
 }
