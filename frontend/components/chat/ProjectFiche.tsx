@@ -51,6 +51,7 @@ export function ProjectFiche({ data }: ProjectFicheProps) {
       </div>
 
       {/* Features */}
+      {data.KeyFeatures && data.KeyFeatures.length > 0 && (
       <div>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
           ✓ Fonctionnalités clés
@@ -64,6 +65,7 @@ export function ProjectFiche({ data }: ProjectFicheProps) {
           ))}
         </ul>
       </div>
+      )}
 
       {/* Stats */}
       {data.Stats && data.Stats.length > 0 && (

@@ -496,21 +496,15 @@ Profil live d'Alexi (source : maiprofiles.etheryale.com) :
 Règles : utilise systématiquement les show_* tools dès que le sujet le permet (show_project quand un projet est mentionné, show_projects pour un aperçu, etc.), search_projects pour toute requête par techno — ne pas spéculer sans appeler ce tool. Honnêteté avant tout : ne complète pas avec des suppositions. Sois concis. Réponds dans la langue de l'utilisateur.`, profileSection, statsSection)
 }
 
-// slimProjects retourne une version allégée de la liste : LongDesc supprimée.
+// slimProjects retourne la liste avec LongDesc vidée.
+// On garde la struct PortfolioEntry pour ne pas changer les noms de champs
+// attendus par le frontend (pas de json tags → Go PascalCase).
 // Une liste de 20 projets avec Markdown complet = des milliers de tokens inutiles.
-// Le panel liste n'affiche que ShortDesc de toute façon.
-func slimProjects(projects []PortfolioEntry) []map[string]interface{} {
-	slim := make([]map[string]interface{}, len(projects))
+func slimProjects(projects []PortfolioEntry) []PortfolioEntry {
+	slim := make([]PortfolioEntry, len(projects))
 	for i, p := range projects {
-		slim[i] = map[string]interface{}{
-			"name":      p.Name,
-			"title":     p.Title,
-			"category":  p.Category,
-			"shortDesc": p.ShortDesc,
-			"stack":     p.TechStack,
-			"tags":      p.Tags,
-			"status":    p.Status,
-		}
+		slim[i] = p
+		slim[i].LongDesc = "" // strip — le panel liste n'affiche que ShortDesc
 	}
 	return slim
 }
@@ -525,17 +519,8 @@ func trimForClaude(toolName string, result interface{}) interface{} {
 		if !ok {
 			return result
 		}
-		// Garder uniquement les champs utiles au raisonnement de Claude
-		return map[string]interface{}{
-			"name":      entry.Name,
-			"title":     entry.Title,
-			"category":  entry.Category,
-			"shortDesc": entry.ShortDesc,
-			"stack":     entry.TechStack,
-			"tags":      entry.Tags,
-			"status":    entry.Status,
-			"stats":     entry.Stats,
-		}
+		entry.LongDesc = "" // strip LongDesc, garder le reste intact
+		return entry
 	}
 	// Pour tous les autres tools : résultat inchangé
 	return result
