@@ -357,9 +357,64 @@
     "invalidUrl": "Invalid URL"
   },
   "footer": {
-    "description": "Interactive intelligent CV with AI-powered letter generation",
+    "about": "About",
+    "aboutText": "maicivy is an AI-powered interactive CV. Cover letter generation, intelligent chat, real-time Git statistics — everything a portfolio should be.",
     "navigation": "Navigation",
+    "legal": "Legal",
+    "legalNotice": "Legal notice",
+    "privacy": "Privacy policy",
+    "legalDisclaimer": "This site uses AI to generate content. Session data is temporary and is not shared with third parties.",
     "contact": "Contact",
     "rights": "All rights reserved."
+  },
+  "legal": {
+    "title": "Legal notice",
+    "editor": {
+      "title": "Site editor",
+      "text": "This site is published by Alexis Trouvé, an independent developer based in France. It serves as a personal portfolio and technical demonstration."
+    },
+    "hosting": {
+      "title": "Hosting",
+      "text": "This site is hosted on a virtual private server (VPS) located in France. The domain name is managed through Cloudflare."
+    },
+    "ip": {
+      "title": "Intellectual property",
+      "text": "All content on this site (source code, text, design) is the property of Alexis Trouvé, unless otherwise stated. The source code is publicly available on GitHub for demonstration purposes."
+    },
+    "ai": {
+      "title": "AI-generated content",
+      "text": "Some features of this site use artificial intelligence (Claude, Anthropic) to generate content: cover letters, personalized messages, and chatbot responses. This content is generated on demand and is not permanently stored."
+    },
+    "liability": {
+      "title": "Limitation of liability",
+      "text": "AI-generated content is provided for informational purposes only. The publisher cannot be held responsible for its use. Information presented on this site is provided as-is, without guarantee of completeness or accuracy."
+    }
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "collection": {
+      "title": "Data collected",
+      "text": "This site only collects anonymous session data (session cookie) necessary for AI features to function. No registration is required. No personal data is requested or stored."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "text": "A session cookie (maicivy_session) is used to identify your session and manage rate limiting for AI features. This cookie is strictly necessary for the site to function and does not require consent. No tracking or advertising cookies are used."
+    },
+    "ai": {
+      "title": "AI processing",
+      "text": "Text you submit (job offers, company names) is sent to the Anthropic API (Claude) to generate content. This data is processed in accordance with Anthropic's privacy policy and is not used to train their models."
+    },
+    "retention": {
+      "title": "Data retention",
+      "text": "Sessions expire automatically. Generated letters are temporarily retained for consultation. Analytics data (visits, page views) is aggregated and anonymized."
+    },
+    "rights": {
+      "title": "Your rights",
+      "text": "Under GDPR, you have the right to access, rectify, and delete your data. Since this site does not collect personally identifiable data, these rights primarily apply to session data."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "For any questions regarding the protection of your data, you can contact the publisher through the links available in the site footer."
+    }
   }
 }

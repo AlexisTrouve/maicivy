@@ -357,9 +357,64 @@
     "invalidUrl": "URL invalide"
   },
   "footer": {
-    "description": "CV interactif intelligent avec génération de lettres par IA",
+    "about": "À propos",
+    "aboutText": "maicivy est un CV interactif propulsé par l'IA. Génération de lettres de motivation, chat intelligent, statistiques Git en temps réel — tout ce qu'un portfolio devrait être.",
     "navigation": "Navigation",
+    "legal": "Légal",
+    "legalNotice": "Mentions légales",
+    "privacy": "Politique de confidentialité",
+    "legalDisclaimer": "Ce site utilise l'IA pour générer du contenu. Les données de session sont temporaires et ne sont pas partagées avec des tiers.",
     "contact": "Contact",
     "rights": "Tous droits réservés."
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "editor": {
+      "title": "Éditeur du site",
+      "text": "Ce site est édité par Alexis Trouvé, développeur indépendant basé en France. Il s'agit d'un portfolio personnel et d'une démonstration technique."
+    },
+    "hosting": {
+      "title": "Hébergement",
+      "text": "Ce site est hébergé sur un serveur privé virtuel (VPS) localisé en France. Le nom de domaine est géré via Cloudflare."
+    },
+    "ip": {
+      "title": "Propriété intellectuelle",
+      "text": "L'ensemble du contenu de ce site (code source, textes, design) est la propriété d'Alexis Trouvé, sauf mention contraire. Le code source est disponible publiquement sur GitHub à titre de démonstration."
+    },
+    "ai": {
+      "title": "Contenu généré par IA",
+      "text": "Certaines fonctionnalités de ce site utilisent l'intelligence artificielle (Claude, Anthropic) pour générer du contenu : lettres de motivation, messages personnalisés, et réponses du chatbot. Ce contenu est généré à la demande et n'est pas stocké de façon permanente."
+    },
+    "liability": {
+      "title": "Limitation de responsabilité",
+      "text": "Les contenus générés par l'IA sont fournis à titre indicatif. L'éditeur ne saurait être tenu responsable de l'utilisation qui en est faite. Les informations présentées sur ce site sont fournies en l'état, sans garantie d'exhaustivité ou d'exactitude."
+    }
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "collection": {
+      "title": "Données collectées",
+      "text": "Ce site collecte uniquement des données de session anonymes (cookie de session) nécessaires au fonctionnement des fonctionnalités IA. Aucune inscription n'est requise. Aucune donnée personnelle n'est demandée ni stockée."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "text": "Un cookie de session (maicivy_session) est utilisé pour identifier votre session et gérer le rate limiting des fonctionnalités IA. Ce cookie est strictement nécessaire au fonctionnement du site et ne requiert pas de consentement. Aucun cookie de tracking ou publicitaire n'est utilisé."
+    },
+    "ai": {
+      "title": "Traitement IA",
+      "text": "Les textes que vous soumettez (offres d'emploi, noms d'entreprises) sont envoyés à l'API Anthropic (Claude) pour générer du contenu. Ces données sont traitées conformément à la politique de confidentialité d'Anthropic et ne sont pas utilisées pour entraîner leurs modèles."
+    },
+    "retention": {
+      "title": "Durée de conservation",
+      "text": "Les sessions expirent automatiquement. Les lettres générées sont conservées temporairement pour permettre leur consultation. Les données analytiques (visites, pages vues) sont agrégées et anonymisées."
+    },
+    "rights": {
+      "title": "Vos droits",
+      "text": "Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Étant donné que ce site ne collecte pas de données personnelles identifiantes, ces droits s'appliquent principalement aux données de session."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "Pour toute question relative à la protection de vos données, vous pouvez contacter l'éditeur via les liens disponibles dans le pied de page du site."
+    }
   }
 }

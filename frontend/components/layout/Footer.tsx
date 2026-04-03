@@ -2,64 +2,174 @@
 
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Github, Linkedin, Mail } from 'lucide-react';
+import { Github, Mail, MapPin, ExternalLink, Scale } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+const MAIPROFILES_URL = 'https://maiprofiles.etheryale.com';
+
+interface ProfileContact {
+  name: string;
+  headline: string;
+  location: string;
+  email: string;
+  github: string;
+  gitea: string;
+  githubUrl: string;
+  giteaUrl: string;
+}
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const t = useTranslations('footer');
   const tNav = useTranslations('nav');
+  const [contact, setContact] = useState<ProfileContact | null>(null);
+
+  // Fetch contact info depuis maiprofiles
+  useEffect(() => {
+    fetch(`${MAIPROFILES_URL}/profile`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data) return;
+        setContact({
+          name: data.name,
+          headline: data.headline,
+          location: data.location,
+          email: data.contact?.email || '',
+          github: data.contact?.github || '',
+          gitea: data.contact?.gitea || '',
+          githubUrl: data.links?.github || '',
+          giteaUrl: data.links?.gitea || '',
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <footer className="border-t bg-muted/50">
-      <div className="container py-8 md:py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="container py-10 md:py-14">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* About */}
           <div>
-            <h3 className="font-heading text-lg font-semibold">maicivy</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t('description')}
+            <h3 className="font-heading text-lg font-semibold">{t('about')}</h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {t('aboutText')}
             </p>
+            {contact && (
+              <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span>{contact.location}</span>
+              </div>
+            )}
           </div>
 
+          {/* Navigation */}
           <div>
             <h3 className="font-heading text-lg font-semibold">{t('navigation')}</h3>
-            <ul className="mt-2 space-y-2 text-sm">
+            <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/cv" className="text-muted-foreground hover:text-foreground">
+                <Link href="/cv" className="text-muted-foreground transition-colors hover:text-foreground">
                   {tNav('cv')}
                 </Link>
               </li>
               <li>
-                <Link href="/letters" className="text-muted-foreground hover:text-foreground">
+                <Link href="/letters" className="text-muted-foreground transition-colors hover:text-foreground">
                   {tNav('letters')}
                 </Link>
               </li>
               <li>
-                <Link href="/analytics" className="text-muted-foreground hover:text-foreground">
-                  {tNav('analytics')}
+                <Link href="/chat" className="text-muted-foreground transition-colors hover:text-foreground">
+                  {tNav('chat')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-muted-foreground transition-colors hover:text-foreground">
+                  {tNav('blog')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/gitstats" className="text-muted-foreground transition-colors hover:text-foreground">
+                  {tNav('gitstats')}
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* TODO: Add real contact links
+          {/* Mentions légales */}
           <div>
-            <h3 className="font-heading text-lg font-semibold">{t('contact')}</h3>
-            <div className="mt-2 flex gap-4">
-              <a href="https://github.com/USERNAME" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-                <Github className="h-5 w-5" />
-              </a>
-              <a href="https://linkedin.com/in/USERNAME" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="mailto:EMAIL" className="text-muted-foreground hover:text-foreground">
-                <Mail className="h-5 w-5" />
-              </a>
+            <h3 className="font-heading text-lg font-semibold">{t('legal')}</h3>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li>
+                <Link href="/legal" className="text-muted-foreground transition-colors hover:text-foreground">
+                  {t('legalNotice')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-foreground">
+                  {t('privacy')}
+                </Link>
+              </li>
+            </ul>
+            <div className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground/70">
+              <Scale className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{t('legalDisclaimer')}</span>
             </div>
           </div>
-          */}
+
+          {/* Contact — données dynamiques maiprofiles */}
+          <div>
+            <h3 className="font-heading text-lg font-semibold">{t('contact')}</h3>
+            {contact ? (
+              <div className="mt-3 space-y-3">
+                <p className="text-sm font-medium">{contact.name}</p>
+                <p className="text-xs text-muted-foreground">{contact.headline}</p>
+                <div className="flex flex-col gap-2 text-sm">
+                  {contact.email && (
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Mail className="h-4 w-4 shrink-0" />
+                      <span>{contact.email}</span>
+                    </a>
+                  )}
+                  {contact.githubUrl && (
+                    <a
+                      href={contact.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Github className="h-4 w-4 shrink-0" />
+                      <span>{contact.github}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                    </a>
+                  )}
+                  {contact.giteaUrl && (
+                    <a
+                      href={contact.giteaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <ExternalLink className="h-4 w-4 shrink-0" />
+                      <span>Gitea</span>
+                      <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-48 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-36 animate-pulse rounded bg-muted" />
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
+        {/* Copyright */}
+        <div className="mt-10 border-t pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; {currentYear} maicivy. {t('rights')}</p>
         </div>
       </div>
