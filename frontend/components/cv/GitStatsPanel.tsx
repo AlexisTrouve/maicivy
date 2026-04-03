@@ -65,18 +65,28 @@ function ChartSection({ children, delay = 0 }: { children: React.ReactNode; dela
 export default function GitStatsPanel() {
   const [stats, setStats] = useState<GitStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/v1/cv/gitstats`)
+  // Fetch stats — force=true pour ignorer le cache Redis
+  const fetchStats = (force = false) => {
+    const query = force ? '?force=true' : '';
+    if (force) setRefreshing(true);
+
+    fetch(`${API_URL}/api/v1/cv/gitstats${query}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch git stats');
         return res.json();
       })
       .then(setStats)
       .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
+  };
+
+  useEffect(() => { fetchStats(); }, []);
 
   if (loading) {
     return (
@@ -127,6 +137,23 @@ export default function GitStatsPanel() {
 
   return (
     <div className="space-y-8">
+      {/* Header avec bouton refresh */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-50"
+        >
+          <svg
+            className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {refreshing ? 'Refresh...' : 'Refresh'}
+        </button>
+      </div>
+
       {/* KPI cards — stagger animation */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kpis.map((kpi, i) => (

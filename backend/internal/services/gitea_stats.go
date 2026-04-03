@@ -111,12 +111,20 @@ const (
 )
 
 // GetStats retourne les stats Git agrégées avec cache incrémental.
+// - force=true → supprime le cache et fait un full fetch
 // - Si le cache a moins de 30 min → retourne tel quel
 // - Si le cache a plus de 30 min → fetch incrémental (seulement les nouveaux commits)
 // - Si pas de cache → full fetch
-func (s *GiteaStatsService) GetStats(ctx context.Context) (*GitStatsResponse, error) {
+func (s *GiteaStatsService) GetStats(ctx context.Context, force bool) (*GitStatsResponse, error) {
 	if s.redis == nil {
 		return s.fullFetch(ctx)
+	}
+
+	// Force refresh → vider le cache et refaire un full fetch
+	if force {
+		log.Info().Msg("gitstats: force refresh requested, clearing cache")
+		s.redis.Del(ctx, cacheKey)
+		return s.fullFetchAndCache(ctx)
 	}
 
 	// Charger le cache existant

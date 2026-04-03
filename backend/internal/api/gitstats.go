@@ -30,7 +30,8 @@ func (h *GitStatsHandler) GetGitStats(c *fiber.Ctx) error {
 		})
 	}
 
-	stats, err := h.gitea.GetStats(c.Context())
+	force := c.Query("force") == "true"
+	stats, err := h.gitea.GetStats(c.Context(), force)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
