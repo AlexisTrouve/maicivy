@@ -298,7 +298,7 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 
 		for _, c := range res.commits {
 			// Exclure les commits massifs (imports, vendoring, migrations)
-			if c.Stats.Additions > 10000 {
+			if c.Stats.Additions > 50000 {
 				continue
 			}
 			date := c.Commit.Author.Date.Format("2006-01-02")
