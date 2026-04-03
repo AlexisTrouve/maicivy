@@ -2,7 +2,7 @@
 
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Github, Mail, MapPin, ExternalLink, Scale } from 'lucide-react';
+import { Github, Linkedin, Mail, MapPin, MessageCircle, ExternalLink, Scale } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const MAIPROFILES_URL = 'https://maiprofiles.etheryale.com';
@@ -14,8 +14,11 @@ interface ProfileContact {
   email: string;
   github: string;
   gitea: string;
+  linkedin: string;
+  whatsapp: string;
   githubUrl: string;
   giteaUrl: string;
+  linkedinUrl: string;
 }
 
 export function Footer() {
@@ -37,8 +40,11 @@ export function Footer() {
           email: data.contact?.email || '',
           github: data.contact?.github || '',
           gitea: data.contact?.gitea || '',
+          linkedin: data.contact?.linkedin || '',
+          whatsapp: data.contact?.whatsapp || '',
           githubUrl: data.links?.github || '',
           giteaUrl: data.links?.gitea || '',
+          linkedinUrl: data.links?.linkedin || '',
         });
       })
       .catch(() => {});
@@ -132,6 +138,18 @@ export function Footer() {
                       <span>{contact.email}</span>
                     </a>
                   )}
+                  {contact.linkedinUrl && (
+                    <a
+                      href={contact.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Linkedin className="h-4 w-4 shrink-0" />
+                      <span>LinkedIn</span>
+                      <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                    </a>
+                  )}
                   {contact.githubUrl && (
                     <a
                       href={contact.githubUrl}
@@ -144,15 +162,15 @@ export function Footer() {
                       <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                     </a>
                   )}
-                  {contact.giteaUrl && (
+                  {contact.whatsapp && (
                     <a
-                      href={contact.giteaUrl}
+                      href={`https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      <ExternalLink className="h-4 w-4 shrink-0" />
-                      <span>Gitea</span>
+                      <MessageCircle className="h-4 w-4 shrink-0" />
+                      <span>WhatsApp</span>
                       <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                     </a>
                   )}
