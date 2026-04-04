@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useRef, Suspense, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 import { GlassCard3D } from './GlassCard3D';

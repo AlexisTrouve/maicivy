@@ -7,91 +7,85 @@ import { ArrowLeft } from 'lucide-react';
 import { use3DSupport } from '@/hooks/use3DSupport';
 import type { Portfolio3DProject } from '@/lib/types';
 
-// Lazy load 3D components
+const MAIPROFILES_URL = 'https://maiprofiles.etheryale.com';
+
+// Lazy load 3D components — SSR désactivé (WebGL client-only)
 const PortfolioShowcase = nextDynamic(
   () => import('@/components/3d/portfolio').then(m => m.PortfolioShowcase),
   { ssr: false }
 );
 
-// Real projects data
-const demoProjects: Portfolio3DProject[] = [
-  {
-    id: '1',
-    title: 'maicivy',
-    description: 'CV interactif intelligent avec generation de lettres de motivation par IA. Stack moderne avec Next.js 14, Go, et Three.js pour les effets 3D.',
-    imageUrl: '/projects/maicivy.png',
-    technologies: ['Next.js', 'Go', 'Three.js', 'PostgreSQL', 'Redis'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: true,
-    category: 'fullstack'
-  },
-  {
-    id: '2',
-    title: 'GroveEngine',
-    description: 'Moteur C++ modulaire avec hot-reload ultra-rapide (0.4ms). Architecture optimisee pour le developpement avec Claude Code et iteration rapide.',
-    imageUrl: '/projects/groveengine.png',
-    technologies: ['C++', 'CMake', 'ImGui', 'Hot-Reload'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: true,
-    category: 'devops'
-  },
-  {
-    id: '3',
-    title: 'VBA MCP Server',
-    description: 'Serveur MCP pour extraction, analyse et injection de code VBA dans les fichiers Office. 24 outils pour automatiser Excel, Word et Access avec Claude.',
-    imageUrl: '/projects/vba-mcp.png',
-    technologies: ['TypeScript', 'MCP', 'COM', 'Office'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: true,
-    category: 'devops'
-  },
-  {
-    id: '4',
-    title: 'Freelance Dashboard',
-    description: 'Demo VBA MCP - Dashboard Excel pour suivi freelance avec KPIs, tableaux croises dynamiques et automatisation VBA.',
-    imageUrl: '/projects/freelance-dashboard.png',
-    technologies: ['Excel', 'VBA', 'MCP Demo'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: false,
-    category: 'demo'
-  },
-  {
-    id: '5',
-    title: 'TimeTrack Pro',
-    description: 'Demo VBA MCP - Gestionnaire de temps Access avec suivi heures par client/projet. Vitrine des capacites Access du serveur MCP.',
-    imageUrl: '/projects/timetrack.png',
-    technologies: ['Access', 'VBA', 'SQL', 'MCP Demo'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: false,
-    category: 'demo'
-  },
-  {
-    id: '6',
-    title: 'Confluent',
-    description: 'Langue construite complete pour un univers JDR. Systeme linguistique (67 racines, grammaire SOV), API de traduction multi-LLM et interface web temps reel.',
-    imageUrl: '/projects/confluent.png',
-    technologies: ['Node.js', 'Claude API', 'OpenAI', 'Linguistics'],
-    // githubUrl: '', // TODO: Add GitHub URL
-    featured: true,
-    category: 'ai'
-  }
-];
+// Mapping catégorie maiprofiles → catégorie portfolio 3D
+function mapCategory(cat: string): string {
+  const lower = cat.toLowerCase();
+  if (lower.includes('web') || lower.includes('saas') || lower.includes('full')) return 'fullstack';
+  if (lower.includes('backend') || lower.includes('api')) return 'backend';
+  if (lower.includes('frontend') || lower.includes('ui')) return 'frontend';
+  if (lower.includes('ai') || lower.includes('ml') || lower.includes('nlp')) return 'ai';
+  if (lower.includes('devops') || lower.includes('infra') || lower.includes('tool')) return 'devops';
+  if (lower.includes('game') || lower.includes('engine')) return 'devops';
+  if (lower.includes('mobile') || lower.includes('flutter')) return 'mobile';
+  return 'tools';
+}
+
+// Transforme un projet maiprofiles en Portfolio3DProject
+function toPortfolio3D(p: any): Portfolio3DProject {
+  return {
+    id: p.id,
+    title: p.name,
+    description: p.description?.portfolio || p.description?.short || '',
+    // Image hero si dispo, sinon placeholder basé sur l'id
+    imageUrl: p.screenshots?.[0] || `/projects/${p.id}.png`,
+    technologies: p.stack || [],
+    githubUrl: p.links?.github,
+    demoUrl: p.links?.live,
+    featured: p.status === 'production',
+    category: mapCategory(p.category || ''),
+  };
+}
 
 export default function Demo3DContent() {
   const [mounted, setMounted] = useState(false);
+  const [projects, setProjects] = useState<Portfolio3DProject[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showLegacy, setShowLegacy] = useState(false);
   const { isSupported, performanceLevel, webGLVersion, isMobile } = use3DSupport();
 
+  // Fetch projets depuis maiprofiles
   useEffect(() => {
     setMounted(true);
+    fetch(`${MAIPROFILES_URL}/projects`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProjects(data.map(toPortfolio3D));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  if (!mounted) {
+  // Attendre le montage + le fetch
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-white/60">Loading 3D Portfolio...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Aucun projet chargé — erreur réseau ou API vide
+  if (projects.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <p className="text-white/60 mb-4">Aucun projet disponible.</p>
+          <Link href="/" className="text-purple-400 hover:text-purple-300 underline">
+            Retour
+          </Link>
         </div>
       </div>
     );
@@ -114,6 +108,7 @@ export default function Demo3DContent() {
               <h1 className="text-2xl font-bold text-white">Portfolio 3D</h1>
               <p className="text-sm text-white/60">
                 WebGL {webGLVersion} | {performanceLevel} | {isMobile ? 'Mobile' : 'Desktop'}
+                {' '}| {projects.length} projets
               </p>
             </div>
           </div>
@@ -126,14 +121,13 @@ export default function Demo3DContent() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content — projets dynamiques depuis maiprofiles */}
       {!showLegacy ? (
-        // New Portfolio Showcase
         <PortfolioShowcase
-          projects={demoProjects}
+          projects={projects}
           height="100vh"
           config={{
-            layout: 'circular',
+            layout: projects.length > 12 ? 'spiral' : 'circular',
             radius: 4,
             enablePostProcessing: performanceLevel === 'high',
             enableParticles: performanceLevel !== 'low',
@@ -141,7 +135,6 @@ export default function Demo3DContent() {
           }}
         />
       ) : (
-        // Legacy demo content
         <LegacyDemo />
       )}
 
