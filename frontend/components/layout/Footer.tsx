@@ -138,9 +138,9 @@ export function Footer() {
                       <span>{contact.email}</span>
                     </a>
                   )}
-                  {contact.linkedinUrl && (
+                  {(contact.linkedinUrl || contact.linkedin) && (
                     <a
-                      href={contact.linkedinUrl}
+                      href={contact.linkedinUrl || contact.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
