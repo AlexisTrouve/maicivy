@@ -190,7 +190,7 @@ function PortfolioScene({
             y,
             Math.cos(angle) * radius
           ],
-          rotation: [0, angle + Math.PI, 0],
+          rotation: [0, angle, 0],
           scale: Math.max(0.7, 1 - ring * 0.1) // Slightly smaller in outer rings
         });
       }

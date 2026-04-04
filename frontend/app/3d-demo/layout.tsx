@@ -14,7 +14,7 @@ export default function Demo3DLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={{ margin: 0, padding: 0, overflow: 'hidden', height: '100vh', width: '100vw' }}>{children}</body>
     </html>
   );
 }
