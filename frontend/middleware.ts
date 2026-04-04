@@ -9,6 +9,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Exclude api, _next, _vercel, static files, and special routes (3d-demo, api-test)
-  matcher: ['/((?!api|_next|_vercel|3d-demo|api-test|.*\\..*).*)']
+  // Exclude api, _next, _vercel, static files, and special routes (api-test)
+  matcher: ['/((?!api|_next|_vercel|api-test|.*\\..*).*)']
 };

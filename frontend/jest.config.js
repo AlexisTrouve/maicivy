@@ -18,8 +18,6 @@ const customJestConfig = {
     '^.+\.(css|sass|scss)$': '<rootDir>/__mocks__/styleMocks.js',
     // Handle image imports
     '^.+\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i': '<rootDir>/__mocks__/fileMocks.js',
-    // Mock three.js
-    '^three$': '<rootDir>/__mocks__/three.ts',
     // Mock @radix-ui/react-slot
     '^@radix-ui/react-slot$': '<rootDir>/__mocks__/@radix-ui/react-slot.js',
     // Mock @radix-ui/react-select

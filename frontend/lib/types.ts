@@ -213,41 +213,6 @@ export interface AnalyticsEvent {
   metadata?: Record<string, any>;
 }
 
-// 3D Types (Phase 5 - Feature 4)
-export interface SkillNode3D {
-  id: string;
-  name: string;
-  level: number; // 0-1
-  category: string;
-  color: string;
-  position: [number, number, number];
-  radius: number;
-}
-
-export interface SkillEdge3D {
-  source: string;
-  target: string;
-  strength: number; // 0-1
-}
-
-export interface Scene3DConfig {
-  antialias?: boolean;
-  shadows?: boolean;
-  pixelRatio?: number;
-  alpha?: boolean;
-  powerPreference?: 'high-performance' | 'low-power' | 'default';
-}
-
-export type PerformanceLevel = 'high' | 'medium' | 'low' | 'none';
-
-export interface Device3DSupport {
-  isSupported: boolean;
-  performanceLevel: PerformanceLevel;
-  webGLVersion: number | null;
-  isMobile: boolean;
-  reason?: string;
-}
-
 // Profile Detection Types (Phase 5 - Feature 3)
 export type ProfileType = 'recruiter' | 'cto' | 'tech_lead' | 'ceo' | 'developer' | 'other';
 
@@ -355,34 +320,6 @@ export interface GitHubReposResponse {
 export interface GitHubDisconnectResponse {
   success: boolean;
   message: string;
-}
-
-// Portfolio 3D Types (Glassmorphism Showcase)
-export interface Portfolio3DProject {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  technologies: string[];
-  githubUrl?: string;
-  demoUrl?: string;
-  featured: boolean;
-  category: string;
-}
-
-export interface CardPosition3D {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale: number;
-}
-
-export interface PortfolioShowcaseConfig {
-  layout: 'circular' | 'spiral' | 'grid';
-  radius: number;
-  cardSpacing: number;
-  enablePostProcessing: boolean;
-  enableParticles: boolean;
-  enableLightRays: boolean;
 }
 
 // Timeline Types (Phase 5 - Feature 2)

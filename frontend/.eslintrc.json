@@ -19,13 +19,6 @@
         "react/display-name": "off",
         "react/no-unescaped-entities": "off"
       }
-    },
-    {
-      "files": ["**/3d/**/*", "**/3d-demo/**/*", "**/_3d-demo-disabled/**/*", "**/_3d-disabled/**/*"],
-      "rules": {
-        "@typescript-eslint/no-unused-vars": "warn",
-        "react/no-unescaped-entities": "off"
-      }
     }
   ]
 }

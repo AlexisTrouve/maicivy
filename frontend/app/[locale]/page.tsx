@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
-import NextLink from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Sparkles, BarChart3, Layers, Box } from 'lucide-react';
+import { FileText, Sparkles, BarChart3, Layers } from 'lucide-react';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
@@ -39,14 +38,6 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <div className="mt-6">
-          <Button asChild variant="ghost" className="gap-2">
-            <NextLink href="/3d-demo">
-              <Box className="h-4 w-4" />
-              Portfolio 3D
-            </NextLink>
-          </Button>
-        </div>
       </div>
 
       <div className="mx-auto mt-24 grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-4">
