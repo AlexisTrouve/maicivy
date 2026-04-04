@@ -97,7 +97,7 @@ func getDefaultCSP(environment string) string {
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
 			"font-src 'self' https://fonts.gstatic.com data:; " +
 			"img-src 'self' data: https: http://localhost:*; " +
-			"connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://api.anthropic.com https://api.openai.com; " +
+			"connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://api.anthropic.com https://api.openai.com https://maiprofiles.etheryale.com; " +
 			"frame-ancestors 'none'; " +
 			"base-uri 'self'; " +
 			"form-action 'self';"
@@ -109,7 +109,7 @@ func getDefaultCSP(environment string) string {
 		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
 		"font-src 'self' https://fonts.gstatic.com data:; " +
 		"img-src 'self' data: https:; " +
-		"connect-src 'self' https://api.anthropic.com https://api.openai.com wss:; " +
+		"connect-src 'self' https://api.anthropic.com https://api.openai.com https://maiprofiles.etheryale.com wss:; " +
 		"frame-ancestors 'none'; " +
 		"base-uri 'self'; " +
 		"form-action 'self'; " +

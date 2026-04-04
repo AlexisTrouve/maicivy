@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, Html } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Portfolio3DProject, PerformanceLevel } from '@/lib/types';
 import type { CardPosition3D } from '@/lib/3d-utils';
@@ -111,25 +111,28 @@ export function GlassCard3D({
         )}
       </group>
 
-      {/* HTML overlay for title and details */}
-      <Html
-        position={[0, 0, cardDepth / 2 + 0.02]}
-        center
-        distanceFactor={6}
-        style={{
-          pointerEvents: 'none',
-          userSelect: 'none'
-        }}
+      {/* Titre et catégorie en WebGL (pas de Html drei → évite le crash DOM Next.js) */}
+      <Text
+        position={[0, 0.15, cardDepth / 2 + 0.02]}
+        fontSize={0.14}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={cardWidth * 0.85}
+        fontWeight="bold"
       >
-        <div className="text-center w-[160px]">
-          <h3 className="text-sm font-bold text-white drop-shadow-lg">
-            {project.title}
-          </h3>
-          <p className="text-xs text-white/80 mt-1">
-            {project.category}
-          </p>
-        </div>
-      </Html>
+        {project.title}
+      </Text>
+      <Text
+        position={[0, -0.1, cardDepth / 2 + 0.02]}
+        fontSize={0.09}
+        color="#ffffffcc"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={cardWidth * 0.85}
+      >
+        {project.category}
+      </Text>
     </group>
   );
 }
