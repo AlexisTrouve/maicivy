@@ -57,8 +57,19 @@ export default function Demo3DContent() {
     fetch(`${MAIPROFILES_URL}/projects`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setProjects(data.map(toPortfolio3D));
+        if (!data) return;
+        // L'API peut retourner [{projects: [...]}, ...projects] ou juste [...projects]
+        let projects: any[] = [];
+        if (Array.isArray(data)) {
+          // Filtrer les vrais projets (ceux avec un id) vs les wrappers
+          projects = data.filter((p: any) => p.id);
+          // Si le premier élément est un wrapper {projects: [...]}, extraire aussi
+          if (data[0]?.projects && Array.isArray(data[0].projects)) {
+            projects = [...data[0].projects, ...projects];
+          }
+        }
+        if (projects.length > 0) {
+          setProjects(projects.map(toPortfolio3D));
         }
       })
       .catch(() => {})
