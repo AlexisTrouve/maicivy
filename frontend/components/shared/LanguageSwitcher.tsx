@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname, useRouter } from '@/i18n/navigation';
-import { useParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 
 const LANGUAGES = [
@@ -19,8 +19,12 @@ export function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  const rawPathname = usePathname(); // ex: '/en', '/fr/cv', '/de/letters'
   const currentLocale = (params.locale as string) || 'fr';
   const current = LANGUAGES.find(l => l.code === currentLocale) ?? LANGUAGES[0];
+
+  // Chemin sans le préfixe locale — ex: '/en/cv' → '/cv', '/fr' → '/'
+  const pathWithoutLocale = rawPathname.replace(/^\/(fr|en|de|it|zh)/, '') || '/';
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -35,7 +39,7 @@ export function LanguageSwitcher() {
 
   const switchTo = (code: string) => {
     setOpen(false);
-    router.replace(pathname, { locale: code });
+    router.replace(pathWithoutLocale, { locale: code });
   };
 
   return (
