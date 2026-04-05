@@ -1,0 +1,317 @@
+{
+  "metadata": {
+    "title": "maicivy - Interaktiver Intelligenter Lebenslauf",
+    "description": "Interaktiver Lebenslauf mit KI-gestützter Anschreibengenerierung"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "retry": "Erneut versuchen",
+    "close": "Schließen",
+    "backToHome": "Zurück zur Startseite",
+    "download": "Herunterladen",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "viewMore": "Mehr anzeigen",
+    "toggleTheme": "Design wechseln"
+  },
+  "nav": {
+    "home": "Startseite",
+    "cv": "Lebenslauf",
+    "letters": "Anschreiben",
+    "chat": "Chat",
+    "analytics": "Analytics",
+    "architecture": "Architektur",
+    "blog": "Blog",
+    "gitstats": "Git Stats"
+  },
+  "home": {
+    "title": "Interaktiver Intelligenter Lebenslauf",
+    "subtitle": "Entdecken Sie meinen adaptiven beruflichen Werdegang und generieren Sie personalisierte Anschreiben mithilfe von künstlicher Intelligenz.",
+    "cta": {
+      "viewCV": "Meinen Lebenslauf ansehen",
+      "generateLetter": "Anschreiben generieren"
+    },
+    "features": {
+      "cv": {
+        "title": "Dynamischer Lebenslauf",
+        "description": "Ein Lebenslauf, der sich automatisch dem Kontext anpasst: Backend, Frontend, DevOps...",
+        "action": "Erkunden"
+      },
+      "letters": {
+        "title": "KI-Anschreiben",
+        "description": "KI-gestützte Generierung von personalisierten Motivations- und Anti-Motivationsschreiben.",
+        "action": "Ausprobieren"
+      },
+      "analytics": {
+        "title": "Öffentliche Analytics",
+        "description": "Echtzeit-Dashboard mit Besuchs- und Nutzungsstatistiken.",
+        "action": "Statistiken ansehen"
+      },
+      "architecture": {
+        "title": "Architektur",
+        "description": "Vollständiger Tech-Stack: Go, Next.js, PostgreSQL, Redis, Claude AI...",
+        "action": "Entdecken"
+      }
+    }
+  },
+  "cv": {
+    "title": "Dynamischer Lebenslauf",
+    "adaptedTo": "Lebenslauf angepasst für Profil:",
+    "selectTheme": "Design auswählen",
+    "sections": {
+      "experiences": "Berufserfahrung",
+      "skills": "Kenntnisse",
+      "projects": "Projekte"
+    },
+    "duration": {
+      "present": "Heute",
+      "year": "Jahr",
+      "years": "Jahre",
+      "month": "Monat",
+      "months": "Monate",
+      "unknownDate": "Datum unbekannt",
+      "invalidDate": "Ungültiges Datum",
+      "unknownDuration": "Dauer unbekannt"
+    },
+    "experience": {
+      "viewDetails": "Details anzeigen"
+    },
+    "skills": {
+      "all": "Alle",
+      "tooltip": "{name} – Niveau {level}/5 – {years} Jahre Erfahrung",
+      "legend": "Die Größe repräsentiert das Kenntnislevel und die Relevanz für das gewählte Design"
+    },
+    "projects": {
+      "featured": "Hauptprojekt",
+      "code": "Code",
+      "demo": "Demo",
+      "relevance": "Relevanz",
+      "inProgress": "In Bearbeitung",
+      "clickForDetails": "Klicken für weitere Details",
+      "openDetails": "Details von {title} öffnen",
+      "defaultCategory": "Projekt"
+    },
+    "export": {
+      "downloading": "Export läuft...",
+      "download": "PDF herunterladen",
+      "error": "PDF-Export fehlgeschlagen"
+    },
+    "themes": {
+      "backend": "Backend",
+      "fullstack": "Full-Stack",
+      "devops": "DevOps",
+      "cpp": "C++",
+      "artistic": "Kreativ"
+    },
+    "detailModal": {
+      "close": "Schließen",
+      "image": "Bild",
+      "prevImage": "Vorheriges Bild",
+      "nextImage": "Nächstes Bild",
+      "goToImage": "Zu Bild wechseln",
+      "functional": { "title": "Was es macht" },
+      "technical": { "title": "Wie es umgesetzt ist" },
+      "technologies": "Technologien",
+      "skills": "Kenntnisse",
+      "links": {
+        "title": "Links",
+        "github": "GitHub",
+        "demo": "Online-Demo",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "other": "Link"
+      }
+    }
+  },
+  "letters": {
+    "title": "KI-Anschreibengenerator",
+    "subtitle": "Generieren Sie sofort ein professionelles Motivationsschreiben und eine humorvolle \"Anti-Motivations\"-Version",
+    "form": {
+      "companyName": "Unternehmensname",
+      "placeholder": "z. B. Google, Microsoft, Innovatives Startup...",
+      "submit": "Anschreiben generieren",
+      "generating": "Generierung läuft...",
+      "info": "Die KI generiert zwei Schreiben: ein professionelles Motivationsschreiben und ein humorvolles Anti-Motivationsschreiben. Die Generierung dauert ca. 30–60 Sekunden."
+    },
+    "progress": {
+      "analyzing": "Unternehmensanalyse läuft...",
+      "writingMotivation": "Motivationsschreiben wird verfasst...",
+      "writingAnti": "Anti-Motivationsschreiben wird erstellt...",
+      "finalizing": "Abschluss..."
+    },
+    "preview": {
+      "title": "Anschreiben für {company}",
+      "sector": "Branche:",
+      "motivation": "Motivationsschreiben",
+      "antiMotivation": "Anti-Motivationsschreiben",
+      "downloadDual": "Dual-PDF",
+      "newGeneration": "Neu generieren",
+      "copyText": "Text kopieren",
+      "downloadPDF": "PDF herunterladen",
+      "warning": "Hinweis: Das Anti-Motivationsschreiben wird zu humoristischen Zwecken generiert. Es darf NICHT an das Unternehmen gesendet werden.",
+      "downloadError": "Fehler beim Herunterladen des PDFs",
+      "filenameLetter": "anschreiben"
+    },
+    "accessGate": {
+      "title": "Premium-Funktion",
+      "description": "Der KI-Anschreibengenerator ist ab dem 3. Besuch verfügbar.",
+      "progress": "Ihr Fortschritt",
+      "visits": "{count} / 3 Besuche",
+      "remaining": "Noch {count} Besuch(e) bis zur Freischaltung",
+      "encourage": "Besuchen Sie meinen Lebenslauf erneut, um diese Funktion freizuschalten!",
+      "unlockTitle": "Sie schalten frei:",
+      "features": {
+        "motivation": "Personalisiertes Motivationsschreiben",
+        "anti": "Einzigartiges humorvolles Anti-Motivationsschreiben",
+        "pdf": "Professioneller PDF-Export beider Schreiben",
+        "analysis": "KI-Analyse des Zielunternehmens"
+      },
+      "exploreCV": "Lebenslauf erkunden"
+    },
+    "errors": {
+      "accessDenied": "Zugriff verweigert. Sie müssen 3 Besuche absolvieren, um diese Funktion freizuschalten.",
+      "rateLimit": "Limit erreicht. Versuchen Sie es in einigen Minuten erneut.",
+      "serverError": "Serverfehler. Unsere KIs machen eine kurze Pause. Versuchen Sie es gleich erneut.",
+      "generic": "Bei der Generierung ist ein Fehler aufgetreten."
+    }
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "subtitle": "Öffentliche Echtzeit-Statistiken",
+    "description": "Erfahren Sie, wie Besucher mit der Website interagieren",
+    "privacy": "Dieses Dashboard ist öffentlich und wird in Echtzeit aktualisiert. Die Daten werden anonym erfasst.",
+    "widgets": {
+      "visitors": {
+        "title": "Aktuelle Besucher",
+        "online": "Online",
+        "offline": "Offline",
+        "person": "Person",
+        "people": "Personen",
+        "rightNow": "gerade jetzt",
+        "realtime": "Echtzeit-Aktualisierung via WebSocket"
+      },
+      "themes": {
+        "title": "Top Lebenslauf-Designs",
+        "views": "Aufrufe",
+        "update": "Aktualisierung alle 30 Sekunden"
+      },
+      "letters": {
+        "title": "KI-Anschreiben",
+        "total": "insgesamt generierte Anschreiben",
+        "noData": "Keine Daten verfügbar",
+        "evolution": "Entwicklung über {period}"
+      },
+      "heatmap": {
+        "title": "Interaktions-Heatmap",
+        "low": "Niedrig",
+        "high": "Hoch",
+        "noData": "Keine Interaktionsdaten verfügbar",
+        "interactions": "{count} Interaktionen",
+        "based": "Basierend auf {count} Interaktionspunkten"
+      },
+      "stats": {
+        "visitors": "Besucher",
+        "pageViews": "Seitenaufrufe",
+        "letters": "Anschreiben",
+        "conversion": "Conversion"
+      }
+    },
+    "periods": {
+      "today": "Heute",
+      "last7days": "Letzte 7 Tage",
+      "last30days": "Letzte 30 Tage",
+      "all": "Gesamt",
+      "day": "Tag",
+      "week": "Woche",
+      "month": "Monat",
+      "select": "Zeitraum auswählen",
+      "label": "Zeitraum:"
+    }
+  },
+  "architecture": {
+    "title": "Architektur & Tech-Stack",
+    "subtitle": "Entdecken Sie die Technologien und die Architektur hinter maicivy",
+    "overview": "Überblick",
+    "fullStack": "Vollständiger Tech-Stack",
+    "scraper": "Multi-Source Company Scraper",
+    "features": "Technische Funktionen",
+    "security": "Sicherheit (OWASP Top 10)",
+    "codeExample": "Beispiel: Multi-Source Scraper",
+    "sourceCode": "Quellcode",
+    "sourceCodeDesc": "Entdecken Sie den vollständigen Code auf GitHub – 100+ Go-Dateien, 60+ React-Komponenten, 882 Tests",
+    "viewOnGithub": "Auf GitHub ansehen",
+    "backToCV": "Zurück zum Lebenslauf",
+    "layers": { "client": "CLIENT", "backend": "API BACKEND", "services": "SERVICES", "database": "DATABASE", "cache": "CACHE", "aiProviders": "AI PROVIDERS" },
+    "stacks": {
+      "backend": { "title": "Backend (Go)", "description": "Hochperformante API mit Go und Fiber" },
+      "frontend": { "title": "Frontend (Next.js)", "description": "Moderne Oberfläche mit React und TypeScript" },
+      "ai": { "title": "Künstliche Intelligenz", "description": "Inhaltsgenerierung mit Claude und GPT-4" },
+      "infra": { "title": "Infrastruktur", "description": "Docker, Datenbanken und Monitoring" }
+    },
+    "metrics": {
+      "goFiles": "Go-Dateien (Backend)", "reactComponents": "React-Komponenten", "backendTests": "Backend-Tests",
+      "frontendTests": "Frontend-Tests", "passingTests": "Erfolgreiche Tests", "apiEndpoints": "API-Endpunkte",
+      "documentation": "Dokumentation", "implementationGuides": "Implementierungsleitfäden"
+    },
+    "technicalFeatures": {
+      "dynamicCV": { "title": "Adaptiver Dynamischer Lebenslauf", "description": "5 Designs mit intelligentem Scoring", "tech": ["Scoring-Algorithmus", "PDF-Export", "Framer Motion Animationen"] },
+      "aiLetters": { "title": "KI-Anschreibengenerator", "description": "Parallele Generierung von Anschreiben", "tech": ["Claude API", "Asynchrone Job Queue", "PDF generation"] },
+      "scraper": { "title": "Multi-Source Scraper", "description": "Unternehmenssuche in Echtzeit", "tech": ["Wikipedia API", "GitHub API", "Blog scraping", "DuckDuckGo", "Clearbit"] },
+      "analytics": { "title": "Echtzeit-Analytics", "description": "Öffentliches Dashboard mit WebSocket", "tech": ["WebSocket", "Chart.js", "Heatmap clicks"] },
+      "accessGate": { "title": "Intelligentes Access Gate", "description": "Freischaltung nach 3 Besuchen oder Profilerkennung", "tech": ["Profile detection", "User-Agent parsing", "Cookie tracking"] },
+      "rateLimiting": { "title": "KI Rate Limiting", "description": "5 Generierungen/Tag, 2 Min. Cooldown", "tech": ["Redis sliding window", "Token counting", "Cost tracking"] }
+    },
+    "securityItems": {
+      "injection": { "title": "Injection Prevention", "description": "GORM ORM, parametrisierte Abfragen" },
+      "xss": { "title": "XSS Protection", "description": "Input-Sanitization, bluemonday" },
+      "rateLimit": { "title": "Rate Limiting", "description": "Redis sliding window" },
+      "headers": { "title": "Security Headers", "description": "CSP, X-Frame-Options, HSTS" },
+      "gdpr": { "title": "DSGVO-Konformität", "description": "IP-Hashing SHA256, keine personenbezogenen Daten" },
+      "cookies": { "title": "Secure Cookies", "description": "HttpOnly, Secure, SameSite" }
+    }
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "tryAgain": "Entschuldigung, etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "notFound": "Seite nicht gefunden",
+    "serverError": "Serverfehler",
+    "retry": "Erneut versuchen"
+  },
+  "validation": {
+    "minLength": "Muss mindestens {min} Zeichen enthalten",
+    "maxLength": "Darf {max} Zeichen nicht überschreiten",
+    "invalidChars": "Ungültige Zeichen erkannt",
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidUrl": "Ungültige URL"
+  },
+  "footer": {
+    "about": "Über uns",
+    "aboutText": "maicivy ist ein KI-gestützter interaktiver Lebenslauf. Anschreibengenerierung, intelligenter Chat, Echtzeit-Git-Statistiken — alles, was ein Portfolio sein sollte.",
+    "navigation": "Navigation",
+    "legal": "Rechtliches",
+    "legalNotice": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "legalDisclaimer": "Diese Website verwendet KI zur Inhaltsgenerierung. Sitzungsdaten sind temporär und werden nicht an Dritte weitergegeben.",
+    "contact": "Kontakt",
+    "rights": "Alle Rechte vorbehalten."
+  },
+  "legal": {
+    "title": "Impressum",
+    "editor": { "title": "Betreiber der Website", "text": "Diese Website wird betrieben von Alexis Trouvé, freiberuflicher Entwickler mit Sitz in Frankreich. Es handelt sich um ein persönliches Portfolio und eine technische Demonstration." },
+    "hosting": { "title": "Hosting", "text": "Diese Website wird auf einem VPS in Frankreich gehostet, die Domain wird über Cloudflare verwaltet." },
+    "ip": { "title": "Geistiges Eigentum", "text": "Alle Inhalte dieser Website (Quellcode, Texte, Design) sind Eigentum von Alexis Trouvé. Der Quellcode ist auf GitHub öffentlich verfügbar." },
+    "ai": { "title": "KI-generierte Inhalte", "text": "Bestimmte Funktionen nutzen KI (Claude, Anthropic) zur Inhaltsgenerierung: Anschreiben, personalisierte Nachrichten und Chatbot-Antworten." },
+    "liability": { "title": "Haftungsbeschränkung", "text": "KI-generierte Inhalte dienen ausschließlich zu Informationszwecken. Der Betreiber übernimmt keine Haftung für deren Verwendung." }
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "collection": { "title": "Erhobene Daten", "text": "Diese Website erhebt ausschließlich anonyme Sitzungsdaten (Session-Cookie), die für den Betrieb der KI-Funktionen erforderlich sind. Es ist keine Registrierung erforderlich." },
+    "cookies": { "title": "Cookies", "text": "Ein Sitzungs-Cookie (maicivy_session) wird verwendet, um Ihre Sitzung zu identifizieren und das Rate Limiting der KI-Funktionen zu verwalten. Dieser Cookie ist technisch notwendig." },
+    "ai": { "title": "KI-Verarbeitung", "text": "Eingegebene Texte (Stellenangebote, Unternehmensnamen) werden zur Inhaltsgenerierung an die Anthropic API (Claude) übermittelt, gemäß der Datenschutzrichtlinie von Anthropic." },
+    "retention": { "title": "Speicherdauer", "text": "Sitzungen laufen automatisch ab. Analysedaten (Besuche, Seitenaufrufe) werden aggregiert und anonymisiert." },
+    "rights": { "title": "Ihre Rechte", "text": "Gemäß DSGVO haben Sie das Recht auf Auskunft, Berichtigung und Löschung Ihrer Daten. Da diese Website keine identifizierenden personenbezogenen Daten erhebt, beziehen sich diese Rechte hauptsächlich auf Sitzungsdaten." },
+    "contact": { "title": "Kontakt", "text": "Bei Fragen zum Datenschutz wenden Sie sich über die Links in der Fußzeile an den Betreiber." }
+  }
+}
