@@ -3,11 +3,20 @@ import { Inter, Poppins } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import Script from 'next/script';
+import nextDynamic from 'next/dynamic';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { VisitorHeartbeatProvider } from '@/components/providers/VisitorHeartbeatProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import '../globals.css';
+
+// Import lazy — ssr:false garantit 0 exécution server-side.
+// Three.js est lui-même importé dynamiquement à l'intérieur du composant (useEffect),
+// ce qui donne deux couches de lazy loading : Next.js chunking + import() natif.
+const ConstellationBackground = nextDynamic(
+  () => import('@/components/background/ConstellationBackground'),
+  { ssr: false }
+);
 
 const inter = Inter({
   subsets: ['latin'],
@@ -154,6 +163,11 @@ export default async function LocaleLayout({
                     }}
                   />
                 </div>
+
+                {/* Constellation 3D Three.js — lazy loaded après hydration.
+                    z-[1] : au-dessus des blobs aurora (z-0), sous le contenu (z-10).
+                    Le composant gère lui-même son canvas en position fixed. */}
+                <ConstellationBackground />
 
                 {/* Contenu au-dessus de l'aurora — z-10 garantit le passage devant les blobs */}
                 <div className="relative z-10 flex min-h-screen flex-col">
