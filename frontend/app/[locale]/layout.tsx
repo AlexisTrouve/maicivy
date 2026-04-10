@@ -65,8 +65,8 @@ export async function generateMetadata({
       description: messages.metadata.description,
       images: [
         {
-          // Image statique hébergée sur maiprofiles (l'endpoint /api/og est routé vers le backend Go, pas Next.js)
-          url: 'https://maiprofiles.etheryale.com/images/img_dbb0624c',
+          // Route OG dynamique Next.js — génère l'image 1200×630 via @vercel/og (ImageResponse)
+          url: `${baseUrl}/api/og?locale=${locale}`,
           width: 1200,
           height: 630,
           alt: messages.metadata.title,
@@ -77,7 +77,8 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: messages.metadata.title,
       description: messages.metadata.description,
-      images: ['https://maiprofiles.etheryale.com/images/img_dbb0624c'],
+      // Route OG dynamique — même URL que openGraph.images
+      images: [`${baseUrl}/api/og?locale=${locale}`],
       creator: '@AlexisTrouve',
     },
     robots: {
