@@ -85,11 +85,34 @@ export default function ConstellationBackground() {
       const pointsGeo = new THREE.BufferGeometry();
       pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
+      // --- Texture glow via canvas 2D ---
+      // Dégradé radial blanc→bleu→transparent : simuler un halo lumineux autour de chaque étoile.
+      // Chromium génère un texture atlas côté GPU — plus efficace qu'un ShaderMaterial custom.
+      const glowCanvas = document.createElement('canvas');
+      glowCanvas.width = 64;
+      glowCanvas.height = 64;
+      const glowCtx = glowCanvas.getContext('2d')!;
+
+      // Dégradé radial centré : blanc opaque au centre, transparent aux bords
+      const gradient = glowCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gradient.addColorStop(0,   'rgba(255, 255, 255, 1.0)');  // centre : blanc pur
+      gradient.addColorStop(0.3, 'rgba(147, 197, 253, 0.8)'); // bleu clair (93c5fd)
+      gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.3)');  // bleu primaire, semi-transparent
+      gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0)');          // bord : transparent
+
+      glowCtx.fillStyle = gradient;
+      glowCtx.fillRect(0, 0, 64, 64);
+
+      const glowTexture = new THREE.CanvasTexture(glowCanvas);
+
       const pointsMat = new THREE.PointsMaterial({
-        color: 0x93c5fd, // bleu clair (Tailwind blue-300)
-        size: 0.06,
+        color: 0xffffff,          // blanc — la teinte finale vient de la texture
+        size: 0.35,               // plus grand pour que le halo glow soit visible
+        map: glowTexture,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,  // mode lumière — zones denses = plus lumineux
+        depthWrite: false,        // évite les artefacts de profondeur avec l'additive blending
         sizeAttenuation: true,
       });
 
@@ -254,6 +277,7 @@ export default function ConstellationBackground() {
         // Disposer chaque géométrie et matériau pour éviter les fuites GPU
         pointsGeo.dispose();
         pointsMat.dispose();
+        glowTexture.dispose(); // libère la texture canvas du GPU
         lineGeo.dispose();
         lineMat.dispose();
         trailObjects.forEach((t) => {
