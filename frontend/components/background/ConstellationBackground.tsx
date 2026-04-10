@@ -28,7 +28,8 @@ export default function ConstellationBackground() {
     let animationId: number;
     let renderer: any;
 
-    // Import dynamique Three.js — ne bloque pas le premier paint, chargé après hydration
+    // Import dynamique Three.js — différé de 3s pour laisser le LCP se rendre d'abord
+    const startDelay = setTimeout(() => {
     import('three').then((THREE) => {
       const mount = mountRef.current;
       if (!mount) return;
@@ -289,9 +290,11 @@ export default function ConstellationBackground() {
         }
       };
     });
+    }, 3000); // 3s de délai — laisse le LCP et le thread principal se libérer d'abord
 
-    // Cleanup de secours si la Promise three n'est pas encore résolue au unmount
+    // Cleanup : annule le timer si unmount avant les 3s, ou stoppe le renderer si déjà démarré
     return () => {
+      clearTimeout(startDelay);
       if (animationId) cancelAnimationFrame(animationId);
       if (renderer) renderer.dispose();
     };
