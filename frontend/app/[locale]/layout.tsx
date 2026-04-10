@@ -89,6 +89,9 @@ export default async function LocaleLayout({
   const locale = resolvedParams.locale;
   const messages = await getMessages({ locale });
 
+  // data-URI SVG noise inline — évite un réseau request supplémentaire
+  const noiseSvg = "data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E";
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
@@ -111,10 +114,53 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             <VisitorHeartbeatProvider showActiveVisitors={false}>
-              <div className="relative flex min-h-screen flex-col bg-background">
-                <Header />
-                <main className="flex-1 bg-background">{children}</main>
-                <Footer />
+              <div className="relative flex min-h-screen flex-col bg-background overflow-hidden">
+                {/* Aurora background — blobs lumineux animés positionnés en fixed z-0.
+                    Visible sur toutes les pages, derrière tout le contenu.
+                    Les opacités dark: sont plus hautes pour compenser le fond très sombre. */}
+                <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                  {/* Blob 1 — bleu primaire, haut gauche — animation 18s */}
+                  <div
+                    className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] rounded-full opacity-[0.15] dark:opacity-[0.18] blur-[100px]"
+                    style={{
+                      background: 'radial-gradient(circle, hsl(217.2 91.2% 59.8%) 0%, transparent 70%)',
+                      animation: 'aurora-1 18s ease-in-out infinite',
+                    }}
+                  />
+                  {/* Blob 2 — violet/indigo, bas droite — animation 22s (désynchronisé du blob 1) */}
+                  <div
+                    className="absolute -bottom-[20%] -right-[10%] w-[55vw] h-[55vw] max-w-[650px] max-h-[650px] rounded-full opacity-[0.12] dark:opacity-[0.15] blur-[120px]"
+                    style={{
+                      background: 'radial-gradient(circle, hsl(262 83% 58%) 0%, transparent 70%)',
+                      animation: 'aurora-2 22s ease-in-out infinite',
+                    }}
+                  />
+                  {/* Blob 3 — cyan/teal, centre droite — animation 26s (désynchronisé) */}
+                  <div
+                    className="absolute top-[30%] -right-[5%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08] dark:opacity-[0.10] blur-[90px]"
+                    style={{
+                      background: 'radial-gradient(circle, hsl(199 89% 48%) 0%, transparent 70%)',
+                      animation: 'aurora-3 26s ease-in-out infinite',
+                    }}
+                  />
+                  {/* Noise texture overlay — grain SVG subtil pour l'effet premium.
+                      baseFrequency 0.9 = grain fin, numOctaves 4 = texture riche. */}
+                  <div
+                    className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+                    style={{
+                      backgroundImage: `url("${noiseSvg}")`,
+                      backgroundRepeat: 'repeat',
+                      backgroundSize: '200px 200px',
+                    }}
+                  />
+                </div>
+
+                {/* Contenu au-dessus de l'aurora — z-10 garantit le passage devant les blobs */}
+                <div className="relative z-10 flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
               </div>
             </VisitorHeartbeatProvider>
           </ThemeProvider>

@@ -64,3 +64,21 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+
+/* Animation aurora — blobs lumineux qui dérivent lentement sur le fond sombre.
+   Chaque keyframe utilise translate + scale pour un mouvement organique.
+   Les durées différentes (18s/22s/26s) évitent la synchronisation visible. */
+@keyframes aurora-1 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  33%       { transform: translate(3%, -4%) scale(1.05); }
+  66%       { transform: translate(-2%, 3%) scale(0.97); }
+}
+@keyframes aurora-2 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  33%       { transform: translate(-4%, 3%) scale(1.08); }
+  66%       { transform: translate(3%, -2%) scale(0.95); }
+}
+@keyframes aurora-3 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  50%       { transform: translate(2%, 4%) scale(1.03); }
+}
