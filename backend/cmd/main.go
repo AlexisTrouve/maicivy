@@ -200,7 +200,12 @@ func main() {
 	messagesHandler := api.NewMessagesHandler(db, redisClient, letterGenerator, aiConfig.OwnerAPIKey)
 	githubHandler := api.NewGitHubHandler(githubOAuthService, githubSyncService)
 	activityHandler := api.NewActivityHandler(repoScanner)
-	blogHandler := api.NewBlogHandler(blogGeneratorService, aiConfig.OwnerAPIKey)
+	// Client HTTP vers maiProFiles — utilisé par blogHandler pour le CRUD blog
+	mpfClient := services.NewMaiProFilesClient()
+
+	// blogHandler utilise mpfClient pour list/get/create/update/delete/publish
+	// et blogGeneratorService uniquement pour la génération IA (GeneratePost)
+	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, aiConfig.OwnerAPIKey)
 	timelineHandler := api.NewTimelineHandler(db)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService)

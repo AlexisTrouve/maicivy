@@ -10,17 +10,22 @@ import (
 	"maicivy/internal/services"
 )
 
-// BlogHandler gère les endpoints API du blog
+// BlogHandler gère les endpoints API du blog.
+// Depuis la migration vers maiProFiles, les opérations CRUD passent par mpfClient
+// (appels HTTP vers maiprofiles.etheryale.com). Seule la génération IA (GeneratePost)
+// reste dans blogGenerator, qui écrit ensuite dans maiProFiles via mpfClient.
 type BlogHandler struct {
-	blogService *services.BlogGeneratorService
-	ownerAPIKey string
+	mpfClient     *services.MaiProFilesClient   // CRUD blog → maiProFiles
+	blogGenerator *services.BlogGeneratorService // Génération IA markdown
+	ownerAPIKey   string
 }
 
-// NewBlogHandler crée une nouvelle instance
-func NewBlogHandler(blogService *services.BlogGeneratorService, ownerAPIKey string) *BlogHandler {
+// NewBlogHandler crée une nouvelle instance avec les deux dépendances.
+func NewBlogHandler(mpfClient *services.MaiProFilesClient, blogGenerator *services.BlogGeneratorService, ownerAPIKey string) *BlogHandler {
 	return &BlogHandler{
-		blogService: blogService,
-		ownerAPIKey: ownerAPIKey,
+		mpfClient:     mpfClient,
+		blogGenerator: blogGenerator,
+		ownerAPIKey:   ownerAPIKey,
 	}
 }
 
@@ -54,12 +59,12 @@ func (h *BlogHandler) RegisterRoutes(router fiber.Router) {
 	admin.Delete("/posts/:id", h.DeletePost)
 }
 
-// ListPosts retourne la liste des articles publiés
-// GET /api/v1/blog/posts?page=1&per_page=10&all=false
+// ListPosts retourne la liste des articles publiés depuis maiProFiles.
+// GET /api/v1/blog/posts?page=1&per_page=10
+// Note: le paramètre "all" n'est plus supporté — maiProFiles ne sert que les posts publiés.
 func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	perPage, _ := strconv.Atoi(c.Query("per_page", "10"))
-	showAll := c.QueryBool("all", false)
 
 	if page < 1 {
 		page = 1
@@ -68,15 +73,7 @@ func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 		perPage = 10
 	}
 
-	var response *models.BlogPostListResponse
-	var err error
-
-	if showAll {
-		response, err = h.blogService.GetAllPosts(c.Context(), page, perPage)
-	} else {
-		response, err = h.blogService.GetPublishedPosts(c.Context(), page, perPage)
-	}
-
+	response, err := h.mpfClient.GetBlogPosts(c.Context(), page, perPage)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "failed_to_list_posts",
@@ -87,17 +84,17 @@ func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// GetPost retourne un article par son slug
+// GetPost retourne un article par son slug depuis maiProFiles.
 // GET /api/v1/blog/posts/:slug
 func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
-	slug := c.Params("slug")
-	if slug == "" {
+	postSlug := c.Params("slug")
+	if postSlug == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "slug_required",
 		})
 	}
 
-	post, err := h.blogService.GetPostBySlug(c.Context(), slug)
+	post, err := h.mpfClient.GetBlogPost(c.Context(), postSlug)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":   "post_not_found",
@@ -108,7 +105,7 @@ func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
 	return c.JSON(post)
 }
 
-// CreatePost crée un article directement depuis du contenu fourni
+// CreatePost crée un article directement dans maiProFiles depuis du contenu fourni.
 // POST /api/v1/blog/posts
 // Body: {"title": "...", "summary": "...", "content": "markdown...", "tags": [...], "publish": true}
 func (h *BlogHandler) CreatePost(c *fiber.Ctx) error {
@@ -120,7 +117,24 @@ func (h *BlogHandler) CreatePost(c *fiber.Ctx) error {
 		})
 	}
 
-	post, err := h.blogService.CreatePost(c.Context(), req)
+	if req.Title == "" || req.Content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "title and content are required",
+		})
+	}
+
+	// Construire un BlogPost depuis la request pour le passer au client MPF
+	post := &models.BlogPost{
+		Title:         req.Title,
+		Summary:       req.Summary,
+		Content:       req.Content,
+		ProjectName:   req.ProjectName,
+		Tags:          req.Tags,
+		CoverImageURL: req.CoverImageURL,
+		Published:     req.Publish,
+	}
+
+	created, err := h.mpfClient.CreateBlogPost(c.Context(), post)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "create_failed",
@@ -130,11 +144,11 @@ func (h *BlogHandler) CreatePost(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"post":    post,
+		"post":    created,
 	})
 }
 
-// UpdatePost met à jour un article existant
+// UpdatePost met à jour un article existant dans maiProFiles.
 // PUT /api/v1/blog/posts/:id
 func (h *BlogHandler) UpdatePost(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
@@ -152,7 +166,25 @@ func (h *BlogHandler) UpdatePost(c *fiber.Ctx) error {
 		})
 	}
 
-	post, err := h.blogService.UpdatePost(c.Context(), uint(id), req)
+	// Construire un BlogPost partiel depuis la request de mise à jour
+	post := &models.BlogPost{}
+	if req.Title != nil {
+		post.Title = *req.Title
+	}
+	if req.Summary != nil {
+		post.Summary = *req.Summary
+	}
+	if req.Content != nil {
+		post.Content = *req.Content
+	}
+	if len(req.Tags) > 0 {
+		post.Tags = req.Tags
+	}
+	if req.CoverImageURL != nil {
+		post.CoverImageURL = *req.CoverImageURL
+	}
+
+	updated, err := h.mpfClient.UpdateBlogPost(c.Context(), int(id), post)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "update_failed",
@@ -162,11 +194,12 @@ func (h *BlogHandler) UpdatePost(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"success": true,
-		"post":    post,
+		"post":    updated,
 	})
 }
 
-// GeneratePost génère un nouvel article depuis les commits
+// GeneratePost génère un nouvel article depuis les commits via IA (blogGenerator),
+// puis le sauvegarde dans maiProFiles via mpfClient.CreateBlogPost.
 // POST /api/v1/blog/generate
 // Body: {"project_name": "maicivy", "auto_select": true}
 func (h *BlogHandler) GeneratePost(c *fiber.Ctx) error {
@@ -183,24 +216,26 @@ func (h *BlogHandler) GeneratePost(c *fiber.Ctx) error {
 		})
 	}
 
-	var post *models.BlogPost
+	// Générer le contenu markdown via IA (blogGenerator utilise encore son propre pipeline)
+	// mais on NE sauvegarde plus dans PostgreSQL — on passe par mpfClient ensuite.
+	var generatedPost *models.BlogPost
 	var err error
 
 	if req.AutoSelect || len(req.CommitSHAs) == 0 {
-		// Générer depuis l'activité récente
-		post, err = h.blogService.GenerateFromRecentActivity(c.Context(), req.ProjectName)
+		// Générer depuis l'activité récente du repo
+		generatedPost, err = h.blogGenerator.GenerateFromRecentActivity(c.Context(), req.ProjectName)
 	} else {
-		// Générer depuis des commits spécifiques
+		// Générer depuis des commits spécifiques fournis par l'appelant
 		var commits []models.CommitRef
 		for _, sha := range req.CommitSHAs {
 			commits = append(commits, models.CommitRef{
 				SHA:     sha,
-				Message: sha, // Le message sera enrichi par le service si dispo
+				Message: sha, // Le message sera enrichi par le service si disponible
 				Date:    time.Now().Format(time.RFC3339),
 				Project: req.ProjectName,
 			})
 		}
-		post, err = h.blogService.GenerateFromCommits(c.Context(), req.ProjectName, commits)
+		generatedPost, err = h.blogGenerator.GenerateFromCommits(c.Context(), req.ProjectName, commits)
 	}
 
 	if err != nil {
@@ -210,14 +245,26 @@ func (h *BlogHandler) GeneratePost(c *fiber.Ctx) error {
 		})
 	}
 
+	// Sauvegarder dans maiProFiles (au lieu de PostgreSQL)
+	// Le post généré est en draft (Published: false) par défaut — review manuelle requise.
+	saved, err := h.mpfClient.CreateBlogPost(c.Context(), generatedPost)
+	if err != nil {
+		// Log l'erreur mais retourner quand même le post généré pour ne pas perdre le contenu
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "save_to_maiprofiles_failed",
+			"message": err.Error(),
+			"post":    generatedPost, // Le contenu généré est retourné pour récupération manuelle
+		})
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"post":    post,
-		"message": "Article généré. Vérifiez et publiez manuellement.",
+		"post":    saved,
+		"message": "Article généré et sauvegardé dans maiProFiles. Vérifiez et publiez manuellement.",
 	})
 }
 
-// PublishPost publie un article
+// PublishPost publie un article dans maiProFiles.
 // POST /api/v1/blog/posts/:id/publish
 func (h *BlogHandler) PublishPost(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
@@ -227,7 +274,7 @@ func (h *BlogHandler) PublishPost(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.blogService.PublishPost(c.Context(), uint(id)); err != nil {
+	if err := h.mpfClient.PublishBlogPost(c.Context(), int(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "publish_failed",
 			"message": err.Error(),
@@ -240,7 +287,7 @@ func (h *BlogHandler) PublishPost(c *fiber.Ctx) error {
 	})
 }
 
-// UnpublishPost dépublie un article
+// UnpublishPost dépublie un article dans maiProFiles.
 // POST /api/v1/blog/posts/:id/unpublish
 func (h *BlogHandler) UnpublishPost(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
@@ -250,7 +297,7 @@ func (h *BlogHandler) UnpublishPost(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.blogService.UnpublishPost(c.Context(), uint(id)); err != nil {
+	if err := h.mpfClient.UnpublishBlogPost(c.Context(), int(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "unpublish_failed",
 			"message": err.Error(),
@@ -263,7 +310,7 @@ func (h *BlogHandler) UnpublishPost(c *fiber.Ctx) error {
 	})
 }
 
-// DeletePost supprime un article
+// DeletePost supprime un article dans maiProFiles.
 // DELETE /api/v1/blog/posts/:id
 func (h *BlogHandler) DeletePost(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
@@ -273,7 +320,7 @@ func (h *BlogHandler) DeletePost(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.blogService.DeletePost(c.Context(), uint(id)); err != nil {
+	if err := h.mpfClient.DeleteBlogPost(c.Context(), int(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "delete_failed",
 			"message": err.Error(),
@@ -286,10 +333,10 @@ func (h *BlogHandler) DeletePost(c *fiber.Ctx) error {
 	})
 }
 
-// GetRSSFeed retourne le flux RSS du blog
+// GetRSSFeed retourne le flux RSS du blog en fetchant les 20 derniers posts depuis maiProFiles.
 // GET /api/v1/blog/feed.xml
 func (h *BlogHandler) GetRSSFeed(c *fiber.Ctx) error {
-	posts, err := h.blogService.GetPublishedPosts(c.Context(), 1, 20)
+	posts, err := h.mpfClient.GetBlogPosts(c.Context(), 1, 20)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed_to_generate_feed",
