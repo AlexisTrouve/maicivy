@@ -31,9 +31,6 @@ const poppins = Poppins({
   display: 'swap',
 });
 
-// Force dynamic rendering for all locale pages to ensure proper i18n context
-export const dynamic = 'force-dynamic';
-
 // Generate dynamic metadata based on locale
 export async function generateMetadata({
   params,

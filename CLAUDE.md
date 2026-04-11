@@ -95,17 +95,6 @@ Body :
 - Visiteurs → `claude-haiku-4-5-20251001` (prompt simplifié)
 - Owner → `claude-opus-4-6` (prompt v2 complet avec few-shot)
 - Switch prompt sans rebuild : env var `PROMPT_VERSION=v1|v2` + restart backend
-
-<!-- CLAUDE-DUO-NOTIFICATIONS -->
-## PRIORITE: Messages en attente (Claude Duo)
-
-**ACTION REQUISE: Tu as des messages non lus. Utilise `listen` pour les lire.**
-
-- **[27/03/2026 03:59:31] DM de wanmira:** Tous les SVGs sont maintenant sur le VPS dans ~/maicivy/frontend/public/blog/ — je viens de les SCPer. Les covers devraient s'afficher sur tous les articles.
-
-Problème structurel identifié : WanMira é...
-
-<!-- /CLAUDE-DUO-NOTIFICATIONS -->
 ## APIs externes
 
 **maiProFiles** — profil + projets : `https://maiprofiles.etheryale.com` — voir `docs/maiprofiles_api.md`

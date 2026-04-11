@@ -73,8 +73,8 @@ export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
         {/* Cover image — cliquable pour ouvrir en lightbox */}
         {post.cover_image_url && (
           <>
+            {/* Fond fixe #0f172a — assure la visibilité des SVG (même fond) en light et dark mode */}
             <div
-              {/* Fond fixe #0f172a — assure la visibilité des SVG (même fond) en light et dark mode */}
               className="mb-6 rounded-xl overflow-hidden bg-[#0f172a] cursor-zoom-in"
               onClick={() => setLightboxOpen(true)}
             >

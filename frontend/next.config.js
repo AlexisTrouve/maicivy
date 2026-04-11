@@ -56,6 +56,8 @@ const nextConfig = {
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-slot',
+      // Tree-shake framer-motion pour ne bundler que les exports utilisés
+      'framer-motion',
     ],
   },
 
