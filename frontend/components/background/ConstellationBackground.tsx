@@ -13,13 +13,13 @@ import type { Line, LineBasicMaterial, BufferGeometry } from 'three';
  * - Un THREE.Group regroupe tous les objets et tourne lentement sur les 3 axes.
  * - 100 points driftent lentement dans une sphère de rayon 8 unités.
  * - Les paires à moins de 2.5u sont reliées par des LineSegments (buffer pré-alloué).
- * - Recalcul des lignes throttlé à 1 frame sur 3 — imperceptible visuellement, -66% CPU.
+ * - Connexions calculées UNE SEULE FOIS à l'init — 0 CPU en runtime, 0 clignotement.
  * - Sur mobile (< 768px) : Three.js est complètement skippé (trop coûteux pour un effet décoratif).
  * - Canvas transparent (alpha:true, clearColor alpha=0) — les blobs aurora restent visibles dessous.
  *
  * Optimisations perf :
  * - distance² partout (Math.sqrt évité dans la hot path O(n²))
- * - Throttle 1/3 frames sur le recalcul des connexions
+ * - Connexions statiques calculées à l'init (0 CPU en runtime, 0 clignotement)
  * - Trails des points normaux supprimés (coût élevé, effet quasi invisible)
  * - Skip complet sur mobile
  */
@@ -137,7 +137,7 @@ export default function ConstellationBackground() {
       scene.add(group);
 
       // =========================================================
-      // LIGNES DE CONNEXION — buffer pré-alloué, recalculé tous les 3 frames
+      // LIGNES DE CONNEXION — buffer pré-alloué, calculé une seule fois à l'init.
       // MAX_LINES * 6 floats = 2 points (x,y,z) * MAX_LINES segments
       // =========================================================
       const MAX_LINES = POINT_COUNT * 10;
@@ -153,6 +153,35 @@ export default function ConstellationBackground() {
 
       const lineSegments = new THREE.LineSegments(lineGeo, lineMat);
       group.add(lineSegments);
+
+      // =========================================================
+      // CONNEXIONS STATIQUES — calculées une seule fois à l'init.
+      // Les points driftent à 0.002u/frame : les lignes statiques
+      // sont visuellement indiscernables des lignes dynamiques,
+      // mais sans clignotement ni coût O(n²) en runtime.
+      // =========================================================
+      {
+        let lineIdx = 0;
+        for (let i = 0; i < POINT_COUNT; i++) {
+          for (let j = i + 1; j < POINT_COUNT; j++) {
+            const dx = positions[i * 3]     - positions[j * 3];
+            const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
+            const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
+            const d2 = dx * dx + dy * dy + dz * dz;
+            if (d2 < 6.25 && lineIdx < MAX_LINES) {  // 2.5² = 6.25
+              linePositions[lineIdx * 6]     = positions[i * 3];
+              linePositions[lineIdx * 6 + 1] = positions[i * 3 + 1];
+              linePositions[lineIdx * 6 + 2] = positions[i * 3 + 2];
+              linePositions[lineIdx * 6 + 3] = positions[j * 3];
+              linePositions[lineIdx * 6 + 4] = positions[j * 3 + 1];
+              linePositions[lineIdx * 6 + 5] = positions[j * 3 + 2];
+              lineIdx++;
+            }
+          }
+        }
+        lineGeo.attributes.position.needsUpdate = true;
+        lineGeo.setDrawRange(0, lineIdx * 2);
+      }
 
       // Fix 3 — Trails des points normaux supprimés.
       // 100 objets Line × mise à jour buffer/frame = coût élevé pour un effet quasi invisible.
@@ -285,15 +314,8 @@ export default function ConstellationBackground() {
       // ANIMATION LOOP
       // =========================================================
 
-      // Fix 2 — Compteur de frames pour throttler le recalcul des connexions.
-      // Les lignes n'ont pas besoin d'être recalculées à 60fps — 1 frame sur 3 suffit.
-      let frameCount = 0;
-
       const animate = () => {
         animationId = requestAnimationFrame(animate);
-
-        // Incrémenter le compteur de frames (Fix 2 — throttle lignes)
-        frameCount++;
 
         // Rotation globale lente — Z plus lent pour un effet subtil
         group.rotation.x += 0.0003;
@@ -321,36 +343,6 @@ export default function ConstellationBackground() {
           }
         }
         pointsGeo.attributes.position.needsUpdate = true;
-
-        // --- Recalcul des lignes de connexion (throttlé 1/3 frames) ---
-        // Fix 2 — O(n²) avec 100 points = 4950 paires. Recalculer toutes les 3 frames
-        // réduit ce coût de 66% sans impact visuel perceptible.
-        if (frameCount % 3 === 0) {
-          let lineIdx = 0;
-          for (let i = 0; i < POINT_COUNT; i++) {
-            for (let j = i + 1; j < POINT_COUNT; j++) {
-              const dx = pos[i * 3]     - pos[j * 3];
-              const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
-              const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
-
-              // Fix 1 — distance au carré : évite Math.sqrt à chaque paire.
-              // d² < 6.25 équivaut à d < 2.5 (seuil de connexion).
-              const d2 = dx * dx + dy * dy + dz * dz;
-              if (d2 < 6.25 && lineIdx < MAX_LINES) {  // 2.5² = 6.25
-                linePositions[lineIdx * 6]     = pos[i * 3];
-                linePositions[lineIdx * 6 + 1] = pos[i * 3 + 1];
-                linePositions[lineIdx * 6 + 2] = pos[i * 3 + 2];
-                linePositions[lineIdx * 6 + 3] = pos[j * 3];
-                linePositions[lineIdx * 6 + 4] = pos[j * 3 + 1];
-                linePositions[lineIdx * 6 + 5] = pos[j * 3 + 2];
-                lineIdx++;
-              }
-            }
-          }
-          lineGeo.attributes.position.needsUpdate = true;
-          // setDrawRange évite de rendre les segments vides du buffer pré-alloué
-          lineGeo.setDrawRange(0, lineIdx * 2);
-        }
 
         // --- Update shooting stars ---
         // Les trails des points normaux ont été supprimés (Fix 3).
