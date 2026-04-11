@@ -74,7 +74,8 @@ export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
         {post.cover_image_url && (
           <>
             <div
-              className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 cursor-zoom-in"
+              {/* Fond fixe #0f172a — assure la visibilité des SVG (même fond) en light et dark mode */}
+              className="mb-6 rounded-xl overflow-hidden bg-[#0f172a] cursor-zoom-in"
               onClick={() => setLightboxOpen(true)}
             >
               <img
