@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 // Import de type uniquement — ne charge PAS Three.js dans le bundle initial.
 // Utilisé uniquement pour les annotations TypeScript dans ce fichier.
-import type { Line, LineBasicMaterial } from 'three';
+import type { Line, LineBasicMaterial, BufferGeometry } from 'three';
 
 /**
  * ConstellationBackground — fond 3D interactif avec Three.js.
@@ -167,6 +167,129 @@ export default function ConstellationBackground() {
       }
 
       // =========================================================
+      // SHOOTING STARS — météores traversant la sphère
+      // Chaque shooting star est une THREE.Line avec un trail de SHOOTING_TRAIL_LENGTH positions.
+      // L'opacity globale du matériau démarre à 0.8 et descend pendant les dernières frames de vie
+      // (LineBasicMaterial ne supporte pas les vertex colors nativement — pas de dégradé par vertex).
+      // =========================================================
+      const MAX_SHOOTING_STARS = 3;   // simultanés max — évite la surcharge visuelle
+      const SHOOTING_TRAIL_LENGTH = 50; // longueur du trail en nombre de positions mémorisées
+
+      interface ShootingStar {
+        active: boolean;                                           // true = en vol, false = slot libre
+        position: { x: number; y: number; z: number };            // tête de la shooting star
+        velocity: { x: number; y: number; z: number };            // direction × vitesse (unités/frame)
+        trail: Array<{ x: number; y: number; z: number }>;        // historique des positions (tête en [0])
+        life: number;                                              // frames restantes avant disparition forcée
+        maxLife: number;                                           // vie totale (pour le fade-out progressif)
+        line: Line;           // THREE.Line — type importé statiquement depuis 'three'
+        mat: LineBasicMaterial;
+        geo: BufferGeometry;
+      }
+
+      // Allouer le pool de shooting stars — les objets Three.js sont créés une fois,
+      // réactivés/désactivés selon le besoin pour éviter les allocs/GC en cours d'animation.
+      const shootingStars: ShootingStar[] = [];
+      for (let i = 0; i < MAX_SHOOTING_STARS; i++) {
+        const ssGeo = new THREE.BufferGeometry();
+        // Buffer pré-alloué : SHOOTING_TRAIL_LENGTH positions × 3 floats (x,y,z)
+        const ssPos = new Float32Array(SHOOTING_TRAIL_LENGTH * 3);
+        ssGeo.setAttribute('position', new THREE.BufferAttribute(ssPos, 3));
+        // setDrawRange(0, 0) : rien affiché tant que inactive
+        ssGeo.setDrawRange(0, 0);
+
+        const ssMat = new THREE.LineBasicMaterial({
+          color: 0xe0f0ff,                      // blanc/bleu clair — s'intègre naturellement
+          transparent: true,
+          opacity: 0.0,                          // invisible au départ
+          blending: THREE.AdditiveBlending,      // cohérent avec les étoiles et trails existants
+          depthWrite: false,                     // pas d'artefacts de profondeur avec additive blending
+        });
+
+        const ssLine = new THREE.Line(ssGeo, ssMat);
+        ssLine.visible = false; // caché jusqu'à activation
+        group.add(ssLine); // enfant du group → bénéficie de la rotation globale
+
+        shootingStars.push({
+          active: false,
+          position: { x: 0, y: 0, z: 0 },
+          velocity: { x: 0, y: 0, z: 0 },
+          trail: [],
+          life: 0,
+          maxLife: 0,
+          line: ssLine,
+          mat: ssMat,
+          geo: ssGeo,
+        });
+      }
+
+      /**
+       * Spawn une shooting star sur un slot libre.
+       * - Origine : point aléatoire sur la surface de la sphère (rayon ~10, légèrement hors scène)
+       * - Vélocité : vers le centre + déviation aléatoire, normalisée puis multipliée par la vitesse cible.
+       *   Vitesse de 0.15 unité/frame ≈ traversée en ~1–1.5s à 60fps sur un rayon de 10u.
+       */
+      const spawnShootingStar = () => {
+        // Trouver un slot libre dans le pool
+        const slot = shootingStars.find((s) => !s.active);
+        if (!slot) return; // tous les slots occupés, on attend le prochain timer
+
+        // Position de départ : surface de la sphère de rayon 10
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.acos(2 * Math.random() - 1);
+        const r     = 10;
+        const startX = r * Math.sin(phi) * Math.cos(theta);
+        const startY = r * Math.sin(phi) * Math.sin(theta);
+        const startZ = r * Math.cos(phi);
+
+        // Direction : vers le centre (0,0,0) + petite déviation aléatoire (±1 unité)
+        // → trajectoire globalement diagonale, pas strictement radiale
+        const dirX = -startX + (Math.random() - 0.5) * 2;
+        const dirY = -startY + (Math.random() - 0.5) * 2;
+        const dirZ = -startZ + (Math.random() - 0.5) * 2;
+
+        // Normalisation puis mise à l'échelle — 0.15 u/frame ≈ traversée en ~1.1s à 60fps
+        const len  = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+        const speed = 0.15;
+
+        // Vie max = distance totale à parcourir (diamètre ~20u) / vitesse + marge
+        // → la shooting star disparaît au plus tard après ~160 frames (~2.7s à 60fps)
+        const maxLife = Math.round((r * 2.2) / speed);
+
+        // Réinitialiser le slot
+        slot.active   = true;
+        slot.position = { x: startX, y: startY, z: startZ };
+        slot.velocity = {
+          x: (dirX / len) * speed,
+          y: (dirY / len) * speed,
+          z: (dirZ / len) * speed,
+        };
+        slot.trail    = [];
+        slot.life     = maxLife;
+        slot.maxLife  = maxLife;
+        slot.line.visible = true;
+        slot.mat.opacity  = 0.8; // pleine opacité au départ
+      };
+
+      /**
+       * Timer récursif — planifie un spawn toutes les 4–8 secondes (aléatoire).
+       * Utilise setTimeout récursif plutôt que setInterval pour varier l'intervalle à chaque fois.
+       */
+      let shootingStarTimer: ReturnType<typeof setTimeout>;
+      const scheduleNextShootingStar = () => {
+        const delay = Math.random() * 4000 + 4000; // 4000–8000ms
+        shootingStarTimer = setTimeout(() => {
+          spawnShootingStar();
+          scheduleNextShootingStar(); // replanifie
+        }, delay);
+      };
+      // Premier spawn décalé de 2s pour laisser la scène se stabiliser
+      shootingStarTimer = setTimeout(() => {
+        spawnShootingStar();
+        scheduleNextShootingStar();
+      }, 2000);
+
+      // =========================================================
       // ANIMATION LOOP
       // =========================================================
       const animate = () => {
@@ -250,6 +373,60 @@ export default function ConstellationBackground() {
           (trailLine.material as LineBasicMaterial).opacity = Math.min(speed * 80, 0.3);
         }
 
+        // --- Update shooting stars ---
+        // Traité après les trails existants pour bénéficier des positions à jour.
+        for (const ss of shootingStars) {
+          if (!ss.active) continue;
+
+          // Décrémenter la vie — quand life <= 0 ou la star a quitté la sphère → désactiver
+          ss.life--;
+
+          // Avancer la position selon la vélocité
+          ss.position.x += ss.velocity.x;
+          ss.position.y += ss.velocity.y;
+          ss.position.z += ss.velocity.z;
+
+          // Vérifier si la shooting star est sortie de la sphère de rayon 12 (marge au-delà du rayon de spawn=10)
+          const distSS = Math.sqrt(ss.position.x ** 2 + ss.position.y ** 2 + ss.position.z ** 2);
+          const outOfBounds = distSS > 12;
+
+          if (ss.life <= 0 || outOfBounds) {
+            // Désactiver proprement — le slot sera réutilisé au prochain spawn
+            ss.active = false;
+            ss.line.visible   = false;
+            ss.mat.opacity    = 0.0;
+            ss.trail          = [];
+            ss.geo.setDrawRange(0, 0);
+            ss.geo.attributes.position.needsUpdate = true;
+            continue;
+          }
+
+          // Enregistrer la position courante dans le trail (tête en [0])
+          ss.trail.unshift({ x: ss.position.x, y: ss.position.y, z: ss.position.z });
+          if (ss.trail.length > SHOOTING_TRAIL_LENGTH) ss.trail.pop();
+
+          // Mettre à jour le buffer geometry avec les positions du trail
+          const ssPosBuf = ss.geo.attributes.position.array as Float32Array;
+          for (let t = 0; t < ss.trail.length; t++) {
+            ssPosBuf[t * 3]     = ss.trail[t].x;
+            ssPosBuf[t * 3 + 1] = ss.trail[t].y;
+            ssPosBuf[t * 3 + 2] = ss.trail[t].z;
+          }
+          ss.geo.attributes.position.needsUpdate = true;
+          // setDrawRange : n'afficher que les positions déjà remplies (trail croissant au début)
+          ss.geo.setDrawRange(0, ss.trail.length);
+
+          // Fade-out progressif : opacity pleine pendant les 60% de la vie, puis descend à 0
+          // Cela crée un effet de disparition naturelle en fin de trajectoire
+          const lifeRatio = ss.life / ss.maxLife; // 1.0 → 0.0
+          if (lifeRatio > 0.6) {
+            ss.mat.opacity = 0.8;           // pleine opacité en début de trajectoire
+          } else {
+            // fade de 0.8 → 0.0 sur les 40% finaux
+            ss.mat.opacity = (lifeRatio / 0.6) * 0.8;
+          }
+        }
+
         renderer.render(scene, camera);
       };
 
@@ -284,6 +461,12 @@ export default function ConstellationBackground() {
         trailObjects.forEach((t) => {
           t.geometry.dispose();
           (t.material as LineBasicMaterial).dispose();
+        });
+        // Disposer les géométries et matériaux des shooting stars pour libérer la mémoire GPU
+        clearTimeout(shootingStarTimer); // stoppe le spawn timer
+        shootingStars.forEach((ss) => {
+          ss.geo.dispose();
+          ss.mat.dispose();
         });
         if (mount && renderer.domElement.parentNode === mount) {
           mount.removeChild(renderer.domElement);
