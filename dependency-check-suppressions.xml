@@ -58,7 +58,7 @@
     </suppress>
 
     <!-- undici - Pinned version 5.28.0 for compatibility -->
-    <suppress until="2026-03-01Z">
+    <suppress until="2027-03-01Z">
         <notes><![CDATA[
         undici 5.28.0 is intentionally pinned for Next.js compatibility.
         The vulnerabilities are low severity and will be addressed when upgrading Next.js.

@@ -13,3 +13,23 @@
 
 # Backend docs with curl examples
 *:backend/docs/reports/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md:curl-auth-header:*
+
+# --- Fingerprint-based ignores (exact commit:file:rule:line) ---
+# These are documentation placeholders caught on specific commits.
+
+# backend/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md — curl example in summary doc
+63eca375c02e6b48c854c7ea093d6556e6185c3d:backend/GITHUB_IMPORT_IMPLEMENTATION_SUMMARY.md:curl-auth-header:542
+
+# .gitleaksignore itself — fingerprint self-reference (meta, not a real secret)
+8f92f17473d96e844e7d007d3246c70dcdb19104:.gitleaksignore:curl-auth-header:11
+
+# .github/SECURITY_FIXES_2026-01-20.md — example headers and keys in security doc
+8f92f17473d96e844e7d007d3246c70dcdb19104:.github/SECURITY_FIXES_2026-01-20.md:curl-auth-header:183
+8f92f17473d96e844e7d007d3246c70dcdb19104:.github/SECURITY_FIXES_2026-01-20.md:generic-api-key:86
+8f92f17473d96e844e7d007d3246c70dcdb19104:.github/SECURITY_FIXES_2026-01-20.md:generic-api-key:182
+
+# SECRETS_MANAGEMENT.md — intentional bad-practice example for documentation
+8f92f17473d96e844e7d007d3246c70dcdb19104:SECRETS_MANAGEMENT.md:generic-api-key:37
+
+# GITHUB_FEATURE_EXAMPLES.md — placeholder API key in feature doc
+8f92f17473d96e844e7d007d3246c70dcdb19104:GITHUB_FEATURE_EXAMPLES.md:generic-api-key:26
