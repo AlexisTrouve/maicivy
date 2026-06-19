@@ -373,11 +373,12 @@ export const githubApi = {
 
 // Timeline API (Phase 5 - Feature 2)
 export const timelineApi = {
-  getTimeline: async (category?: string, from?: string, to?: string) => {
+  getTimeline: async (category?: string, from?: string, to?: string, lang?: string) => {
     const params: Record<string, string> = {};
     if (category) params.category = category;
     if (from) params.from = from;
     if (to) params.to = to;
+    if (lang) params.lang = lang; // locale → contenu CV localisé (?lang=fr|en)
 
     const response = await api.get<import('./types').TimelineResponse>(
       '/api/v1/timeline',

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"sync"
 	"time"
@@ -54,7 +55,13 @@ type RepoStat struct {
 	Description string `json:"description"`
 	Language    string `json:"language"`
 	Stars       int    `json:"stars"`
-	UpdatedAt   string `json:"updatedAt"`
+	UpdatedAt   string `json:"updatedAt"` // dernière MAJ du repo (push, tag, settings…) — PAS forcément du code
+	Commits     int    `json:"commits"`   // commits sur la fenêtre (affichage UI)
+	// CommitDays = jours calendaires distincts (YYYY-MM-DD, triés) avec ≥1 commit sur la branche par
+	// défaut, fenêtre 6 mois. SOURCE UNIQUE du scoring vedette : âge = now-CommitDays[0],
+	// récence = now-CommitDays[len-1], régularité = len(CommitDays). Stocké comme ensemble pour que
+	// le merge incrémental soit une UNION (pas une addition qui gonflerait) + rolloff des >6 mois.
+	CommitDays []string `json:"commitDays"`
 }
 
 type GitStatsResponse struct {
@@ -76,13 +83,14 @@ type gitStatsCache struct {
 // --- Types Gitea API ---
 
 type giteaRepo struct {
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Language    string    `json:"language"`
-	Stars       int       `json:"stars_count"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	Empty       bool      `json:"empty"`
-	Fork        bool      `json:"fork"`
+	Name          string    `json:"name"`
+	Description   string    `json:"description"`
+	Language      string    `json:"language"`
+	Stars         int       `json:"stars_count"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	Empty         bool      `json:"empty"`
+	Fork          bool      `json:"fork"`
+	DefaultBranch string    `json:"default_branch"` // main, master, ou autre — varie selon le repo
 }
 
 type giteaCommit struct {
@@ -105,9 +113,20 @@ type repoResult struct {
 }
 
 const (
-	cacheKey       = "gitstats:v3"
+	// v6 : filtre des commits massifs rendu SYMÉTRIQUE (suppressions aussi, plus seulement additions).
+	// La migration LFS de ChineseClass (1599 ajouts, 1,19M suppressions) passait l'ancien filtre
+	// additions-seul et avait gonflé TotalDeleted dans le cache v5 ; le merge incrémental ne corrige
+	// pas une donnée déjà agrégée → bump de clé pour forcer un refetch complet qui réapplique le filtre.
+	// v5 : ajout des signaux de scoring vedette (FirstCommit/LastCommit/ActiveDays) → refetch requis.
+	// (v4 invalidait v3 et ses commits=0 erronés du bug sha=main, cf. listCommits.)
+	cacheKey       = "gitstats:v6"
 	// Intervalle minimum entre deux fetches incrémentaux
 	minFetchInterval = 30 * time.Minute
+
+	// massiveCommitThreshold — seuil (lignes ajoutées OU supprimées sur un seul commit) au-delà
+	// duquel le commit est classé "tuyauterie" (import/vendoring, migration LFS, purge de dossier
+	// généré) et exclu des agrégats LOC, pour ne pas fausser les compteurs add/del de la page gitstats.
+	massiveCommitThreshold = 50000
 )
 
 // GetStats retourne les stats Git agrégées avec cache incrémental.
@@ -222,10 +241,26 @@ func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitSta
 		totalDeleted += d.Deletions
 	}
 
-	// Repos : prendre la liste fraîche (elle est rapide à fetcher)
+	// Repos : liste fraîche (métadonnée à jour) MAIS on fusionne l'activité avec le cache.
+	// - Commits : count affiché → on additionne (approx, sans rolloff fin — l'ordre relatif suffit pour l'UI).
+	// - CommitDays : source du scoring vedette → UNION + rolloff 6 mois (cf. mergeCommitDays), sinon
+	//   le jour courant serait recompté à chaque fetch incrémental et la régularité gonflerait à tort.
+	cutoffDay := time.Now().AddDate(0, -6, 0).Format("2006-01-02")
+	cachedByName := make(map[string]RepoStat, len(cached.Response.Repos))
+	for _, r := range cached.Response.Repos {
+		cachedByName[r.Name] = r
+	}
+	mergedRepos := make([]RepoStat, len(newData.Repos))
+	for i, r := range newData.Repos {
+		c := cachedByName[r.Name]
+		r.Commits += c.Commits
+		r.CommitDays = mergeCommitDays(c.CommitDays, r.CommitDays, cutoffDay)
+		mergedRepos[i] = r
+	}
+
 	resp := &GitStatsResponse{
 		Daily:        daily,
-		Repos:        newData.Repos,
+		Repos:        mergedRepos,
 		TotalCommits: totalCommits,
 		TotalAdded:   totalAdded,
 		TotalDeleted: totalDeleted,
@@ -277,11 +312,17 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 				},
 			}
 
-			commits, err := s.listCommits(ctx, r.Name, since)
+			commits, err := s.listCommits(ctx, r.Name, r.DefaultBranch, since)
 			if err != nil {
 				log.Debug().Err(err).Str("repo", r.Name).Msg("skip commits")
 			} else {
 				res.commits = commits
+				res.repo.Commits = len(commits) // commit-count par repo (affichage UI)
+				// QUOI : ensemble des jours calendaires distincts avec commit → source du scoring vedette.
+				// POURQUOI : âge/récence/régularité s'en dérivent (cf. RepoStat.CommitDays) ; stocké
+				// comme ensemble trié pour que le merge incrémental soit une union sans double-comptage.
+				// COMMENT : set des dates formatées, puis tri croissant ([0]=plus ancien, [n-1]=plus récent).
+				res.repo.CommitDays = distinctSortedDays(commits)
 			}
 
 			results[idx] = res
@@ -305,8 +346,10 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 		}
 
 		for _, c := range res.commits {
-			// Exclure les commits massifs (imports, vendoring, migrations)
-			if c.Stats.Additions > 50000 {
+			// Exclure les commits "tuyauterie" (imports, vendoring, migrations LFS, purges) — dans les
+			// DEUX sens add/del, cf. isMassiveCommit : un vendoring gonfle les additions, une migration
+			// LFS / nettoyage gonfle les suppressions.
+			if isMassiveCommit(c) {
 				continue
 			}
 			date := c.Commit.Author.Date.Format("2006-01-02")
@@ -351,6 +394,60 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 		ActiveRepos:  activeRepos,
 		Period:       "6months",
 	}, nil
+}
+
+// isMassiveCommit signale un commit "tuyauterie" à exclure des agrégats LOC (additions/suppressions).
+// POURQUOI symétrique add/del : un import/vendoring gonfle les additions, tandis qu'une migration LFS
+// ou une purge de dossier généré gonfle les suppressions. Cas réel verrouillé par TestIsMassiveCommit :
+// la migration LFS de ChineseClass (1599 ajouts, 1 187 366 suppressions) passait l'ancien filtre
+// additions-seul et faussait TotalDeleted. COMMENT : seuil unique massiveCommitThreshold, comparaison
+// stricte (> ) sur chaque sens indépendamment.
+func isMassiveCommit(c giteaCommit) bool {
+	return c.Stats.Additions > massiveCommitThreshold || c.Stats.Deletions > massiveCommitThreshold
+}
+
+// distinctSortedDays extrait les jours calendaires distincts (YYYY-MM-DD) d'une liste de commits,
+// triés croissant. Sert de base au scoring vedette (âge/récence/régularité) et au merge incrémental.
+func distinctSortedDays(commits []giteaCommit) []string {
+	if len(commits) == 0 {
+		return nil
+	}
+	set := make(map[string]struct{}, len(commits))
+	for _, c := range commits {
+		set[c.Commit.Author.Date.Format("2006-01-02")] = struct{}{}
+	}
+	days := make([]string, 0, len(set))
+	for d := range set {
+		days = append(days, d)
+	}
+	sort.Strings(days)
+	return days
+}
+
+// mergeCommitDays fusionne deux ensembles de jours de commit (cache + frais) en UNION dédupliquée,
+// puis élague ceux antérieurs à `cutoff` (rolloff fenêtre 6 mois). Évite le double-comptage qu'une
+// simple addition de compteurs provoquerait à chaque fetch incrémental.
+func mergeCommitDays(cached, fresh []string, cutoff string) []string {
+	set := make(map[string]struct{}, len(cached)+len(fresh))
+	for _, d := range cached {
+		if d >= cutoff {
+			set[d] = struct{}{}
+		}
+	}
+	for _, d := range fresh {
+		if d >= cutoff {
+			set[d] = struct{}{}
+		}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	days := make([]string, 0, len(set))
+	for d := range set {
+		days = append(days, d)
+	}
+	sort.Strings(days)
+	return days
 }
 
 // --- Cache Redis ---
@@ -431,13 +528,26 @@ func (s *GiteaStatsService) listRepos(ctx context.Context) ([]giteaRepo, error) 
 	return allRepos, nil
 }
 
-func (s *GiteaStatsService) listCommits(ctx context.Context, repoName string, since time.Time) ([]giteaCommit, error) {
+func (s *GiteaStatsService) listCommits(ctx context.Context, repoName, branch string, since time.Time) ([]giteaCommit, error) {
 	var allCommits []giteaCommit
 	page := 1
 
+	// QUOI : construit le paramètre de branche (sha) pour l'API commits.
+	// POURQUOI : la moitié des repos StillHammer ont `master` comme branche par défaut
+	// (GroveEngine, grimorium…), l'autre `main` (maicivy, Aurelm…). Coder `sha=main` en dur
+	// vidait les repos `master` (erreur branche absente → commits=0 → exclus du scoring vedette) ;
+	// et OMETTRE `sha` ne marche pas non plus car Gitea retombe sur un `master` implicite et
+	// casse les repos `main` (500 "refs/heads/master object does not exist").
+	// COMMENT : on passe EXPLICITEMENT la branche par défaut de chaque repo (fournie par
+	// l'API repo-list). Fallback : si vide, on omet `sha` et on laisse Gitea décider.
+	shaParam := ""
+	if branch != "" {
+		shaParam = "sha=" + url.QueryEscape(branch) + "&"
+	}
+
 	for {
-		path := fmt.Sprintf("/repos/%s/%s/commits?sha=main&since=%s&stat=true&page=%d&limit=50",
-			s.username, repoName, since.Format(time.RFC3339), page)
+		path := fmt.Sprintf("/repos/%s/%s/commits?%ssince=%s&stat=true&page=%d&limit=50",
+			s.username, repoName, shaParam, since.Format(time.RFC3339), page)
 
 		data, err := s.doGet(ctx, path)
 		if err != nil {

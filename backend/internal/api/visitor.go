@@ -166,21 +166,20 @@ func (vh *VisitorHandler) Heartbeat(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Récupérer visitor_id depuis context (set by tracking middleware)
+	// Récupérer visitor_id depuis context (set by tracking middleware).
+	// Pas de session (cookie absent/non encore établi/non signé HMAC) → heartbeat NO-OP en 200.
+	// POURQUOI 200 et pas 404/400 : un heartbeat sans session est BÉNIN (visiteur sans cookie valide,
+	// très courant), pas une erreur. Le 404 comptait comme "erreur scanner" dans l'anti-abus (sus) →
+	// score qui grimpe à chaque ping (toutes les 30s) → faux positif de throttle sur des users légitimes.
+	// On répond OK sans rien tracker (rien à suivre sans session).
 	visitorID := c.Locals("visitor_id")
 	if visitorID == nil {
-		log.Warn().Msg("Heartbeat called without visitor_id in context")
-		return c.Status(404).JSON(fiber.Map{
-			"error": "No visitor session found",
-		})
+		return c.JSON(HeartbeatResponse{Success: true})
 	}
 
 	visitorUUID, ok := visitorID.(uuid.UUID)
 	if !ok || visitorUUID == uuid.Nil {
-		log.Warn().Interface("visitor_id", visitorID).Msg("Invalid visitor_id in heartbeat")
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Invalid visitor session",
-		})
+		return c.JSON(HeartbeatResponse{Success: true})
 	}
 
 	// Parser le body (optionnel)

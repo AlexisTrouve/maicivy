@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useLocale } from 'next-intl';
 import { TimelineEvent, TimelineMilestone } from '@/lib/types';
 import { timelineApi } from '@/lib/api';
 
@@ -43,6 +44,7 @@ export const useTimelineData = (
   options: UseTimelineDataOptions = {}
 ): UseTimelineDataReturn => {
   const { autoFetch = true } = options;
+  const locale = useLocale(); // locale next-intl → contenu CV localisé
 
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [allEvents, setAllEvents] = useState<TimelineEvent[]>([]);
@@ -73,7 +75,8 @@ export const useTimelineData = (
       const eventsData = await timelineApi.getTimeline(
         activeFilters.category,
         activeFilters.from,
-        activeFilters.to
+        activeFilters.to,
+        locale
       );
 
       setAllEvents(eventsData.events);
@@ -109,7 +112,7 @@ export const useTimelineData = (
     } finally {
       setIsLoading(false);
     }
-  }, [activeFilters, categories.length, milestones.length]);
+  }, [activeFilters, categories.length, milestones.length, locale]);
 
   // Initial fetch
   useEffect(() => {

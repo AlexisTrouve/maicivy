@@ -3,10 +3,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Skill } from '@/lib/types';
+import { Skill, Project, Experience, LangStatsResponse } from '@/lib/types';
+import SkillDetailModal from '@/components/cv/SkillDetailModal';
 
 interface SkillsCloudProps {
   skills: Skill[];
+  // Optionnels : alimentent la fiche détail ouverte au clic sur une pastille. Absents (ex: tests),
+  // la pastille s'ouvre quand même mais la fiche affiche 0 projet / 0 LOC.
+  projects?: Project[];
+  experiences?: Experience[];
+  langStats?: LangStatsResponse | null;
 }
 
 const categoryColors: Record<string, string> = {
@@ -18,8 +24,10 @@ const categoryColors: Record<string, string> = {
   other: 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 border-pink-300 dark:border-pink-700',
 };
 
-export default function SkillsCloud({ skills }: SkillsCloudProps) {
+export default function SkillsCloud({ skills, projects, experiences, langStats }: SkillsCloudProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Skill dont la fiche détail est ouverte (null = fermée).
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const t = useTranslations('cv.skills');
 
   // Get categories - memoized for performance
@@ -100,24 +108,30 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
       >
         <AnimatePresence mode="popLayout">
           {filteredSkills.map((skill) => (
-            <motion.div
+            <motion.button
               key={skill.id}
+              type="button"
               layout
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
               whileHover={{ scale: 1.15, rotate: 2 }}
               transition={{ duration: 0.3 }}
-              className={`px-4 py-2 rounded-full font-semibold border-2 cursor-pointer ${
+              // Pastille = bouton : clic ouvre la fiche détail. <button> nous donne clavier (Enter/Space)
+              // et focus gratuitement, sans gérer role/tabIndex/onKeyDown à la main.
+              onClick={() => setSelectedSkill(skill)}
+              data-testid={`skill-badge-${skill.id}`}
+              className={`px-4 py-2 rounded-full font-semibold border-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-500 ${
                 categoryColors[skill.category] || categoryColors.other
               }`}
               style={{
                 fontSize: `${getFontSize(skill)}px`,
               }}
-              title={`${skill.name} - ${skill.level} - ${skill.yearsExperience} ans d'expérience`}
+              title={t('badgeTitle', { name: skill.name })}
+              aria-label={t('badgeTitle', { name: skill.name })}
             >
               {skill.name}
-            </motion.div>
+            </motion.button>
           ))}
         </AnimatePresence>
       </motion.div>
@@ -126,6 +140,16 @@ export default function SkillsCloud({ skills }: SkillsCloudProps) {
       <div className="text-center text-sm text-gray-600 dark:text-gray-400">
         <p>{t('legend')}</p>
       </div>
+
+      {/* Fiche détail — ouverte au clic sur une pastille */}
+      <SkillDetailModal
+        isOpen={selectedSkill !== null}
+        onClose={() => setSelectedSkill(null)}
+        skill={selectedSkill}
+        projects={projects ?? []}
+        experiences={experiences ?? []}
+        langStats={langStats}
+      />
     </div>
   );
 }

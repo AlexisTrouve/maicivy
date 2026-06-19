@@ -25,9 +25,83 @@
     "blog": "Blog",
     "gitstats": "Git Stats"
   },
+  "chat": {
+    "greeting": "👋 Bonjour !",
+    "greetingSubtitle": "Posez-moi des questions sur mes projets, compétences ou expériences.",
+    "inputPlaceholder": "Posez votre question... (Entrée pour envoyer)",
+    "error": "❌ Erreur : {message}",
+    "askQuestion": "Posez une question →",
+    "questionsHeader": "Questions",
+    "newSuggestions": "Nouvelles suggestions",
+    "closeTip": "Fermer ce tip",
+    "closeTab": "Fermer {label}",
+    "tabs": {
+      "projects": "Projets",
+      "experience": "Expérience",
+      "skills": "Skills",
+      "blog": "Blog",
+      "default": "Fiche"
+    },
+    "toolLabels": {
+      "project": "projet",
+      "projects": "projets",
+      "skills": "skills",
+      "experience": "expérience",
+      "article": "article",
+      "blog": "blog",
+      "tip": "tip"
+    },
+    "skillsTitle": "Compétences techniques",
+    "domains": "Domaines",
+    "experiences": "Expériences",
+    "yearsExperience": "{years} ans d'expérience",
+    "techStack": "Stack technique",
+    "keyFeatures": "Fonctionnalités clés",
+    "stats": "Stats",
+    "skills": "Skills",
+    "projects": "Projets",
+    "blogEmpty": "Aucun article publié pour l'instant.",
+    "articles": "Articles ({count})",
+    "minRead": "{min} min de lecture",
+    "readArticle": "Lire l'article →",
+    "hints": [
+      { "text": "C'est quoi Aria ?", "message": "Parle-moi du projet Aria", "category": "projets" },
+      { "text": "Cogesco c'est quoi ?", "message": "Qu'est-ce que le projet Cogesco ?", "category": "projets" },
+      { "text": "Maicivy, comment ça marche ?", "message": "Comment fonctionne maicivy ?", "category": "projets" },
+      { "text": "Projet le plus complexe ?", "message": "Quel est ton projet le plus complexe ?", "category": "projets" },
+      { "text": "Stack IA d'Alexi ?", "message": "Quelles sont tes compétences en IA ?", "category": "skills" },
+      { "text": "Go ou Node ?", "message": "Tu aurais choisi Go ou Node pour un nouveau projet ?", "category": "skills" },
+      { "text": "Tu fais du mobile ?", "message": "Est-ce que tu fais du développement mobile ?", "category": "skills" },
+      { "text": "TJM ?", "message": "C'est quoi ton TJM ?", "category": "freelance" },
+      { "text": "Dispo pour une mission ?", "message": "Tu es disponible pour une mission freelance ?", "category": "freelance" },
+      { "text": "Remote ou présentiel ?", "message": "Tu travailles en remote ou présentiel ?", "category": "freelance" },
+      { "text": "Galère sur un projet ?", "message": "T'as eu des galères techniques sur un projet ?", "category": "curiosite" },
+      { "text": "Stack idéale ?", "message": "C'est quoi ta stack idéale ?", "category": "curiosite" },
+      { "text": "Derniers articles ?", "message": "Quels sont tes derniers articles de blog ?", "category": "blog" },
+      { "text": "Article sur les agents IA ?", "message": "T'as écrit sur les agents IA ?", "category": "blog" },
+      { "text": "Comment ce portfolio est fait ?", "message": "Comment ce portfolio a été construit ?", "category": "meta" },
+      { "text": "Qui a codé cette page ?", "message": "Qui a développé cette page de chat ?", "category": "meta" }
+    ]
+  },
+  "gitstats": {
+    "subtitle": "6 mois d'activité sur Gitea",
+    "commits6mo": "Commits (6 mois)",
+    "linesAdded": "Lignes ajoutées",
+    "linesDeleted": "Lignes supprimées",
+    "commitsPerDay": "Commits par jour",
+    "commits": "Commits",
+    "linesPerDay": "Lignes de code par jour",
+    "activeRepos": "Repos actifs",
+    "seriesAdded": "Ajoutées",
+    "seriesRemoved": "Supprimées",
+    "unavailable": "Stats Git indisponibles",
+    "repositories": "Repositories ({count})"
+  },
   "home": {
     "title": "CV Interactif Intelligent",
     "subtitle": "Découvrez mon parcours professionnel adaptatif et générez des lettres de motivation personnalisées grâce à l'intelligence artificielle.",
+    "availability": "Disponible pour missions freelance",
+    "identity": "Alexis Trouvé — Développeur Fullstack",
     "cta": {
       "viewCV": "Voir mon CV",
       "generateLetter": "Générer une lettre"
@@ -80,7 +154,24 @@
     "skills": {
       "all": "Toutes",
       "tooltip": "{name} - Niveau {level}/5 - {years} ans d'expérience",
-      "legend": "La taille représente le niveau de compétence et la pertinence par rapport au thème sélectionné"
+      "legend": "La taille représente le niveau de compétence et la pertinence par rapport au thème sélectionné",
+      "badgeTitle": "{name} — cliquez pour les détails"
+    },
+    "skillDetail": {
+      "close": "Fermer",
+      "levels": {
+        "beginner": "Débutant",
+        "intermediate": "Intermédiaire",
+        "advanced": "Avancé",
+        "expert": "Expert"
+      },
+      "years": "{count, plural, =0 {moins d’un an d’expérience} one {# an d’expérience} other {# ans d’expérience}}",
+      "locLabel": "lignes de code",
+      "projectsLabel": "projets",
+      "experiencesLabel": "expériences",
+      "projectsTitle": "Projets",
+      "experiencesTitle": "Expériences",
+      "noStats": "Pas encore de statistiques pour cette compétence"
     },
     "projects": {
       "featured": "Projet Vedette",

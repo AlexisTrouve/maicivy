@@ -103,7 +103,7 @@ func TestGetTimeline(t *testing.T) {
 	seedTimelineData(t, db)
 
 	app := fiber.New()
-	handler := NewTimelineHandler(db)
+	handler := NewTimelineHandler(db, nil)
 	app.Get("/api/v1/timeline", handler.GetTimeline)
 
 	// Test: Récupérer toute la timeline
@@ -202,7 +202,7 @@ func TestGetCategories(t *testing.T) {
 	seedTimelineData(t, db)
 
 	app := fiber.New()
-	handler := NewTimelineHandler(db)
+	handler := NewTimelineHandler(db, nil)
 	app.Get("/api/v1/timeline/categories", handler.GetCategories)
 
 	req := httptest.NewRequest("GET", "/api/v1/timeline/categories", nil)
@@ -235,7 +235,7 @@ func TestGetMilestones(t *testing.T) {
 	seedTimelineData(t, db)
 
 	app := fiber.New()
-	handler := NewTimelineHandler(db)
+	handler := NewTimelineHandler(db, nil)
 	app.Get("/api/v1/timeline/milestones", handler.GetMilestones)
 
 	req := httptest.NewRequest("GET", "/api/v1/timeline/milestones", nil)
@@ -271,7 +271,7 @@ func TestTimelineEventTypes(t *testing.T) {
 	seedTimelineData(t, db)
 
 	app := fiber.New()
-	handler := NewTimelineHandler(db)
+	handler := NewTimelineHandler(db, nil)
 	app.Get("/api/v1/timeline", handler.GetTimeline)
 
 	req := httptest.NewRequest("GET", "/api/v1/timeline", nil)
@@ -314,7 +314,7 @@ func TestTimelineFilterByDate(t *testing.T) {
 	seedTimelineData(t, db)
 
 	app := fiber.New()
-	handler := NewTimelineHandler(db)
+	handler := NewTimelineHandler(db, nil)
 	app.Get("/api/v1/timeline", handler.GetTimeline)
 
 	// Test: Filtrer par date "from"

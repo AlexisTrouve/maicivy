@@ -11,7 +11,9 @@ services:
       POSTGRES_DB: ${DB_NAME:-maicivy_db}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
     ports:
-      - "5433:5432"
+      # Bind localhost uniquement : la DB ne doit jamais être exposée publiquement
+      # (seul le backend, sur le réseau docker interne, y accède). Cf. durcissement 2026-06.
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # Removed initdb.d mount - GORM handles schema creation
@@ -39,7 +41,8 @@ services:
     image: redis:7-alpine
     container_name: maicivy-redis
     ports:
-      - "6380:6379"
+      # Bind localhost uniquement (cache/sessions, jamais exposé publiquement).
+      - "127.0.0.1:6380:6379"
     volumes:
       - redis-data:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
@@ -61,6 +64,9 @@ services:
       dockerfile: Dockerfile
       args:
         - BUILDKIT_INLINE_CACHE=1
+    # Tag explicite : `up -d --build` produit maicivy-backend:latest (tag déterministe,
+    # cohérent avec le rollback `docker tag maicivy-backend:latest maicivy-backend:rollback-*`).
+    image: maicivy-backend:latest
     container_name: maicivy-backend
     environment:
       # Database
@@ -88,15 +94,22 @@ services:
       CHAT_API_KEY: ${CHAT_API_KEY}
       # Owner API key — bypass session/rate-limit pour appels server-to-server (ex: indeed-outreach)
       MAICIVY_OWNER_API_KEY: ${MAICIVY_OWNER_API_KEY}
+      # Session signing — secret HMAC du cookie maicivy_session (anti-forge + anti-amplification PG).
+      # Vide → fallback dev non sécurisé (signature active mais secret connu). À définir en prod.
+      SESSION_SECRET: ${SESSION_SECRET:-}
       # Repos scanner
       REPOS_DIR: /repos
       # Gitea Stats (read-only token pour section Git Stats du CV)
       GITEA_STATS_URL: ${GITEA_STATS_URL:-https://git.etheryale.com}
       GITEA_STATS_TOKEN: ${GITEA_STATS_TOKEN}
       GITEA_STATS_USER: ${GITEA_STATS_USER:-StillHammer}
-      CONTENT_DIR: /content
+      # Anti-abus : le sus-rate-limit a migré dans le service `frontdoor` (devant tout le trafic).
+      # Ici ne reste que le circuit-breaker coût (spécifique aux générations IA du backend).
+      AI_GLOBAL_DAILY_MAX: ${AI_GLOBAL_DAILY_MAX:-200} # circuit-breaker coût : plafond gén. IA/jour
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      # Bind localhost : le reverse-proxy nginx (sur l'hôte) proxifie vers ce port.
+      # Prod VPS142 : BACKEND_PORT=8081 dans .env (upstream nginx). Dev : 8080 par défaut.
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -117,7 +130,6 @@ services:
       - seccomp:unconfined
     volumes:
       - /home/debian:/repos:ro  # Accès lecture seule aux repos pour le scan
-      - ./content:/content:ro  # Fichiers markdown CV (source de vérité)
 
   # Frontend - Next.js
   frontend:
@@ -127,6 +139,9 @@ services:
       args:
         - BUILDKIT_INLINE_CACHE=1
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    # Tag explicite. Le frontend est buildé DEPUIS LA SOURCE sur le VPS (build Next.js +
+    # deps 3D vérifié OK sur VPS142, 2026-06) — plus besoin d'override pour pin une image.
+    image: maicivy-frontend:latest
     container_name: maicivy-frontend
     environment:
       # Server-side: internal docker network URL
@@ -137,7 +152,8 @@ services:
       # Bind to all interfaces for healthcheck to work
       HOSTNAME: 0.0.0.0
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      # Bind localhost : nginx proxifie vers ce port. Prod VPS142 : FRONTEND_PORT=3002.
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -155,6 +171,50 @@ services:
       # visibles dans le container sans rebuild
       - ./frontend/public/blog:/app/public/blog
     # Note: seul public/blog/ est monté en volume, le reste est dans l'image buildée
+
+  # Front-door - reverse-proxy + checkpoint anti-abus (sus-rate-limit + signature de path).
+  # nginx envoie TOUT le trafic ici → le sus voit tout (frontend inclus) → puis proxy vers les
+  # bons upstreams. /ws/ est routé direct par nginx (bypass) car proxy WS en Go = inutile ici.
+  frontdoor:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.frontdoor
+    image: maicivy-frontdoor:latest
+    container_name: maicivy-frontdoor
+    environment:
+      FRONTDOOR_PORT: 8090
+      BACKEND_URL: http://maicivy-backend:8080
+      FRONTEND_URL: http://maicivy-frontend:3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # Anti-abus (le sus vit ICI désormais — voit tout le trafic, signature de path activée)
+      SUS_HALFLIFE_HOURS: ${SUS_HALFLIFE_HOURS:-48}    # demi-vie du score de réputation (mémoire ~4-5 j)
+      SUS_ALERT_SCORE: ${SUS_ALERT_SCORE:-20}          # score à partir duquel on alerte (filou)
+      SUS_WEBHOOK_URL: ${SUS_WEBHOOK_URL:-}            # webhook Discord (vide = log seul)
+      SUS_ALERT_MUTE_TYPES: ${SUS_ALERT_MUTE_TYPES:-php} # types d'alerte loggés mais PAS notifiés Discord (CSV)
+      # Exemptions du sus : owner via header X-Owner-Key (IP-indépendant) + IPs/CIDR stables.
+      MAICIVY_OWNER_API_KEY: ${MAICIVY_OWNER_API_KEY}  # header X-Owner-Key == cette clé → bypass
+      SUS_ALLOWLIST: ${SUS_ALLOWLIST:-}                # IPs/CIDR exemptés, séparés par virgule
+    ports:
+      # nginx (hôte) proxifie TOUT vers ce port.
+      - "127.0.0.1:8090:8090"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - maicivy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/__frontdoor/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
   postgres-data:

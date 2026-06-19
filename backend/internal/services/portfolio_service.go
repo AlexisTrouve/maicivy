@@ -77,12 +77,14 @@ func NewPortfolioService() *PortfolioService {
 }
 
 // GetProject retourne les détails complets d'un projet par son nom ou slug.
-// Stratégie : recherche par nom d'abord, puis match sur les résultats.
-func (s *PortfolioService) GetProject(name string) (PortfolioEntry, bool) {
+// lang est passé à l'API maiProFiles pour retourner les textes dans la bonne langue.
+// Stratégie : recherche par nom d'abord sur la liste, puis match sur les résultats.
+func (s *PortfolioService) GetProject(name string, lang string) (PortfolioEntry, bool) {
 	ctx := context.Background()
 
 	// Tenter avec la liste complète pour trouver le bon ID
-	projects, err := s.client.ListProjects(ctx)
+	// On passe lang pour que les descriptions soient déjà dans la bonne langue
+	projects, err := s.client.ListProjects(ctx, lang)
 	if err != nil {
 		return PortfolioEntry{}, false
 	}
@@ -101,8 +103,9 @@ func (s *PortfolioService) GetProject(name string) (PortfolioEntry, bool) {
 	}
 
 	// Fallback : recherche par mot-clé via /search
+	// On passe lang pour que les résultats soient dans la bonne langue
 	if matchedID == "" {
-		results, err := s.client.Search(ctx, name)
+		results, err := s.client.Search(ctx, name, lang)
 		if err == nil && len(results) > 0 {
 			matchedID = results[0].ID
 		}
@@ -112,8 +115,8 @@ func (s *PortfolioService) GetProject(name string) (PortfolioEntry, bool) {
 		return PortfolioEntry{}, false
 	}
 
-	// Récupère le détail complet (avec description.portfolio)
-	p, err := s.client.GetProject(ctx, matchedID)
+	// Récupère le détail complet (avec description.portfolio) dans la bonne langue
+	p, err := s.client.GetProject(ctx, matchedID, lang)
 	if err != nil {
 		return PortfolioEntry{}, false
 	}
@@ -121,9 +124,10 @@ func (s *PortfolioService) GetProject(name string) (PortfolioEntry, bool) {
 	return mapProject(p), true
 }
 
-// ListProjects retourne tous les projets
-func (s *PortfolioService) ListProjects() []PortfolioEntry {
-	projects, err := s.client.ListProjects(context.Background())
+// ListProjects retourne tous les projets dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (s *PortfolioService) ListProjects(lang string) []PortfolioEntry {
+	projects, err := s.client.ListProjects(context.Background(), lang)
 	if err != nil {
 		return nil
 	}
@@ -134,9 +138,11 @@ func (s *PortfolioService) ListProjects() []PortfolioEntry {
 	return result
 }
 
-// ListSkills retourne les skills groupés (strong / familiar / domains)
-func (s *PortfolioService) ListSkills() []SkillCategory {
-	profile, err := s.client.GetProfile(context.Background())
+// ListSkills retourne les skills groupés (strong / familiar / domains).
+// Les noms de catégories sont en dur ici (UI interne), pas via maiProFiles.
+// lang est passé pour que les données de profil soient dans la bonne langue.
+func (s *PortfolioService) ListSkills(lang string) []SkillCategory {
+	profile, err := s.client.GetProfile(context.Background(), lang)
 	if err != nil {
 		return nil
 	}
@@ -154,9 +160,10 @@ func (s *PortfolioService) ListSkills() []SkillCategory {
 	return cats
 }
 
-// GetExperience retourne la bio et l'expérience d'Alexi depuis /profile
-func (s *PortfolioService) GetExperience() ExperienceData {
-	profile, err := s.client.GetProfile(context.Background())
+// GetExperience retourne la bio et l'expérience d'Alexi depuis /profile dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (s *PortfolioService) GetExperience(lang string) ExperienceData {
+	profile, err := s.client.GetProfile(context.Background(), lang)
 	if err != nil {
 		return ExperienceData{}
 	}
@@ -174,7 +181,7 @@ func (s *PortfolioService) GetExperience() ExperienceData {
 	}
 }
 
-// GetStats retourne les stats globales du portfolio
+// GetStats retourne les stats globales du portfolio (données numériques, pas de traduction).
 func (s *PortfolioService) GetStats() GlobalStats {
 	stats, err := s.client.GetStats(context.Background())
 	if err != nil {
@@ -209,9 +216,10 @@ func (s *PortfolioService) GetStats() GlobalStats {
 	}
 }
 
-// SearchProjects recherche des projets par mot-clé (délègue à /search)
-func (s *PortfolioService) SearchProjects(query string) []PortfolioEntry {
-	results, err := s.client.Search(context.Background(), query)
+// SearchProjects recherche des projets par mot-clé dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (s *PortfolioService) SearchProjects(query string, lang string) []PortfolioEntry {
+	results, err := s.client.Search(context.Background(), query, lang)
 	if err != nil {
 		return nil
 	}

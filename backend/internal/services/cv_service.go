@@ -10,7 +10,6 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"maicivy/internal/config"
-	"maicivy/internal/content"
 	"maicivy/internal/models"
 )
 
@@ -19,7 +18,7 @@ const maxDetailedProjects = 6
 
 // CVService gère la logique métier du CV
 type CVService struct {
-	contentLoader  *content.Loader
+	contentLoader  ContentProvider // source des données CV (maiprofiles)
 	redis          *redis.Client
 	scoringService *CVScoringService
 	l10nHelper     *LocalizationHelper
@@ -27,7 +26,7 @@ type CVService struct {
 }
 
 // NewCVService crée une nouvelle instance
-func NewCVService(contentLoader *content.Loader, redisClient *redis.Client, llmScoring *LLMScoringService) *CVService {
+func NewCVService(contentLoader ContentProvider, redisClient *redis.Client, llmScoring *LLMScoringService) *CVService {
 	return &CVService{
 		contentLoader:  contentLoader,
 		redis:          redisClient,
@@ -88,10 +87,10 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 		}
 	}
 
-	// 3. Cache miss - récupérer depuis le content loader
-	experiences := s.contentLoader.GetExperiences()
-	skills := s.contentLoader.GetSkills()
-	projects := s.contentLoader.GetProjects()
+	// 3. Cache miss - récupérer depuis le content loader (contenu déjà dans la bonne langue)
+	experiences := s.contentLoader.GetExperiences(lang)
+	skills := s.contentLoader.GetSkills(lang)
+	projects := s.contentLoader.GetProjects(lang)
 
 	// 4. Scorer et filtrer selon thème
 	scoredExp := s.scoringService.ScoreExperiences(experiences, theme)
@@ -162,28 +161,30 @@ func (s *CVService) GetAdaptiveCV(ctx context.Context, themeID string, lang stri
 		GeneratedAt: time.Now(),
 	}
 
-	// 7. Mettre en cache (TTL 1h)
+	// 7. Mettre en cache (TTL 5 min — aligné sur le TTL du content provider, plancher de fraîcheur).
+	// Court exprès : un changement de contenu/traduction apparaît en ~5 min sans recalcul par requête
+	// (le scoring LLM reste caché 6h à part). Avant : 1h → contenu figé trop longtemps.
 	jsonData, err := json.Marshal(response)
 	if err == nil {
-		s.redis.Set(ctx, cacheKey, jsonData, 1*time.Hour)
+		s.redis.Set(ctx, cacheKey, jsonData, 5*time.Minute)
 	}
 
 	return response, nil
 }
 
-// GetAllExperiences retourne toutes les expériences
-func (s *CVService) GetAllExperiences(ctx context.Context) ([]models.Experience, error) {
-	return s.contentLoader.GetExperiences(), nil
+// GetAllExperiences retourne toutes les expériences dans la langue demandée.
+func (s *CVService) GetAllExperiences(ctx context.Context, lang string) ([]models.Experience, error) {
+	return s.contentLoader.GetExperiences(lang), nil
 }
 
-// GetAllSkills retourne toutes les compétences
-func (s *CVService) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
-	return s.contentLoader.GetSkills(), nil
+// GetAllSkills retourne toutes les compétences dans la langue demandée.
+func (s *CVService) GetAllSkills(ctx context.Context, lang string) ([]models.Skill, error) {
+	return s.contentLoader.GetSkills(lang), nil
 }
 
-// GetAllProjects retourne tous les projets
-func (s *CVService) GetAllProjects(ctx context.Context) ([]models.Project, error) {
-	return s.contentLoader.GetProjects(), nil
+// GetAllProjects retourne tous les projets dans la langue demandée.
+func (s *CVService) GetAllProjects(ctx context.Context, lang string) ([]models.Project, error) {
+	return s.contentLoader.GetProjects(lang), nil
 }
 
 // GetAvailableThemes retourne la liste des thèmes disponibles

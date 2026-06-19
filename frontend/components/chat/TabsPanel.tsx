@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { DefaultFiche } from './DefaultFiche';
 import { ProjectFiche } from './ProjectFiche';
 import { ProjectListFiche } from './ProjectListFiche';
@@ -48,6 +49,7 @@ function FicheContent({ tab }: { tab: Tab }) {
 }
 
 export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose }: TabsPanelProps) {
+  const t = useTranslations('chat');
   // Aucun onglet → fiche par défaut
   if (tabs.length === 0) {
     return (
@@ -84,7 +86,7 @@ export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose }: TabsPan
                   e.stopPropagation();
                   onTabClose(tab.id);
                 }}
-                aria-label={`Fermer ${tab.label}`}
+                aria-label={t('closeTab', { label: tab.label })}
                 className="ml-1 text-muted-foreground hover:text-foreground leading-none text-xs"
               >
                 ×

@@ -162,9 +162,9 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
               {project.catchphrase || project.description}
             </p>
 
-            {/* Technologies Preview */}
+            {/* Technologies Preview — garde || [] : la data peut arriver sans technologies */}
             <div className="flex flex-wrap gap-1.5">
-              {project.technologies.slice(0, 3).map((tech) => (
+              {(project.technologies || []).slice(0, 3).map((tech) => (
                 <span
                   key={tech}
                   className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs"
@@ -172,9 +172,9 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                   {tech}
                 </span>
               ))}
-              {project.technologies.length > 3 && (
+              {(project.technologies || []).length > 3 && (
                 <span className="px-2 py-0.5 text-gray-500 dark:text-gray-400 text-xs">
-                  +{project.technologies.length - 3}
+                  +{(project.technologies || []).length - 3}
                 </span>
               )}
             </div>

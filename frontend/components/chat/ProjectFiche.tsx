@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface StatItem {
   Label: string;
   Value: string;
@@ -22,6 +24,7 @@ interface ProjectFicheProps {
 
 // Fiche détaillée d'un projet — affichée quand tool_result get_project est reçu
 export function ProjectFiche({ data }: ProjectFicheProps) {
+  const t = useTranslations('chat');
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
@@ -36,7 +39,7 @@ export function ProjectFiche({ data }: ProjectFicheProps) {
       {/* Tech stack */}
       <div>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          🔧 Stack technique
+          🔧 {t('techStack')}
         </h3>
         <div className="flex flex-wrap gap-1.5">
           {data.TechStack.map((tech) => (
@@ -54,7 +57,7 @@ export function ProjectFiche({ data }: ProjectFicheProps) {
       {data.KeyFeatures && data.KeyFeatures.length > 0 && (
       <div>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          ✓ Fonctionnalités clés
+          ✓ {t('keyFeatures')}
         </h3>
         <ul className="space-y-1.5">
           {data.KeyFeatures.map((feature, i) => (

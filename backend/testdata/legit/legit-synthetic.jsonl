@@ -1,0 +1,15 @@
+{"type":"meta","ip":"legit-synthetic","ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36","total":14,"dur_s":11,"first":"2026-06-07T08:55:47Z"}
+{"t":0,"m":"GET","p":"/fr","st":200,"b":68790,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":6,"m":"GET","p":"/fr/cv","st":200,"b":207040,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":6,"m":"GET","p":"/fr/architecture","st":200,"b":43796,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":7,"m":"GET","p":"/fr/blog","st":200,"b":48177,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":7,"m":"GET","p":"/fr/gitstats","st":200,"b":44818,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":8,"m":"GET","p":"/fr/letters","st":200,"b":45241,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":8,"m":"GET","p":"/fr/chat","st":200,"b":47082,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":9,"m":"GET","p":"/fr/analytics","st":200,"b":50700,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":9,"m":"GET","p":"/api/v1/letters/access/status","st":200,"b":204,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":10,"m":"GET","p":"/api/v1/letters/ratelimit/status","st":200,"b":132,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":10,"m":"GET","p":"/fr/old-portfolio","st":404,"b":4211,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":10,"m":"GET","p":"/fr/cv-2023","st":404,"b":4205,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":11,"m":"GET","p":"/fr/projets-archive","st":404,"b":4213,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+{"t":11,"m":"GET","p":"/vieux-cv","st":307,"b":22,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}

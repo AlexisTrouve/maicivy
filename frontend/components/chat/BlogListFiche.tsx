@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations, useLocale } from 'next-intl';
 import { BlogPost } from './BlogFiche';
 
 interface BlogListFicheProps {
@@ -9,21 +10,23 @@ interface BlogListFicheProps {
   };
 }
 
-// Formate une date ISO en "mars 2026"
-function formatDate(iso: string | null | undefined): string {
+// Formate une date ISO selon la locale courante (ex: "March 2026" / "mars 2026")
+function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 // BlogListFiche — liste des articles de blog dans le panel droit
 export function BlogListFiche({ data }: BlogListFicheProps) {
+  const t = useTranslations('chat');
+  const locale = useLocale();
   const posts = data?.posts ?? [];
 
   if (posts.length === 0) {
     return (
       <div className="p-4 text-sm text-muted-foreground text-center">
-        Aucun article publié pour l&apos;instant.
+        {t('blogEmpty')}
       </div>
     );
   }
@@ -31,7 +34,7 @@ export function BlogListFiche({ data }: BlogListFicheProps) {
   return (
     <div className="p-4 space-y-3 overflow-y-auto h-full">
       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Articles ({posts.length})
+        {t('articles', { count: posts.length })}
       </h3>
 
       {posts.map((post) => (
@@ -62,7 +65,7 @@ export function BlogListFiche({ data }: BlogListFicheProps) {
                 {post.project_name}
               </span>
             )}
-            {post.published_at && <span>{formatDate(post.published_at)}</span>}
+            {post.published_at && <span>{formatDate(post.published_at, locale)}</span>}
             {post.reading_time_minutes && (
               <span>{post.reading_time_minutes} min</span>
             )}

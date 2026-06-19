@@ -241,9 +241,9 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
                   {exp.description}
                 </p>
 
-                {/* Technologies - show only first 4 */}
+                {/* Technologies - show only first 4 (garde || [] : data possiblement sans technologies) */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {exp.technologies.slice(0, 4).map((tech) => (
+                  {(exp.technologies || []).slice(0, 4).map((tech) => (
                     <span
                       key={tech}
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium"
@@ -251,9 +251,9 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
                       {tech}
                     </span>
                   ))}
-                  {exp.technologies.length > 4 && (
+                  {(exp.technologies || []).length > 4 && (
                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full text-sm font-medium">
-                      +{exp.technologies.length - 4}
+                      +{(exp.technologies || []).length - 4}
                     </span>
                   )}
                 </div>

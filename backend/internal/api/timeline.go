@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"
+	"maicivy/internal/services"
 )
 
 // TimelineEvent représente un événement dans la timeline (experience ou project)
@@ -28,13 +29,16 @@ type TimelineEvent struct {
 
 // TimelineHandler gère les endpoints timeline
 type TimelineHandler struct {
-	db *gorm.DB
+	db      *gorm.DB
+	content services.ContentProvider // expériences localisées (maiprofiles) ; nil → fallback DB
 }
 
-// NewTimelineHandler crée une nouvelle instance
-func NewTimelineHandler(db *gorm.DB) *TimelineHandler {
+// NewTimelineHandler crée une nouvelle instance.
+// content (maiprofiles) sert les expériences localisées per-locale ; si nil, fallback DB.
+func NewTimelineHandler(db *gorm.DB, content services.ContentProvider) *TimelineHandler {
 	return &TimelineHandler{
-		db: db,
+		db:      db,
+		content: content,
 	}
 }
 
@@ -48,31 +52,39 @@ func (h *TimelineHandler) GetTimeline(c *fiber.Ctx) error {
 	category := c.Query("category", "")
 	from := c.Query("from", "")
 	to := c.Query("to", "")
+	lang := c.Query("lang", "en") // locale frontend (?lang=fr|en) ; défaut anglais
 
-	// Récupérer expériences
+	// Récupérer expériences. Source = maiprofiles (LOCALISÉES per-locale) → fini la table DB en
+	// français/désynchronisée. Filtres appliqués en mémoire. Fallback DB si provider absent (nil).
 	var experiences []models.Experience
-	expQuery := h.db.Model(&models.Experience{})
-
-	if category != "" {
-		expQuery = expQuery.Where("category = ?", category)
-	}
-
-	// Filtrage par date
-	if from != "" {
-		fromDate, err := time.Parse("2006-01-02", from)
-		if err == nil {
+	if h.content != nil {
+		fromDate, _ := time.Parse("2006-01-02", from)
+		toDate, _ := time.Parse("2006-01-02", to)
+		for _, exp := range h.content.GetExperiences(lang) {
+			if category != "" && exp.Category != category {
+				continue
+			}
+			if from != "" && !fromDate.IsZero() && exp.StartDate.Before(fromDate) {
+				continue
+			}
+			if to != "" && !toDate.IsZero() && exp.StartDate.After(toDate) {
+				continue
+			}
+			experiences = append(experiences, exp)
+		}
+	} else {
+		expQuery := h.db.Model(&models.Experience{})
+		if category != "" {
+			expQuery = expQuery.Where("category = ?", category)
+		}
+		if fromDate, err := time.Parse("2006-01-02", from); from != "" && err == nil {
 			expQuery = expQuery.Where("start_date >= ?", fromDate)
 		}
-	}
-
-	if to != "" {
-		toDate, err := time.Parse("2006-01-02", to)
-		if err == nil {
+		if toDate, err := time.Parse("2006-01-02", to); to != "" && err == nil {
 			expQuery = expQuery.Where("start_date <= ?", toDate)
 		}
+		expQuery.Order("start_date DESC").Find(&experiences)
 	}
-
-	expQuery.Order("start_date DESC").Find(&experiences)
 
 	// Récupérer projets
 	var projects []models.Project
@@ -87,10 +99,10 @@ func (h *TimelineHandler) GetTimeline(c *fiber.Ctx) error {
 	// Combiner et convertir en TimelineEvent
 	var events []TimelineEvent
 
-	// Ajouter expériences
-	for _, exp := range experiences {
+	// Ajouter expériences (ID par index — les expériences provider n'ont pas d'ID DB)
+	for i, exp := range experiences {
 		events = append(events, TimelineEvent{
-			ID:        fmt.Sprintf("exp_%d", exp.ID),
+			ID:        fmt.Sprintf("exp_%d", i),
 			Type:      "experience",
 			Title:     exp.Title,
 			Subtitle:  exp.Company,

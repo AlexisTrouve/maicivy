@@ -21,8 +21,11 @@ type MockLetterQueueService struct {
 	mock.Mock
 }
 
-func (m *MockLetterQueueService) EnqueueJob(visitorID, companyName, jobTitle, theme, lang string) (string, error) {
-	args := m.Called(visitorID, companyName, jobTitle, theme, lang)
+// Signature alignée sur LetterQueueServiceInterface — commit 338ea8b a ajouté `model` + `jobOffer`
+// sans mettre à jour ce mock (cassait la compilation du package de test). jobOffer (variadic)
+// n'est pas asserté par les tests existants → non transmis à Called.
+func (m *MockLetterQueueService) EnqueueJob(visitorID, companyName, jobTitle, theme, lang, model string, jobOffer ...string) (string, error) {
+	args := m.Called(visitorID, companyName, jobTitle, theme, lang, model)
 	return args.String(0), args.Error(1)
 }
 
@@ -89,7 +92,7 @@ func TestGenerateLetters_Success(t *testing.T) {
 	})
 
 	// Mock queue success
-	mockQueue.On("EnqueueJob", "test-session-123", "Google", "", "backend", "fr").
+	mockQueue.On("EnqueueJob", "test-session-123", "Google", "", "backend", "fr", mock.Anything).
 		Return("job-abc-123", nil)
 
 	// Request body
@@ -222,7 +225,7 @@ func TestGenerateLetters_QueueError(t *testing.T) {
 	})
 
 	// Mock queue error
-	mockQueue.On("EnqueueJob", "test-session", "Google", "", "backend", "fr").
+	mockQueue.On("EnqueueJob", "test-session", "Google", "", "backend", "fr", mock.Anything).
 		Return("", assert.AnError)
 
 	// Request
@@ -265,7 +268,7 @@ func TestGenerateLetters_WithJobTitle(t *testing.T) {
 	})
 
 	// Mock avec job title
-	mockQueue.On("EnqueueJob", "test-session", "Microsoft", "Senior Backend Engineer", "backend", "fr").
+	mockQueue.On("EnqueueJob", "test-session", "Microsoft", "Senior Backend Engineer", "backend", "fr", mock.Anything).
 		Return("job-xyz-456", nil)
 
 	// Request avec job_title
@@ -341,7 +344,7 @@ func TestGenerateLetters_ValidThemes(t *testing.T) {
 
 	for _, theme := range validThemes {
 		t.Run(theme, func(t *testing.T) {
-			mockQueue.On("EnqueueJob", "test-session", "TestCorp", "", theme, "fr").
+			mockQueue.On("EnqueueJob", "test-session", "TestCorp", "", theme, "fr", mock.Anything).
 				Return("job-123", nil).Once()
 
 			reqBody := dto.GenerateLetterRequest{
@@ -376,7 +379,7 @@ func BenchmarkGenerateLetters(b *testing.B) {
 		return handler.GenerateLetter(c)
 	})
 
-	mockQueue.On("EnqueueJob", "bench-session", "BenchCorp", "", "backend", "fr").
+	mockQueue.On("EnqueueJob", "bench-session", "BenchCorp", "", "backend", "fr", mock.Anything).
 		Return("job-bench", nil)
 
 	reqBody := dto.GenerateLetterRequest{

@@ -41,18 +41,18 @@ func (m *MockCVService) InvalidateCache(ctx context.Context, themeID string) err
 	return args.Error(0)
 }
 
-func (m *MockCVService) GetAllExperiences(ctx context.Context) ([]models.Experience, error) {
-	args := m.Called(ctx)
+func (m *MockCVService) GetAllExperiences(ctx context.Context, lang string) ([]models.Experience, error) {
+	args := m.Called(ctx, lang)
 	return args.Get(0).([]models.Experience), args.Error(1)
 }
 
-func (m *MockCVService) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
-	args := m.Called(ctx)
+func (m *MockCVService) GetAllSkills(ctx context.Context, lang string) ([]models.Skill, error) {
+	args := m.Called(ctx, lang)
 	return args.Get(0).([]models.Skill), args.Error(1)
 }
 
-func (m *MockCVService) GetAllProjects(ctx context.Context) ([]models.Project, error) {
-	args := m.Called(ctx)
+func (m *MockCVService) GetAllProjects(ctx context.Context, lang string) ([]models.Project, error) {
+	args := m.Called(ctx, lang)
 	return args.Get(0).([]models.Project), args.Error(1)
 }
 
@@ -251,7 +251,7 @@ func TestGetExperiences(t *testing.T) {
 		},
 	}
 
-	mockService.On("GetAllExperiences", mock.Anything).Return(experiences, nil)
+	mockService.On("GetAllExperiences", mock.Anything, mock.Anything).Return(experiences, nil)
 
 	// Request
 	req := httptest.NewRequest("GET", "/api/v1/experiences", nil)
@@ -285,7 +285,7 @@ func TestGetSkills(t *testing.T) {
 		{Name: "Docker", Level: models.SkillLevelIntermediate, Category: "devops"},
 	}
 
-	mockService.On("GetAllSkills", mock.Anything).Return(skills, nil)
+	mockService.On("GetAllSkills", mock.Anything, mock.Anything).Return(skills, nil)
 
 	// Request
 	req := httptest.NewRequest("GET", "/api/v1/skills", nil)
@@ -342,7 +342,7 @@ func TestGetExperiences_DatabaseError(t *testing.T) {
 	app.Get("/api/v1/experiences", handler.GetExperiences)
 
 	// Mock error
-	mockService.On("GetAllExperiences", mock.Anything).
+	mockService.On("GetAllExperiences", mock.Anything, mock.Anything).
 		Return([]models.Experience{}, assert.AnError)
 
 	// Request

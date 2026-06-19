@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface SkillCategory {
   Name: string;
   Skills: string[];
@@ -26,9 +28,10 @@ interface SkillsCategoriesProps {
 }
 
 function SkillsCategoriesFiche({ categories }: SkillsCategoriesProps) {
+  const t = useTranslations('chat');
   return (
     <div className="p-6 space-y-5">
-      <h2 className="text-lg font-bold text-foreground">Compétences techniques</h2>
+      <h2 className="text-lg font-bold text-foreground">{t('skillsTitle')}</h2>
       {categories.map((cat) => (
         <div key={cat.Name}>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -50,6 +53,14 @@ function SkillsCategoriesFiche({ categories }: SkillsCategoriesProps) {
   );
 }
 
+// Un poste dans le parcours pro (rendu dans la fiche expérience).
+interface ExperienceItem {
+  Role: string;
+  Company: string;
+  Period: string;
+  Summary: string;
+}
+
 interface ExperienceData {
   Bio: string;
   BioFull: string;
@@ -62,6 +73,7 @@ interface ExperienceData {
 }
 
 function ExperienceFiche({ data }: { data: ExperienceData }) {
+  const t = useTranslations('chat');
   return (
     <div className="p-6 space-y-5">
       {/* Headline + dispo + années */}
@@ -70,7 +82,7 @@ function ExperienceFiche({ data }: { data: ExperienceData }) {
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           {data.ExperienceYears > 0 && (
             <span className="text-sm font-medium text-foreground">
-              {data.ExperienceYears} ans d&apos;expérience
+              {t('yearsExperience', { years: data.ExperienceYears })}
             </span>
           )}
           <span className="text-sm text-muted-foreground">{data.TJM}</span>
@@ -90,7 +102,7 @@ function ExperienceFiche({ data }: { data: ExperienceData }) {
       {data.Domains && data.Domains.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Domaines
+            {t('domains')}
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {data.Domains.map((d) => (
@@ -109,7 +121,7 @@ function ExperienceFiche({ data }: { data: ExperienceData }) {
       {data.Experience && data.Experience.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Expériences
+            {t('experiences')}
           </h3>
           <div className="space-y-4">
             {data.Experience.map((exp, i) => (

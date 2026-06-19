@@ -11,8 +11,8 @@ import (
 
 type Config struct {
 	// Server
-	ServerPort string
-	ServerHost string
+	ServerPort  string
+	ServerHost  string
 	Environment string
 
 	// CORS
@@ -33,8 +33,8 @@ type Config struct {
 	RedisDB       int
 
 	// API Keys
-	ClaudeAPIKey    string
-	OpenAIAPIKey    string
+	ClaudeAPIKey string
+	OpenAIAPIKey string
 	// Proxy Anthropic (vendor proxy interne)
 	AnthropicBaseURL string
 	AnthropicAPIKey  string
@@ -49,6 +49,9 @@ type Config struct {
 	GiteaStatsURL   string
 	GiteaStatsToken string
 	GiteaStatsUser  string
+
+	// Session : secret HMAC pour signer le cookie maicivy_session (anti-forge + anti-amplification PG)
+	SessionSecret string
 }
 
 func Load() (*Config, error) {
@@ -94,6 +97,9 @@ func Load() (*Config, error) {
 		GiteaStatsURL:   getEnv("GITEA_STATS_URL", "https://git.etheryale.com"),
 		GiteaStatsToken: getEnv("GITEA_STATS_TOKEN", ""),
 		GiteaStatsUser:  getEnv("GITEA_STATS_USER", "StillHammer"),
+
+		// Session signing
+		SessionSecret: getEnv("SESSION_SECRET", ""),
 	}
 
 	if err := cfg.Validate(); err != nil {

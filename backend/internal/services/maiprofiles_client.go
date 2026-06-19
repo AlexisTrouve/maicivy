@@ -21,6 +21,14 @@ const maiProFilesBaseURL = "https://maiprofiles.etheryale.com"
 // cacheTTL — durée de vie d'une entrée en cache (5 minutes)
 const cacheTTL = 5 * time.Minute
 
+// validLangs liste les langues acceptées par maiProFiles.
+// Toute autre valeur → le param ?lang= n'est pas envoyé (fallback FR côté API).
+var validLangs = map[string]bool{
+	"fr": true,
+	"en": true,
+	"ka": true,
+}
+
 // --- Types API ---
 
 // MPFProfile représente la réponse de GET /profile
@@ -65,6 +73,7 @@ type MPFProject struct {
 	Name        string            `json:"name"`
 	Category    string            `json:"category"`
 	Status      string            `json:"status"`
+	Featured    bool              `json:"featured"` // curé dans maiprofiles → projet vedette sur le CV
 	Stack       []string          `json:"stack"`
 	Stats       MPFStats          `json:"stats"`
 	Description MPFDescription    `json:"description"`
@@ -122,11 +131,31 @@ func NewMaiProFilesClient() *MaiProFilesClient {
 	}
 }
 
+// langSuffix retourne "&lang=<lang>" ou "?lang=<lang>" selon si la path contient déjà un "?".
+// Permet d'ajouter le paramètre lang à un path qui a déjà d'autres query params (ex: /blog/posts?page=1).
+func langSuffix(path, lang string) string {
+	if !validLangs[lang] {
+		return path
+	}
+	// Détermine le séparateur selon la présence de query params existants
+	for _, ch := range path {
+		if ch == '?' {
+			return path + "&lang=" + lang
+		}
+	}
+	return path + "?lang=" + lang
+}
+
 // get fait un GET sur path et décode le JSON dans out.
-// Cherche d'abord dans le cache, sinon fetch et met en cache.
-func (c *MaiProFilesClient) get(ctx context.Context, path string, out interface{}) error {
-	// Vérifier le cache
-	if cached, ok := c.cache.Load(path); ok {
+// Si lang est une valeur valide (fr/en/ka), l'ajoute comme query param ?lang=.
+// Cherche d'abord dans le cache (clé = path+lang), sinon fetch et met en cache.
+func (c *MaiProFilesClient) get(ctx context.Context, path string, lang string, out interface{}) error {
+	// Construire le path final avec le paramètre de langue si valide.
+	// La clé de cache inclut le lang pour éviter des collisions inter-langues.
+	fullPath := langSuffix(path, lang)
+
+	// Vérifier le cache (clé = path localisé)
+	if cached, ok := c.cache.Load(fullPath); ok {
 		entry := cached.(*cacheEntry)
 		if !entry.isExpired() {
 			// Ré-encoder/décoder pour copier dans out (types différents selon l'appelant)
@@ -139,23 +168,23 @@ func (c *MaiProFilesClient) get(ctx context.Context, path string, out interface{
 		}
 	}
 
-	// Fetch l'API
-	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+path, nil)
+	// Fetch l'API avec le path localisé
+	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+fullPath, nil)
 	if err != nil {
 		return err
 	}
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("maiprofiles fetch %s: %w", path, err)
+		return fmt.Errorf("maiprofiles fetch %s: %w", fullPath, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("not found: %s", path)
+		return fmt.Errorf("not found: %s", fullPath)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("maiprofiles %s: HTTP %d", path, resp.StatusCode)
+		return fmt.Errorf("maiprofiles %s: HTTP %d", fullPath, resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -166,53 +195,117 @@ func (c *MaiProFilesClient) get(ctx context.Context, path string, out interface{
 	// Décoder dans une interface{} générique pour le cache
 	var raw interface{}
 	if err = json.Unmarshal(body, &raw); err != nil {
-		return fmt.Errorf("json decode %s: %w", path, err)
+		return fmt.Errorf("json decode %s: %w", fullPath, err)
 	}
 
-	// Mettre en cache
-	c.cache.Store(path, &cacheEntry{value: raw, expiresAt: time.Now().Add(cacheTTL)})
+	// Mettre en cache avec la clé localisée
+	c.cache.Store(fullPath, &cacheEntry{value: raw, expiresAt: time.Now().Add(cacheTTL)})
 
 	// Décoder dans le type cible
 	return json.Unmarshal(body, out)
 }
 
-// GetProfile retourne le profil complet
-func (c *MaiProFilesClient) GetProfile(ctx context.Context) (*MPFProfile, error) {
+// GetProfile retourne le profil complet dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (c *MaiProFilesClient) GetProfile(ctx context.Context, lang string) (*MPFProfile, error) {
 	var p MPFProfile
-	err := c.get(ctx, "/profile", &p)
+	err := c.get(ctx, "/profile", lang, &p)
 	return &p, err
 }
 
-// ListProjects retourne tous les projets (sans description.portfolio)
-func (c *MaiProFilesClient) ListProjects(ctx context.Context) ([]MPFProject, error) {
+// ListProjects retourne tous les projets dans la langue demandée (sans description.portfolio).
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (c *MaiProFilesClient) ListProjects(ctx context.Context, lang string) ([]MPFProject, error) {
 	var projects []MPFProject
-	err := c.get(ctx, "/projects", &projects)
+	err := c.get(ctx, "/projects", lang, &projects)
 	return projects, err
 }
 
-// GetProject retourne les détails complets d'un projet par ID
-func (c *MaiProFilesClient) GetProject(ctx context.Context, id string) (*MPFProject, error) {
+// GetProject retourne les détails complets d'un projet par ID dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (c *MaiProFilesClient) GetProject(ctx context.Context, id string, lang string) (*MPFProject, error) {
 	var p MPFProject
-	err := c.get(ctx, "/projects/"+id, &p)
+	err := c.get(ctx, "/projects/"+id, lang, &p)
 	return &p, err
 }
 
-// GetStats retourne les stats globales
+// GetStats retourne les stats globales (pas de traduction — données numériques uniquement).
 func (c *MaiProFilesClient) GetStats(ctx context.Context) (*MPFGlobalStats, error) {
 	var s MPFGlobalStats
-	err := c.get(ctx, "/stats", &s)
+	// Les stats sont purement numériques — pas besoin de lang
+	err := c.get(ctx, "/stats", "", &s)
 	return &s, err
 }
 
-// Search recherche des projets par mot-clé
-func (c *MaiProFilesClient) Search(ctx context.Context, query string) ([]MPFProject, error) {
+// Search recherche des projets par mot-clé dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (c *MaiProFilesClient) Search(ctx context.Context, query string, lang string) ([]MPFProject, error) {
 	var results []MPFProject
 	path := "/search?q=" + url.QueryEscape(query)
-	err := c.get(ctx, path, &results)
+	err := c.get(ctx, path, lang, &results)
 	return results, err
 }
 
-// InvalidateCache vide l'entrée en cache pour un path donné (utile après PATCH)
+// --- Expériences & skills (source du CV — endpoints maiProFiles /experiences et /skills) ---
+
+// MPFLink représente un lien {name, url, icon} d'une expérience.
+type MPFLink struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+	Icon string `json:"icon"`
+}
+
+// MPFExpDescription : les 3 niveaux de description d'une expérience.
+type MPFExpDescription struct {
+	Short      string `json:"short"`
+	Technical  string `json:"technical"`
+	Functional string `json:"functional"`
+}
+
+// MPFExperience représente une expérience retournée par GET /experiences.
+type MPFExperience struct {
+	ID           string            `json:"id"`
+	Title        string            `json:"title"`
+	Company      string            `json:"company"`
+	Category     string            `json:"category"`
+	StartDate    string            `json:"start_date"` // "YYYY-MM"
+	EndDate      *string           `json:"end_date"`   // null = poste en cours
+	Technologies []string          `json:"technologies"`
+	Tags         []string          `json:"tags"`
+	Featured     bool              `json:"featured"`
+	Catchphrase  string            `json:"catchphrase"`
+	Links        []MPFLink         `json:"links"`
+	Description  MPFExpDescription `json:"description"`
+}
+
+// MPFSkill représente une compétence riche retournée par GET /skills.
+type MPFSkill struct {
+	Name        string   `json:"name"`
+	Level       string   `json:"level"` // expert | advanced | intermediate | beginner
+	Category    string   `json:"category"`
+	Tags        []string `json:"tags"`
+	Years       int      `json:"years"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+	Featured    bool     `json:"featured"`
+}
+
+// GetExperiences retourne les expériences pro dans la langue demandée.
+func (c *MaiProFilesClient) GetExperiences(ctx context.Context, lang string) ([]MPFExperience, error) {
+	var exps []MPFExperience
+	err := c.get(ctx, "/experiences", lang, &exps)
+	return exps, err
+}
+
+// GetSkills retourne les skills riches (niveau, tags, années...) dans la langue demandée.
+func (c *MaiProFilesClient) GetSkills(ctx context.Context, lang string) ([]MPFSkill, error) {
+	var skills []MPFSkill
+	err := c.get(ctx, "/skills", lang, &skills)
+	return skills, err
+}
+
+// InvalidateCache vide l'entrée en cache pour un path donné (utile après PATCH).
+// Note : le path peut être avec ou sans suffix de langue — invalide uniquement la clé exacte.
 func (c *MaiProFilesClient) InvalidateCache(path string) {
 	c.cache.Delete(path)
 }
@@ -374,13 +467,16 @@ type MPFBlogUpdateRequest struct {
 	CoverImageURL *string  `json:"cover_image_url,omitempty"`
 }
 
-// GetBlogPosts retourne la liste des posts publiés depuis maiProFiles (paginée).
-// Résultats mis en cache TTL 5min (invalidés explicitement après écriture).
-func (c *MaiProFilesClient) GetBlogPosts(ctx context.Context, page, perPage int) (*models.BlogPostListResponse, error) {
+// GetBlogPosts retourne la liste des posts publiés depuis maiProFiles (paginée) dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR (maiProFiles ignore le param).
+// Résultats mis en cache TTL 5min avec clé par langue (invalidés explicitement après écriture).
+func (c *MaiProFilesClient) GetBlogPosts(ctx context.Context, page, perPage int, lang string) (*models.BlogPostListResponse, error) {
+	// Le path de base contient déjà des query params (page, per_page).
+	// get() appellera langSuffix() pour ajouter "&lang=<lang>" correctement.
 	path := fmt.Sprintf("/blog/posts?page=%d&per_page=%d", page, perPage)
 
 	var raw MPFBlogListResponse
-	if err := c.get(ctx, path, &raw); err != nil {
+	if err := c.get(ctx, path, lang, &raw); err != nil {
 		return nil, fmt.Errorf("GetBlogPosts: %w", err)
 	}
 
@@ -404,12 +500,13 @@ func (c *MaiProFilesClient) GetBlogPosts(ctx context.Context, page, perPage int)
 	}, nil
 }
 
-// GetBlogPost retourne un post complet par son slug (avec content markdown).
-func (c *MaiProFilesClient) GetBlogPost(ctx context.Context, postSlug string) (*models.BlogPost, error) {
+// GetBlogPost retourne un post complet par son slug (avec content markdown) dans la langue demandée.
+// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+func (c *MaiProFilesClient) GetBlogPost(ctx context.Context, postSlug string, lang string) (*models.BlogPost, error) {
 	path := "/blog/posts/" + url.PathEscape(postSlug)
 
 	var raw MPFBlogPost
-	if err := c.get(ctx, path, &raw); err != nil {
+	if err := c.get(ctx, path, lang, &raw); err != nil {
 		return nil, fmt.Errorf("GetBlogPost(%s): %w", postSlug, err)
 	}
 
@@ -462,7 +559,10 @@ func (c *MaiProFilesClient) UpdateBlogPost(ctx context.Context, id int, post *mo
 		return nil, fmt.Errorf("UpdateBlogPost(%d): %w", id, err)
 	}
 
-	// Invalider le cache du post individuel et la liste
+	// Invalider le cache du post individuel et la liste (toutes les langues connues)
+	for lang := range validLangs {
+		c.InvalidateCache("/blog/posts/" + raw.Slug + "?lang=" + lang)
+	}
 	c.InvalidateCache("/blog/posts/" + raw.Slug)
 	c.invalidateBlogListCache()
 
@@ -504,13 +604,21 @@ func (c *MaiProFilesClient) UnpublishBlogPost(ctx context.Context, id int) error
 }
 
 // invalidateBlogListCache supprime toutes les entrées de cache /blog/posts?...
-// On ne peut pas énumérer une sync.Map par préfixe directement, donc on invalide
-// les pages courantes les plus communes (page 1 à 5, per_page 10 et 20).
+// On invalide les pages courantes les plus communes (page 1 à 5, per_page 10 et 20),
+// pour chaque langue supportée + sans langue (fallback FR).
 // Cette approche est simple et suffisante pour le volume de posts attendu.
 func (c *MaiProFilesClient) invalidateBlogListCache() {
+	langs := []string{"", "fr", "en", "ka"}
 	for page := 1; page <= 5; page++ {
 		for _, pp := range []int{10, 20} {
-			c.InvalidateCache(fmt.Sprintf("/blog/posts?page=%d&per_page=%d", page, pp))
+			for _, lang := range langs {
+				base := fmt.Sprintf("/blog/posts?page=%d&per_page=%d", page, pp)
+				if lang != "" {
+					c.InvalidateCache(base + "&lang=" + lang)
+				} else {
+					c.InvalidateCache(base)
+				}
+			}
 		}
 	}
 }

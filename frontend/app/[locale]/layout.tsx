@@ -1,22 +1,17 @@
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 import Script from 'next/script';
-import nextDynamic from 'next/dynamic';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { VisitorHeartbeatProvider } from '@/components/providers/VisitorHeartbeatProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { BackgroundProvider } from '@/components/background/BackgroundProvider';
+import { BackgroundHost } from '@/components/background/BackgroundHost';
+import { locales } from '@/i18n/config';
 import '../globals.css';
-
-// Import lazy — ssr:false garantit 0 exécution server-side.
-// Three.js est lui-même importé dynamiquement à l'intérieur du composant (useEffect),
-// ce qui donne deux couches de lazy loading : Next.js chunking + import() natif.
-const ConstellationBackground = nextDynamic(
-  () => import('@/components/background/ConstellationBackground'),
-  { ssr: false }
-);
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,7 +33,19 @@ export async function generateMetadata({
   params: Promise<{ locale: string }> | { locale: string };
 }): Promise<Metadata> {
   const resolvedParams = params instanceof Promise ? await params : params;
-  const locale = resolvedParams.locale || 'fr';
+  const locale = resolvedParams.locale;
+  // QUOI : rejette toute locale hors liste blanche (`locales`) → vrai 404.
+  // POURQUOI : un scanner tape /aws-credentials.json → Next matche [locale]="aws-credentials.json"
+  //   (segment unique avec point, qui bypasse le middleware i18n via le matcher `.*\..*`). Sans
+  //   cette garde, le layout rendait la homepage en HTTP 200 (fallback silencieux sur 'fr' dans
+  //   i18n/request.ts) → faux signal de succès pour le scanner + 0 incrément du score sus (qui ne
+  //   bump que sur 4xx). notFound() ici coupe AUSSI l'import `@/messages/<locale>.json` ci-dessous,
+  //   qui throw sur une locale inexistante (d'où le <title> vide observé sur le soft-200).
+  // COMMENT : hasLocale (next-intl) teste l'appartenance à `locales` ; sinon notFound() lève
+  //   NEXT_NOT_FOUND → rendu de app/not-found.tsx (racine, sans i18n) avec un statut 404 réel.
+  if (!hasLocale(locales, locale)) {
+    notFound();
+  }
   const messages = (await import(`@/messages/${locale}.json`)).default;
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.etheryale.com';
@@ -94,6 +101,12 @@ export default async function LocaleLayout({
 }) {
   const resolvedParams = params instanceof Promise ? await params : params;
   const locale = resolvedParams.locale;
+  // Voir generateMetadata pour le QUOI/POURQUOI/COMMENT. Le layout est le point DRY qui enveloppe
+  // toutes les pages sous [locale] → valider ici protège chaque route. notFound() AVANT getMessages
+  // (sinon on chargerait des messages pour une locale qui n'existe pas).
+  if (!hasLocale(locales, locale)) {
+    notFound();
+  }
   const messages = await getMessages({ locale });
 
   // data-URI SVG noise inline — évite un réseau request supplémentaire
@@ -121,6 +134,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             <VisitorHeartbeatProvider showActiveVisitors={false}>
+              {/* BackgroundProvider — état de sélection du fond animé, partagé entre la coquille
+                  (BackgroundHost ci-dessous) et le sélecteur (BackgroundSwitcher, dans le Header). */}
+              <BackgroundProvider>
               <div className="relative flex min-h-screen flex-col bg-background overflow-hidden">
                 {/* Aurora background — blobs lumineux animés positionnés en fixed z-0.
                     Visible sur toutes les pages, derrière tout le contenu.
@@ -162,10 +178,10 @@ export default async function LocaleLayout({
                   />
                 </div>
 
-                {/* Constellation 3D Three.js — lazy loaded après hydration.
-                    z-[1] : au-dessus des blobs aurora (z-0), sous le contenu (z-10).
-                    Le composant gère lui-même son canvas en position fixed. */}
-                <ConstellationBackground />
+                {/* Fond animé pluggable — la coquille gère defer/mobile/reduced-motion/cleanup
+                    et rend le fond sélectionné (constellation, etc.). z-[1] : au-dessus des
+                    blobs aurora (z-0), sous le contenu (z-10). */}
+                <BackgroundHost />
 
                 {/* Contenu au-dessus de l'aurora — z-10 garantit le passage devant les blobs */}
                 <div className="relative z-10 flex min-h-screen flex-col">
@@ -174,6 +190,7 @@ export default async function LocaleLayout({
                   <Footer />
                 </div>
               </div>
+              </BackgroundProvider>
             </VisitorHeartbeatProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

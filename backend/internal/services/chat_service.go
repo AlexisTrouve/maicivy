@@ -214,6 +214,45 @@ func (s *ChatService) buildMessages(history []ChatMessage, newMessage string) []
 	return messages
 }
 
+// supportedChatLangs : langues dans lesquelles le portfolio peut être servi (= locales du front).
+// Toute autre valeur passée par le LLM déclenche une erreur tool (cf. validateLang).
+var supportedChatLangs = map[string]bool{
+	"fr": true, "en": true, "de": true, "it": true, "zh": true,
+}
+
+// chatLangList : liste affichable des langues supportées, pour les messages d'erreur au LLM.
+const chatLangList = "fr, en, de, it, zh"
+
+// validateLang extrait et valide le paramètre `language` (obligatoire sur TOUS les tools).
+// POURQUOI : le contenu portfolio (maiProFiles) n'existe que dans un nombre fini de langues. On force
+// le LLM à déclarer la langue de la conversation à chaque tool ; si elle n'est pas servable, on lui
+// renvoie une ERREUR explicite (au lieu d'un fallback FR silencieux) qui l'invite à répondre en anglais.
+// Le LLM voit ce message (tool_result isError=true) et peut retenter en "en".
+func validateLang(input map[string]interface{}) (string, error) {
+	lang, _ := input["language"].(string)
+	lang = strings.ToLower(strings.TrimSpace(lang))
+	if !supportedChatLangs[lang] {
+		return "", fmt.Errorf(
+			"unsupported language %q. Available languages: %s. Answer the user in English (en) instead.",
+			lang, chatLangList,
+		)
+	}
+	return lang, nil
+}
+
+// withLang ajoute le paramètre `language` (requis) à un schema de tool — appliqué à TOUS les tools
+// pour que le LLM déclare systématiquement la langue de la conversation.
+func withLang(props map[string]interface{}, required ...string) anthropic.ToolInputSchemaParam {
+	props["language"] = map[string]interface{}{
+		"type":        "string",
+		"description": "Langue de la conversation en code ISO 639-1 (ex: fr, en, de, it, zh, es, ja). À passer systématiquement. Contenu servable en fr, en, de, it, zh uniquement — toute autre valeur renvoie une erreur et tu dois répondre en anglais (en).",
+	}
+	return anthropic.ToolInputSchemaParam{
+		Properties: props,
+		Required:   append(required, "language"),
+	}
+}
+
 // buildTools définit les tools disponibles pour Claude
 func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 	makeTool := func(name, desc string, schema anthropic.ToolInputSchemaParam) anthropic.ToolUnionParam {
@@ -225,16 +264,14 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 		return anthropic.ToolUnionParam{OfTool: &p}
 	}
 
-	projectNameSchema := anthropic.ToolInputSchemaParam{
-		Properties: map[string]interface{}{
-			"name": map[string]interface{}{
-				"type":        "string",
-				"description": "Nom du projet (ex: aria, maicivy, cogesco, liveconf, freelance-dashboard)",
-			},
+	projectNameSchema := withLang(map[string]interface{}{
+		"name": map[string]interface{}{
+			"type":        "string",
+			"description": "Nom du projet (ex: aria, maicivy, cogesco, liveconf, freelance-dashboard)",
 		},
-		Required: []string{"name"},
-	}
-	emptySchema := anthropic.ToolInputSchemaParam{Properties: map[string]interface{}{}}
+	}, "name")
+	// emptySchema : juste le paramètre `language` (requis) — pour les tools sans autre input.
+	emptySchema := withLang(map[string]interface{}{})
 
 	return []anthropic.ToolUnionParam{
 		// --- Tools de données (récupération) ---
@@ -268,28 +305,22 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 		// --- Tool de recherche de projets par mot-clé ---
 		makeTool("search_projects",
 			"Recherche des projets par mot-clé dans le nom, la stack, les tags et la description. Utilise ce tool quand l'utilisateur demande les projets liés à une techno ou un sujet (ex: 'projets C++', 'projets Rust', 'projets IA').",
-			anthropic.ToolInputSchemaParam{
-				Properties: map[string]interface{}{
-					"query": map[string]interface{}{
-						"type":        "string",
-						"description": "Mot-clé de recherche (ex: c++, rust, game engine, mcp)",
-					},
+			withLang(map[string]interface{}{
+				"query": map[string]interface{}{
+					"type":        "string",
+					"description": "Mot-clé de recherche (ex: c++, rust, game engine, mcp)",
 				},
-				Required: []string{"query"},
-			}),
+			}, "query")),
 
 		// --- Tools blog (affichent un article ou la liste dans le panel droit) ---
 		makeTool("show_blog_article",
 			"Affiche un article de blog dans le panel droit. Utilise ce tool quand l'utilisateur parle d'un article ou demande à en voir un spécifique.",
-			anthropic.ToolInputSchemaParam{
-				Properties: map[string]interface{}{
-					"slug": map[string]interface{}{
-						"type":        "string",
-						"description": "Slug de l'article (ex: building-a-persistent-multi-agent-ide)",
-					},
+			withLang(map[string]interface{}{
+				"slug": map[string]interface{}{
+					"type":        "string",
+					"description": "Slug de l'article (ex: building-a-persistent-multi-agent-ide)",
 				},
-				Required: []string{"slug"},
-			}),
+			}, "slug")),
 		makeTool("show_blog_list",
 			"Affiche la liste des articles de blog récents dans le panel droit. Utilise ce tool quand l'utilisateur demande les articles ou le blog.",
 			emptySchema),
@@ -297,19 +328,16 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 		// --- Tool de tip (affiche un conseil contextuel persistant dans la barre latérale gauche) ---
 		makeTool("add_tip",
 			"Affiche un conseil contextuel persistant dans la barre latérale. Utilise-le pour donner des insights courts qui restent visibles pendant la conversation.",
-			anthropic.ToolInputSchemaParam{
-				Properties: map[string]interface{}{
-					"text": map[string]interface{}{
-						"type":        "string",
-						"description": "Texte du tip (court, ~100 chars max)",
-					},
-					"icon": map[string]interface{}{
-						"type":        "string",
-						"description": "Emoji optionnel (💡, 🚀, ⚡...)",
-					},
+			withLang(map[string]interface{}{
+				"text": map[string]interface{}{
+					"type":        "string",
+					"description": "Texte du tip (court, ~100 chars max)",
 				},
-				Required: []string{"text"},
-			}),
+				"icon": map[string]interface{}{
+					"type":        "string",
+					"description": "Emoji optionnel (💡, 🚀, ⚡...)",
+				},
+			}, "text")),
 	}
 }
 
@@ -328,82 +356,58 @@ func parseInput(input interface{}) (map[string]interface{}, bool) {
 	return m, ok
 }
 
-// executeTool appelle la méthode PortfolioService correspondante
+// executeTool valide la langue puis appelle la méthode PortfolioService/Blog correspondante.
+// La langue (paramètre obligatoire de TOUS les tools) est validée AVANT le switch : si elle n'est
+// pas servable, on renvoie une erreur au LLM (→ tool_result isError=true) qui l'invite à répondre en
+// anglais. Sinon elle est propagée aux appels de données pour que le contenu sorte dans la bonne langue.
 func (s *ChatService) executeTool(name string, input interface{}) (interface{}, error) {
+	inputMap, ok := parseInput(input)
+	if !ok {
+		return nil, fmt.Errorf("invalid input for %s", name)
+	}
+
+	// Validation systématique de la langue (tous les tools reçoivent `language`).
+	lang, langErr := validateLang(inputMap)
+	if langErr != nil {
+		return nil, langErr
+	}
+
 	switch name {
-	case "get_project":
-		// Extraire le paramètre "name" depuis l'input
-		inputMap, ok := parseInput(input)
-		if !ok {
-			return nil, fmt.Errorf("invalid input for get_project")
-		}
+	// get_project / show_project — même logique ; show_* déclenche en plus l'affichage de la fiche
+	// côté frontend (réaction au tool_result).
+	case "get_project", "show_project":
 		projectName, ok := inputMap["name"].(string)
 		if !ok || projectName == "" {
 			return nil, fmt.Errorf("missing project name")
 		}
-		project, found := s.portfolio.GetProject(projectName)
+		project, found := s.portfolio.GetProject(projectName, lang)
 		if !found {
 			return map[string]string{"error": fmt.Sprintf("Projet '%s' non trouvé", projectName)}, nil
 		}
 		return project, nil
 
-	case "list_projects":
-		// Strip LongDesc — une liste de 20 projets avec description Markdown complète = des milliers de tokens
-		return slimProjects(s.portfolio.ListProjects()), nil
+	case "list_projects", "show_projects":
+		// Strip LongDesc — une liste de projets avec Markdown complet = des milliers de tokens.
+		return slimProjects(s.portfolio.ListProjects(lang)), nil
 
-	case "list_skills":
-		return s.portfolio.ListSkills(), nil
+	case "list_skills", "show_skills":
+		return s.portfolio.ListSkills(lang), nil
 
-	case "get_experience":
-		return s.portfolio.GetExperience(), nil
-
-	// Tools d'affichage — même logique que les tools de données,
-	// mais le frontend réagit à leur tool_result pour updater le panel droit.
-	case "show_project":
-		inputMap, ok := parseInput(input)
-		if !ok {
-			return nil, fmt.Errorf("invalid input for show_project")
-		}
-		projectName, ok := inputMap["name"].(string)
-		if !ok || projectName == "" {
-			return nil, fmt.Errorf("missing project name")
-		}
-		project, found := s.portfolio.GetProject(projectName)
-		if !found {
-			return map[string]string{"error": fmt.Sprintf("Projet '%s' non trouvé", projectName)}, nil
-		}
-		return project, nil
-
-	case "show_projects":
-		// Strip LongDesc pour la liste — le panel liste n'affiche que ShortDesc
-		return slimProjects(s.portfolio.ListProjects()), nil
-
-	case "show_skills":
-		return s.portfolio.ListSkills(), nil
-
-	case "show_experience":
-		return s.portfolio.GetExperience(), nil
+	case "get_experience", "show_experience":
+		return s.portfolio.GetExperience(lang), nil
 
 	// search_projects — recherche live dans maiprofiles via /search?q=
 	case "search_projects":
-		inputMap, ok := parseInput(input)
-		if !ok {
-			return nil, fmt.Errorf("invalid input for search_projects")
-		}
 		query, ok := inputMap["query"].(string)
 		if !ok || query == "" {
 			return nil, fmt.Errorf("missing query")
 		}
-		results := s.portfolio.SearchProjects(query)
-		// Strip LongDesc — résultats de recherche affichés en liste, pas besoin du Markdown complet
-		return slimProjects(results), nil
+		// Strip LongDesc — résultats affichés en liste.
+		return slimProjects(s.portfolio.SearchProjects(query, lang)), nil
 
-	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit
+	// show_blog_article — récupère l'article par slug pour l'afficher dans le panel droit.
+	// Le blog est en anglais (passthrough) → la langue est validée pour le contrat mais n'affecte pas le fetch.
 	case "show_blog_article":
-		inputMap, ok := parseInput(input)
-		if !ok {
-			return nil, fmt.Errorf("invalid input for show_blog_article")
-		}
 		postSlug, ok := inputMap["slug"].(string)
 		if !ok || postSlug == "" {
 			return nil, fmt.Errorf("missing slug")
@@ -434,8 +438,9 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 // buildSystemPrompt construit le prompt système avec les données live du profil.
 // Le profil est fetché depuis maiprofiles.etheryale.com (cache 5 min) — jamais hardcodé.
 func (s *ChatService) buildSystemPrompt(ctx context.Context) string {
-	// Fetch le profil live (cache TTL 5 min — quasi gratuit après le premier appel)
-	profile, err := s.portfolio.client.GetProfile(ctx)
+	// Fetch le profil live (cache TTL 5 min — quasi gratuit après le premier appel).
+	// Lang vide → fallback FR. Le système prompt est toujours en français pour Claude.
+	profile, err := s.portfolio.client.GetProfile(ctx, "")
 	stats, statsErr := s.portfolio.client.GetStats(ctx)
 
 	// Construire le contexte profil — uniquement ce que l'API confirme
@@ -508,7 +513,7 @@ Contact :%s`,
 	return fmt.Sprintf(`Tu es l'assistant du portfolio d'Alexi. Tu le représentes et tu lui es loyal.
 %s%s
 
-Règles tools : utilise systématiquement les show_* tools dès que le sujet le permet, search_projects pour toute requête par techno. Honnêteté : ne spécule pas sans données. Sois concis. Réponds dans la langue de l'utilisateur.
+Règles tools : utilise systématiquement les show_* tools dès que le sujet le permet, search_projects pour toute requête par techno. CHAQUE tool exige un paramètre "language" = la langue de la conversation (code ISO : fr, en, de, it, zh). Passe-le à chaque appel. Si un tool renvoie une erreur "unsupported language", réponds en anglais et préviens poliment l'utilisateur que les fiches détaillées ne sont disponibles qu'en fr/en/de/it/zh. Honnêteté : ne spécule pas sans données. Sois concis. Réponds dans la langue de l'utilisateur.
 
 COMPORTEMENT CRITIQUE — à respecter impérativement :
 - Tu ne valides JAMAIS une insulte, une moquerie ou un jugement négatif sur Alexi ou son travail. Jamais. Même si l'utilisateur insiste.

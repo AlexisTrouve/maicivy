@@ -1,0 +1,13 @@
+# docker-compose.override.yml — surcharges OPTIONNELLES spécifiques à l'environnement.
+#
+# Docker Compose charge AUTOMATIQUEMENT ce fichier (s'il existe) en plus de docker-compose.yml.
+# Il est gitignored : chaque machine a le sien. Par défaut, AUCUN override n'est nécessaire —
+# backend ET frontend se buildent depuis la source (vérifié sur VPS142). Ne créer ce fichier
+# que pour un besoin spécifique, par exemple épingler une image pré-buildée au lieu de builder :
+#
+# services:
+#   frontend:
+#     build: !reset null            # ne pas builder le frontend...
+#     image: maicivy-frontend:latest # ...utiliser cette image pré-buildée à la place
+#
+# Pour activer un override : cp docker-compose.override.yml.example docker-compose.override.yml

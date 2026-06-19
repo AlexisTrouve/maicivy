@@ -10,7 +10,7 @@ import SkillsCloud from '@/components/cv/SkillsCloud';
 import ProjectsGrid from '@/components/cv/ProjectsGrid';
 import ExportPDFButton from '@/components/cv/ExportPDFButton';
 import { CVSkeleton } from '@/components/cv/CVSkeleton';
-import { CVData } from '@/lib/types';
+import { CVData, LangStatsResponse } from '@/lib/types';
 
 interface CVPageProps {
   searchParams: {
@@ -32,7 +32,9 @@ async function getCVData(theme: string = 'fullstack', lang: string = 'fr'): Prom
   const res = await fetch(
     `${apiUrl}/api/v1/cv?theme=${theme}&lang=${lang}`,
     {
-      next: { revalidate: 3600 }, // Cache 1 hour
+      // Pas de cache Next : la page reflète toujours le backend. Le backend a son propre cache
+      // Redis (court) → fraîcheur sans recalcul à chaque requête. Évite le contenu figé 1h.
+      cache: 'no-store',
     }
   );
 
@@ -41,6 +43,20 @@ async function getCVData(theme: string = 'fullstack', lang: string = 'fr'): Prom
   }
 
   return res.json();
+}
+
+// Récupère les LOC par langage (pour la fiche détail des skills). Enrichissement NON critique :
+// si l'endpoint est indispo (Gitea down, token absent), on rend null et la fiche masque juste le
+// bloc LOC — le CV reste affiché. Ce n'est pas un fallback qui masque un bug : c'est une dégradation
+// gracieuse d'une donnée d'agrément, le cœur de page (CV) a son propre fetch qui, lui, throw.
+async function getLocStats(): Promise<LangStatsResponse | null> {
+  try {
+    const res = await fetch(`${getApiUrl()}/api/v1/cv/loc`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 // Generate dynamic metadata
@@ -71,7 +87,8 @@ export default async function CVPage({ params, searchParams }: CVPageProps & { p
   const resolvedParams = params instanceof Promise ? await params : params;
   const theme = searchParams.theme || 'fullstack';
   const lang = resolvedParams.locale || 'fr';
-  const cvData = await getCVData(theme, lang);
+  // CV (cœur, throw si KO) + LOC (agrément, null si KO) en parallèle.
+  const [cvData, locStats] = await Promise.all([getCVData(theme, lang), getLocStats()]);
   const t = await getTranslations({ locale: resolvedParams.locale, namespace: 'cv' });
 
   return (
@@ -110,7 +127,12 @@ export default async function CVPage({ params, searchParams }: CVPageProps & { p
               <span className="text-purple-600">🎯</span>
               {t('sections.skills')}
             </h2>
-            <SkillsCloud skills={cvData.skills} />
+            <SkillsCloud
+              skills={cvData.skills}
+              projects={cvData.projects}
+              experiences={cvData.experiences}
+              langStats={locStats}
+            />
           </section>
 
           {/* Projects Section */}

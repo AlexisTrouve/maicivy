@@ -39,7 +39,11 @@ type Project struct {
 
 	// Categorization
 	Technologies pq.StringArray `gorm:"type:text[]" json:"technologies"`
-	Category     string         `gorm:"type:varchar(100);index" json:"category" validate:"required"`
+	// Tags — catégorisation maiProFiles (inclut les flags-concept: "Scraping", "AI / LLM Integration"…).
+	// Sert AU MATCHING skill→projet côté frontend (en plus de Technologies), PAS à l'affichage du stack.
+	// Non persisté (gorm:"-") : provient de maiProFiles, jamais de la DB.
+	Tags     pq.StringArray `gorm:"-" json:"tags"`
+	Category string         `gorm:"type:varchar(100);index" json:"category" validate:"required"`
 
 	// GitHub metadata (synced automatically)
 	GithubStars    int    `gorm:"default:0" json:"githubStars"`

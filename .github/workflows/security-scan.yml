@@ -1,10 +1,10 @@
 name: Security Scan
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  # NOTE : le runner Gitea Actions est auto-hébergé sur le VPS de PROD. Les scans lourds
+  # (gosec, govulncheck, owasp dependency-check) ne tournent donc PAS à chaque push, pour
+  # ne pas concurrencer la prod — hebdomadaire + à la demande uniquement. Réactiver `push`
+  # ici si un runner dédié (hors prod) est mis en place.
   schedule:
     # Run weekly security scan every Sunday at midnight UTC
     - cron: '0 0 * * 0'

@@ -9,7 +9,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"maicivy/internal/content"
 	"maicivy/internal/models"
 )
 
@@ -25,11 +24,14 @@ func NewLetterGenerator(
 	scraper *CompanyScraper,
 	pdf *PDFLetterService,
 	profile models.UserProfile,
-	contentLoader *content.Loader, // pour injecter les projets dans le prompt
+	contentLoader ContentProvider, // pour injecter les projets dans le prompt (maiprofiles)
 ) *LetterGenerator {
 	projects := []models.Project{}
 	if contentLoader != nil {
-		projects = contentLoader.GetProjects()
+		// Contexte projets pour le prompt de lettre. Les projets sont en anglais quelle que soit
+		// la langue (source anglophone) → "en" convient ; la lettre elle-même est rédigée dans la
+		// langue de la requête par le LLM.
+		projects = contentLoader.GetProjects("en")
 	}
 	return &LetterGenerator{
 		aiService:     ai,

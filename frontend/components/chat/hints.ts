@@ -1,5 +1,8 @@
-// Système de hints modulaire pour le LeftPanel.
-// Pool de questions par catégorie — affiché sous forme de boutons cliquables.
+// Système de hints pour le LeftPanel.
+// QUOI : sélection diversifiée de questions-suggestions affichées en boutons cliquables.
+// POURQUOI i18n : les LIBELLÉS (text + message) sont dans les fichiers de traduction
+//   (messages/*.json → `chat.hints`), lus via `t.raw('hints')` côté composant. On ne hardcode
+//   AUCUNE phrase ici. Ce fichier ne garde que le TYPE et la logique de tirage (indépendante de la langue).
 
 export type HintCategory = 'projets' | 'skills' | 'freelance' | 'curiosite' | 'blog' | 'meta';
 
@@ -9,38 +12,12 @@ export interface Hint {
   category: HintCategory;
 }
 
-// Pool complet des hints disponibles, alternés par catégorie pour la diversité
-export const HINTS: Hint[] = [
-  // projets
-  { text: "C'est quoi Aria ?", message: "Parle-moi du projet Aria", category: 'projets' },
-  { text: "Cogesco c'est quoi ?", message: "Qu'est-ce que le projet Cogesco ?", category: 'projets' },
-  { text: "Maicivy, comment ça marche ?", message: "Comment fonctionne maicivy ?", category: 'projets' },
-  { text: "Projet le plus complexe ?", message: "Quel est ton projet le plus complexe ?", category: 'projets' },
-  // skills
-  { text: "Stack IA d'Alexi ?", message: "Quelles sont tes compétences en IA ?", category: 'skills' },
-  { text: "Go ou Node ?", message: "Tu aurais choisi Go ou Node pour un nouveau projet ?", category: 'skills' },
-  { text: "Tu fais du mobile ?", message: "Est-ce que tu fais du développement mobile ?", category: 'skills' },
-  // freelance
-  { text: "TJM ?", message: "C'est quoi ton TJM ?", category: 'freelance' },
-  { text: "Dispo pour une mission ?", message: "Tu es disponible pour une mission freelance ?", category: 'freelance' },
-  { text: "Remote ou présentiel ?", message: "Tu travailles en remote ou présentiel ?", category: 'freelance' },
-  // curiosite
-  { text: "Galère sur un projet ?", message: "T'as eu des galères techniques sur un projet ?", category: 'curiosite' },
-  { text: "Stack idéale ?", message: "C'est quoi ta stack idéale ?", category: 'curiosite' },
-  // blog
-  { text: "Derniers articles ?", message: "Quels sont tes derniers articles de blog ?", category: 'blog' },
-  { text: "Article sur les agents IA ?", message: "T'as écrit sur les agents IA ?", category: 'blog' },
-  // meta
-  { text: "Comment ce portfolio est fait ?", message: "Comment ce portfolio a été construit ?", category: 'meta' },
-  { text: "Qui a codé cette page ?", message: "Qui a développé cette page de chat ?", category: 'meta' },
-];
-
-// Tire N hints au hasard depuis le pool.
+// Tire N hints au hasard depuis le pool fourni (déjà localisé par l'appelant).
 // Tente d'avoir un hint par catégorie avant d'en répéter — diversité garantie.
-export function pickHints(n = 5): Hint[] {
+export function pickHints(hints: Hint[], n = 5): Hint[] {
   // Grouper par catégorie
   const byCategory: Record<HintCategory, Hint[]> = {} as Record<HintCategory, Hint[]>;
-  for (const hint of HINTS) {
+  for (const hint of hints) {
     if (!byCategory[hint.category]) byCategory[hint.category] = [];
     byCategory[hint.category].push(hint);
   }

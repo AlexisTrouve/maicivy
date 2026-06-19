@@ -1,7 +1,7 @@
 'use client';
 
 import { Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Github, Linkedin, Mail, MapPin, MessageCircle, ExternalLink, Scale } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -36,15 +36,26 @@ const FALLBACK_CONTACT: ProfileContact = {
   linkedinUrl: 'https://www.linkedin.com/in/alexis-trouve-432397a9/',
 };
 
+// maiProfilesLang mappe une locale next-intl vers une langue supportée par maiProFiles.
+// fr/en/ka sont seedés — les autres locales (it, de, zh...) fallback sur "fr" en attendant.
+function maiProfilesLang(locale: string): string {
+  const supported: Record<string, string> = { fr: 'fr', en: 'en', ka: 'ka' };
+  return supported[locale] ?? 'fr';
+}
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const t = useTranslations('footer');
   const tNav = useTranslations('nav');
+  const locale = useLocale();
   const [contact, setContact] = useState<ProfileContact>(FALLBACK_CONTACT);
 
-  // Fetch contact info depuis maiprofiles (met à jour le fallback si disponible)
+  // Fetch contact info depuis maiprofiles avec la locale courante de l'app.
+  // On passe ?lang= pour que maiProFiles retourne les textes (headline, bio) dans la bonne langue.
+  // useLocale() est re-exécuté à chaque changement de locale → le fetch se relance automatiquement.
   useEffect(() => {
-    fetch(`${MAIPROFILES_URL}/profile`)
+    const lang = maiProfilesLang(locale);
+    fetch(`${MAIPROFILES_URL}/profile?lang=${lang}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (!data) return;
@@ -63,7 +74,8 @@ export function Footer() {
         });
       })
       .catch(() => {});
-  }, []);
+  // Re-fetch when the locale changes so the displayed data matches the current language
+  }, [locale]);
 
   return (
     <footer className="border-t bg-muted/50">

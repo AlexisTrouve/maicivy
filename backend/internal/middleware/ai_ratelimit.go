@@ -15,8 +15,18 @@ type AIRateLimitConfig struct {
 	MaxPerDay        int           // Nombre maximum de générations par jour par session (défaut: 5)
 	MaxPerDayPerIP   int           // Nombre maximum de générations par jour par IP (défaut: 3)
 	CooldownDuration time.Duration // Temps d'attente entre générations (défaut: 2 minutes)
+	GlobalDailyMax   int           // Circuit-breaker : plafond quotidien GLOBAL toutes sessions/IP confondues (0 = désactivé)
 	OwnerAPIKey      string        // Si set : les requêtes avec X-Owner-Key matchant bypass le rate limit
 }
+
+// globalDailyKey clé Redis du compteur global de générations IA (circuit-breaker coût).
+// Partagée par la vérification (middleware) et l'incrémentation (IncrementAIRateLimit).
+const globalDailyKey = "ratelimit:ai:global:daily"
+
+// aiInflightTTL : TTL du verrou in-flight par session (anti-TOCTOU). C'est un backstop au cas où
+// le process crasherait sans libérer le verrou — en marche normale il est DEL via defer dès la fin
+// du middleware. 2 min couvre largement une génération (Claude + PDF) ; au pire on relâche après ça.
+const aiInflightTTL = 2 * time.Minute
 
 // AIRateLimit middleware pour limiter les générations IA par session + par IP
 // Trois limites :
@@ -42,6 +52,29 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 			return c.Next()
 		}
 
+		// --- Circuit-breaker coût global : plafond quotidien toutes sessions/IP confondues ---
+		// POURQUOI : dernier garde-fou contre un abus distribué (rotation de sessions/IP via
+		// incognito ou pool de proxies) qui contournerait les limites par-session/par-IP et
+		// brûlerait le budget token Claude. L'owner est déjà sorti au-dessus → non affecté.
+		// COMMENT : compteur Redis `ratelimit:ai:global:daily` (TTL minuit, incrémenté sur chaque
+		// génération réussie). On lit avec .Int() — clé absente → redis.Nil → traité comme 0.
+		// Fail-open si erreur Redis (cohérent avec le reste du middleware : ne pas bloquer si Redis HS).
+		if config.GlobalDailyMax > 0 {
+			globalCount, gErr := config.Redis.Get(ctx, globalDailyKey).Int()
+			if gErr == nil && globalCount >= config.GlobalDailyMax {
+				ttl, _ := config.Redis.TTL(ctx, globalDailyKey).Result()
+				c.Set("Retry-After", fmt.Sprintf("%d", int(ttl.Seconds())))
+				c.Set("X-RateLimit-Type", "global-daily")
+				return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+					"error":       "Service au quota quotidien",
+					"code":        "GLOBAL_DAILY_LIMIT",
+					"retry_after": int(ttl.Seconds()),
+					"message": "Le service de génération IA a atteint son plafond quotidien global. " +
+						"Réessayez après la réinitialisation (minuit UTC).",
+				})
+			}
+		}
+
 		sessionID := c.Cookies("maicivy_session")
 		if sessionID == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -49,6 +82,30 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 				"code":  "SESSION_REQUIRED",
 			})
 		}
+
+		// --- Verrou in-flight par session (anti-TOCTOU) ---
+		// POURQUOI : les checks ci-dessous LISENT les compteurs, mais l'incrément + le cooldown ne
+		// sont posés qu'APRÈS la génération réussie (IncrementAIRateLimit, dans le handler). Sans
+		// verrou, N requêtes concurrentes d'une même session passaient toutes les checks avant qu'un
+		// seul compteur ne bouge → N générations payantes au lieu d'une (fenêtre TOCTOU).
+		// COMMENT : SETNX atomique → une seule requête par session progresse à la fois ; les autres
+		// reçoivent 429 "génération en cours". Libéré via defer en sortie de middleware (et TTL
+		// backstop si crash). Fail-open si Redis HS (cohérent : ne pas casser le service).
+		inflightKey := fmt.Sprintf("ratelimit:ai:%s:inflight", sessionID)
+		if acquired, lockErr := config.Redis.SetNX(ctx, inflightKey, "1", aiInflightTTL).Result(); lockErr == nil && !acquired {
+			ttl, _ := config.Redis.TTL(ctx, inflightKey).Result()
+			c.Set("Retry-After", fmt.Sprintf("%d", int(ttl.Seconds())))
+			c.Set("X-RateLimit-Type", "in-flight")
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error":   "Génération déjà en cours",
+				"code":    "GENERATION_IN_PROGRESS",
+				"message": "Une génération est déjà en cours pour votre session. Patientez qu'elle se termine.",
+			})
+		} else if lockErr == nil && acquired {
+			// Verrou acquis → le libérer quoi qu'il arrive en sortie (succès, 429 limite, ou erreur).
+			defer config.Redis.Del(ctx, inflightKey)
+		}
+		// lockErr != nil → Redis HS → on continue sans verrou (fail-open).
 
 		// --- Vérification Cooldown (2 minutes) ---
 		cooldownKey := fmt.Sprintf("ratelimit:ai:%s:cooldown", sessionID)
@@ -224,6 +281,17 @@ func IncrementAIRateLimit(c *fiber.Ctx, redis *redis.Client, cooldownDuration ti
 		if ipCount == 1 {
 			redis.Expire(ctx, ipDailyKey, dailyTTL)
 		}
+	}
+
+	// Incrémenter le compteur GLOBAL (circuit-breaker coût) — toutes sessions/IP confondues.
+	// POURQUOI : c'est ce compteur que lit le circuit-breaker dans le middleware. Sans cet
+	// incrément, le plafond global ne se déclencherait jamais.
+	globalCount, err := redis.Incr(ctx, globalDailyKey).Result()
+	if err != nil {
+		return fmt.Errorf("failed to increment global daily counter: %w", err)
+	}
+	if globalCount == 1 {
+		redis.Expire(ctx, globalDailyKey, dailyTTL)
 	}
 
 	// Activer cooldown

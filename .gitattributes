@@ -1,0 +1,5 @@
+# Force LF sur les scripts shell : ils tournent sur Linux (VPS). Un CRLF (édité depuis
+# Windows) casserait le shebang (`#!/usr/bin/env bash\r` → bad interpreter).
+*.sh text eol=lf
+START.sh text eol=lf
+STOP.sh text eol=lf

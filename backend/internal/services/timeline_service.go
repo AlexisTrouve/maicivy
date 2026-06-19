@@ -15,15 +15,18 @@ import (
 
 // TimelineService gère la logique métier de la timeline
 type TimelineService struct {
-	db    *gorm.DB
-	redis *redis.Client
+	db      *gorm.DB
+	redis   *redis.Client
+	content ContentProvider // source des expériences (per-locale) ; nil → fallback DB
 }
 
-// NewTimelineService crée une nouvelle instance du service
-func NewTimelineService(db *gorm.DB, redis *redis.Client) *TimelineService {
+// NewTimelineService crée une nouvelle instance du service.
+// content (maiprofiles) sert les expériences localisées ; si nil, on retombe sur la DB.
+func NewTimelineService(db *gorm.DB, redis *redis.Client, content ContentProvider) *TimelineService {
 	return &TimelineService{
-		db:    db,
-		redis: redis,
+		db:      db,
+		redis:   redis,
+		content: content,
 	}
 }
 
@@ -52,9 +55,9 @@ type TimelineFilters struct {
 }
 
 // GetTimeline récupère et agrège les données chronologiques
-func (s *TimelineService) GetTimeline(ctx context.Context, filters TimelineFilters) ([]TimelineEventDTO, error) {
-	// Essayer le cache d'abord
-	cacheKey := s.buildCacheKey(filters)
+func (s *TimelineService) GetTimeline(ctx context.Context, filters TimelineFilters, lang string) ([]TimelineEventDTO, error) {
+	// Essayer le cache d'abord (clé incluant la langue — contenu localisé)
+	cacheKey := s.buildCacheKey(filters) + ":lang:" + resolveLang(lang)
 	cached, err := s.redis.Get(ctx, cacheKey).Result()
 	if err == nil {
 		var events []TimelineEventDTO
@@ -63,8 +66,8 @@ func (s *TimelineService) GetTimeline(ctx context.Context, filters TimelineFilte
 		}
 	}
 
-	// Récupérer depuis la base de données
-	events, err := s.fetchTimelineFromDB(filters)
+	// Construire : expériences depuis le provider (localisées), projets depuis la DB.
+	events, err := s.fetchTimeline(filters, lang)
 	if err != nil {
 		return nil, err
 	}
@@ -77,42 +80,66 @@ func (s *TimelineService) GetTimeline(ctx context.Context, filters TimelineFilte
 }
 
 // fetchTimelineFromDB récupère les données depuis PostgreSQL
-func (s *TimelineService) fetchTimelineFromDB(filters TimelineFilters) ([]TimelineEventDTO, error) {
+func (s *TimelineService) fetchTimeline(filters TimelineFilters, lang string) ([]TimelineEventDTO, error) {
 	var events []TimelineEventDTO
 
-	// Récupérer expériences si nécessaire
+	// Expériences : depuis le provider maiprofiles (LOCALISÉES selon lang) — source unique avec le
+	// reste du CV, fini la table DB désynchronisée/en français. Filtres appliqués en mémoire.
+	// Fallback DB uniquement si le provider est absent (nil, ex. tests).
 	if filters.Type == "" || filters.Type == "experience" {
-		var experiences []models.Experience
-		query := s.db.Model(&models.Experience{})
-
-		// Appliquer filtres
-		if filters.Category != "" {
-			query = query.Where("category = ?", filters.Category)
-		}
-		if filters.FromDate != nil {
-			query = query.Where("start_date >= ?", *filters.FromDate)
-		}
-		if filters.ToDate != nil {
-			query = query.Where("start_date <= ?", *filters.ToDate)
-		}
-
-		query.Order("start_date DESC").Find(&experiences)
-
-		// Convertir en DTO
-		for _, exp := range experiences {
-			events = append(events, TimelineEventDTO{
-				ID:        fmt.Sprintf("exp_%d", exp.ID),
-				Type:      "experience",
-				Title:     exp.Title,
-				Subtitle:  exp.Company,
-				Content:   exp.Description,
-				StartDate: exp.StartDate,
-				EndDate:   exp.EndDate,
-				Tags:      exp.Technologies,
-				Category:  exp.Category,
-				IsCurrent: exp.IsCurrentJob(),
-				Duration:  s.formatDuration(exp.StartDate, exp.EndDate),
-			})
+		if s.content != nil {
+			for i, exp := range s.content.GetExperiences(lang) {
+				if filters.Category != "" && exp.Category != filters.Category {
+					continue
+				}
+				if filters.FromDate != nil && exp.StartDate.Before(*filters.FromDate) {
+					continue
+				}
+				if filters.ToDate != nil && exp.StartDate.After(*filters.ToDate) {
+					continue
+				}
+				events = append(events, TimelineEventDTO{
+					ID:        fmt.Sprintf("exp_%d", i),
+					Type:      "experience",
+					Title:     exp.Title,
+					Subtitle:  exp.Company,
+					Content:   exp.Description,
+					StartDate: exp.StartDate,
+					EndDate:   exp.EndDate,
+					Tags:      exp.Technologies,
+					Category:  exp.Category,
+					IsCurrent: exp.IsCurrentJob(),
+					Duration:  s.formatDuration(exp.StartDate, exp.EndDate),
+				})
+			}
+		} else {
+			var experiences []models.Experience
+			query := s.db.Model(&models.Experience{})
+			if filters.Category != "" {
+				query = query.Where("category = ?", filters.Category)
+			}
+			if filters.FromDate != nil {
+				query = query.Where("start_date >= ?", *filters.FromDate)
+			}
+			if filters.ToDate != nil {
+				query = query.Where("start_date <= ?", *filters.ToDate)
+			}
+			query.Order("start_date DESC").Find(&experiences)
+			for _, exp := range experiences {
+				events = append(events, TimelineEventDTO{
+					ID:        fmt.Sprintf("exp_%d", exp.ID),
+					Type:      "experience",
+					Title:     exp.Title,
+					Subtitle:  exp.Company,
+					Content:   exp.Description,
+					StartDate: exp.StartDate,
+					EndDate:   exp.EndDate,
+					Tags:      exp.Technologies,
+					Category:  exp.Category,
+					IsCurrent: exp.IsCurrentJob(),
+					Duration:  s.formatDuration(exp.StartDate, exp.EndDate),
+				})
+			}
 		}
 	}
 
@@ -230,7 +257,7 @@ func (s *TimelineService) buildCacheKey(filters TimelineFilters) string {
 
 // CalculateOverlaps détecte les périodes où plusieurs expériences/projets se chevauchent
 func (s *TimelineService) CalculateOverlaps(ctx context.Context) ([]TimelineOverlap, error) {
-	events, err := s.GetTimeline(ctx, TimelineFilters{})
+	events, err := s.GetTimeline(ctx, TimelineFilters{}, "en") // analytics : langue indifférente
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +325,7 @@ func (s *TimelineService) checkOverlap(e1, e2 TimelineEventDTO) *TimelineOverlap
 
 // GetYearlyBreakdown retourne un breakdown par année
 func (s *TimelineService) GetYearlyBreakdown(ctx context.Context) (map[int]YearStats, error) {
-	events, err := s.GetTimeline(ctx, TimelineFilters{})
+	events, err := s.GetTimeline(ctx, TimelineFilters{}, "en") // analytics : langue indifférente
 	if err != nil {
 		return nil, err
 	}

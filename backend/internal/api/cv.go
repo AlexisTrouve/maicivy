@@ -1,29 +1,38 @@
 package api
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"fmt"
+	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
+
+	"maicivy/internal/middleware"
 	"maicivy/internal/services"
 )
 
 // CVHandler gère les endpoints liés au CV
 type CVHandler struct {
-	cvService   services.CVServiceInterface
-	tailoring   *services.TailoringService    // nil si AI non configurée
-	generation  *services.CVGenerationService // nil si AI non configurée
+	cvService  services.CVServiceInterface
+	tailoring  *services.TailoringService    // nil si AI non configurée
+	generation *services.CVGenerationService // nil si AI non configurée
+	redis      *redis.Client                 // pour incrémenter le rate-limit IA après succès (nil en test)
 }
 
 // NewCVHandler crée un nouveau handler
-func NewCVHandler(cvService services.CVServiceInterface, tailoring *services.TailoringService, generation *services.CVGenerationService) *CVHandler {
+func NewCVHandler(cvService services.CVServiceInterface, tailoring *services.TailoringService, generation *services.CVGenerationService, redis *redis.Client) *CVHandler {
 	return &CVHandler{
 		cvService:  cvService,
 		tailoring:  tailoring,
 		generation: generation,
+		redis:      redis,
 	}
 }
 
-// RegisterRoutes enregistre les routes CV
-func (h *CVHandler) RegisterRoutes(app *fiber.App) {
+// RegisterRoutes enregistre les routes CV.
+// aiRateLimit : middleware de rate-limit IA appliqué aux endpoints qui appellent Claude
+// (/cv/tailor, /cv/generate). Les routes GET de lecture/export restent libres.
+func (h *CVHandler) RegisterRoutes(app *fiber.App, aiRateLimit fiber.Handler) {
 	api := app.Group("/api/v1")
 
 	api.Get("/cv", h.GetAdaptiveCV)
@@ -33,8 +42,25 @@ func (h *CVHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/skills", h.GetSkills)
 	api.Get("/projects", h.GetProjects)
 	api.Get("/cv/export", h.ExportPDF)
-	api.Post("/cv/tailor", h.TailorCV)      // CV personnalisé par annonce (indeed-outreach)
-	api.Post("/cv/generate", h.GenerateCV)  // CV dynamique depuis offre d'emploi
+	// /cv/tailor et /cv/generate appellent Claude (coût token) → rate-limit IA obligatoire.
+	// Owner (X-Owner-Key) bypass ; sinon session + cooldown + plafonds session/IP/global.
+	api.Post("/cv/tailor", aiRateLimit, h.TailorCV)     // CV personnalisé par annonce (indeed-outreach)
+	api.Post("/cv/generate", aiRateLimit, h.GenerateCV) // CV dynamique depuis offre d'emploi
+}
+
+// incrementRateLimit incrémente les compteurs de rate-limit IA après une génération réussie.
+// POURQUOI : /cv/* partage le même middleware que /letters et /messages ; sans cet appel, les
+// générations CV ne compteraient ni dans les quotas session/IP ni dans le circuit-breaker global,
+// rendant le rate-limit posé sur la route inopérant.
+// COMMENT : no-op si redis absent (contexte de test) ; IncrementAIRateLimit ignore lui-même les
+// requêtes owner (is_owner) et lit les clés posées par le middleware dans les locals.
+func (h *CVHandler) incrementRateLimit(c *fiber.Ctx) {
+	if h.redis == nil {
+		return
+	}
+	if err := middleware.IncrementAIRateLimit(c, h.redis, 2*time.Minute); err != nil {
+		fmt.Printf("Failed to increment CV rate limit: %v\n", err)
+	}
 }
 
 // GetAdaptiveCV retourne le CV adapté au thème et à la langue
@@ -84,7 +110,8 @@ func (h *CVHandler) GetThemes(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /api/v1/experiences [get]
 func (h *CVHandler) GetExperiences(c *fiber.Ctx) error {
-	experiences, err := h.cvService.GetAllExperiences(c.Context())
+	lang := c.Query("lang", "en") // locale frontend (?lang=fr|en) ; défaut anglais
+	experiences, err := h.cvService.GetAllExperiences(c.Context(), lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch experiences",
@@ -105,7 +132,8 @@ func (h *CVHandler) GetExperiences(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /api/v1/skills [get]
 func (h *CVHandler) GetSkills(c *fiber.Ctx) error {
-	skills, err := h.cvService.GetAllSkills(c.Context())
+	lang := c.Query("lang", "en")
+	skills, err := h.cvService.GetAllSkills(c.Context(), lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch skills",
@@ -126,7 +154,8 @@ func (h *CVHandler) GetSkills(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /api/v1/projects [get]
 func (h *CVHandler) GetProjects(c *fiber.Ctx) error {
-	projects, err := h.cvService.GetAllProjects(c.Context())
+	lang := c.Query("lang", "en")
+	projects, err := h.cvService.GetAllProjects(c.Context(), lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch projects",
@@ -198,11 +227,11 @@ func (h *CVHandler) ListCVs(c *fiber.Ctx) error {
 	langs := []string{"fr", "en"}
 
 	type CVEntry struct {
-		Theme       string `json:"theme"`
-		ThemeName   string `json:"themeName"`
-		Lang        string `json:"lang"`
-		JSONURL     string `json:"jsonUrl"`
-		PDFURL      string `json:"pdfUrl"`
+		Theme     string `json:"theme"`
+		ThemeName string `json:"themeName"`
+		Lang      string `json:"lang"`
+		JSONURL   string `json:"jsonUrl"`
+		PDFURL    string `json:"pdfUrl"`
 	}
 
 	base := c.BaseURL()
@@ -259,6 +288,9 @@ func (h *CVHandler) TailorCV(c *fiber.Ctx) error {
 		})
 	}
 
+	// Génération réussie → compter dans les quotas IA (session/IP/global). No-op si owner.
+	h.incrementRateLimit(c)
+
 	c.Set("Content-Type", "application/pdf")
 	c.Set("Content-Disposition", "attachment; filename=cv_tailored.pdf")
 	return c.Send(pdfBytes)
@@ -310,6 +342,8 @@ func (h *CVHandler) GenerateCV(c *fiber.Ctx) error {
 				"error": err.Error(),
 			})
 		}
+		// Génération réussie → compter dans les quotas IA (session/IP/global). No-op si owner.
+		h.incrementRateLimit(c)
 		c.Set("Content-Type", "application/pdf")
 		c.Set("Content-Disposition", "attachment; filename=cv_dynamic_"+lang+".pdf")
 		return c.Send(pdfBytes)
@@ -322,6 +356,9 @@ func (h *CVHandler) GenerateCV(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
+
+	// Génération réussie → compter dans les quotas IA (session/IP/global). No-op si owner.
+	h.incrementRateLimit(c)
 
 	return c.JSON(cv)
 }

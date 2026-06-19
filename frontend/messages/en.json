@@ -25,9 +25,83 @@
     "blog": "Blog",
     "gitstats": "Git Stats"
   },
+  "chat": {
+    "greeting": "👋 Hello!",
+    "greetingSubtitle": "Ask me about my projects, skills, or experience.",
+    "inputPlaceholder": "Ask your question... (Enter to send)",
+    "error": "❌ Error: {message}",
+    "askQuestion": "Ask a question →",
+    "questionsHeader": "Questions",
+    "newSuggestions": "New suggestions",
+    "closeTip": "Close this tip",
+    "closeTab": "Close {label}",
+    "tabs": {
+      "projects": "Projects",
+      "experience": "Experience",
+      "skills": "Skills",
+      "blog": "Blog",
+      "default": "Card"
+    },
+    "toolLabels": {
+      "project": "project",
+      "projects": "projects",
+      "skills": "skills",
+      "experience": "experience",
+      "article": "article",
+      "blog": "blog",
+      "tip": "tip"
+    },
+    "skillsTitle": "Technical skills",
+    "domains": "Domains",
+    "experiences": "Experience",
+    "yearsExperience": "{years} years of experience",
+    "techStack": "Tech stack",
+    "keyFeatures": "Key features",
+    "stats": "Stats",
+    "skills": "Skills",
+    "projects": "Projects",
+    "blogEmpty": "No articles published yet.",
+    "articles": "Articles ({count})",
+    "minRead": "{min} min read",
+    "readArticle": "Read the article →",
+    "hints": [
+      { "text": "What is Aria?", "message": "Tell me about the Aria project", "category": "projets" },
+      { "text": "What's Cogesco?", "message": "What is the Cogesco project?", "category": "projets" },
+      { "text": "How does maicivy work?", "message": "How does maicivy work?", "category": "projets" },
+      { "text": "Most complex project?", "message": "What's your most complex project?", "category": "projets" },
+      { "text": "Alexi's AI stack?", "message": "What are your AI skills?", "category": "skills" },
+      { "text": "Go or Node?", "message": "Would you have chosen Go or Node for a new project?", "category": "skills" },
+      { "text": "Do you do mobile?", "message": "Do you do mobile development?", "category": "skills" },
+      { "text": "Day rate?", "message": "What's your day rate?", "category": "freelance" },
+      { "text": "Available for a gig?", "message": "Are you available for a freelance assignment?", "category": "freelance" },
+      { "text": "Remote or on-site?", "message": "Do you work remote or on-site?", "category": "freelance" },
+      { "text": "Struggled on a project?", "message": "Have you had technical struggles on a project?", "category": "curiosite" },
+      { "text": "Ideal stack?", "message": "What's your ideal stack?", "category": "curiosite" },
+      { "text": "Latest articles?", "message": "What are your latest blog articles?", "category": "blog" },
+      { "text": "Article on AI agents?", "message": "Have you written about AI agents?", "category": "blog" },
+      { "text": "How is this portfolio built?", "message": "How was this portfolio built?", "category": "meta" },
+      { "text": "Who coded this page?", "message": "Who developed this chat page?", "category": "meta" }
+    ]
+  },
+  "gitstats": {
+    "subtitle": "6 months of activity on Gitea",
+    "commits6mo": "Commits (6 months)",
+    "linesAdded": "Lines added",
+    "linesDeleted": "Lines removed",
+    "commitsPerDay": "Commits per day",
+    "commits": "Commits",
+    "linesPerDay": "Lines of code per day",
+    "activeRepos": "Active repos",
+    "seriesAdded": "Added",
+    "seriesRemoved": "Removed",
+    "unavailable": "Git stats unavailable",
+    "repositories": "Repositories ({count})"
+  },
   "home": {
     "title": "Interactive Intelligent CV",
     "subtitle": "Discover my adaptive professional journey and generate personalized cover letters powered by artificial intelligence.",
+    "availability": "Available for freelance work",
+    "identity": "Alexis Trouvé — Fullstack Developer",
     "cta": {
       "viewCV": "View my CV",
       "generateLetter": "Generate a letter"
@@ -80,7 +154,24 @@
     "skills": {
       "all": "All",
       "tooltip": "{name} - Level {level}/5 - {years} years of experience",
-      "legend": "Size represents skill level and relevance to selected theme"
+      "legend": "Size represents skill level and relevance to selected theme",
+      "badgeTitle": "{name} — click for details"
+    },
+    "skillDetail": {
+      "close": "Close",
+      "levels": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert"
+      },
+      "years": "{count, plural, =0 {less than a year of experience} one {# year of experience} other {# years of experience}}",
+      "locLabel": "lines of code",
+      "projectsLabel": "projects",
+      "experiencesLabel": "experiences",
+      "projectsTitle": "Projects",
+      "experiencesTitle": "Experience",
+      "noStats": "No stats yet for this skill"
     },
     "projects": {
       "featured": "Featured Project",

@@ -7,11 +7,12 @@ import {
 } from 'recharts';
 import { GitDayStat, GitStatsResponse } from '@/lib/types';
 import { motion } from 'framer-motion';
+import { useTranslations, useLocale } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 // Filtre les 6 derniers mois et formate les dates pour l'affichage
-function filterLast6Months(daily: GitDayStat[]) {
+function filterLast6Months(daily: GitDayStat[], locale: string) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -19,7 +20,8 @@ function filterLast6Months(daily: GitDayStat[]) {
     .filter((d) => new Date(d.date) >= sixMonthsAgo)
     .map((d) => ({
       ...d,
-      label: new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+      // Label de l'axe X formaté selon la locale courante (jour + mois court)
+      label: new Date(d.date).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
     }));
 }
 
@@ -63,6 +65,8 @@ function ChartSection({ children, delay = 0 }: { children: React.ReactNode; dela
 }
 
 export default function GitStatsPanel() {
+  const t = useTranslations('gitstats');
+  const locale = useLocale();
   const [stats, setStats] = useState<GitStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,13 +108,13 @@ export default function GitStatsPanel() {
   if (error || !stats) {
     return (
       <div className="text-center text-gray-500 py-12">
-        <p>Stats Git indisponibles</p>
+        <p>{t('unavailable')}</p>
         {error && <p className="text-sm mt-2 text-red-400">{error}</p>}
       </div>
     );
   }
 
-  const daily = filterLast6Months(stats.daily);
+  const daily = filterLast6Months(stats.daily, locale);
 
   // Tooltip custom
   const ChartTooltip = ({ active, payload, label }: any) => {
@@ -129,10 +133,10 @@ export default function GitStatsPanel() {
   };
 
   const kpis = [
-    { label: 'Commits (6 mois)', value: stats.totalCommits, color: 'text-blue-600' },
-    { label: 'Lignes ajoutées', value: stats.totalAdded, color: 'text-green-600' },
-    { label: 'Lignes supprimées', value: stats.totalDeleted, color: 'text-red-500' },
-    { label: 'Repos actifs', value: stats.activeRepos, color: 'text-purple-600' },
+    { label: t('commits6mo'), value: stats.totalCommits, color: 'text-blue-600' },
+    { label: t('linesAdded'), value: stats.totalAdded, color: 'text-green-600' },
+    { label: t('linesDeleted'), value: stats.totalDeleted, color: 'text-red-500' },
+    { label: t('activeRepos'), value: stats.activeRepos, color: 'text-purple-600' },
   ];
 
   return (
@@ -163,7 +167,7 @@ export default function GitStatsPanel() {
 
       {/* Commits par jour — area chart */}
       <ChartSection>
-        <h3 className="text-lg font-semibold mb-4">Commits par jour</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('commitsPerDay')}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={daily}>
             <defs>
@@ -179,7 +183,7 @@ export default function GitStatsPanel() {
             <Area
               type="monotone"
               dataKey="commits"
-              name="Commits"
+              name={t('commits')}
               stroke="#3b82f6"
               strokeWidth={2}
               fill="url(#commitGrad)"
@@ -192,7 +196,7 @@ export default function GitStatsPanel() {
 
       {/* Lignes ajoutées/supprimées par jour */}
       <ChartSection delay={0.1}>
-        <h3 className="text-lg font-semibold mb-4">Lignes de code par jour</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('linesPerDay')}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={daily}>
             <defs>
@@ -212,7 +216,7 @@ export default function GitStatsPanel() {
             <Area
               type="monotone"
               dataKey="additions"
-              name="Ajoutées"
+              name={t('seriesAdded')}
               stroke="#22c55e"
               strokeWidth={2}
               fill="url(#addGrad)"
@@ -222,7 +226,7 @@ export default function GitStatsPanel() {
             <Area
               type="monotone"
               dataKey="deletions"
-              name="Supprimées"
+              name={t('seriesRemoved')}
               stroke="#ef4444"
               strokeWidth={2}
               fill="url(#delGrad)"
@@ -236,7 +240,7 @@ export default function GitStatsPanel() {
       {/* Repos actifs — liste compacte */}
       <ChartSection delay={0.15}>
         <h3 className="text-lg font-semibold mb-4">
-          Repositories ({stats.repos.length})
+          {t('repositories', { count: stats.repos.length })}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {stats.repos.map((repo, i) => (

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"maicivy/internal/config"
-	"maicivy/internal/content"
 	"maicivy/internal/models"
 )
 
@@ -22,7 +21,7 @@ import (
 // et retourne scores + catchphrases réécrites par le LLM pour matcher le vocabulaire exact.
 // Peut aussi générer un PDF avec couche stealth ATS intégrée via GenerateDynamicPDF.
 type CVGenerationService struct {
-	contentLoader *content.Loader
+	contentLoader ContentProvider // source des données CV (maiprofiles)
 	baseURL       string
 	apiKey        string
 	httpClient    *http.Client
@@ -31,7 +30,7 @@ type CVGenerationService struct {
 }
 
 // NewCVGenerationService crée une instance. Retourne nil si baseURL ou apiKey vides.
-func NewCVGenerationService(contentLoader *content.Loader, baseURL, apiKey string, pdfService *PDFService) *CVGenerationService {
+func NewCVGenerationService(contentLoader ContentProvider, baseURL, apiKey string, pdfService *PDFService) *CVGenerationService {
 	if baseURL == "" || apiKey == "" {
 		return nil
 	}
@@ -93,10 +92,10 @@ func (s *CVGenerationService) GenerateDynamicCV(ctx context.Context, offer, lang
 		// Erreur de fetch → on continue avec l'URL brute plutôt que bloquer
 	}
 
-	// Charger toutes les données CV depuis le contentLoader (source de vérité markdown)
-	experiences := s.contentLoader.GetExperiences()
-	projects := s.contentLoader.GetProjects()
-	skills := s.contentLoader.GetSkills()
+	// Charger toutes les données CV depuis le contentLoader, dans la langue demandée.
+	experiences := s.contentLoader.GetExperiences(lang)
+	projects := s.contentLoader.GetProjects(lang)
+	skills := s.contentLoader.GetSkills(lang)
 
 	// Appel LLM : analyse de l'offre + scoring de tout le contenu CV en une seule passe
 	prompt := s.buildGenerationPrompt(offerText, experiences, projects, skills, lang)
@@ -266,6 +265,13 @@ func (s *CVGenerationService) GenerateDynamicPDF(ctx context.Context, offer, lan
 // fetchURLContent récupère le texte brut d'une URL en strippant les balises HTML.
 // Timeout : 15s pour ne pas bloquer le pipeline de génération.
 func (s *CVGenerationService) fetchURLContent(url string) (string, error) {
+	// Schéma autorisé : http/https uniquement (refuse file://, gopher://, etc.). Défense en
+	// profondeur — le call-site ne teste qu'un préfixe "http" laxiste ("httpx://" passerait).
+	low := strings.ToLower(strings.TrimSpace(url))
+	if !strings.HasPrefix(low, "http://") && !strings.HasPrefix(low, "https://") {
+		return "", fmt.Errorf("schéma d'URL non autorisé (http/https uniquement)")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -276,13 +282,17 @@ func (s *CVGenerationService) fetchURLContent(url string) (string, error) {
 	// User-Agent standard pour éviter les blocages simples
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; CVGenerator/1.0)")
 
-	resp, err := s.httpClient.Do(req)
+	// Client durci anti-SSRF : bloque loopback/privé/metadata/Tailscale AU MOMENT DU DIAL et refuse
+	// les redirections. Client DÉDIÉ — surtout PAS s.httpClient, qui sert aussi l'appel proxy
+	// Anthropic (lequel peut légitimement résoudre vers une IP interne/Tailscale).
+	resp, err := newSSRFSafeClient(15 * time.Second).Do(req)
 	if err != nil {
 		return "", fmt.Errorf("fetch failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	// Cap de taille (anti-DoS mémoire : sans cap, une réponse géante saturerait la RAM).
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxFetchBytes))
 	if err != nil {
 		return "", fmt.Errorf("read body failed: %w", err)
 	}
@@ -325,7 +335,6 @@ Exemples (NE PAS copier, s'en inspirer pour le ton) :
 - Offre hors domaine → rester honnête mais trouver l'angle transfert le plus fort, même style.
 
 `)
-
 
 	// Tronquer l'offre à 3000 chars — garde le prompt sous ~4K tokens
 	sb.WriteString("OFFRE D'EMPLOI:\n")

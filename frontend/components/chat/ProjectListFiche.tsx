@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface Project {
   Name: string;
   Title: string;
@@ -14,9 +16,10 @@ interface ProjectListFicheProps {
 
 // Fiche liste de projets — affichée quand tool_result list_projects est reçu
 export function ProjectListFiche({ data }: ProjectListFicheProps) {
+  const t = useTranslations('chat');
   return (
     <div className="p-6 space-y-4">
-      <h2 className="text-lg font-bold text-foreground">Projets</h2>
+      <h2 className="text-lg font-bold text-foreground">{t('projects')}</h2>
       <div className="space-y-3">
         {data.map((project) => (
           <div

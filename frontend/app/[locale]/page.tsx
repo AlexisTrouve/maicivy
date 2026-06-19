@@ -21,12 +21,13 @@ export default function HomePage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
           </span>
-          Disponible pour missions freelance
+          {/* i18n : ces deux lignes étaient hardcodées en FR → fuite FR en mode /en. Passées par t(). */}
+          {t('availability')}
         </div>
 
         {/* Identité */}
         <p className="animate-fade-in-up [animation-delay:100ms] mb-3 text-base font-medium text-muted-foreground tracking-widest uppercase">
-          Alexis Trouvé — Développeur Fullstack
+          {t('identity')}
         </p>
 
         {/* Titre principal avec gradient */}

@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -9,11 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
+
+	"maicivy/internal/models"
 )
 
 func TestTrackingMiddleware_NewVisitor(t *testing.T) {
 	db, redisClient := setupTestDB(t)
-	trackingMW := NewTracking(db, redisClient)
+	trackingMW := NewTracking(db, redisClient, "test-secret")
 
 	app := fiber.New()
 	app.Use(trackingMW.Handler())
@@ -37,7 +41,7 @@ func TestTrackingMiddleware_NewVisitor(t *testing.T) {
 
 func TestTrackingMiddleware_ReturningVisitor(t *testing.T) {
 	db, redisClient := setupTestDB(t)
-	trackingMW := NewTracking(db, redisClient)
+	trackingMW := NewTracking(db, redisClient, "test-secret")
 
 	app := fiber.New()
 	app.Use(trackingMW.Handler())
@@ -59,7 +63,9 @@ func TestTrackingMiddleware_ReturningVisitor(t *testing.T) {
 	var body map[string]interface{}
 	json.NewDecoder(resp2.Body).Decode(&body)
 
-	assert.Equal(t, float64(2), body["visit_count"])
+	// Nouvelle sémantique (anti-amplification) : la 1re requête anonyme (sans cookie signé) n'est
+	// PAS comptée ; le compteur démarre à 1 quand notre cookie signé revient (req2 = 1re persistée).
+	assert.Equal(t, float64(1), body["visit_count"])
 }
 
 func TestDetectProfile_LinkedIn(t *testing.T) {
@@ -74,4 +80,62 @@ func TestDetectProfile_LinkedIn(t *testing.T) {
 
 	profile := tm.detectProfile(c)
 	assert.Equal(t, "linkedin_bot", profile)
+}
+
+// OFR #1 : un visiteur anonyme ne doit JAMAIS pouvoir faire écrire maicivy en base. 50 cookies
+// forgés → 0 ligne `visitors` (avant le fix : 50 INSERT synchrones, un par cookie inconnu).
+func TestTracking_ForgedCookies_NoVisitorRows(t *testing.T) {
+	db, rc := setupTestDB(t)
+	tm := NewTracking(db, rc, "test-secret")
+	app := fiber.New()
+	app.Use(tm.Handler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	for i := 0; i < 50; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.AddCookie(&http.Cookie{Name: SessionCookieName, Value: fmt.Sprintf("forged-%d", i)})
+		_, _ = app.Test(req)
+	}
+
+	var count int64
+	db.Model(&models.Visitor{}).Count(&count)
+	assert.Equal(t, int64(0), count, "des cookies forgés ne doivent créer aucune ligne visiteur")
+}
+
+// OFR #3 : un vrai visiteur (cookie signé qui revient) = exactement 1 ligne. Le 1er contact
+// anonyme (sans cookie) ne persiste rien ; la persistance arrive quand notre cookie signé revient.
+func TestTracking_ValidReturningCookie_PersistsOnce(t *testing.T) {
+	db, rc := setupTestDB(t)
+	const secret = "test-secret"
+	tm := NewTracking(db, rc, secret)
+	app := fiber.New()
+	app.Use(tm.Handler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	// Requête 1 : pas de cookie → session émise, AUCUNE persistance.
+	resp1, _ := app.Test(httptest.NewRequest("GET", "/", nil))
+	var c0 int64
+	db.Model(&models.Visitor{}).Count(&c0)
+	assert.Equal(t, int64(0), c0, "le 1er contact anonyme ne doit rien persister")
+
+	// Récupérer le cookie signé émis.
+	var sess string
+	for _, ck := range resp1.Cookies() {
+		if ck.Name == SessionCookieName {
+			sess = ck.Value
+		}
+	}
+	assert.NotEmpty(t, sess, "un cookie de session doit être émis")
+	assert.True(t, verifySession(sess, secret), "le cookie émis doit être valide")
+
+	// Requêtes 2 et 3 : cookie valide qui revient → exactement 1 ligne (créée puis mise à jour).
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.AddCookie(&http.Cookie{Name: SessionCookieName, Value: sess})
+		_, _ = app.Test(req)
+	}
+
+	var c1 int64
+	db.Model(&models.Visitor{}).Count(&c1)
+	assert.Equal(t, int64(1), c1, "un visiteur réel qui revient = exactement 1 ligne")
 }

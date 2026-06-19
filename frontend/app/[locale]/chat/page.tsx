@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { LeftPanel } from '@/components/chat/LeftPanel';
 import { RightPanel } from '@/components/chat/RightPanel';
@@ -15,24 +16,27 @@ const MAX_TABS = 4;
 // MAX_TIPS : on garde 3 tips max dans le LeftPanel (FIFO)
 const MAX_TIPS = 3;
 
-// Calcule le label d'un onglet depuis le panelType + les données
-function tabLabel(panelType: Tab['panelType'], data: unknown): string {
+// Calcule le label d'un onglet depuis le panelType + les données.
+// `t` = traducteur du namespace 'chat'. Les libellés statiques (projets/skills/expérience/blog/fiche)
+// sont i18n ; les onglets project/blog gardent le nom/titre issu des données (non traduisible).
+function tabLabel(panelType: Tab['panelType'], data: unknown, t: (key: string) => string): string {
   if (panelType === 'project' && data && typeof data === 'object' && 'name' in data) {
     return String((data as { name: string }).name);
   }
-  if (panelType === 'project_list') return 'Projets';
-  if (panelType === 'skills') return 'Skills';
-  if (panelType === 'experience') return 'Expérience';
+  if (panelType === 'project_list') return t('tabs.projects');
+  if (panelType === 'skills') return t('tabs.skills');
+  if (panelType === 'experience') return t('tabs.experience');
   if (panelType === 'blog' && data && typeof data === 'object' && 'title' in data) {
     // Truncate le titre pour l'onglet
     const title = String((data as { title: string }).title);
     return title.length > 20 ? title.slice(0, 20) + '…' : title;
   }
-  if (panelType === 'blog_list') return 'Blog';
-  return 'Fiche';
+  if (panelType === 'blog_list') return t('tabs.blog');
+  return t('tabs.default');
 }
 
 export default function ChatPage() {
+  const t = useTranslations('chat');
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [tips, setTips] = useState<Tip[]>([]);
@@ -44,7 +48,7 @@ export default function ChatPage() {
   // Si la clé existe déjà → update les data en place.
   // Si nouvelle → prepend + cap à MAX_TABS (supprime le dernier si overflow).
   const pushTab = useCallback((key: string, panelType: Tab['panelType'], data: unknown) => {
-    const label = tabLabel(panelType, data);
+    const label = tabLabel(panelType, data, t);
     setTabs((prev) => {
       const existingIdx = prev.findIndex((t) => t.id === key);
       if (existingIdx !== -1) {
@@ -56,7 +60,7 @@ export default function ChatPage() {
       return [newTab, ...prev].slice(0, MAX_TABS);
     });
     setActiveTabId(key);
-  }, []);
+  }, [t]);
 
   // handleToolResult — appelé par ChatPanel à chaque tool_result reçu en SSE
   const handleToolResult = useCallback((toolName: string, data: unknown) => {

@@ -25,14 +25,23 @@ const (
 )
 
 type TrackingMiddleware struct {
-	db    *gorm.DB
-	redis *redis.Client
+	db     *gorm.DB
+	redis  *redis.Client
+	secret string // secret HMAC pour signer/vérifier le cookie de session
 }
 
-func NewTracking(db *gorm.DB, redisClient *redis.Client) *TrackingMiddleware {
+// NewTracking construit le middleware de tracking. `secret` signe le cookie de session ; s'il est
+// vide (dev / non configuré) on retombe sur un défaut NON sécurisé en loggant un avertissement — la
+// signature reste active (l'anti-amplification marche), mais le secret est à définir en prod.
+func NewTracking(db *gorm.DB, redisClient *redis.Client, secret string) *TrackingMiddleware {
+	if secret == "" {
+		log.Warn().Msg("SESSION_SECRET non défini — fallback dev non sécurisé ; à définir en prod")
+		secret = "maicivy-dev-insecure-session-secret"
+	}
 	return &TrackingMiddleware{
-		db:    db,
-		redis: redisClient,
+		db:     db,
+		redis:  redisClient,
+		secret: secret,
 	}
 }
 
@@ -46,21 +55,32 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 			return c.Next()
 		}
 
-		// 1. Récupérer ou créer session ID
+		// 1. Le cookie de session doit être un token QUE NOUS avons émis (signé HMAC). Un cookie
+		// absent ou forgé = visiteur non identifié : on lui émet une session signée neuve et on NE
+		// persiste RIEN (ni Redis, ni PostgreSQL). POURQUOI : sinon n'importe quel bot envoyant des
+		// cookies bidons déclenche un INSERT `visitors` par cookie (amplification d'écriture non
+		// authentifiée sur le hot path). La persistance n'arrive que quand un cookie signé NOUS
+		// revient (2e requête d'un vrai navigateur) → un bot sans cookie ne fait jamais écrire la base.
 		sessionID := c.Cookies(SessionCookieName)
-		if sessionID == "" {
-			sessionID = uuid.New().String()
-
-			// Set cookie
+		if !verifySession(sessionID, tm.secret) {
+			fresh := newSignedSession(tm.secret)
 			c.Cookie(&fiber.Cookie{
 				Name:     SessionCookieName,
-				Value:    sessionID,
+				Value:    fresh,
 				Expires:  time.Now().Add(SessionTTL),
 				HTTPOnly: true,
 				Secure:   true, // HTTPS only en production
 				SameSite: "Lax",
 			})
+			// Contact anonyme : on expose la session aux handlers mais SANS visitor_id (l'analytics
+			// skippe proprement son absence) et sans toucher Redis/PostgreSQL.
+			c.Locals("session_id", fresh)
+			c.Locals("visit_count", int64(0))
+			c.Locals("profile_detected", "")
+			return c.Next()
 		}
+
+		// --- Cookie valide → visiteur réel qui revient : comptage + profil + persistance. ---
 
 		// 2. Incrémenter compteur de visites dans Redis
 		visitCountKey := fmt.Sprintf("%s%s:count", VisitorKeyPrefix, sessionID)
@@ -77,8 +97,6 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 
 		// 3. Détection de profil
 		profileDetected := tm.detectProfile(c)
-
-		// Stocker profil dans Redis (cache)
 		if profileDetected != "" {
 			profileKey := fmt.Sprintf("%s%s:profile", VisitorKeyPrefix, sessionID)
 			tm.redis.Set(ctx, profileKey, profileDetected, SessionTTL)
@@ -91,7 +109,7 @@ func (tm *TrackingMiddleware) Handler() fiber.Handler {
 		// 5. Enregistrer/update visiteur dans PostgreSQL (SYNCHRONE pour avoir visitor_id)
 		visitorID := tm.saveVisitorSync(sessionID, ip, userAgent, visitCount, profileDetected)
 
-		// 6. Stocker dans context pour utilisation dans handlers et analytics middleware
+		// 6. Stocker dans context pour les handlers + analytics middleware
 		c.Locals("session_id", sessionID)
 		c.Locals("visit_count", visitCount)
 		c.Locals("profile_detected", profileDetected)

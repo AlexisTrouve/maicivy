@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Tip } from './TipBar';
 import { pickHints, Hint } from './hints';
 
@@ -14,13 +15,26 @@ interface LeftPanelProps {
 // Priorité : si des tips sont présents, on les affiche (max 3 FIFO).
 // Sinon : hints aléatoires en boutons pill + bouton refresh.
 export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
-  // Hints tirés aléatoirement au mount, re-tirés au clic refresh
-  const [hints, setHints] = useState<Hint[]>(() => pickHints(5));
+  const t = useTranslations('chat');
+  // Pool de hints localisé (messages/*.json → chat.hints), lu via t.raw (renvoie le tableau brut).
+  const allHints = t.raw('hints') as Hint[];
 
-  // Re-tire 5 hints aléatoires
-  const refreshHints = useCallback(() => {
-    setHints(pickHints(5));
+  // QUOI : état initial DÉTERMINISTE (les 5 premiers hints) — identique SSR et client.
+  // POURQUOI : pickHints utilise Math.random ; l'appeler dans l'initialiseur useState produisait des
+  //   hints différents au SSR et à l'hydratation → mismatch React (#425/#422) sur /chat. On rend donc
+  //   un set stable d'abord, puis on mélange APRÈS le mount (useEffect, côté client uniquement).
+  const [hints, setHints] = useState<Hint[]>(() => allHints.slice(0, 5));
+
+  // Mélange aléatoire une fois monté (post-hydratation → pas de mismatch).
+  useEffect(() => {
+    setHints(pickHints(allHints, 5));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-tire 5 hints aléatoires (clic refresh)
+  const refreshHints = useCallback(() => {
+    setHints(pickHints(allHints, 5));
+  }, [allHints]);
 
   const hasTips = tips.length > 0;
 
@@ -41,7 +55,7 @@ export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
               </p>
               <button
                 onClick={() => onTipClose(tip.id)}
-                aria-label="Fermer ce tip"
+                aria-label={t('closeTip')}
                 className="shrink-0 text-amber-400 hover:text-amber-600 dark:hover:text-amber-300
                            text-base leading-none mt-0.5"
               >
@@ -56,12 +70,12 @@ export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
           {/* Header hints */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Questions
+              {t('questionsHeader')}
             </span>
             <button
               onClick={refreshHints}
-              aria-label="Nouvelles suggestions"
-              title="Nouvelles suggestions"
+              aria-label={t('newSuggestions')}
+              title={t('newSuggestions')}
               className="text-muted-foreground/50 hover:text-muted-foreground transition-colors text-sm leading-none p-1"
             >
               ↺

@@ -7,6 +7,12 @@
 .env.local
 .env.*.local
 
+# Docker override spécifique à l'environnement (chaque machine a le sien).
+# Voir docker-compose.override.yml.example. Sur VPS142 : frontend en image pré-buildée.
+docker-compose.override.yml
+docker-compose.override.yml.bak-pregit
+.env.bak-pregit
+
 # Docker volumes data
 postgres-data/
 redis-data/

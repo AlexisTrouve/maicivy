@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { BackgroundSwitcher } from '@/components/background/BackgroundSwitcher';
 
 export function Header() {
   const pathname = usePathname();
@@ -28,7 +29,9 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="font-heading text-xl font-bold">
+          <Link href="/" className="flex items-center gap-2 font-heading text-xl font-bold">
+            {/* Logo maicivy — coins transparents, propre sur thème clair comme sombre */}
+            <img src="/maicivy-logo.png" alt="" width={28} height={28} className="h-7 w-7" />
             maicivy
           </Link>
 
@@ -51,6 +54,10 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Sélecteur de fond animé — desktop uniquement (les fonds ciblent desktop pour l'instant) */}
+          <div className="hidden md:block">
+            <BackgroundSwitcher />
+          </div>
           <LanguageSwitcher />
           <Button
             variant="ghost"

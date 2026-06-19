@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations, useLocale } from 'next-intl';
+
 // BlogFiche — fiche affichant un article de blog dans le panel droit.
 // Données minimales reçues depuis le tool_result show_blog_article.
 
@@ -18,14 +20,16 @@ interface BlogFicheProps {
   data: BlogPost;
 }
 
-// Formate une date ISO en "mars 2026"
-function formatDate(iso: string | null | undefined): string {
+// Formate une date ISO selon la locale courante (ex: "March 2026" / "mars 2026")
+function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 export function BlogFiche({ data }: BlogFicheProps) {
+  const t = useTranslations('chat');
+  const locale = useLocale();
   const blogUrl = `/blog/${data.slug}`;
 
   return (
@@ -56,11 +60,11 @@ export function BlogFiche({ data }: BlogFicheProps) {
 
         {/* Métadonnées */}
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-          {data.published_at && <span>{formatDate(data.published_at)}</span>}
+          {data.published_at && <span>{formatDate(data.published_at, locale)}</span>}
           {data.reading_time_minutes && (
             <>
               {data.published_at && <span>·</span>}
-              <span>{data.reading_time_minutes} min de lecture</span>
+              <span>{t('minRead', { min: data.reading_time_minutes })}</span>
             </>
           )}
         </div>
@@ -93,7 +97,7 @@ export function BlogFiche({ data }: BlogFicheProps) {
         className="block w-full text-center rounded-lg bg-primary text-primary-foreground
                    px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
       >
-        Lire l&apos;article →
+        {t('readArticle')}
       </a>
     </div>
   );

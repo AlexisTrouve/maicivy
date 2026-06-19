@@ -277,6 +277,19 @@ func (suite *VisitorHandlerTestSuite) TestNewVisitorHandler() {
 	assert.Equal(suite.T(), suite.redis, handler.redis)
 }
 
+// Heartbeat SANS session visiteur (visitor_id absent du contexte) → 200 no-op, PAS 404.
+// Verrouille le fix anti-abus : un 404 ici (cookie session non établi/non signé HMAC, très courant)
+// comptait comme "erreur scanner" dans le rate-limiter sus → score qui grimpe à chaque ping (30s)
+// → faux positif de throttle (SUS_RATE_LIMIT) sur des utilisateurs légitimes.
+func (suite *VisitorHandlerTestSuite) TestHeartbeat_NoSession_Returns200() {
+	suite.app.Post("/api/v1/visitors/heartbeat", suite.handler.Heartbeat)
+	req := httptest.NewRequest("POST", "/api/v1/visitors/heartbeat", nil)
+	resp, err := suite.app.Test(req)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.StatusCode,
+		"heartbeat sans session doit répondre 200 no-op (pas 404 — sinon faux positif anti-abus sus)")
+}
+
 // Run test suite
 func TestVisitorHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(VisitorHandlerTestSuite))

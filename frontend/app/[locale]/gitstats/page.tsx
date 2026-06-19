@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { useTranslations } from 'next-intl';
 import GitStatsPanel from '@/components/cv/GitStatsPanel';
 
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function GitStatsPage() {
+  const t = useTranslations('gitstats');
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-10 text-center">
@@ -16,7 +18,7 @@ export default function GitStatsPage() {
           Git Stats
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300">
-          6 mois d&apos;activité sur Gitea
+          {t('subtitle')}
         </p>
       </header>
 

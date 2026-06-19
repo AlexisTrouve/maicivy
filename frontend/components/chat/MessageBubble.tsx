@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface MessageBubbleProps {
@@ -59,16 +60,16 @@ interface ToolBadgeProps {
   input?: unknown;
 }
 
-// Mapping tool → label court lisible
-const TOOL_LABELS: Record<string, string> = {
-  show_project:      'projet',
-  get_project:       'projet',
-  show_projects:     'projets',
-  list_projects:     'projets',
+// Mapping tool → clé i18n (chat.toolLabels.*). Les libellés eux-mêmes sont traduits.
+const TOOL_LABEL_KEYS: Record<string, string> = {
+  show_project:      'project',
+  get_project:       'project',
+  show_projects:     'projects',
+  list_projects:     'projects',
   show_skills:       'skills',
   list_skills:       'skills',
-  show_experience:   'expérience',
-  get_experience:    'expérience',
+  show_experience:   'experience',
+  get_experience:    'experience',
   show_blog_article: 'article',
   show_blog_list:    'blog',
   add_tip:           'tip',
@@ -76,7 +77,10 @@ const TOOL_LABELS: Record<string, string> = {
 
 // Badge compact affiché inline entre les messages lors d'un tool_call
 export function ToolBadge({ toolName, input }: ToolBadgeProps) {
-  const base = TOOL_LABELS[toolName] ?? toolName;
+  const t = useTranslations('chat.toolLabels');
+  // Clé connue → libellé traduit ; sinon on retombe sur le nom brut de l'outil.
+  const key = TOOL_LABEL_KEYS[toolName];
+  const base = key ? t(key) : toolName;
 
   // Paramètre principal si dispo (name ou slug)
   let param = '';

@@ -60,11 +60,13 @@ func (h *BlogHandler) RegisterRoutes(router fiber.Router) {
 }
 
 // ListPosts retourne la liste des articles publiés depuis maiProFiles.
-// GET /api/v1/blog/posts?page=1&per_page=10
+// GET /api/v1/blog/posts?page=1&per_page=10&lang=fr
 // Note: le paramètre "all" n'est plus supporté — maiProFiles ne sert que les posts publiés.
 func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	perPage, _ := strconv.Atoi(c.Query("per_page", "10"))
+	// lang : "fr" | "en" | "ka" — valeur vide → maiProFiles retourne FR par défaut
+	lang := c.Query("lang", "")
 
 	if page < 1 {
 		page = 1
@@ -73,7 +75,7 @@ func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 		perPage = 10
 	}
 
-	response, err := h.mpfClient.GetBlogPosts(c.Context(), page, perPage)
+	response, err := h.mpfClient.GetBlogPosts(c.Context(), page, perPage, lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "failed_to_list_posts",
@@ -85,7 +87,7 @@ func (h *BlogHandler) ListPosts(c *fiber.Ctx) error {
 }
 
 // GetPost retourne un article par son slug depuis maiProFiles.
-// GET /api/v1/blog/posts/:slug
+// GET /api/v1/blog/posts/:slug?lang=fr
 func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
 	postSlug := c.Params("slug")
 	if postSlug == "" {
@@ -93,8 +95,10 @@ func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
 			"error": "slug_required",
 		})
 	}
+	// lang : "fr" | "en" | "ka" — valeur vide → maiProFiles retourne FR par défaut
+	lang := c.Query("lang", "")
 
-	post, err := h.mpfClient.GetBlogPost(c.Context(), postSlug)
+	post, err := h.mpfClient.GetBlogPost(c.Context(), postSlug, lang)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":   "post_not_found",
@@ -334,9 +338,10 @@ func (h *BlogHandler) DeletePost(c *fiber.Ctx) error {
 }
 
 // GetRSSFeed retourne le flux RSS du blog en fetchant les 20 derniers posts depuis maiProFiles.
+// Le RSS est toujours servi en français (langue principale du blog) — pas de param lang.
 // GET /api/v1/blog/feed.xml
 func (h *BlogHandler) GetRSSFeed(c *fiber.Ctx) error {
-	posts, err := h.mpfClient.GetBlogPosts(c.Context(), 1, 20)
+	posts, err := h.mpfClient.GetBlogPosts(c.Context(), 1, 20, "fr")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed_to_generate_feed",

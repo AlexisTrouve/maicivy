@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 
 	"maicivy/internal/api"
 	"maicivy/internal/config"
-	"maicivy/internal/content"
 	"maicivy/internal/database"
 	"maicivy/internal/jobs"
 	"maicivy/internal/middleware"
@@ -60,6 +60,15 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 		BodyLimit:    4 * 1024 * 1024, // 4MB max body size
 		ErrorHandler: customErrorHandler,
+
+		// QUOI : Fiber lit l'IP client réelle dans l'en-tête X-Real-IP au lieu de l'IP TCP directe.
+		// POURQUOI : le backend tourne derrière nginx (bind 127.0.0.1:8081). Sans ça, c.IP() renvoie
+		// toujours l'IP du proxy (172.18.0.1) → tous les rate-limits par IP et les logs/analytics
+		// étaient écrasés sur une seule IP (faille : rate-limit par IP non-fonctionnel, forensics aveugle).
+		// COMMENT : nginx pose `proxy_set_header X-Real-IP $remote_addr` qui ÉCRASE la valeur entrante
+		// (donc non-spoofable par le client) ; on lit cet en-tête plutôt que X-Forwarded-For, que le
+		// client peut préfixer d'une fausse IP que nginx se contente d'append (left-most spoofable).
+		ProxyHeader: "X-Real-IP",
 	})
 
 	// 6. Middlewares globaux (ORDRE IMPORTANT)
@@ -81,24 +90,33 @@ func main() {
 		Level: compress.LevelBestSpeed,
 	}))
 
+	// 5b. Anti-abus : le sus-rate-limit a MIGRÉ dans le front-door (cmd/frontdoor), placé devant
+	// TOUT le trafic (frontend inclus, pas juste /api). Le garder ici aussi compterait /api 2× et
+	// double-throttlerait → retiré. Le front-door throttle les scanners avant qu'ils n'atteignent
+	// le backend, donc le tracking visiteurs reste protégé (un scanner 429 n'arrive jamais ici).
+
 	// 6. Tracking visiteurs
-	trackingMW := middleware.NewTracking(db, redisClient)
+	trackingMW := middleware.NewTracking(db, redisClient, cfg.SessionSecret)
 	app.Use(trackingMW.Handler())
 
-	// 7. Charger le contenu markdown (source de vérité pour le CV)
-	contentDir := os.Getenv("CONTENT_DIR")
-	if contentDir == "" {
-		contentDir = "../content" // fallback dev local
+	// 7. Source de contenu CV : maiProFiles (source de vérité UNIQUE — plus de markdown local).
+	// Gitea Stats Service — alimente le scoring vedette auto (commits par repo).
+	// Créé AVANT le content provider qui le consomme.
+	giteaStatsService := services.NewGiteaStatsService(redisClient, cfg.GiteaStatsURL, cfg.GiteaStatsToken, cfg.GiteaStatsUser)
+	if giteaStatsService != nil {
+		log.Info().Msg("Gitea stats service initialized")
+	} else {
+		log.Warn().Msg("Gitea stats service not available — GITEA_STATS_TOKEN not configured")
 	}
-	contentLoader := content.NewLoader(contentDir)
-	if err := contentLoader.Load(); err != nil {
-		log.Fatal().Err(err).Str("dir", contentDir).Msg("Failed to load content from markdown files")
-	}
+
+	// Le provider fetch /experiences, /skills, /projects et cache 5 min.
+	// Vedette = pins curés (maiprofiles) UNION top activité Gitea (via giteaStatsService).
+	contentProvider := services.NewMaiProFilesContentProvider(giteaStatsService)
 
 	// 8. Initialiser services (needed for analytics middleware)
 	// LLM scoring via proxy Anthropic (optionnel — fallback tag-weight si non configuré)
 	llmScoring := services.NewLLMScoringService(cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, redisClient)
-	cvService := services.NewCVService(contentLoader, redisClient, llmScoring)
+	cvService := services.NewCVService(contentProvider, redisClient, llmScoring)
 	analyticsService := services.NewAnalyticsService(db, redisClient)
 
 	// 8. Analytics middleware (après tracking pour avoir visitor_id)
@@ -139,7 +157,7 @@ func main() {
 	// Letter generator service (combines AI, scraper, PDF)
 	var letterGenerator *services.LetterGenerator
 	if aiService != nil && scraper != nil {
-		letterGenerator = services.NewLetterGenerator(aiService, scraper, pdfLetterService, userProfile, contentLoader)
+		letterGenerator = services.NewLetterGenerator(aiService, scraper, pdfLetterService, userProfile, contentProvider)
 		log.Info().Msg("Letter generator service initialized")
 	} else {
 		log.Warn().Msg("Letter generator service not initialized - AI or scraper missing")
@@ -154,9 +172,6 @@ func main() {
 
 	// Blog generator service
 	blogGeneratorService := services.NewBlogGeneratorService(db, redisClient, aiService, repoScanner)
-
-	// Timeline service (currently not used in routes but initialized for future use)
-	_ = services.NewTimelineService(db, redisClient)
 
 	// Profile detection services
 	clearbitClient := services.NewClearbitClient(redisClient)
@@ -177,24 +192,18 @@ func main() {
 
 	// CV generation : CV dynamique depuis offre d'emploi (texte ou URL)
 	// Utilise le proxy Anthropic directement (même config que llm_scoring)
-	cvGenerationService := services.NewCVGenerationService(contentLoader, cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, pdfService)
+	cvGenerationService := services.NewCVGenerationService(contentProvider, cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, pdfService)
 	if cvGenerationService != nil {
 		log.Info().Msg("CV generation service initialized")
 	} else {
 		log.Warn().Msg("CV generation service not available — Anthropic credentials not configured")
 	}
 
-	// 7b. Gitea Stats Service
-	giteaStatsService := services.NewGiteaStatsService(redisClient, cfg.GiteaStatsURL, cfg.GiteaStatsToken, cfg.GiteaStatsUser)
-	if giteaStatsService != nil {
-		log.Info().Msg("Gitea stats service initialized")
-	} else {
-		log.Warn().Msg("Gitea stats service not available — GITEA_STATS_TOKEN not configured")
-	}
+	// 7b. Gitea Stats Service : créé plus haut (consommé par le content provider pour la vedette).
 
 	// 8. Initialiser handlers
 	healthHandler := api.NewHealthHandler(db, redisClient)
-	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService)
+	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService, redisClient)
 	analyticsHandler := api.NewAnalyticsHandler(analyticsService)
 	lettersHandler := api.NewLettersHandler(db, redisClient, letterQueueService, letterGenerator, aiConfig.OwnerAPIKey)
 	messagesHandler := api.NewMessagesHandler(db, redisClient, letterGenerator, aiConfig.OwnerAPIKey)
@@ -206,7 +215,7 @@ func main() {
 	// blogHandler utilise mpfClient pour list/get/create/update/delete/publish
 	// et blogGeneratorService uniquement pour la génération IA (GeneratePost)
 	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, aiConfig.OwnerAPIKey)
-	timelineHandler := api.NewTimelineHandler(db)
+	timelineHandler := api.NewTimelineHandler(db, contentProvider)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService)
 	swaggerHandler := api.NewSwaggerHandler()
@@ -225,20 +234,36 @@ func main() {
 		})
 	})
 
-	// Routes CV (Phase 2 - IMPLEMENTED)
-	cvHandler.RegisterRoutes(app)
+	// Circuit-breaker coût : plafond quotidien GLOBAL de générations IA non-owner (toutes
+	// sessions/IP confondues). Dernier garde-fou contre un abus distribué (rotation de
+	// sessions/IP) qui brûlerait le budget token Claude. Configurable via AI_GLOBAL_DAILY_MAX,
+	// défaut 200 — au-delà, toute génération non-owner renvoie 503 jusqu'à minuit UTC.
+	aiGlobalDailyMax := 200
+	if v := os.Getenv("AI_GLOBAL_DAILY_MAX"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			aiGlobalDailyMax = n
+		}
+	}
+
+	// Middleware de rate-limiting IA — PARTAGÉ par tous les endpoints qui appellent Claude
+	// (/letters/generate, /messages/generate, /cv/generate, /cv/tailor). Owner (X-Owner-Key)
+	// bypass total. L'incrémentation des compteurs se fait dans chaque handler APRÈS succès.
+	aiRateLimitMW := middleware.AIRateLimit(middleware.AIRateLimitConfig{
+		Redis:            redisClient,
+		MaxPerDay:        5,                    // 5 générations/jour par session
+		MaxPerDayPerIP:   3,                    // 3 générations/jour par IP réelle (anti-bypass incognito)
+		CooldownDuration: 2 * time.Minute,      // cooldown entre 2 générations d'une même session
+		GlobalDailyMax:   aiGlobalDailyMax,     // circuit-breaker coût (0 = désactivé)
+		OwnerAPIKey:      aiConfig.OwnerAPIKey, // bypass total pour l'owner
+	})
+
+	// Routes CV (Phase 2) — /cv/generate & /cv/tailor passent derrière le rate-limit IA
+	// (appellent Claude). indeed-outreach doit envoyer X-Owner-Key (bypass + tier Opus).
+	cvHandler.RegisterRoutes(app, aiRateLimitMW)
 	gitStatsHandler.RegisterRoutes(app)
 
 	// Routes Letters avec rate limiting AI (Phase 3 - IMPLEMENTED)
 	lettersGroup := apiV1.Group("/letters")
-	// Rate limit AI uniquement sur /generate (utilise le bon middleware avec incrémentation après succès)
-	aiRateLimitMW := middleware.AIRateLimit(middleware.AIRateLimitConfig{
-		Redis:            redisClient,
-		MaxPerDay:        5,   // 5 générations/jour par session
-		MaxPerDayPerIP:   3,   // 3 générations/jour par IP (anti-bypass incognito)
-		CooldownDuration: 2 * time.Minute,
-		OwnerAPIKey:      aiConfig.OwnerAPIKey, // bypass total pour l'owner
-	})
 	lettersGroup.Post("/generate", aiRateLimitMW, lettersHandler.GenerateLetter)
 	lettersGroup.Get("/job/:jobId", lettersHandler.GetJobStatus)
 	lettersGroup.Get("/pair", lettersHandler.GetLetterPair) // ?company=Google
@@ -350,7 +375,7 @@ func main() {
 
 	// Arrêter les background jobs
 	log.Info().Msg("Stopping background jobs...")
-	cancel() // Arrêter analytics cleanup job
+	cancel()                 // Arrêter analytics cleanup job
 	githubAutoSyncJob.Stop() // Arrêter GitHub auto-sync job
 
 	// Arrêter le serveur HTTP

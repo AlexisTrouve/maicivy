@@ -70,6 +70,9 @@ export interface Project {
   githubUrl?: string;
   demoUrl?: string;
   technologies: string[];
+  // Tags de catégorisation (incluent les flags-concept côté maiProFiles). Servent au matching
+  // skill→projet (cf. lib/skillAliases), PAS à l'affichage (la grille montre `technologies`).
+  tags?: string[];
   stars?: number;
   language?: string;
   featured: boolean;
@@ -502,5 +505,21 @@ export interface GitStatsResponse {
   totalAdded: number;
   totalDeleted: number;
   activeRepos: number;
+  period: string;
+}
+
+// LOC par langage (backend GET /api/v1/cv/loc) — alimente la fiche détail d'un skill.
+export interface LangStat {
+  language: string; // clé canonique lowercase (ex: "go", "typescript")
+  bytes: number;    // octets de code agrégés sur tous les repos
+  loc: number;      // approximation lignes (bytes / moyenne)
+}
+
+export interface LangStatsResponse {
+  // languages : clé = langage normalisé lowercase → stat. On matche le nom du skill (via la table
+  // d'alias de lib/skillAliases) contre ces clés pour décider si un skill a des LOC à afficher.
+  languages: Record<string, LangStat>;
+  totalLoc: number;
+  totalBytes: number;
   period: string;
 }
