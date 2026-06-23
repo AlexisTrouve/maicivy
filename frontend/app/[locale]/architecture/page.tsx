@@ -119,7 +119,7 @@ const getMetrics = (t: (key: string) => string, locale: string) => [
   { label: t('metrics.frontendTests'), value: stats.frontend.tests.toLocaleString(locale), icon: FlaskConical, color: 'text-cyan-500' },
   { label: t('metrics.passingTests'), value: stats.total.toLocaleString(locale), icon: CheckCircle2, color: 'text-emerald-500' },
   { label: t('metrics.apiEndpoints'), value: '100+', icon: Network, color: 'text-orange-500' },
-  { label: t('metrics.documentation'), value: '85k+', icon: BookOpen, color: 'text-purple-500' },
+  { label: t('metrics.documentation'), value: '50k+', icon: BookOpen, color: 'text-purple-500' },
   { label: t('metrics.implementationGuides'), value: '20', icon: FileText, color: 'text-pink-500' },
 ];
 

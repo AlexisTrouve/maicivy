@@ -75,9 +75,7 @@ Development dependencies (msw, jest, ts-node) are suppressed as they don't affec
 
 Gitleaks scans for accidentally committed secrets. False positives are managed via `.gitleaksignore`:
 
-**Ignored Files:**
-- `archive/GITHUB_FEATURE_EXAMPLES.md` - Contains example OAuth configuration (not real secrets)
-- `backend/docs/reports/*.md` - Documentation files with placeholder tokens
+**Ignored Files:** see `.gitleaksignore` for the current list of docs/test files with placeholder tokens.
 
 **Adding New Ignores:**
 If you have legitimate documentation with example secrets, add them to `.gitleaksignore`:

@@ -420,7 +420,7 @@ npm run test:coverage     # Coverage report
 | Backend tests | 208 (52 files) |
 | Frontend tests | 833 (58 suites) |
 | Total tests | 1041 passing |
-| Documentation | ~85k lines |
+| Documentation | ~50k lines |
 | API endpoints | 100+ |
 
 ---

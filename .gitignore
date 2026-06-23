@@ -72,6 +72,10 @@ temp/
 
 # Build artifacts
 dist/
+/output/
+# Binaires Go compilés (outils migrate/seed) — ne JAMAIS committer (23 Mo de cruft retirés du repo)
+backend/migrate
+backend/seed
 build/
 *.tar.gz
 *.zip
