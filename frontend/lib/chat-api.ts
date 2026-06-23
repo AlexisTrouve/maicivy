@@ -43,6 +43,8 @@ export async function streamChat(
     response = await fetch(`${API_BASE}/api/v1/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // include : envoie les cookies (session visiteur + cookie admin owner → tier Opus côté backend).
+      credentials: 'include',
       body: JSON.stringify({ message, history }),
       signal,
     });

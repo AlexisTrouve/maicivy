@@ -496,6 +496,8 @@ export interface GitRepoStat {
   language: string;
   stars: number;
   updatedAt: string;
+  commits: number;        // total commits agrégés sur le repo (Gitea + GitLab si mergé)
+  commitDays?: string[];  // dates "YYYY-MM-DD" des jours de commit (capé à ~70/repo côté backend)
 }
 
 export interface GitStatsResponse {
@@ -513,6 +515,15 @@ export interface LangStat {
   language: string; // clé canonique lowercase (ex: "go", "typescript")
   bytes: number;    // octets de code agrégés sur tous les repos
   loc: number;      // approximation lignes (bytes / moyenne)
+}
+
+// Stats de testing affichées sur le CV (généré par scripts/gen-test-stats.mjs depuis les vraies suites).
+export interface TestStats {
+  backend: { tests: number; files: number };
+  frontend: { tests: number; suites: number };
+  total: number;
+  allGreen: boolean;
+  generatedAt: string;
 }
 
 export interface LangStatsResponse {

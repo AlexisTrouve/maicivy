@@ -17,6 +17,7 @@ type AIRateLimitConfig struct {
 	CooldownDuration time.Duration // Temps d'attente entre générations (défaut: 2 minutes)
 	GlobalDailyMax   int           // Circuit-breaker : plafond quotidien GLOBAL toutes sessions/IP confondues (0 = désactivé)
 	OwnerAPIKey      string        // Si set : les requêtes avec X-Owner-Key matchant bypass le rate limit
+	SessionSecret    string        // Secret HMAC : valide aussi le cookie admin (maicivy_admin) comme owner
 }
 
 // globalDailyKey clé Redis du compteur global de générations IA (circuit-breaker coût).
@@ -44,9 +45,11 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := context.Background()
 
-		// --- Owner bypass : X-Owner-Key valide → skip tout le rate limiting ---
-		// Permet à l'owner de générer sans limite via son API key
-		if config.OwnerAPIKey != "" && c.Get("X-Owner-Key") == config.OwnerAPIKey {
+		// --- Owner bypass : skip tout le rate limiting + tier Opus ---
+		// Owner = clé API (X-Owner-Key, appels server-to-server) OU cookie admin signé HMAC
+		// (maicivy_admin, posé par le login du panneau /admin). Les deux donnent les mêmes privilèges.
+		if (config.OwnerAPIKey != "" && c.Get("X-Owner-Key") == config.OwnerAPIKey) ||
+			VerifyAdminCookie(c.Cookies("maicivy_admin"), config.SessionSecret) {
 			// Marquer comme owner dans les locals pour le handler (sélection de modèle)
 			c.Locals("is_owner", true)
 			return c.Next()

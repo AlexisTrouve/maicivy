@@ -1,5 +1,7 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter as useI18nRouter } from '@/i18n/navigation';
 import CVThemeSelector from '../CVThemeSelector';
 import { server } from '@/__mocks__/server';
 import { rest } from 'msw';
@@ -8,6 +10,14 @@ import { rest } from 'msw';
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),
+}));
+
+// Mock i18n/navigation (uses next-intl/navigation which is ESM — not transformable)
+jest.mock('@/i18n/navigation', () => ({
+  useRouter: jest.fn(),
+  usePathname: jest.fn(() => '/'),
+  Link: ({ children }: { children: React.ReactNode }) => children,
+  redirect: jest.fn(),
 }));
 
 const mockPush = jest.fn();
@@ -48,6 +58,7 @@ describe('CVThemeSelector', () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
+    (useI18nRouter as jest.Mock).mockReturnValue({ push: mockPush });
   });
 
   it('should render loading state initially', () => {

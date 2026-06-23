@@ -16,6 +16,12 @@ describe('Heatmap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    // Default implementation: returns empty data so stray interval calls
+    // (fired by runOnlyPendingTimers in afterEach) don't consume test-specific mocks
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: [] }),
+    });
   });
 
   afterEach(() => {
@@ -23,21 +29,31 @@ describe('Heatmap', () => {
     jest.useRealTimers();
   });
 
+  // Real API format: { success: true, data: [...] }
+  // The component reads json.success + json.data, NOT json.points/json.maxIntensity
   const mockHeatmapData = {
-    points: [
+    success: true,
+    data: [
       { x: 20, y: 15, intensity: 45, element: 'theme_selector' },
       { x: 50, y: 30, intensity: 78, element: 'experience_timeline' },
       { x: 75, y: 25, intensity: 92, element: 'export_pdf_button' },
       { x: 30, y: 60, intensity: 34, element: 'skills_cloud' },
       { x: 65, y: 70, intensity: 56, element: 'projects_grid' },
     ],
-    maxIntensity: 100,
   };
 
   const renderAndWait = async () => {
-    const result = render(<Heatmap />);
+    // Wrap the render in act so useEffect + async fetch state updates are flushed
+    let result!: ReturnType<typeof render>;
     await act(async () => {
-      await jest.runOnlyPendingTimersAsync();
+      result = render(<Heatmap />);
+      // Let the microtask queue drain (fetch Promise + setState calls)
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    // Wait until the loading skeleton disappears (isLoading → false)
+    await waitFor(() => {
+      expect(result.container.querySelector('.animate-pulse')).not.toBeInTheDocument();
     });
     return result;
   };
@@ -139,14 +155,17 @@ describe('Heatmap', () => {
     const points = container.querySelectorAll('.rounded-full.blur-xl');
     expect(points.length).toBe(5);
 
-    // Hover over first point
+    // Hover over first point — on cible le TOOLTIP (.bg-popover) car le libellé apparaît AUSSI dans la
+    // liste "Interactions principales" toujours visible → getByText serait ambigu.
     const firstPoint = points[0];
     await act(async () => {
       fireEvent.mouseEnter(firstPoint);
     });
 
-    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
-    expect(screen.getByText('45 interactions')).toBeInTheDocument();
+    const tooltip = container.querySelector('.bg-popover') as HTMLElement;
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Theme Selector');
+    expect(tooltip.textContent).toContain('45 interactions');
   });
 
   it('should hide tooltip on mouse leave', async () => {
@@ -164,13 +183,15 @@ describe('Heatmap', () => {
       fireEvent.mouseEnter(firstPoint);
     });
 
-    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
+    // Le TOOLTIP (.bg-popover) apparaît au survol…
+    expect(container.querySelector('.bg-popover')).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.mouseLeave(firstPoint);
     });
 
-    expect(screen.queryByText('Theme Selector')).not.toBeInTheDocument();
+    // …et disparaît au mouseleave (le libellé reste dans la liste, mais le tooltip non).
+    expect(container.querySelector('.bg-popover')).not.toBeInTheDocument();
   });
 
   it('should format element names correctly', async () => {
@@ -184,14 +205,15 @@ describe('Heatmap', () => {
     const points = container.querySelectorAll('.rounded-full.blur-xl');
     expect(points.length).toBe(5);
 
-    // Hover to see formatted name
+    // Hover to see formatted name (dans le tooltip — le libellé est aussi dans la liste).
     const firstPoint = points[0];
     await act(async () => {
       fireEvent.mouseEnter(firstPoint);
     });
 
-    // 'theme_selector' should become 'Theme Selector'
-    expect(screen.getByText('Theme Selector')).toBeInTheDocument();
+    // 'theme_selector' should become 'Theme Selector' dans le tooltip
+    const tooltip = container.querySelector('.bg-popover') as HTMLElement;
+    expect(tooltip.textContent).toContain('Theme Selector');
   });
 
   it('should display point count', async () => {
@@ -205,16 +227,17 @@ describe('Heatmap', () => {
     expect(screen.getByText('Basé sur 5 points d\'interaction')).toBeInTheDocument();
   });
 
-  it('should use mock data on API error', async () => {
+  it('should show empty state on API error', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
 
-    const { container } = await renderAndWait();
+    await renderAndWait();
 
-    // Should render mock data points
-    const points = container.querySelectorAll('.rounded-full.blur-xl');
-    expect(points.length).toBe(7); // Mock data has 7 points
+    // Component sets points:[] on error — show the noData message
+    expect(
+      screen.getByText("Aucune donnée d'interaction disponible")
+    ).toBeInTheDocument();
 
     consoleErrorSpy.mockRestore();
   });
@@ -222,7 +245,7 @@ describe('Heatmap', () => {
   it('should show message when no data available', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ points: [], maxIntensity: 0 }),
+      json: async () => ({ success: true, data: [] }),
     });
 
     await renderAndWait();
@@ -343,7 +366,7 @@ describe('Heatmap', () => {
     });
   });
 
-  it('should handle API response with 404', async () => {
+  it('should show empty state on API response with 404', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -351,11 +374,13 @@ describe('Heatmap', () => {
       status: 404,
     });
 
-    const { container } = await renderAndWait();
+    await renderAndWait();
 
-    // Should fall back to mock data
-    const points = container.querySelectorAll('.rounded-full.blur-xl');
-    expect(points.length).toBeGreaterThan(0);
+    // Component throws on !response.ok, catches → setHeatmapData({ points: [] })
+    // → no .rounded-full.blur-xl points rendered, noData message is shown
+    expect(
+      screen.getByText("Aucune donnée d'interaction disponible")
+    ).toBeInTheDocument();
 
     consoleErrorSpy.mockRestore();
   });

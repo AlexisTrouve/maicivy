@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Calendar } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 type PeriodPreset = 'today' | '7d' | '30d' | 'all';
 
@@ -13,12 +14,16 @@ interface DateRange {
 
 export default function DateFilter() {
   const t = useTranslations('analytics.periods');
-  const [selectedPreset, setSelectedPreset] = useState<PeriodPreset>('7d');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Sélection initiale lue depuis l'URL (?period=) → cohérent au reload / partage de lien ; défaut 7 jours.
+  const initialPreset = (searchParams.get('period') as PeriodPreset) || '7d';
+  const [selectedPreset, setSelectedPreset] = useState<PeriodPreset>(initialPreset);
+  // dateRange reste calculé au clic (pas au montage) pour éviter un mismatch d'hydratation sur new Date().
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
 
   const presets: { value: PeriodPreset; label: string }[] = [
     { value: 'today', label: t('today') },
@@ -30,7 +35,7 @@ export default function DateFilter() {
   const handlePresetChange = (preset: PeriodPreset) => {
     setSelectedPreset(preset);
 
-    // Calculate date range based on preset
+    // Calculate date range based on preset (affichage)
     const now = new Date();
     const from = new Date();
 
@@ -51,12 +56,13 @@ export default function DateFilter() {
         setDateRange({ from: undefined, to: undefined });
         break;
     }
-  };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const formatDateRange = (): string => {
-    const preset = presets.find((p) => p.value === selectedPreset);
-    return preset?.label || t('select');
+    // Écrit la période dans l'URL → c'est CE qui pilote les widgets (StatsOverview lit ?period=).
+    // Avant, le filtre n'avait aucun consommateur → cliquer ne changeait rien. router.replace = pas
+    // d'entrée d'historique en plus, scroll: false = on ne saute pas en haut de page.
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('period', preset);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
@@ -84,12 +90,12 @@ export default function DateFilter() {
 
       {dateRange.from && dateRange.to && (
         <div className="text-xs text-muted-foreground ml-2">
-          {dateRange.from.toLocaleDateString('fr-FR', {
+          {dateRange.from.toLocaleDateString(locale, {
             day: '2-digit',
             month: 'short',
           })}{' '}
           -{' '}
-          {dateRange.to.toLocaleDateString('fr-FR', {
+          {dateRange.to.toLocaleDateString(locale, {
             day: '2-digit',
             month: 'short',
             year: 'numeric',

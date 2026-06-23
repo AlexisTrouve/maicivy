@@ -1,12 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { AccessGate } from '../AccessGate';
 
-// Mock framer-motion
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  },
+// Mock @/i18n/navigation : ce module ré-exporte depuis next-intl/navigation (ESM pur, non transformé
+// par next/jest) → crash "Unexpected token 'export'". On fournit un Link React minimal.
+jest.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
+  ),
+  redirect: jest.fn(),
+  usePathname: () => '/',
+  useRouter: () => ({ push: jest.fn() }),
 }));
+
+// framer-motion mocké globalement (cf. __mocks__/framer-motion.tsx)
 
 // Mock useVisitCount hook
 const mockUseVisitCount = jest.fn();
@@ -97,7 +103,7 @@ describe('AccessGate', () => {
 
     render(<AccessGate>{mockChildren}</AccessGate>);
 
-    expect(screen.getByText(/Encore 1 visite avant déblocage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Encore 1 visite\(s\) avant déblocage/i)).toBeInTheDocument();
   });
 
   it('should use plural "visites" when remaining > 1', () => {
@@ -113,7 +119,7 @@ describe('AccessGate', () => {
 
     render(<AccessGate>{mockChildren}</AccessGate>);
 
-    expect(screen.getByText(/Encore 2 visites avant déblocage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Encore 2 visite\(s\) avant déblocage/i)).toBeInTheDocument();
   });
 
   it('should render progress bar with correct percentage', () => {
@@ -214,7 +220,7 @@ describe('AccessGate', () => {
     render(<AccessGate>{mockChildren}</AccessGate>);
 
     expect(screen.getByText('0 / 3 visites')).toBeInTheDocument();
-    expect(screen.getByText(/Encore 3 visites avant déblocage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Encore 3 visite\(s\) avant déblocage/i)).toBeInTheDocument();
   });
 
   it('should handle exactly 3 visits (access granted)', () => {

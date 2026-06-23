@@ -2,9 +2,16 @@
 
 import { useTranslations } from 'next-intl';
 
+// Une compétence avec niveau + années (enrichi : aligne le panneau sur ce que voit l'agent).
+interface SkillDetail {
+  Name: string;
+  Level: string; // expert | advanced | intermediate | beginner (valeur maiProFiles)
+  Years: number;
+}
+
 interface SkillCategory {
   Name: string;
-  Skills: string[];
+  Skills: SkillDetail[];
 }
 
 interface SkillsFicheProps {
@@ -21,6 +28,31 @@ export function SkillsFiche({ data }: SkillsFicheProps) {
 
   // Sinon c'est ExperienceData (get_experience)
   return <ExperienceFiche data={data as unknown as ExperienceData} />;
+}
+
+// LEVEL_DOTS — niveau maiProFiles → nombre de points pleins (4 = expert). Le rendu en points
+// (pas en texte) est VOLONTAIRE : aucune string à i18n-er, et lisible dans toutes les langues.
+const LEVEL_DOTS: Record<string, number> = {
+  expert: 4,
+  advanced: 3,
+  intermediate: 2,
+  beginner: 1,
+};
+
+// LevelMeter — petite jauge 4 points reflétant le niveau d'une compétence. null si niveau inconnu.
+function LevelMeter({ level }: { level: string }) {
+  const filled = LEVEL_DOTS[(level || '').toLowerCase()] ?? 0;
+  if (!filled) return null;
+  return (
+    <span className="inline-flex items-center gap-0.5 ml-1.5" aria-hidden>
+      {[1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className={`w-1 h-1 rounded-full ${i <= filled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+        />
+      ))}
+    </span>
+  );
 }
 
 interface SkillsCategoriesProps {
@@ -40,10 +72,11 @@ function SkillsCategoriesFiche({ categories }: SkillsCategoriesProps) {
           <div className="flex flex-wrap gap-1.5">
             {cat.Skills.map((skill) => (
               <span
-                key={skill}
-                className="px-2.5 py-1 rounded-lg bg-muted text-foreground text-xs font-medium"
+                key={skill.Name}
+                className="inline-flex items-center px-2.5 py-1 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
-                {skill}
+                {skill.Name}
+                <LevelMeter level={skill.Level} />
               </span>
             ))}
           </div>
@@ -59,6 +92,9 @@ interface ExperienceItem {
   Company: string;
   Period: string;
   Summary: string;
+  Technologies?: string[]; // technos du poste — chips sous le résumé
+  Catchphrase?: string; // accroche courte (déjà localisée par l'API)
+  Category?: string;
 }
 
 interface ExperienceData {
@@ -133,7 +169,26 @@ function ExperienceFiche({ data }: { data: ExperienceData }) {
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">{exp.Period}</span>
                 </div>
+                {/* Accroche du poste (déjà dans la langue courante via l'API) */}
+                {exp.Catchphrase && (
+                  <p className="mt-1 text-xs italic text-foreground/80 leading-relaxed">
+                    {exp.Catchphrase}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{exp.Summary}</p>
+                {/* Stack du poste — noms propres (VBA, React…), pas de traduction */}
+                {exp.Technologies && exp.Technologies.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {exp.Technologies.map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

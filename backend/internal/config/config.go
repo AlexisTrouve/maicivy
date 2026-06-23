@@ -50,8 +50,19 @@ type Config struct {
 	GiteaStatsToken string
 	GiteaStatsUser  string
 
+	// GitLab Stats (commits d'un projet partagé filtrés par auteur, mergés dans les gitstats).
+	// Tout vient de l'ENV (rien en source) → token/projet hors du repo public.
+	GitLabStatsURL     string
+	GitLabStatsToken   string
+	GitLabStatsProject string // ID ou path URL-encodé du projet GitLab
+	GitLabStatsAuthors string // noms d'auteur à matcher, séparés par virgule (ex: "alexis,stillhammer")
+
 	// Session : secret HMAC pour signer le cookie maicivy_session (anti-forge + anti-amplification PG)
 	SessionSecret string
+
+	// Admin : mot de passe du panneau /admin (login → cookie maicivy_admin signé = privilèges owner).
+	// Vide → login admin désactivé (aucun mot de passe ne matche, le panneau est inatteignable).
+	AdminPassword string
 }
 
 func Load() (*Config, error) {
@@ -98,8 +109,16 @@ func Load() (*Config, error) {
 		GiteaStatsToken: getEnv("GITEA_STATS_TOKEN", ""),
 		GiteaStatsUser:  getEnv("GITEA_STATS_USER", "StillHammer"),
 
+		// GitLab Stats (vide par défaut = désactivé ; projet/token jamais en source, uniquement env VPS)
+		GitLabStatsURL:     getEnv("GITLAB_STATS_URL", "https://gitlab.com"),
+		GitLabStatsToken:   getEnv("GITLAB_STATS_TOKEN", ""),
+		GitLabStatsProject: getEnv("GITLAB_STATS_PROJECT", ""),
+		GitLabStatsAuthors: getEnv("GITLAB_STATS_AUTHORS", "alexis,stillhammer"),
+
 		// Session signing
 		SessionSecret: getEnv("SESSION_SECRET", ""),
+		// Admin panel
+		AdminPassword: getEnv("ADMIN_PASSWORD", ""),
 	}
 
 	if err := cfg.Validate(); err != nil {

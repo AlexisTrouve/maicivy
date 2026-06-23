@@ -7,11 +7,33 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Sparkles, BarChart3, Layers, ArrowRight } from 'lucide-react';
 
+// Person JSON-LD — données structurées schema.org pour que Google construise l'ENTITÉ "Alexis Trouvé"
+// (Knowledge Panel / rich results) → sert le goal "qu'on me trouve". Identité STABLE → hardcodée
+// (pas de fetch maiProFiles qui ajouterait de la latence au TTFB de la home). sameAs = profils
+// officiels (Google les utilise pour relier l'entité). Sync avec maiProFiles /profile.
+const PERSON_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Alexis Trouvé',
+  url: 'https://maicivy.etheryale.com',
+  jobTitle: 'Full-Stack Engineer & AI Specialist',
+  address: { '@type': 'PostalAddress', addressCountry: 'France' },
+  sameAs: [
+    'https://www.linkedin.com/in/alexis-trouve-432397a9/',
+    'https://github.com/AlexisTrouve',
+  ],
+};
+
 export default function HomePage() {
   const t = useTranslations('home');
 
   return (
     <div className="container py-12 md:py-24">
+      {/* JSON-LD Person — rendu côté serveur dans le HTML, lu par Google pour l'entité d'Alexi. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON_SCHEMA) }}
+      />
       {/* ─── Hero section ─────────────────────────────────────────────── */}
       <div className="mx-auto max-w-4xl text-center">
 

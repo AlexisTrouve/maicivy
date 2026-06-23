@@ -61,6 +61,7 @@ func RunAutoMigrations(db *gorm.DB) error {
 		{&models.ActivityProject{}, "activity_projects"},
 		{&models.ActivityStats{}, "activity_stats"},
 		{&models.BlogPost{}, "blog_posts"},
+		{&models.ChatConversation{}, "chat_conversations"},
 	}
 
 	for _, m := range otherModels {

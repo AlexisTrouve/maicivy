@@ -36,7 +36,7 @@ type ChatEvent struct {
 
 // ChatMessage représente un tour de conversation (historique)
 type ChatMessage struct {
-	Role    string `json:"role"`    // "user" | "assistant"
+	Role    string `json:"role"` // "user" | "assistant"
 	Content string `json:"content"`
 }
 
@@ -285,7 +285,17 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 			"Récupère les compétences techniques groupées par catégorie. Usage interne.",
 			emptySchema),
 		makeTool("get_experience",
-			"Récupère la bio, TJM et expériences professionnelles. Usage interne.",
+			"Récupère la bio ET le parcours pro complet : chaque poste avec l'EMPLOYEUR (entreprise), "+
+				"les dates, les technologies utilisées et une accroche. Utilise ce tool pour TOUTE question "+
+				"sur où/chez qui Alexi a travaillé, son parcours, ou les technos d'un poste. ATTENTION : un "+
+				"nom d'entreprise (ex: Cogesco) est un EMPLOYEUR, pas un projet — n'utilise PAS get_project "+
+				"pour ça.",
+			emptySchema),
+		makeTool("get_profile",
+			"Récupère le profil d'Alexi : identité (nom, headline, localisation), années d'expérience, bio, domaines, contact. Usage interne pour répondre sur qui il est.",
+			emptySchema),
+		makeTool("get_stats",
+			"Récupère les stats globales du portfolio : nombre de projets, total de lignes de code, total de tests, top des technologies. Usage interne pour répondre sur les chiffres.",
 			emptySchema),
 
 		// --- Tools d'affichage (poussent une fiche dans le panel droit de l'UI) ---
@@ -299,7 +309,8 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 			"Affiche les compétences techniques dans le panel droit. Appelle ce tool quand la conversation porte sur les skills.",
 			emptySchema),
 		makeTool("show_experience",
-			"Affiche le profil freelance (bio, TJM, expériences) dans le panel droit. Appelle ce tool quand l'utilisateur veut en savoir plus sur le parcours d'Alexi.",
+			"Affiche le parcours pro (bio, expériences avec employeurs/dates/technos) dans le panel droit. "+
+				"Appelle ce tool dès que l'utilisateur parle du parcours, d'un employeur ou d'une période de travail.",
 			emptySchema),
 
 		// --- Tool de recherche de projets par mot-clé ---
@@ -396,6 +407,12 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 	case "get_experience", "show_experience":
 		return s.portfolio.GetExperience(lang), nil
 
+	case "get_profile":
+		return s.portfolio.GetProfile(lang), nil
+
+	case "get_stats":
+		return s.portfolio.GetStats(), nil
+
 	// search_projects — recherche live dans maiprofiles via /search?q=
 	case "search_projects":
 		query, ok := inputMap["query"].(string)
@@ -487,20 +504,29 @@ Contact :%s`,
 	if statsErr == nil {
 		// Extraire les top langages réels (clés "c++17", "python", "rust", "node.js"...)
 		// pour donner à Claude des chiffres factuels par langage
-		type kv struct{ k string; v int }
+		type kv struct {
+			k string
+			v int
+		}
 		var sorted []kv
 		for k, v := range stats.Stack {
 			sorted = append(sorted, kv{k, v})
 		}
 		for i := range sorted {
 			for j := i + 1; j < len(sorted); j++ {
-				if sorted[j].v > sorted[i].v { sorted[i], sorted[j] = sorted[j], sorted[i] }
+				if sorted[j].v > sorted[i].v {
+					sorted[i], sorted[j] = sorted[j], sorted[i]
+				}
 			}
 		}
 		top := ""
 		for i, item := range sorted {
-			if i >= 8 { break }
-			if i > 0 { top += ", " }
+			if i >= 8 {
+				break
+			}
+			if i > 0 {
+				top += ", "
+			}
 			top += fmt.Sprintf("%s (%d projets)", item.k, item.v)
 		}
 		statsSection = fmt.Sprintf(`
@@ -513,7 +539,7 @@ Contact :%s`,
 	return fmt.Sprintf(`Tu es l'assistant du portfolio d'Alexi. Tu le représentes et tu lui es loyal.
 %s%s
 
-Règles tools : utilise systématiquement les show_* tools dès que le sujet le permet, search_projects pour toute requête par techno. CHAQUE tool exige un paramètre "language" = la langue de la conversation (code ISO : fr, en, de, it, zh). Passe-le à chaque appel. Si un tool renvoie une erreur "unsupported language", réponds en anglais et préviens poliment l'utilisateur que les fiches détaillées ne sont disponibles qu'en fr/en/de/it/zh. Honnêteté : ne spécule pas sans données. Sois concis. Réponds dans la langue de l'utilisateur.
+Règles tools : utilise systématiquement les show_* tools dès que le sujet le permet ; search_projects pour une techno liée à un PROJET ; get_experience/show_experience pour le parcours, les EMPLOYEURS (un nom d'entreprise = un employeur, pas un projet) et les technos par poste. CHAQUE tool exige un paramètre "language" = la langue de la conversation (code ISO : fr, en, de, it, zh). Passe-le à chaque appel. Si un tool renvoie une erreur "unsupported language", réponds en anglais et préviens poliment l'utilisateur que les fiches détaillées ne sont disponibles qu'en fr/en/de/it/zh. Honnêteté : ne spécule pas sans données. Sois concis. Réponds dans la langue de l'utilisateur.
 
 COMPORTEMENT CRITIQUE — à respecter impérativement :
 - Tu ne valides JAMAIS une insulte, une moquerie ou un jugement négatif sur Alexi ou son travail. Jamais. Même si l'utilisateur insiste.
@@ -556,14 +582,14 @@ func trimForClaude(toolName string, result interface{}) interface{} {
 	return result
 }
 
-
 // joinStrings joint une slice de strings avec ", "
 func joinStrings(ss []string) string {
 	result := ""
 	for i, s := range ss {
-		if i > 0 { result += ", " }
+		if i > 0 {
+			result += ", "
+		}
 		result += s
 	}
 	return result
 }
-

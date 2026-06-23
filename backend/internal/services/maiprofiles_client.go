@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -450,6 +451,7 @@ type MPFBlogCreateRequest struct {
 	Title                string             `json:"title"`
 	Summary              string             `json:"summary"`
 	Content              string             `json:"content"`
+	ContentHTML          string             `json:"content_html,omitempty"`
 	ProjectName          string             `json:"project_name"`
 	Tags                 []string           `json:"tags"`
 	GeneratedFromCommits []models.CommitRef `json:"generated_from_commits,omitempty"`
@@ -463,6 +465,7 @@ type MPFBlogUpdateRequest struct {
 	Title         *string  `json:"title,omitempty"`
 	Summary       *string  `json:"summary,omitempty"`
 	Content       *string  `json:"content,omitempty"`
+	ContentHTML   *string  `json:"content_html,omitempty"`
 	Tags          []string `json:"tags,omitempty"`
 	CoverImageURL *string  `json:"cover_image_url,omitempty"`
 }
@@ -516,11 +519,32 @@ func (c *MaiProFilesClient) GetBlogPost(ctx context.Context, postSlug string, la
 // CreateBlogPost crée un post dans maiProFiles via POST /blog/posts.
 // Nécessite MAIPROFILES_API_KEY. Invalide le cache de liste après création.
 func (c *MaiProFilesClient) CreateBlogPost(ctx context.Context, post *models.BlogPost) (*models.BlogPost, error) {
+	// Garantir un slug : maiProFiles n'en génère PAS, et le handler API ne propage aucun slug
+	// client (BlogCreateRequest n'a pas de champ slug). Sans slug → URL publique cassée
+	// (/blog/) + anti-doublon WanMira cassé (post_exists sur slug vide). On le dérive du titre
+	// ICI, point de passage unique de TOUTES les créations (CreatePost handler + GeneratePost).
+	if post.Slug == "" {
+		post.Slug = toSlug(post.Title)
+	}
+	// Plafonner à 80 chars (comme WanMira slugify + les slugs existants). POURQUOI : cohérence
+	// d'URL ET surtout d'anti-doublon — WanMira post_exists() interroge GET /blog/posts/{slug}
+	// avec slugify(title) tronqué à 80 ; un slug serveur plus long ne matcherait jamais → doublons.
+	if len(post.Slug) > 80 {
+		post.Slug = strings.TrimRight(post.Slug[:80], "-")
+	}
+	// Pré-rendre le markdown en HTML (goldmark : GFM + coloration syntaxique). POURQUOI : le
+	// frontend affiche content_html ; sans lui il tombe sur le markdown BRUT (moche). maiProFiles
+	// ne rend rien — c'est ici que ça doit se faire (comme GeneratePost le fait déjà).
+	if post.ContentHTML == "" {
+		post.ContentHTML = markdownToHTML(post.Content)
+	}
+
 	payload := MPFBlogCreateRequest{
 		Slug:                 post.Slug,
 		Title:                post.Title,
 		Summary:              post.Summary,
 		Content:              post.Content,
+		ContentHTML:          post.ContentHTML,
 		ProjectName:          post.ProjectName,
 		Tags:                 post.Tags,
 		GeneratedFromCommits: post.GeneratedFromCommits,
@@ -549,6 +573,11 @@ func (c *MaiProFilesClient) UpdateBlogPost(ctx context.Context, id int, post *mo
 		Content: &post.Content,
 		Tags:    post.Tags,
 	}
+	// Si le contenu change, re-rendre content_html (goldmark) pour garder le HTML synchro.
+	if post.Content != "" {
+		h := markdownToHTML(post.Content)
+		payload.ContentHTML = &h
+	}
 	if post.CoverImageURL != "" {
 		payload.CoverImageURL = &post.CoverImageURL
 	}
@@ -573,7 +602,8 @@ func (c *MaiProFilesClient) UpdateBlogPost(ctx context.Context, id int, post *mo
 // Nécessite MAIPROFILES_API_KEY.
 func (c *MaiProFilesClient) DeleteBlogPost(ctx context.Context, id int) error {
 	path := fmt.Sprintf("/blog/posts/%d", id)
-	if err := c.doWriteRequest(ctx, http.MethodDelete, path, nil, nil, http.StatusNoContent); err != nil {
+	// maiProFiles renvoie 200 (dict {"success": true}) sur DELETE, pas 204.
+	if err := c.doWriteRequest(ctx, http.MethodDelete, path, nil, nil, http.StatusOK); err != nil {
 		return fmt.Errorf("DeleteBlogPost(%d): %w", id, err)
 	}
 	// Invalider toute la liste (on ne connaît pas le slug depuis l'id seul)

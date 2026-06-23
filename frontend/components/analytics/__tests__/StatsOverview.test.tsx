@@ -7,6 +7,7 @@ jest.mock('lucide-react', () => ({
   Eye: () => <div data-testid="eye-icon">Eye Icon</div>,
   FileText: () => <div data-testid="filetext-icon">FileText Icon</div>,
   TrendingUp: () => <div data-testid="trendingup-icon">TrendingUp Icon</div>,
+  BookOpen: () => <div data-testid="bookopen-icon">BookOpen Icon</div>,
 }));
 
 // Mock environment variable
@@ -33,6 +34,7 @@ describe('StatsOverview', () => {
       total_events: 8234,
       letters_generated: 456,
       conversion_rate: 0.296, // Backend returns as decimal
+      blog_reads: 789,
     },
   };
 
@@ -71,7 +73,7 @@ describe('StatsOverview', () => {
     const { container } = render(<StatsOverview />);
 
     const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBe(4); // 4 stat cards
+    expect(skeletons.length).toBe(5); // 4 stat cards
   });
 
   it('should fetch stats on mount', async () => {
@@ -81,17 +83,13 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/v1/analytics/stats',
-        { credentials: 'include' }
-      );
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/v1/analytics/realtime',
+        'http://localhost:8080/api/v1/analytics/stats?period=week',
         { credentials: 'include' }
       );
     });
   });
 
-  it('should render all 4 stat cards', async () => {
+  it('should render all 5 stat cards', async () => {
     mockBothApis();
 
     render(<StatsOverview />);
@@ -100,7 +98,18 @@ describe('StatsOverview', () => {
       expect(screen.getByText('Visiteurs')).toBeInTheDocument();
       expect(screen.getByText('Pages Vues')).toBeInTheDocument();
       expect(screen.getByText('Lettres')).toBeInTheDocument();
+      expect(screen.getByText('Lectures blog')).toBeInTheDocument();
       expect(screen.getByText('Conversion')).toBeInTheDocument();
+    });
+  });
+
+  it('should display blog reads count', async () => {
+    mockBothApis();
+
+    render(<StatsOverview />);
+
+    await waitFor(() => {
+      expect(screen.getByText('789')).toBeInTheDocument();
     });
   });
 
@@ -111,16 +120,6 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       expect(screen.getByText('1543')).toBeInTheDocument();
-    });
-  });
-
-  it('should display active visitors in subtitle', async () => {
-    mockBothApis();
-
-    render(<StatsOverview />);
-
-    await waitFor(() => {
-      expect(screen.getByText('+12 actifs')).toBeInTheDocument();
     });
   });
 
@@ -185,7 +184,7 @@ describe('StatsOverview', () => {
     const { container } = render(<StatsOverview />);
 
     await waitFor(() => {
-      const grid = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4');
+      const grid = container.querySelector('.grid.grid-cols-2.md\\:grid-cols-3.lg\\:grid-cols-5');
       expect(grid).toBeInTheDocument();
     });
   });
@@ -197,20 +196,7 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       const cards = container.querySelectorAll('.rounded-lg.border.bg-card');
-      expect(cards.length).toBe(4);
-    });
-  });
-
-  it('should display subtitles for each card', async () => {
-    mockBothApis();
-
-    render(<StatsOverview />);
-
-    await waitFor(() => {
-      expect(screen.getByText('+12 actifs')).toBeInTheDocument();
-      expect(screen.getByText('+234 aujourd\'hui')).toBeInTheDocument();
-      expect(screen.getByText('+12 aujourd\'hui')).toBeInTheDocument();
-      expect(screen.getByText('+2.3% vs hier')).toBeInTheDocument();
+      expect(cards.length).toBe(5);
     });
   });
 
@@ -230,37 +216,15 @@ describe('StatsOverview', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle API response with missing activeVisitors', async () => {
-    (global.fetch as jest.Mock).mockImplementation((url: string) => {
-      if (url.includes('/realtime')) {
-        // Realtime returns no current_visitors
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ success: true, data: {} }),
-        });
-      }
-      return Promise.resolve({
-        ok: true,
-        json: async () => mockStatsApiResponse,
-      });
-    });
-
-    render(<StatsOverview />);
-
-    await waitFor(() => {
-      expect(screen.getByText('+0 actifs')).toBeInTheDocument();
-    });
-  });
-
   it('should auto-refresh every 30 seconds', async () => {
     jest.useFakeTimers();
     mockBothApis();
 
     render(<StatsOverview />);
 
-    // Initial fetch (2 calls: stats + realtime)
+    // Initial fetch (1 appel : stats uniquement, plus de /realtime)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     // Advance 30 seconds and flush promises
@@ -270,7 +234,7 @@ describe('StatsOverview', () => {
     });
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(4); // 2 more calls
+      expect(global.fetch).toHaveBeenCalledTimes(2); // 1 appel de plus
     });
 
     jest.useRealTimers();
@@ -283,7 +247,7 @@ describe('StatsOverview', () => {
     const { unmount } = render(<StatsOverview />);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     unmount();
@@ -294,7 +258,7 @@ describe('StatsOverview', () => {
     });
 
     // Should not fetch again
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
     jest.useRealTimers();
   });
@@ -306,7 +270,7 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       const values = container.querySelectorAll('.text-3xl.font-bold');
-      expect(values.length).toBe(4);
+      expect(values.length).toBe(5);
     });
   });
 
@@ -317,18 +281,7 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       const titles = container.querySelectorAll('.text-sm.font-medium.text-muted-foreground');
-      expect(titles.length).toBe(4);
-    });
-  });
-
-  it('should render subtitles with small text', async () => {
-    mockBothApis();
-
-    const { container } = render(<StatsOverview />);
-
-    await waitFor(() => {
-      const subtitles = container.querySelectorAll('.text-xs.text-muted-foreground');
-      expect(subtitles.length).toBe(4);
+      expect(titles.length).toBe(5);
     });
   });
 
@@ -369,7 +322,7 @@ describe('StatsOverview', () => {
 
     await waitFor(() => {
       const cards = container.querySelectorAll('.p-6');
-      expect(cards.length).toBe(4);
+      expect(cards.length).toBe(5);
     });
   });
 
@@ -395,7 +348,7 @@ describe('StatsOverview', () => {
     const { container } = render(<StatsOverview />);
 
     const skeletonCards = container.querySelectorAll('.rounded-lg.border.bg-card.p-6.animate-pulse');
-    expect(skeletonCards.length).toBe(4);
+    expect(skeletonCards.length).toBe(5);
   });
 
   it('should handle zero values', async () => {

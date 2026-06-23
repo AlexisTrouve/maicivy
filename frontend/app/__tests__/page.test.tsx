@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import HomePage from '../page';
+// Le home réel vit sous app/[locale]/page.tsx (routing par locale) — on teste le vrai composant.
+import HomePage from '../[locale]/page';
 
-// Mock Next.js components
-jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
-});
+// Le home utilise Link depuis @/i18n/navigation (ESM, ré-exporte next-intl/navigation), pas next/link.
+jest.mock('@/i18n/navigation', () => ({
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+}));
 
 // Mock shadcn/ui components
 jest.mock('@/components/ui/button', () => ({
@@ -31,6 +30,8 @@ jest.mock('lucide-react', () => ({
   FileText: () => <svg data-testid="file-text-icon" />,
   Sparkles: () => <svg data-testid="sparkles-icon" />,
   BarChart3: () => <svg data-testid="bar-chart-icon" />,
+  Layers: () => <svg data-testid="layers-icon" />,
+  ArrowRight: () => <svg data-testid="arrow-right-icon" />,
 }));
 
 describe('HomePage', () => {
@@ -124,6 +125,7 @@ describe('HomePage', () => {
 
     const grid = container.querySelector('.grid');
     expect(grid).toBeInTheDocument();
-    expect(grid).toHaveClass('md:grid-cols-3');
+    // Le home a 4 cartes (CV, Lettres, Analytics, Architecture) → grille 2 puis 4 colonnes.
+    expect(grid).toHaveClass('md:grid-cols-2', 'lg:grid-cols-4');
   });
 });

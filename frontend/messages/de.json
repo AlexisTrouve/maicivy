@@ -1,4 +1,91 @@
 {
+  "admin": {
+    "brand": "maicivy · admin",
+    "logout": "Abmelden",
+    "nav": {
+      "cv": "CV aus Angebot",
+      "messages": "Nachrichten",
+      "letters": "Anschreiben",
+      "stats": "Private Stats",
+      "chat": "Agent"
+    },
+    "login": {
+      "password": "Passwort",
+      "submit": "Eintreten",
+      "loading": "…",
+      "invalid": "Ungültiges Passwort",
+      "networkError": "Netzwerkfehler"
+    },
+    "cv": {
+      "title": "CV aus Angebot",
+      "help": "Stellenangebot einfügen (Text oder URL) → ein angepasster Lebenslauf wird als PDF erzeugt, mit unsichtbarer ATS-Optimierung.",
+      "offerPlaceholder": "Stellenangebot hier einfügen (oder eine URL)…",
+      "generate": "CV erzeugen",
+      "generating": "Erzeugung… (~30s)",
+      "previewTitle": "Vorschau",
+      "download": "PDF herunterladen",
+      "empty": "Der erzeugte Lebenslauf erscheint hier.",
+      "loading": "Lebenslauf wird erzeugt…"
+    },
+    "messages": {
+      "title": "Plattform-Nachricht",
+      "help": "Auftrag einfügen (Malt, LinkedIn, Upwork) → eine versandfertige Bewerbungsnachricht wird erzeugt.",
+      "missionPlaceholder": "Auftrag / Anzeige hier einfügen (Malt, LinkedIn, Upwork)…",
+      "tjmPlaceholder": "Tagessatz €",
+      "generate": "Erzeugen",
+      "generating": "Erzeugung…",
+      "resultTitle": "Nachricht",
+      "copy": "Kopieren",
+      "copied": "Kopiert ✓",
+      "empty": "Die erzeugte Nachricht erscheint hier.",
+      "loading": "Nachricht wird geschrieben…"
+    },
+    "letters": {
+      "title": "Anschreiben",
+      "help": "Unternehmen + Angebot → ein Paar Anschreiben (Motivation + Anti-Motivation) wird als PDF erzeugt.",
+      "companyPlaceholder": "Firmenname",
+      "offerPlaceholder": "Angebotstext (optional, empfohlen)…",
+      "generate": "Paar erzeugen",
+      "generating": "Erzeugung…",
+      "progress": "Erzeugung…",
+      "done": "Paar erzeugt ✓",
+      "downloadMotivation": "Download — Motivation (PDF)",
+      "downloadAnti": "Download — Anti-Motivation (PDF)",
+      "empty": "Das Motivation / Anti-Motivation-Paar erscheint hier.",
+      "failed": "Erzeugung fehlgeschlagen"
+    },
+    "stats": {
+      "title": "Private Stats",
+      "loading": "Laden…",
+      "error": "Stats konnten nicht geladen werden",
+      "aiTitle": "KI-Kosten & Nutzung",
+      "genToday": "Generierungen heute",
+      "lettersMonth": "Anschreiben diesen Monat ({tokens} Tokens)",
+      "model": "Modell",
+      "lettersCount": "Anschreiben",
+      "tokens": "Tokens",
+      "cost": "Kosten ~",
+      "noLetters": "Keine Anschreiben diesen Monat.",
+      "aiNote": "Geschätzte Kosten, nur Anschreiben (CV / Nachrichten / Chat speichern ihre Kosten noch nicht).",
+      "securityTitle": "Sicherheit — {count} verdächtige IP(s)",
+      "noSus": "Gerade keine verdächtige IP. 🎉",
+      "analyticsTitle": "Detaillierte Analytics",
+      "byProfile": "Nach erkanntem Profil",
+      "topReferrers": "Top-Referrer",
+      "noReferrers": "Kein Referrer erfasst."
+    },
+    "chat": {
+      "title": "Agent",
+      "help": "Frag zu deinem Portfolio (Projekte, Skills, Erfahrung, Blog) — der Agent fragt maiProFiles live ab.",
+      "newConversation": "Neue Unterhaltung",
+      "placeholder": "Nachricht schreiben…",
+      "send": "Senden",
+      "thinking": "Der Agent denkt nach…",
+      "empty": "Starte eine Unterhaltung mit dem Agenten.",
+      "noConversations": "Keine Unterhaltungen."
+    },
+    "errorPrefix": "Fehler"
+  },
   "metadata": {
     "title": "maicivy - Interaktiver Intelligenter Lebenslauf",
     "description": "Interaktiver Lebenslauf mit KI-gestützter Anschreibengenerierung"
@@ -194,6 +281,24 @@
     }
   },
   "cv": {
+    "devPortrait": {
+      "title": "Dev-Porträt",
+      "subtitle": "Meine Entwickleraktivität in echten Zahlen",
+      "loc": "Codezeilen",
+      "langs": "{count} Sprachen",
+      "commits": "Commits",
+      "commitsSub": "letzte 6 Monate",
+      "repos": "aktive Repos",
+      "genreTitle": "Mein aktueller Fokus",
+      "genreSub": "Commits nach Sprache — letzte 90 Tage vs. Jahresbasis",
+      "momentumTitle": "Momentum",
+      "momentumValue": "{recent} Commits in den letzten 30 Tagen",
+      "momentumRatio": "×{ratio} vs. Vormonat",
+      "hotTitle": "Gerade aktive Repos",
+      "hotCommits": "{count} Commits",
+      "caveat": "Richtungstrends: dominante Sprache des Repos, aggregierte Commit-Tage (begrenzt auf ~70/Repo).",
+      "detailLink": "Detaillierte Heatmap ansehen"
+    },
     "title": "Dynamischer Lebenslauf",
     "adaptedTo": "Lebenslauf angepasst für Profil:",
     "selectTheme": "Design auswählen",
@@ -336,6 +441,14 @@
     }
   },
   "analytics": {
+    "testStats": {
+      "title": "Tests & Qualität",
+      "allGreen": "100% grün",
+      "total": "automatisierte Tests",
+      "backend": "Backend (Go)",
+      "frontend": "Frontend · {suites} Suites",
+      "updated": "Stand {date}"
+    },
     "title": "Analytics Dashboard",
     "subtitle": "Öffentliche Echtzeit-Statistiken",
     "description": "Erfahren Sie, wie Besucher mit der Website interagieren",
@@ -367,12 +480,16 @@
         "high": "Hoch",
         "noData": "Keine Interaktionsdaten verfügbar",
         "interactions": "{count} Interaktionen",
-        "based": "Basierend auf {count} Interaktionspunkten"
+        "based": "Basierend auf {count} Interaktionspunkten",
+        "explain": "Wo Besucher klicken (Buttons & Links, alle Seiten — 24 h). Heißer = mehr Klicks.",
+        "unknownElement": "Element",
+        "topTitle": "Top-Interaktionen"
       },
       "stats": {
         "visitors": "Besucher",
         "pageViews": "Seitenaufrufe",
         "letters": "Anschreiben",
+        "blogReads": "Blog-Aufrufe",
         "conversion": "Conversion"
       }
     },
@@ -392,13 +509,16 @@
     "title": "Architektur & Tech-Stack",
     "subtitle": "Entdecken Sie die Technologien und die Architektur hinter maicivy",
     "overview": "Überblick",
+    "systemDiagram": "Systemarchitektur",
     "fullStack": "Vollständiger Tech-Stack",
     "scraper": "Multi-Source Company Scraper",
+    "scraperParallel": "PARALLELES ABRUFEN",
+    "scraperResult": "AGGREGIERTES ERGEBNIS",
     "features": "Technische Funktionen",
     "security": "Sicherheit (OWASP Top 10)",
     "codeExample": "Beispiel: Multi-Source Scraper",
     "sourceCode": "Quellcode",
-    "sourceCodeDesc": "Entdecken Sie den vollständigen Code auf GitHub – 100+ Go-Dateien, 60+ React-Komponenten, 882 Tests",
+    "sourceCodeDesc": "Entdecken Sie den vollständigen Code auf GitHub – 126 Go-Dateien, 65 React-Komponenten, 1000+ Tests",
     "viewOnGithub": "Auf GitHub ansehen",
     "backToCV": "Zurück zum Lebenslauf",
     "layers": {
@@ -407,7 +527,8 @@
       "services": "SERVICES",
       "database": "DATABASE",
       "cache": "CACHE",
-      "aiProviders": "AI PROVIDERS"
+      "aiProviders": "AI PROVIDERS",
+      "edge": "EDGE & SICHERHEIT"
     },
     "stacks": {
       "backend": {

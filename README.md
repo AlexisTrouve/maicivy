@@ -73,8 +73,17 @@ The AI researches the company in real-time using **multiple sources** (Wikipedia
 - Auto-import public repositories
 - Automatic sync every 6 hours
 
+### AI Chat Agent
+- **Conversational CV**: ask anything about projects, skills, experience, blog
+- **Claude Opus agent** with real-time tool calls to the live profile (maiProFiles)
+- **Live CV cards**: the conversation renders structured cards (projects, skills, experiences) alongside
+
+### Blog & Git Stats
+- **Multilingual blog** served in the visitor's locale, RSS feed, SEO (sitemap, JSON-LD)
+- **Git Stats**: real commit / lines-of-code activity over 6 months (Gitea + GitLab), stale-while-revalidate cache
+
 ### Internationalization
-- **Bilingual Support**: Full French and English versions
+- **5 Languages**: French, English, German, Italian, Chinese (French is the source)
 - **API Language Switching**: `?lang=en` parameter on all endpoints
 - **Localized Content**: Experiences, skills, projects, and AI-generated letters
 
@@ -144,8 +153,8 @@ bash STOP.sh
 ### AI Services
 | Provider | Model | Use Case |
 |----------|-------|----------|
-| **Anthropic** | claude-sonnet-4 | Primary letter generation |
-| **OpenAI** | gpt-4o | Fallback provider |
+| **Anthropic** | Claude (Haiku 4.5 / Opus) | Letters, messages, CV tailoring, chat agent |
+| **OpenAI** | GPT-4o | Fallback provider |
 
 ### Infrastructure
 | Technology | Purpose |
@@ -177,7 +186,7 @@ maicivy/
 │   │   ├── models/         # GORM models
 │   │   └── workers/        # Background jobs
 │   ├── migrations/         # SQL migrations
-│   └── tests/              # 28 test files
+│   └── tests/              # 52 test files
 │
 ├── frontend/               # Next.js Application
 │   ├── app/               # App Router pages
@@ -188,11 +197,11 @@ maicivy/
 │   │   ├── cv/            # CVThemeSelector, ExperienceTimeline...
 │   │   ├── letters/       # LetterGenerator, LetterPreview...
 │   │   └── analytics/     # RealtimeVisitors, ThemeStats...
-│   └── __tests__/         # 228 test files
+│   └── __tests__/         # 70 spec files (Jest + Playwright)
 │
 ├── docs/                  # Comprehensive documentation
 │   ├── PROJECT_SPEC.md    # Full specifications
-│   └── implementation/    # 19 detailed guides
+│   └── implementation/    # 20 detailed guides
 │
 ├── docker-compose.yml     # Full stack orchestration
 ├── START.sh              # Quick start script
@@ -233,6 +242,14 @@ GET  /api/v1/analytics/stats      # Aggregated statistics
 GET  /api/v1/analytics/themes     # Top CV themes
 GET  /api/v1/analytics/heatmap    # Interaction heatmap
 WS   /ws/analytics                # WebSocket real-time updates
+```
+
+### Chat, Blog & Git Stats
+```http
+POST /api/v1/messages/generate    # Platform outreach message (Malt/LinkedIn/Upwork)
+GET  /api/v1/blog/posts           # Blog articles (paginated, ?lang=)
+GET  /api/v1/blog/feed.xml        # RSS feed
+GET  /api/v1/cv/gitstats          # Real commit / LOC stats (6 months)
 ```
 
 ---
@@ -380,10 +397,9 @@ npm run test:coverage     # Coverage report
 
 | Document | Description |
 |----------|-------------|
-| [CLAUDE.md](./CLAUDE.md) | Navigation guide for developers |
 | [docs/PROJECT_SPEC.md](./docs/PROJECT_SPEC.md) | Complete specifications |
 | [QUICKSTART.md](./QUICKSTART.md) | Quick start guide |
-| [docs/implementation/](./docs/implementation/) | 19 detailed implementation guides |
+| [docs/implementation/](./docs/implementation/) | 20 detailed implementation guides |
 
 ### Implementation Guides
 - `01_SETUP_INFRASTRUCTURE.md` - Docker, PostgreSQL, Redis
@@ -391,7 +407,7 @@ npm run test:coverage     # Coverage report
 - `08_BACKEND_AI_SERVICES.md` - Claude/GPT integration
 - `10_FRONTEND_LETTERS.md` - Letter generator UI
 - `17_SECURITY.md` - OWASP compliance
-- ... and 14 more
+- ... and 15 more
 
 ---
 
@@ -399,13 +415,13 @@ npm run test:coverage     # Coverage report
 
 | Metric | Value |
 |--------|-------|
-| Backend Go files | 100+ |
-| Frontend components | 60+ |
-| Backend tests | 28 files |
-| Frontend tests | 228 files |
-| Total tests | 882 passing |
-| Documentation | ~10,000 lines |
-| API endpoints | 30+ |
+| Backend Go files | 126 |
+| Frontend components | 65 |
+| Backend tests | 208 (52 files) |
+| Frontend tests | 833 (58 suites) |
+| Total tests | 1041 passing |
+| Documentation | ~85k lines |
+| API endpoints | 100+ |
 
 ---
 
@@ -420,10 +436,10 @@ npm run test:coverage     # Coverage report
 - [x] Multi-source company scraper (Wikipedia, GitHub, News)
 - [x] Real-time analytics dashboard (WebSocket)
 - [x] GitHub OAuth integration
-- [x] Comprehensive testing (882 tests passing)
-- [ ] Production deployment
-- [x] Multi-language support (FR/EN)
-- [ ] AI chatbot for CV Q&A
+- [x] Comprehensive testing (1000+ tests passing)
+- [x] Production deployment (live at maicivy.etheryale.com)
+- [x] Multi-language support (FR / EN / DE / IT / ZH)
+- [x] AI chat agent for CV Q&A (Claude Opus, live CV cards)
 
 ---
 

@@ -24,6 +24,14 @@ const (
 	susFreeScore = 5.0  // erreurs "gratuites" avant tout throttle (une page cassée ne pénalise pas)
 	susFullScore = 50.0 // score où le throttle sature
 	susMaxP      = 0.9  // proba max — jamais 100% (jamais de coupure dure)
+
+	// susSuccessCredit : décrément du score par vrai 2xx (densité d'erreurs, cf. la branche succès).
+	// Conservateur (0.5) : protège les vrais users sans annuler le signal d'un scanner qui pad des 200.
+	susSuccessCredit = 0.5
+
+	// friendCookieName : cookie "badge dev" exemptant le sus (cf. SusConfig.FriendSecret). Même nom
+	// que celui posé au login owner (api/admin.go).
+	friendCookieName = "maicivy_friend"
 )
 
 // SusConfig configure le sus-rate-limit persistant + l'alerte filou.
@@ -44,6 +52,11 @@ type SusConfig struct {
 	OwnerKey string
 	// Allowlist : IPs/CIDR exemptés (IPs STABLES : monitor, partenaire, box de test). Parsé au setup.
 	Allowlist []string
+	// FriendSecret : si non vide, une requête portant un cookie `maicivy_friend` HMAC-valide (signé
+	// avec ce secret = le SESSION_SECRET serveur) est EXEMPTÉE (ni score ni throttle). Badge dev
+	// "je suis un copain" : posé au login owner, valable ~90 j, IP-INDÉPENDANT (survit au changement
+	// d'IP, contrairement à l'allowlist) et révocable (tourner le secret invalide tous les badges).
+	FriendSecret string
 	// AlertMuteTypes : types d'attaque (cf. classifyAttack) dont l'alerte filou est LOGguée mais
 	// PAS notifiée sur Discord. Ex "php" : les scans webshell PHP sont du bruit (aucun PHP servi
 	// sur maicivy) → on garde la trace en log mais on ne spamme pas la notif. CSV via env.
@@ -93,18 +106,26 @@ func SusRateLimit(cfg SusConfig) fiber.Handler {
 		if cfg.OwnerKey != "" && c.Get("X-Owner-Key") == cfg.OwnerKey {
 			return c.Next()
 		}
+		// Badge dev "je suis un copain" : cookie maicivy_friend HMAC-valide → exempté. IP-indépendant
+		// (le owner dev génère des 404 légitimes en bossant ; ce cookie le marque ami sans allowlister
+		// son IP, qui peut tourner). VerifyAdminCookie vérifie signature + expiry (constant-time).
+		if cfg.FriendSecret != "" && VerifyAdminCookie(c.Cookies(friendCookieName), cfg.FriendSecret) {
+			return c.Next()
+		}
 		if ipAllowed(ip, allowNets) {
 			return c.Next()
 		}
-		// Chemins de navigateur bénins (favicon, _next, robots…) : JAMAIS scorés ni throttlés.
-		// POURQUOI : un favicon manquant → 404 ; chaque onglet le redemande → le score sus d'un VRAI
-		// utilisateur grimpait jusqu'au throttle (faux positif observé sur une IP résidentielle).
-		// Un scanner ne cible pas /favicon.ico (il cible /.env, /wp-config…) → les exclure ne perd
-		// aucun signal. À placer AVANT le throttle pour que les assets passent même IP déjà flaggée.
+		// Chemins de navigateur bénins (favicon, _next, robots…) ET assets statiques (.png/.css/.js/
+		// fontes…) : JAMAIS scorés ni throttlés.
+		// POURQUOI : un asset manquant → 404 ; le navigateur le redemande à CHAQUE page → le score sus
+		// d'un VRAI utilisateur grimpait jusqu'au throttle (faux positif). Un favicon précis était déjà
+		// couvert, mais N'IMPORTE quel asset cassé (/logo.png, un .css externe, une font) faisait le
+		// même dégât. Un scanner ne cible pas /logo.png (il cible /.env, /wp-login.php… → couverts par
+		// les signatures), donc exempter les extensions d'asset ne perd aucun signal.
 		// EXCEPTION : on n'exempte QUE si le chemin ne matche pas aussi une signature scanner — sinon
-		// un scanner préfixait /_next/ ou /.well-known/ (préfixes non ancrés) pour scanner à score 0.
-		// Un vrai asset bénin (/_next/static/x.js) ne matche jamais une signature → rien n'est perdu.
-		if benignPath(c.Path()) && !(cfg.ScannerPath != nil && cfg.ScannerPath(c.Path())) {
+		// un scanner suffixait .js / préfixait /_next/ pour scanner à score 0 (ex: /wp-config.js reste
+		// scoré). Un vrai asset (/logo.png, /_next/static/x.js) ne matche jamais une signature.
+		if (benignPath(c.Path()) || isAssetExtension(c.Path())) && !(cfg.ScannerPath != nil && cfg.ScannerPath(c.Path())) {
 			return c.Next()
 		}
 		ctx := context.Background()
@@ -149,7 +170,21 @@ func SusRateLimit(cfg SusConfig) fiber.Handler {
 		// en 200 — c'est ce qui attrape le scan du frontend, aveugle au seul taux de 4xx.
 		isScanner := cfg.ScannerPath != nil && cfg.ScannerPath(c.Path())
 		if !isBad && !isScanner {
-			return nextErr // requête légitime → le score n'augmente pas
+			// Crédit de densité : un vrai 2xx (contenu réel, non-scanner) ABAISSE le score (plancher 0).
+			// POURQUOI : un user légitime génère surtout des SUCCÈS ; ils doivent absorber ses 4xx
+			// incidents (lien mort, asset non couvert par l'exemption) pour qu'il n'atteigne jamais le
+			// throttle. Le système mesure ainsi la DENSITÉ d'erreurs, pas le compte brut. Un scanner ne
+			// génère quasi aucun 2xx → non concerné (et ses hits de signature scorent ailleurs). On
+			// n'écrit QUE si un score existe déjà (>0) → aucun write Redis pour les 99% d'IP propres.
+			if score > 0 && status >= 200 && status < 300 {
+				credited := score - susSuccessCredit
+				if credited < 0 {
+					credited = 0
+				}
+				cfg.Redis.HSet(ctx, key, "score", strconv.FormatFloat(credited, 'f', 3, 64), "ts", now.Unix())
+				cfg.Redis.Expire(ctx, key, memoryTTL)
+			}
+			return nextErr // requête légitime → le score n'augmente jamais (et décroît si succès)
 		}
 
 		// Erreur scanner → score += 1 (sur le score déjà décliné), persiste + échantillon de chemin.
@@ -172,6 +207,33 @@ func SusRateLimit(cfg SusConfig) fiber.Handler {
 		}
 		return nextErr
 	}
+}
+
+// staticAssetExts : extensions d'ASSETS statiques (visuels, styles, scripts, fontes, sourcemaps).
+// Un 4xx dessus = asset manquant (favicon, logo, css/js cassé, font absente), JAMAIS un scan — un
+// scanner cible des chemins sans extension ou en .php/.env/.git (couverts par les signatures), pas
+// /logo.png. L'exemption est de toute façon écrasée si le chemin matche une signature (cf. l'appel).
+var staticAssetExts = map[string]bool{
+	".ico": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+	".svg": true, ".webp": true, ".avif": true, ".bmp": true,
+	".css": true, ".js": true, ".mjs": true, ".map": true,
+	".woff": true, ".woff2": true, ".ttf": true, ".eot": true, ".otf": true,
+}
+
+// isAssetExtension : le chemin se termine-t-il par une extension d'asset statique ? On isole
+// l'extension après le DERNIER point, et on rejette si un '/' suit ce point (ex: /a.b/c n'a pas
+// d'extension). Distinct de isStaticAsset (analytics) : EXCLUT .json — un scanner probe /config.json
+// et autres secrets en .json, on ne doit donc PAS exempter cette extension du scoring sus.
+func isAssetExtension(p string) bool {
+	i := strings.LastIndexByte(p, '.')
+	if i < 0 {
+		return false
+	}
+	ext := p[i:]
+	if strings.IndexByte(ext, '/') >= 0 {
+		return false
+	}
+	return staticAssetExts[strings.ToLower(ext)]
 }
 
 // benignPath : chemins générés par les navigateurs/SPA, jamais malveillants → exemptés du sus

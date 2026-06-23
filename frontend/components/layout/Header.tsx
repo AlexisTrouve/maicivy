@@ -35,16 +35,22 @@ export function Header() {
             maicivy
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Nav en pastilles (segmented control) : chaque onglet est une surface arrondie cliquable.
+              gap-1 (et non gap-6) car chaque pastille porte déjà son propre padding px-3 → on évite
+              de doubler l'espacement et de faire déborder la barre sur md (7 onglets). */}
+          <nav className="hidden md:flex items-center gap-1">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'text-sm font-medium transition-colors hover:text-primary',
+                  // Forme commune : pastille arrondie, padding pour la surface cliquable, transition douce.
+                  'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                   pathname === item.href
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
+                    // Actif : pastille PLEINE (fond primary + texte contrasté) → saute aux yeux.
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    // Inactif : texte lisible, fond gris au survol pour signaler que c'est cliquable.
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 {item.name}

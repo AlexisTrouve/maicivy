@@ -1,6 +1,7 @@
 import { getRequestConfig } from 'next-intl/server';
 import { hasLocale } from 'next-intl';
 import { locales, defaultLocale, type Locale } from './config';
+import { loadMessages } from './messages';
 
 // QUOI : fournit la locale + les messages à TOUT rendu côté serveur qui passe par next-intl
 //   (Server Components via useTranslations/getTranslations sans locale explicite).
@@ -22,6 +23,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(`../messages/${locale}.json`)).default
+    // loadMessages = imports statiques (turbopack-safe), cf. ./messages.ts.
+    messages: loadMessages(locale)
   };
 });

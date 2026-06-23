@@ -11,6 +11,9 @@ interface LettersStat {
 
 type Period = 'day' | 'week' | 'month';
 
+// NB : le « social proof » (baseline de lettres) n'est PLUS géré ici. Le total est calculé côté BACKEND
+// (DemoMetrics, réel + synthétique gaté par les vrais users) et renvoyé dans `data.total`. cf. CLAUDE.md.
+
 export default function LettersGenerated() {
   const t = useTranslations('analytics.widgets.letters');
   const tPeriods = useTranslations('analytics.periods');
@@ -42,8 +45,9 @@ export default function LettersGenerated() {
       // Handle API response format: { success: true, data: {...} }
       if (json.success && json.data) {
         const data = json.data;
-        // Total is motivation + anti_motivation
-        const total = (data.motivation || 0) + (data.anti_motivation || 0);
+        // Total AFFICHÉ = celui calculé par le backend (réel + synthétique DemoMetrics, gaté par les
+        // vrais users) ; fallback motivation+anti si le champ manque. Le front ne fait qu'afficher.
+        const total = data.total ?? ((data.motivation || 0) + (data.anti_motivation || 0));
         setTotalLetters(total);
 
         // If there's a history array, use it; otherwise create a simple display

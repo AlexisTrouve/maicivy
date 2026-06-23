@@ -40,6 +40,19 @@ var ScannerSignatureDefs = []struct{ Name, Pattern string }{
 	{"yaml", `\.ya?ml`},
 	{"token", `token`},
 	{"envlocal", `\.local`},
+	// — Scanners de services d'automatisation/IA/infra exposés (n8n, Langflow, Docker API), minés du
+	//   scanner 103.153.183.92 (juin 2026, Go-http-client) qui sprayait ces chemins. Préfixes COMPLETS
+	//   et distinctifs → 0 overlap avec l'API maicivy (letters/cv/blog/analytics/gitstats…) ni les
+	//   assets Next (un chunk `components-x.js` ne contient pas `/api/v1/components`). Validés 0 faux
+	//   positif par TestTune_ScannerSignatures (corpus légitime synth + historique).
+	//   NB : on n'ajoute PAS `webhook-test` (un futur slug blog "webhook-testing…" matcherait → FP) ;
+	//   la densité de 404 l'attrape déjà de toute façon.
+	{"n8nworkflows", `/api/v1/workflows`},
+	{"n8nexecutions", `/api/v1/executions`},
+	{"n8nrest", `/rest/workflows`},
+	{"langflowflows", `/api/v1/flows`},
+	{"langflowcomponents", `/api/v1/components`},
+	{"dockerapi", `docker/api`},
 }
 
 // ScannerPathMatcher compile un matcher depuis des motifs. Décode les %xx d'abord (évasions),

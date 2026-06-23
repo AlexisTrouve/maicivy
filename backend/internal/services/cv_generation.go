@@ -408,7 +408,66 @@ Donne UNIQUEMENT ce JSON après ton analyse (sans markdown, sans explication):
 	return sb.String()
 }
 
-// callClaude envoie le prompt à Anthropic et retourne le texte brut de la réponse.
+// isRetryableLLMStatus : statuts transients du proxy LLM / d'Anthropic → on retente. 429 (rate),
+// 500/502/503 (gateway/proxy down), 529 (overloaded Anthropic). Le proxy dit lui-même "Please retry".
+func isRetryableLLMStatus(code int) bool {
+	switch code {
+	case http.StatusTooManyRequests, // 429
+		http.StatusInternalServerError, // 500
+		http.StatusBadGateway,          // 502 (le "Proxy unavailable" observé)
+		http.StatusServiceUnavailable,  // 503
+		529:                            // 529 Overloaded (spécifique Anthropic)
+		return true
+	}
+	return false
+}
+
+// doClaudeOnce fait UNE tentative d'appel. Renvoie (texte, retryable, err) : texte si 200, sinon
+// un flag indiquant si l'échec vaut la peine d'être retenté (erreur réseau ou statut transient).
+func (s *CVGenerationService) doClaudeOnce(ctx context.Context, bodyBytes []byte) (string, bool, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/v1/messages", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return "", false, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", s.apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", true, err // erreur réseau/timeout → transient, retryable
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", true, err
+	}
+
+	if resp.StatusCode != 200 {
+		return "", isRetryableLLMStatus(resp.StatusCode), fmt.Errorf("API returned %d: %s", resp.StatusCode, string(respBytes))
+	}
+
+	// Structure de réponse Anthropic : content[0].text
+	var apiResp struct {
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := json.Unmarshal(respBytes, &apiResp); err != nil {
+		return "", false, fmt.Errorf("failed to parse API response: %w", err)
+	}
+	if len(apiResp.Content) == 0 {
+		return "", false, fmt.Errorf("empty API response")
+	}
+	return apiResp.Content[0].Text, false, nil
+}
+
+// callClaude envoie le prompt au proxy LLM et retourne le texte brut, avec RETRY sur erreurs
+// transientes. POURQUOI : ai.etheryale.com renvoie parfois 502 "Proxy unavailable. Please retry."
+// sur les gros prompts (CV ~4K tokens) → sans retry, un seul hoquet = 500 pour l'utilisateur.
+// COMMENT : jusqu'à 3 tentatives, backoff léger (400ms, 800ms) interruptible par le contexte ;
+// on ne retente JAMAIS un 4xx (hors 429) — c'est une vraie erreur, pas un transient.
 // Haiku avec CoT inline : max_tokens 4000 pour raisonnement + JSON de sortie.
 func (s *CVGenerationService) callClaude(ctx context.Context, prompt string) (string, error) {
 	body := map[string]interface{}{
@@ -424,43 +483,26 @@ func (s *CVGenerationService) callClaude(ctx context.Context, prompt string) (st
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/v1/messages", bytes.NewReader(bodyBytes))
-	if err != nil {
-		return "", err
+	const maxAttempts = 3
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		text, retryable, err := s.doClaudeOnce(ctx, bodyBytes)
+		if err == nil {
+			return text, nil
+		}
+		lastErr = err
+		// Stop si non-retryable ou si on a épuisé les tentatives.
+		if !retryable || attempt == maxAttempts {
+			break
+		}
+		// Backoff (400ms puis 800ms), abandonné si le contexte expire entre-temps.
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(time.Duration(attempt) * 400 * time.Millisecond):
+		}
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", s.apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("API returned %d: %s", resp.StatusCode, string(respBytes))
-	}
-
-	// Structure de réponse Anthropic : content[0].text
-	var apiResp struct {
-		Content []struct {
-			Text string `json:"text"`
-		} `json:"content"`
-	}
-	if err := json.Unmarshal(respBytes, &apiResp); err != nil {
-		return "", fmt.Errorf("failed to parse API response: %w", err)
-	}
-	if len(apiResp.Content) == 0 {
-		return "", fmt.Errorf("empty API response")
-	}
-
-	return apiResp.Content[0].Text, nil
+	return "", lastErr
 }
 
 // parseLLMResponse parse le JSON retourné par le LLM.

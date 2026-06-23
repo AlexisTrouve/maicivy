@@ -71,10 +71,15 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
+  /* Run your local dev server before starting the tests.
+     SAUF si on cible une URL distante (PLAYWRIGHT_TEST_BASE_URL défini, ex: prod) : dans ce
+     cas inutile — et coûteux — de démarrer un `npm run dev` local que les tests n'utilisent
+     pas. On désactive donc le webServer quand une baseURL externe est fournie. */
+  webServer: process.env.PLAYWRIGHT_TEST_BASE_URL
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+      },
 })

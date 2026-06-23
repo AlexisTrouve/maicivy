@@ -12,12 +12,14 @@ import { lettersApi } from '@/lib/api';
 import { LetterPreview } from './LetterPreview';
 import type { GeneratedLetters } from '@/lib/types';
 
-// Create validation schema with translations
+// Create validation schema with translations.
+// POURQUOI : t est déjà namespaced sur 'validation' (via useTranslations('validation')),
+// donc on passe uniquement la sous-clé (ex: 'minLength'), pas le chemin complet.
 const createFormSchema = (t: (key: string, params?: Record<string, number>) => string) => z.object({
   companyName: z.string()
-    .min(2, t('validation.minLength', { min: 2 }))
-    .max(100, t('validation.maxLength', { max: 100 }))
-    .regex(/^[a-zA-Z0-9\s\-&.,'À-ÿ]+$/, t('validation.invalidChars')),
+    .min(2, t('minLength', { min: 2 }))
+    .max(100, t('maxLength', { max: 100 }))
+    .regex(/^[a-zA-Z0-9\s\-&.,'À-ÿ]+$/, t('invalidChars')),
 });
 
 export function LetterGenerator() {

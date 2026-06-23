@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react';
 import ExperienceTimeline from '../ExperienceTimeline';
 import { mockCVData } from '@/lib/testutil/fixtures';
 
-// Mock framer-motion to avoid animation issues in tests
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, variants, initial, animate, whileInView, whileHover, viewport, transition, ...props }: any) => (
-      <div {...props}>{children}</div>
-    ),
-  },
+// framer-motion mocké globalement (cf. __mocks__/framer-motion.tsx)
+
+// lucide-react : le mock global ne couvre pas ArrowRight (utilisé dans ExperienceTimeline).
+// On surcharge localement pour éviter le crash "Element type is invalid: undefined".
+jest.mock('lucide-react', () => ({
+  Briefcase: ({ className }: any) => <svg data-testid="briefcase-icon" className={className} />,
+  Calendar: ({ className }: any) => <svg data-testid="calendar-icon" className={className} />,
+  ArrowRight: ({ className }: any) => <svg data-testid="arrow-right-icon" className={className} />,
 }));
 
 describe('ExperienceTimeline', () => {

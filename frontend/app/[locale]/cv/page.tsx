@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { loadMessages } from '@/i18n/messages';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ import ExperienceTimeline from '@/components/cv/ExperienceTimeline';
 import SkillsCloud from '@/components/cv/SkillsCloud';
 import ProjectsGrid from '@/components/cv/ProjectsGrid';
 import ExportPDFButton from '@/components/cv/ExportPDFButton';
+import DevPortrait from '@/components/cv/DevPortrait';
 import { CVSkeleton } from '@/components/cv/CVSkeleton';
 import { CVData, LangStatsResponse } from '@/lib/types';
 
@@ -67,7 +69,7 @@ export async function generateMetadata({
   const resolvedParams = params instanceof Promise ? await params : params;
   const theme = searchParams.theme || 'fullstack';
   const locale = resolvedParams.locale || 'en';
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = loadMessages(locale);
 
   const themeName = messages.cv.themes[theme as keyof typeof messages.cv.themes] || theme;
 
@@ -109,6 +111,14 @@ export default async function CVPage({ params, searchParams }: CVPageProps & { p
         </div>
       </header>
 
+      {/* Portrait Dev — en-tête de crédibilité : stats pro réelles (LOC, commits, genre récent,
+          momentum, repos chauds), branché sur /cv/loc + /cv/gitstats. null si endpoints indispo. */}
+      <div className="mb-12">
+        <Suspense fallback={<DevPortraitSkeleton />}>
+          <DevPortrait locale={resolvedParams.locale} />
+        </Suspense>
+      </div>
+
       {/* Main Content */}
       <Suspense fallback={<CVSkeleton />}>
         <main className="space-y-16">
@@ -145,6 +155,21 @@ export default async function CVPage({ params, searchParams }: CVPageProps & { p
           </section>
         </main>
       </Suspense>
+    </div>
+  );
+}
+
+// Skeleton de la bande Portrait Dev pendant le fetch (loc + gitstats).
+function DevPortraitSkeleton() {
+  return (
+    <div className="rounded-xl border bg-card p-6 animate-pulse">
+      <div className="h-7 w-40 bg-muted rounded mb-6" />
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-20 bg-muted rounded-lg" />
+        ))}
+      </div>
+      <div className="h-40 bg-muted rounded" />
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function BlogCard({ post, locale = 'fr' }: BlogCardProps) {
 
   return (
     <Link href={`/${locale}/blog/${post.slug}`} className="block">
-    <article className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer">
+    <article data-testid="blog-card" className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer">
       {/* Cover image — SVG/image si dispo, sinon placeholder gradient */}
       {/* Fond fixe #0f172a — SVG ont le même fond, invisibles sur gradient clair en light mode */}
       <div className="h-48 bg-[#0f172a] flex items-center justify-center overflow-hidden">

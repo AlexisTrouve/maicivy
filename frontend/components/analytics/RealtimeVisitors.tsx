@@ -17,6 +17,10 @@ interface WSMessage {
   time?: number;
 }
 
+// NB : le « social proof » (plancher vivant de visiteurs) n'est PLUS géré ici. Il est généré côté
+// BACKEND (DemoMetrics, seedé par les commits + gaté par les vrais users) et arrive déjà blendé dans
+// `current_visitors` via le WebSocket. Le composant ne fait qu'afficher la valeur reçue. cf. CLAUDE.md.
+
 export default function RealtimeVisitors() {
   const t = useTranslations('analytics.widgets.visitors');
   const [visitors, setVisitors] = useState<number>(0);
@@ -142,11 +146,12 @@ export default function RealtimeVisitors() {
 
       <div className="flex items-center justify-center py-8">
         <div className="text-center">
+          {/* Valeur reçue du WebSocket (déjà blendée côté backend), animée en count-up. */}
           <div className="text-6xl font-bold text-primary">
             {displayCount}
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            {visitors === 0 || visitors === 1 ? t('person') : t('people')} {t('rightNow')}
+            {displayCount <= 1 ? t('person') : t('people')} {t('rightNow')}
           </p>
         </div>
       </div>

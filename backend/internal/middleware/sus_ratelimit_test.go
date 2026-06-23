@@ -142,6 +142,91 @@ func TestSusRateLimit_BenignPrefixScannerStillScores(t *testing.T) {
 	assert.Equal(t, int64(0), n, "un vrai asset _next ne doit pas scorer (pas de régression favicon)")
 }
 
+// isAssetExtension : reconnaît les extensions d'asset (hors .json), rejette le reste.
+func TestIsAssetExtension(t *testing.T) {
+	assert.True(t, isAssetExtension("/logo.png"))
+	assert.True(t, isAssetExtension("/assets/app.css"))
+	assert.True(t, isAssetExtension("/fonts/Inter.woff2"))
+	assert.True(t, isAssetExtension("/x.JS"))         // casse insensible
+	assert.False(t, isAssetExtension("/config.json")) // .json EXCLU (probe scanner)
+	assert.False(t, isAssetExtension("/.env"))
+	assert.False(t, isAssetExtension("/api/v1/letters"))
+	assert.False(t, isAssetExtension("/wp-login.php"))
+	assert.False(t, isAssetExtension("/a.b/c")) // point dans un segment, pas une extension finale
+	assert.False(t, isAssetExtension("/admin"))
+}
+
+// FOOTGUN "asset manquant = throttle" : un asset (favicon/logo/css/font) qui 404 EN RAFALE ne doit
+// JAMAIS scorer un vrai user. Un chemin scanner score toujours (contrôle).
+func TestSusRateLimit_StaticAssetNoScore(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	app := fiber.New(fiber.Config{ProxyHeader: "X-Real-IP"})
+	app.Use(SusRateLimit(SusConfig{Redis: rdb, ScannerPath: ScannerPathMatcher(AllScannerPatterns()...)}))
+	app.Get("/*", func(c *fiber.Ctx) error { return c.SendStatus(404) }) // tout en 404
+
+	for _, asset := range []string{"/logo.png", "/style.css", "/fonts/Inter.woff2", "/app.js"} {
+		for i := 0; i < 10; i++ {
+			susHit(app, asset, "1.2.3.4")
+		}
+	}
+	n, _ := rdb.Exists(context.Background(), "maicivy:sus:1.2.3.4").Result()
+	assert.Equal(t, int64(0), n, "40 assets 404 ne doivent JAMAIS scorer (footgun favicon/asset)")
+
+	// Contrôle : un vrai chemin scanner doit toujours scorer.
+	susHit(app, "/.env", "5.6.7.8")
+	s, _ := rdb.HGet(context.Background(), "maicivy:sus:5.6.7.8", "score").Result()
+	assert.NotEmpty(t, s, "un chemin scanner doit toujours scorer")
+}
+
+// Override : un chemin d'extension asset qui matche AUSSI une signature scanner DOIT scorer (sinon
+// un scanner suffixe .js pour passer à score 0).
+func TestSusRateLimit_AssetExtScannerStillScores(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	app := fiber.New(fiber.Config{ProxyHeader: "X-Real-IP"})
+	app.Use(SusRateLimit(SusConfig{Redis: rdb, ScannerPath: ScannerPathMatcher(`\.env`)}))
+	app.Get("/*", func(c *fiber.Ctx) error { return c.SendStatus(200) }) // 200 partout
+
+	for i := 0; i < 3; i++ {
+		susHit(app, "/config/.env.js", "9.8.7.6") // extension .js MAIS signature .env dans le path
+	}
+	s, _ := rdb.HGet(context.Background(), "maicivy:sus:9.8.7.6", "score").Result()
+	assert.NotEmpty(t, s, "asset-ext + signature scanner doit scorer (override)")
+}
+
+// Crédit de densité : un vrai 2xx abaisse un score existant (plancher 0) ; une IP propre ne crée
+// aucune clé sur un 200 (pas de write inutile).
+func TestSusRateLimit_SuccessCredit(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	ctx := context.Background()
+	rdb.HSet(ctx, "maicivy:sus:3.3.3.3", "score", "4.0", "ts", time.Now().Unix())
+
+	app := newSusApp(rdb) // /ok → 200, /miss → 404
+	for i := 0; i < 4; i++ {
+		assert.Equal(t, 200, susHit(app, "/ok", "3.3.3.3")) // 4 succès × 0.5 = -2.0
+	}
+	s, _ := rdb.HGet(ctx, "maicivy:sus:3.3.3.3", "score").Result()
+	score, _ := strconv.ParseFloat(s, 64)
+	assert.InDelta(t, 2.0, score, 0.05, "4 succès (×0.5) doivent retrancher 2.0")
+
+	for i := 0; i < 20; i++ { // plancher 0 : jamais négatif
+		susHit(app, "/ok", "3.3.3.3")
+	}
+	s2, _ := rdb.HGet(ctx, "maicivy:sus:3.3.3.3", "score").Result()
+	score2, _ := strconv.ParseFloat(s2, 64)
+	assert.InDelta(t, 0.0, score2, 0.0001, "le score doit être plancher à 0")
+
+	// IP propre (score absent) → un 200 ne crée AUCUNE clé.
+	susHit(app, "/ok", "7.7.7.7")
+	n, _ := rdb.Exists(ctx, "maicivy:sus:7.7.7.7").Result()
+	assert.Equal(t, int64(0), n, "un 200 sur IP propre ne doit créer aucune clé (pas de write)")
+}
+
 // Score élevé pré-chargé → la plupart des requêtes throttlées (P≈0.9, test statistique).
 func TestSusRateLimit_HighScoreThrottles(t *testing.T) {
 	mr, _ := miniredis.Run()
@@ -234,20 +319,69 @@ func TestSusRateLimit_Bypass(t *testing.T) {
 	assert.NotEmpty(t, s, "une IP normale doit être scorée (contrôle)")
 }
 
+// Badge dev "je suis un copain" : un cookie maicivy_friend HMAC-valide exempte du sus (ni score ni
+// throttle), même en floodant des 404 ; un cookie forgé/absent ne change rien (scoré normalement).
+// IP-indépendant → résout le throttle du dev sans allowlist d'IP (l'IP peut tourner).
+func TestSusRateLimit_FriendCookieBypass(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	secret := "test-session-secret"
+	app := fiber.New(fiber.Config{ProxyHeader: "X-Real-IP"})
+	app.Use(SusRateLimit(SusConfig{Redis: rdb, FriendSecret: secret}))
+	app.Get("/*", func(c *fiber.Ctx) error { return c.Status(404).SendString("x") }) // 404 → bumperait
+
+	validBadge := SignAdminCookie(secret, time.Hour) // jeton signé par le serveur
+
+	// Cookie ami VALIDE → exempté même en floodant des 404.
+	for i := 0; i < 20; i++ {
+		r := httptest.NewRequest("GET", "/miss", nil)
+		r.Header.Set("X-Real-IP", "55.55.55.55")
+		r.AddCookie(&http.Cookie{Name: "maicivy_friend", Value: validBadge})
+		resp, _ := app.Test(r)
+		assert.Equal(t, 404, resp.StatusCode) // jamais 429
+	}
+	n, _ := rdb.Exists(context.Background(), "maicivy:sus:55.55.55.55").Result()
+	assert.Equal(t, int64(0), n, "badge ami valide ne doit construire aucun score")
+
+	// Cookie FORGÉ (mauvaise signature) → ignoré, scoré normalement.
+	for i := 0; i < 8; i++ {
+		r := httptest.NewRequest("GET", "/miss", nil)
+		r.Header.Set("X-Real-IP", "66.66.66.66")
+		r.AddCookie(&http.Cookie{Name: "maicivy_friend", Value: "admin:9999999999.forged"})
+		app.Test(r)
+	}
+	s, _ := rdb.HGet(context.Background(), "maicivy:sus:66.66.66.66", "score").Result()
+	assert.NotEmpty(t, s, "cookie forgé ne doit PAS exempter (scoré normalement)")
+
+	// Aucun cookie + FriendSecret vide → pas d'exemption (contrôle de non-régression).
+	appNoSecret := fiber.New(fiber.Config{ProxyHeader: "X-Real-IP"})
+	appNoSecret.Use(SusRateLimit(SusConfig{Redis: rdb})) // FriendSecret == ""
+	appNoSecret.Get("/*", func(c *fiber.Ctx) error { return c.Status(404).SendString("x") })
+	for i := 0; i < 8; i++ {
+		r := httptest.NewRequest("GET", "/miss", nil)
+		r.Header.Set("X-Real-IP", "44.44.44.44")
+		r.AddCookie(&http.Cookie{Name: "maicivy_friend", Value: validBadge})
+		appNoSecret.Test(r)
+	}
+	s2, _ := rdb.HGet(context.Background(), "maicivy:sus:44.44.44.44", "score").Result()
+	assert.NotEmpty(t, s2, "sans FriendSecret configuré, le cookie ne doit pas exempter")
+}
+
 // Helper IP version + bloc à bannir.
 func TestIPVersionAndBlock(t *testing.T) {
-	v4, b4 := ipVersionAndBlock("57.131.33.10")
+	v4, b4 := ipVersionAndBlock("203.0.113.10")
 	assert.Equal(t, "IPv4", v4)
-	assert.Equal(t, "57.131.33.10/32", b4)
+	assert.Equal(t, "203.0.113.10/32", b4)
 
-	v6, b6 := ipVersionAndBlock("2001:41d0:2005:100::bef")
+	v6, b6 := ipVersionAndBlock("2001:db8:2005:100::bef")
 	assert.Equal(t, "IPv6", v6)
-	assert.Equal(t, "2001:41d0:2005:100::/64", b6)
+	assert.Equal(t, "2001:db8:2005:100::/64", b6)
 }
 
 // susKeyIP : IPv4 → IP complète ; IPv6 → préfixe /64 ; non parsable → tel quel.
 func TestSusKeyIP(t *testing.T) {
-	assert.Equal(t, "57.131.33.10", susKeyIP("57.131.33.10"))                        // IPv4 = complète
+	assert.Equal(t, "203.0.113.10", susKeyIP("203.0.113.10"))                        // IPv4 = complète
 	assert.Equal(t, "2001:db8:abcd:1::", susKeyIP("2001:db8:abcd:1::dead"))          // IPv6 → /64
 	assert.Equal(t, "2001:db8:abcd:1::", susKeyIP("2001:db8:abcd:1:ffff:ffff:ff:9")) // autre /128, même /64
 	assert.Equal(t, "garbage", susKeyIP("garbage"))                                  // non parsable

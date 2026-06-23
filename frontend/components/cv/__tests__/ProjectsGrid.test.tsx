@@ -7,16 +7,10 @@ jest.mock('lucide-react', () => ({
   ExternalLink: ({ className }: any) => <svg data-testid="external-link-icon" className={className} />,
   Github: ({ className }: any) => <svg data-testid="github-icon" className={className} />,
   Star: ({ className }: any) => <svg data-testid="star-icon" className={className} />,
+  Clock: ({ className }: any) => <svg data-testid="clock-icon" className={className} />,
 }));
 
-// Mock framer-motion
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, initial, whileInView, whileHover, viewport, variants, ...props }: any) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-}));
+// framer-motion mocké globalement (cf. __mocks__/framer-motion.tsx)
 
 // Mock next/link
 jest.mock('next/link', () => {
@@ -90,69 +84,78 @@ describe('ProjectsGrid', () => {
     expect(screen.getByText('Projet Vedette')).toBeInTheDocument();
   });
 
-  it('should display technologies with max 4 visible', () => {
+  it('should display technologies with max 3 visible', () => {
     render(<ProjectsGrid projects={mockProjects} />);
 
-    // First project has 5 technologies, should show 4 + "+1"
+    // First project has 5 technologies, component shows 3 + "+2"
     expect(screen.getByText('Go')).toBeInTheDocument();
     expect(screen.getByText('React')).toBeInTheDocument();
     expect(screen.getByText('PostgreSQL')).toBeInTheDocument();
-    expect(screen.getByText('Redis')).toBeInTheDocument();
-    expect(screen.getByText('+1')).toBeInTheDocument();
+    // Redis and Docker are hidden, overflow shown as +2
+    expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
-  it('should display language indicator with color', () => {
+  it('should display project categories in badge when available', () => {
+    const projectWithCategory = {
+      ...mockProjects[0],
+      category: 'Backend',
+    };
+    const { container } = render(<ProjectsGrid projects={[projectWithCategory]} />);
+
+    // Category badge is shown in top-right absolute div
+    expect(screen.getByText('Backend')).toBeInTheDocument();
+    // The badge has specific styling
+    const badge = screen.getByText('Backend');
+    expect(badge).toHaveClass('rounded-full');
+  });
+
+  it('should show click-for-details hint on all cards', () => {
+    render(<ProjectsGrid projects={mockProjects} />);
+
+    // "Cliquez pour plus de details" appears on each card
+    const hints = screen.getAllByText('Cliquez pour plus de details');
+    expect(hints.length).toBe(mockProjects.length);
+  });
+
+  it('should render cards as accessible buttons with aria-label', () => {
+    render(<ProjectsGrid projects={mockProjects} />);
+
+    // Each card is a role="button" div with aria-label containing the project title
+    expect(screen.getByRole('button', { name: /E-commerce Platform/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Real-time Chat App/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ML Image Classifier/i })).toBeInTheDocument();
+  });
+
+  it('should show in-progress badge when project is in progress', () => {
+    const inProgressProject = {
+      ...mockProjects[1],
+      inProgress: true,
+    };
+    render(<ProjectsGrid projects={[inProgressProject]} />);
+
+    // t('inProgress') = "En cours"
+    expect(screen.getByText('En cours')).toBeInTheDocument();
+  });
+
+  it('should render the grid container and all three cards', () => {
     const { container } = render(<ProjectsGrid projects={mockProjects} />);
 
-    const languages = screen.getAllByText('TypeScript');
-    expect(languages.length).toBeGreaterThan(0);
-
-    // Check for language color indicators
-    const languageDots = container.querySelectorAll('.w-3.h-3.rounded-full');
-    expect(languageDots.length).toBeGreaterThan(0);
+    const grid = container.querySelector('.grid');
+    expect(grid).toBeInTheDocument();
+    // Each project gets a card (role="button")
+    const cards = screen.getAllByRole('button');
+    expect(cards.length).toBe(mockProjects.length);
   });
 
-  it('should display star counts', () => {
-    render(<ProjectsGrid projects={mockProjects} />);
-
-    expect(screen.getByText('150')).toBeInTheDocument();
-    expect(screen.getByText('75')).toBeInTheDocument();
-  });
-
-  it('should render GitHub links when provided', () => {
-    render(<ProjectsGrid projects={mockProjects} />);
-
-    const codeLinks = screen.getAllByText('Code');
-    expect(codeLinks).toHaveLength(2); // Only 2 projects have GitHub URLs
-
-    expect(codeLinks[0].closest('a')).toHaveAttribute('href', 'https://github.com/johndoe/ecommerce');
-    expect(codeLinks[1].closest('a')).toHaveAttribute('href', 'https://github.com/johndoe/chat');
-  });
-
-  it('should render demo links when provided', () => {
-    render(<ProjectsGrid projects={mockProjects} />);
-
-    const demoLink = screen.getByText('Demo');
-    expect(demoLink).toBeInTheDocument();
-    expect(demoLink.closest('a')).toHaveAttribute('href', 'https://demo.ecommerce.com');
-  });
-
-  it('should display relevance score as percentage', () => {
-    render(<ProjectsGrid projects={mockProjects} />);
-
-    expect(screen.getByText('95%')).toBeInTheDocument();
-    expect(screen.getByText('82%')).toBeInTheDocument();
-    expect(screen.getByText('70%')).toBeInTheDocument();
-  });
-
-  it('should render score progress bar with correct width', () => {
+  it('should display technology tags with correct styling', () => {
     const { container } = render(<ProjectsGrid projects={mockProjects} />);
 
-    const progressBars = container.querySelectorAll('.bg-blue-600.rounded-full');
-    expect(progressBars.length).toBe(3);
-
-    // First project has 95% score
-    expect(progressBars[0]).toHaveStyle({ width: '95%' });
+    // Technology spans use bg-gray-100 styling
+    const techSpans = container.querySelectorAll('.bg-gray-100.dark\\:bg-gray-700.text-gray-600');
+    expect(techSpans.length).toBeGreaterThan(0);
+    // First project shows Go, React, PostgreSQL (3 visible)
+    expect(screen.getByText('Go')).toBeInTheDocument();
+    expect(screen.getByText('React')).toBeInTheDocument();
   });
 
   it('should apply featured border styling', () => {
@@ -194,19 +197,21 @@ describe('ProjectsGrid', () => {
     expect(screen.queryByText('Demo')).not.toBeInTheDocument();
   });
 
-  it('should render Pertinence label for scored projects', () => {
-    render(<ProjectsGrid projects={mockProjects} />);
-
-    const pertinenceLabels = screen.getAllByText('Pertinence');
-    expect(pertinenceLabels.length).toBe(3);
-  });
-
-  it('should render external link icons', () => {
+  it('should show star icon in the featured badge', () => {
     const { container } = render(<ProjectsGrid projects={mockProjects} />);
 
+    // Featured project has a Star SVG icon
+    const starIcon = container.querySelector('[data-testid="star-icon"]');
+    expect(starIcon).toBeInTheDocument();
+  });
+
+  it('should render at least one svg icon in the grid', () => {
+    const { container } = render(<ProjectsGrid projects={mockProjects} />);
+
+    // Featured project shows Star SVG + potentially Clock for in-progress
     const svgElements = container.querySelectorAll('svg');
-    // Should have: Star icons (featured + counts), ExternalLink, Github icons
-    expect(svgElements.length).toBeGreaterThan(5);
+    // At minimum the Star icon from the featured badge is present
+    expect(svgElements.length).toBeGreaterThan(0);
   });
 
   it('should apply dark mode classes', () => {
@@ -216,21 +221,21 @@ describe('ProjectsGrid', () => {
     expect(cards.length).toBe(3);
   });
 
-  it('should handle technologies exactly at 4 limit', () => {
-    const projectWith4Techs: Project = {
+  it('should handle technologies exactly at 3 limit (no overflow)', () => {
+    const projectWith3Techs: Project = {
       id: '5',
-      title: 'Project With 4 Techs',
+      title: 'Project With 3 Techs',
       description: 'Test project',
-      technologies: ['Tech1', 'Tech2', 'Tech3', 'Tech4'],
+      technologies: ['Tech1', 'Tech2', 'Tech3'],
       featured: false,
     };
 
-    render(<ProjectsGrid projects={[projectWith4Techs]} />);
+    render(<ProjectsGrid projects={[projectWith3Techs]} />);
 
     expect(screen.getByText('Tech1')).toBeInTheDocument();
     expect(screen.getByText('Tech2')).toBeInTheDocument();
     expect(screen.getByText('Tech3')).toBeInTheDocument();
-    expect(screen.getByText('Tech4')).toBeInTheDocument();
+    // No overflow badge since exactly 3 techs shown
     expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
   });
 });

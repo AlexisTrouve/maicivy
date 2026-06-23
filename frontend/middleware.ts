@@ -54,6 +54,8 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Exclude api, _next, _vercel, static files, and special routes (api-test)
-  matcher: ['/((?!api|_next|_vercel|api-test|.*\\..*).*)']
+  // Exclude api, _next, _vercel, static files, and special routes (api-test, admin).
+  // `admin` exclu : panneau owner hors-i18n (pas de préfixe locale) — sinon le middleware
+  // redirigerait /admin → /fr/admin et la route top-level ne serait jamais atteinte.
+  matcher: ['/((?!api|_next|_vercel|api-test|admin|.*\\..*).*)']
 };

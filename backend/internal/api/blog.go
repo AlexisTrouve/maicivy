@@ -2,9 +2,11 @@ package api
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 
 	"maicivy/internal/models"
 	"maicivy/internal/services"
@@ -15,16 +17,18 @@ import (
 // (appels HTTP vers maiprofiles.etheryale.com). Seule la génération IA (GeneratePost)
 // reste dans blogGenerator, qui écrit ensuite dans maiProFiles via mpfClient.
 type BlogHandler struct {
-	mpfClient     *services.MaiProFilesClient   // CRUD blog → maiProFiles
+	mpfClient     *services.MaiProFilesClient    // CRUD blog → maiProFiles
 	blogGenerator *services.BlogGeneratorService // Génération IA markdown
+	redis         *redis.Client                  // compteur de lectures (blog:reads:total) — best-effort
 	ownerAPIKey   string
 }
 
-// NewBlogHandler crée une nouvelle instance avec les deux dépendances.
-func NewBlogHandler(mpfClient *services.MaiProFilesClient, blogGenerator *services.BlogGeneratorService, ownerAPIKey string) *BlogHandler {
+// NewBlogHandler crée une nouvelle instance. rdb sert au compteur de lectures (peut être nil).
+func NewBlogHandler(mpfClient *services.MaiProFilesClient, blogGenerator *services.BlogGeneratorService, rdb *redis.Client, ownerAPIKey string) *BlogHandler {
 	return &BlogHandler{
 		mpfClient:     mpfClient,
 		blogGenerator: blogGenerator,
+		redis:         rdb,
 		ownerAPIKey:   ownerAPIKey,
 	}
 }
@@ -104,6 +108,12 @@ func (h *BlogHandler) GetPost(c *fiber.Ctx) error {
 			"error":   "post_not_found",
 			"message": err.Error(),
 		})
+	}
+
+	// Compteur de lectures RÉEL (incrémenté à chaque article effectivement servi) → alimente la stat
+	// "Lectures blog" de l'analytics. Best-effort : non bloquant, erreur ignorée.
+	if h.redis != nil {
+		h.redis.Incr(c.Context(), services.BlogReadsTotalKey)
 	}
 
 	return c.JSON(post)
@@ -353,10 +363,10 @@ func (h *BlogHandler) GetRSSFeed(c *fiber.Ctx) error {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
   <title>maicivy Blog</title>
-  <link>https://maicivy.com/blog</link>
+  <link>https://maicivy.etheryale.com/fr/blog</link>
   <description>Actualités développement et projets</description>
   <language>fr-FR</language>
-  <atom:link href="https://maicivy.com/api/v1/blog/feed.xml" rel="self" type="application/rss+xml"/>
+  <atom:link href="https://maicivy.etheryale.com/api/v1/blog/feed.xml" rel="self" type="application/rss+xml"/>
 `
 
 	for _, post := range posts.Posts {
@@ -367,10 +377,10 @@ func (h *BlogHandler) GetRSSFeed(c *fiber.Ctx) error {
 
 		rss += `  <item>
     <title>` + escapeXML(post.Title) + `</title>
-    <link>https://maicivy.com/blog/` + post.Slug + `</link>
+    <link>https://maicivy.etheryale.com/fr/blog/` + post.Slug + `</link>
     <description>` + escapeXML(post.Summary) + `</description>
     <pubDate>` + pubDate + `</pubDate>
-    <guid>https://maicivy.com/blog/` + post.Slug + `</guid>
+    <guid>https://maicivy.etheryale.com/fr/blog/` + post.Slug + `</guid>
   </item>
 `
 	}
@@ -382,32 +392,20 @@ func (h *BlogHandler) GetRSSFeed(c *fiber.Ctx) error {
 	return c.SendString(rss)
 }
 
-// escapeXML échappe les caractères spéciaux XML
-func escapeXML(s string) string {
-	replacer := map[string]string{
-		"&":  "&amp;",
-		"<":  "&lt;",
-		">":  "&gt;",
-		"\"": "&quot;",
-		"'":  "&apos;",
-	}
-	for old, new := range replacer {
-		for {
-			if idx := indexOf(s, old); idx >= 0 {
-				s = s[:idx] + new + s[idx+len(old):]
-			} else {
-				break
-			}
-		}
-	}
-	return s
-}
+// xmlEscaper échappe les caractères spéciaux XML en UN SEUL passage (gauche→droite, sans re-scanner
+// le texte inséré). POURQUOI strings.NewReplacer : l'ancienne implémentation remplaçait "&" par
+// "&amp;" PUIS re-cherchait "&" dans le résultat — or "&amp;" contient "&" → boucle INFINIE dès qu'un
+// titre/résumé contenait un "&" (hang 60s → 504, et goroutine qui spinne à l'infini = mini-DoS).
+// L'ordre "&" en premier est garanti par NewReplacer qui ne ré-examine jamais ce qu'il vient d'insérer.
+var xmlEscaper = strings.NewReplacer(
+	"&", "&amp;",
+	"<", "&lt;",
+	">", "&gt;",
+	"\"", "&quot;",
+	"'", "&apos;",
+)
 
-func indexOf(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
+// escapeXML échappe les caractères spéciaux XML d'une chaîne (titres/résumés du flux RSS).
+func escapeXML(s string) string {
+	return xmlEscaper.Replace(s)
 }

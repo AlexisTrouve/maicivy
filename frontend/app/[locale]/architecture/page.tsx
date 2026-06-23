@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Server,
   Globe,
@@ -17,8 +17,24 @@ import {
   Layers,
   ArrowRight,
   CheckCircle2,
-  Terminal
+  Terminal,
+  FileCode2,
+  Boxes,
+  FlaskConical,
+  Network,
+  BookOpen,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
+import testStats from '@/lib/test-stats.json';
+import { TestStats } from '@/lib/types';
+
+// Stats de tests RÉELLES, auto-régénérées à chaque commit (cf. lib/test-stats.json) → jamais périmé
+// (avant : "882 tests" figé alors qu'on en a 1000+).
+const stats = testStats as TestStats;
+
+// Style "verre" intégré à l'aurora du site (cohérent avec la home) : semi-transparent + flou + hover.
+const glass = 'backdrop-blur-sm bg-card/80 border-border/60 hover:border-primary/40 transition-colors';
 
 // Tech Stack Data
 const backendStack = [
@@ -95,15 +111,16 @@ const getFeatures = (t: any) => {
   ];
 };
 
-const getMetrics = (t: (key: string) => string) => [
-  { label: t('metrics.goFiles'), value: '100+' },
-  { label: t('metrics.reactComponents'), value: '60+' },
-  { label: t('metrics.backendTests'), value: '28 fichiers' },
-  { label: t('metrics.frontendTests'), value: '228 fichiers' },
-  { label: t('metrics.passingTests'), value: '882' },
-  { label: t('metrics.apiEndpoints'), value: '30+' },
-  { label: t('metrics.documentation'), value: '~10,000 lignes' },
-  { label: t('metrics.implementationGuides'), value: '19 docs' },
+const getMetrics = (t: (key: string) => string, locale: string) => [
+  { label: t('metrics.goFiles'), value: '126', icon: FileCode2, color: 'text-green-500' },
+  { label: t('metrics.reactComponents'), value: '65', icon: Boxes, color: 'text-blue-500' },
+  // Tests : LIVE depuis test-stats.json (jamais périmé).
+  { label: t('metrics.backendTests'), value: stats.backend.tests.toLocaleString(locale), icon: FlaskConical, color: 'text-emerald-500' },
+  { label: t('metrics.frontendTests'), value: stats.frontend.tests.toLocaleString(locale), icon: FlaskConical, color: 'text-cyan-500' },
+  { label: t('metrics.passingTests'), value: stats.total.toLocaleString(locale), icon: CheckCircle2, color: 'text-emerald-500' },
+  { label: t('metrics.apiEndpoints'), value: '100+', icon: Network, color: 'text-orange-500' },
+  { label: t('metrics.documentation'), value: '85k+', icon: BookOpen, color: 'text-purple-500' },
+  { label: t('metrics.implementationGuides'), value: '20', icon: FileText, color: 'text-pink-500' },
 ];
 
 function TechBadge({ name, description, icon }: { name: string; description: string; icon: string }) {
@@ -121,7 +138,7 @@ function TechBadge({ name, description, icon }: { name: string; description: str
 function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
   return (
     <div className="rounded-xl border bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
-      <h3 className="mb-6 text-center text-xl font-bold">Architecture Système</h3>
+      <h3 className="mb-6 text-center text-xl font-bold">{t('systemDiagram')}</h3>
 
       <div className="space-y-4">
         {/* Client Layer */}
@@ -139,6 +156,22 @@ function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
           <ArrowRight className="h-6 w-6 rotate-90 text-gray-500" />
         </div>
 
+        {/* Edge & Sécurité — Cloudflare → Nginx → frontdoor (checkpoint sus / anti-abus). C'est la
+            couche construite cette session, jusque-là absente du diagramme. */}
+        <div className="rounded-lg border border-rose-500/50 bg-rose-500/10 p-4">
+          <div className="mb-2 text-center text-sm font-semibold text-rose-400">{t('layers.edge')}</div>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded bg-rose-700 p-2">Cloudflare<div className="text-[10px] text-rose-200/70">CDN · WAF</div></div>
+            <div className="rounded bg-rose-700 p-2">Nginx<div className="text-[10px] text-rose-200/70">reverse proxy · SSL</div></div>
+            <div className="rounded bg-rose-700 p-2">Frontdoor<div className="text-[10px] text-rose-200/70">rate-limit · sus</div></div>
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <div className="flex justify-center">
+          <ArrowRight className="h-6 w-6 rotate-90 text-gray-500" />
+        </div>
+
         {/* API Gateway */}
         <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4">
           <div className="mb-2 text-center text-sm font-semibold text-green-400">{t('layers.backend')}</div>
@@ -147,11 +180,13 @@ function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
             <div className="rounded bg-green-700 p-2">Middlewares</div>
             <div className="rounded bg-green-700 p-2">WebSocket</div>
           </div>
-          <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-            <div className="rounded bg-green-800 p-2">CV API</div>
-            <div className="rounded bg-green-800 p-2">Letters API</div>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs md:grid-cols-6">
+            <div className="rounded bg-green-800 p-2">CV</div>
+            <div className="rounded bg-green-800 p-2">Lettres</div>
             <div className="rounded bg-green-800 p-2">Analytics</div>
-            <div className="rounded bg-green-800 p-2">GitHub</div>
+            <div className="rounded bg-green-800 p-2">Chat</div>
+            <div className="rounded bg-green-800 p-2">Blog</div>
+            <div className="rounded bg-green-800 p-2">GitStats</div>
           </div>
         </div>
 
@@ -163,11 +198,12 @@ function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
         {/* Services Layer */}
         <div className="rounded-lg border border-purple-500/50 bg-purple-500/10 p-4">
           <div className="mb-2 text-center text-sm font-semibold text-purple-400">{t('layers.services')}</div>
-          <div className="grid grid-cols-2 gap-2 text-center text-xs md:grid-cols-4">
-            <div className="rounded bg-purple-700 p-2">AI Service</div>
+          <div className="grid grid-cols-2 gap-2 text-center text-xs md:grid-cols-5">
+            <div className="rounded bg-purple-700 p-2">AI (Claude/GPT)</div>
             <div className="rounded bg-purple-700 p-2">Scraper</div>
-            <div className="rounded bg-purple-700 p-2">Profile Builder</div>
+            <div className="rounded bg-purple-700 p-2">DemoMetrics</div>
             <div className="rounded bg-purple-700 p-2">CV Scoring</div>
+            <div className="rounded bg-purple-700 p-2">Profile Builder</div>
           </div>
         </div>
 
@@ -190,7 +226,7 @@ function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
             <div className="mb-2 text-center text-sm font-semibold text-red-400">{t('layers.cache')}</div>
             <div className="text-center">
               <div className="rounded bg-red-700 px-3 py-2 text-sm">Redis 7</div>
-              <div className="mt-2 text-xs text-red-300">Sessions, Rate Limit</div>
+              <div className="mt-2 text-xs text-red-300">Sessions · Rate-limit · Queues</div>
             </div>
           </div>
 
@@ -207,10 +243,10 @@ function ArchitectureDiagram({ t }: { t: (key: string) => string }) {
   );
 }
 
-function ScraperDiagram() {
+function ScraperDiagram({ t }: { t: (key: string) => string }) {
   return (
     <div className="rounded-xl border bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
-      <h3 className="mb-6 text-center text-xl font-bold">Multi-Source Company Scraper</h3>
+      <h3 className="mb-6 text-center text-xl font-bold">{t('scraper')}</h3>
 
       <div className="space-y-4">
         {/* Input */}
@@ -228,7 +264,7 @@ function ScraperDiagram() {
         {/* Parallel Sources */}
         <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-4">
           <div className="mb-3 text-center text-sm font-semibold text-blue-400">
-            PARALLEL DATA FETCHING
+            {t('scraperParallel')}
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-5">
             <div className="rounded bg-blue-700 p-2 text-center">
@@ -262,7 +298,7 @@ function ScraperDiagram() {
         {/* Output */}
         <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4">
           <div className="mb-3 text-center text-sm font-semibold text-green-400">
-            AGGREGATED RESULT
+            {t('scraperResult')}
           </div>
           <div className="space-y-2 font-mono text-xs">
             <div className="rounded bg-green-900/50 p-2">
@@ -284,7 +320,8 @@ function ScraperDiagram() {
 export default function ArchitecturePage() {
   const [mounted, setMounted] = useState(false);
   const t = useTranslations('architecture');
-  const metrics = getMetrics(t);
+  const locale = useLocale();
+  const metrics = getMetrics(t, locale);
   const features = getFeatures(t);
 
   useEffect(() => {
@@ -300,7 +337,9 @@ export default function ArchitecturePage() {
       {/* Header */}
       <div className="mx-auto max-w-4xl text-center">
         <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
-          {t('title')}
+          <span className="bg-gradient-to-r from-primary via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            {t('title')}
+          </span>
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
           {t('subtitle')}
@@ -310,14 +349,18 @@ export default function ArchitecturePage() {
       {/* Metrics Overview */}
       <div className="mx-auto mt-12 max-w-6xl">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {metrics.map((metric) => (
-            <Card key={metric.label} className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-primary">{metric.value}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{metric.label}</div>
-              </CardContent>
-            </Card>
-          ))}
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Card key={metric.label} className={`text-center ${glass}`}>
+                <CardContent className="pt-6">
+                  <Icon className={`mx-auto mb-2 h-6 w-6 ${metric.color}`} />
+                  <div className="text-3xl font-bold text-primary">{metric.value}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{metric.label}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
@@ -339,7 +382,7 @@ export default function ArchitecturePage() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Backend */}
-          <Card>
+          <Card className={glass}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Server className="h-5 w-5 text-green-500" />
@@ -355,7 +398,7 @@ export default function ArchitecturePage() {
           </Card>
 
           {/* Frontend */}
-          <Card>
+          <Card className={glass}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5 text-blue-500" />
@@ -371,7 +414,7 @@ export default function ArchitecturePage() {
           </Card>
 
           {/* AI */}
-          <Card>
+          <Card className={glass}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cpu className="h-5 w-5 text-purple-500" />
@@ -387,7 +430,7 @@ export default function ArchitecturePage() {
           </Card>
 
           {/* Infrastructure */}
-          <Card>
+          <Card className={glass}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="h-5 w-5 text-orange-500" />
@@ -410,7 +453,7 @@ export default function ArchitecturePage() {
           <Zap className="mb-1 mr-2 inline h-6 w-6" />
           {t('scraper')}
         </h2>
-        <ScraperDiagram />
+        <ScraperDiagram t={t} />
       </div>
 
       {/* Features */}
@@ -422,14 +465,14 @@ export default function ArchitecturePage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <Card key={feature.title}>
+            <Card key={feature.title} className={glass}>
               <CardHeader>
                 <CardTitle className="text-lg">{feature.title}</CardTitle>
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {feature.tech.map((techItem) => (
+                  {feature.tech.map((techItem: string) => (
                     <span
                       key={techItem}
                       className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
@@ -451,7 +494,7 @@ export default function ArchitecturePage() {
           {t('security')}
         </h2>
 
-        <Card>
+        <Card className={glass}>
           <CardContent className="pt-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex items-start gap-3">
@@ -558,22 +601,20 @@ func (s *CompanyScraper) GetCompanyInfo(ctx context.Context, companyName string)
 
       {/* GitHub Link */}
       <div className="mx-auto mt-16 max-w-4xl text-center">
-        <Card className="border-dashed">
+        <Card className={`border-dashed ${glass}`}>
           <CardContent className="pt-6">
             <GitBranch className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-xl font-semibold">{t('sourceCode')}</h3>
             <p className="mt-2 text-muted-foreground">
               {t('sourceCodeDesc')}
             </p>
-            <div className="mt-6 flex justify-center gap-4">
-              {/* TODO: Add real GitHub URL when project is public
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Button asChild>
-                <a href="https://github.com/USERNAME/maicivy" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/AlexisTrouve/maicivy" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   {t('viewOnGithub')}
                 </a>
               </Button>
-              */}
               <Button variant="outline" asChild>
                 <Link href="/cv">
                   {t('backToCV')}

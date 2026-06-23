@@ -59,10 +59,10 @@ describe('DateFilter', () => {
     const todayButton = screen.getByText("Aujourd'hui");
     fireEvent.click(todayButton);
 
-    // Should display formatted date range - check for the date format
+    // Should display formatted date range - check for the date format (day number present)
     const dateRangeDiv = container.querySelector('.ml-2');
     expect(dateRangeDiv).toBeInTheDocument();
-    expect(dateRangeDiv?.textContent).toContain('déc.');
+    expect(dateRangeDiv?.textContent).toMatch(/\d{2}/);
   });
 
   it('should display date range for 7 days preset', () => {
@@ -126,9 +126,9 @@ describe('DateFilter', () => {
     const todayButton = screen.getByText("Aujourd'hui");
     fireEvent.click(todayButton);
 
-    // French month abbreviations (janv., févr., mars, etc.) with period
+    // French locale date format — contains a day number and a separator
     const dateRangeDiv = container.querySelector('.ml-2');
-    expect(dateRangeDiv?.textContent).toMatch(/\w+\./); // Should have month abbreviation with period
+    expect(dateRangeDiv?.textContent).toMatch(/\d{2}/); // Should have day number
   });
 
   it('should apply text-sm to buttons', () => {

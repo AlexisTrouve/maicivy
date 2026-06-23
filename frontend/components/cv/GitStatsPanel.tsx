@@ -11,6 +11,32 @@ import { useTranslations, useLocale } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+// Cache de session : peinture INSTANTANÉE des stats au re-visit de la page (navigation interne), au
+// lieu de re-fetch + skeleton à chaque montage. Couplé au stale-while-revalidate du backend, ça tue le
+// « repull à chaque fois » des deux côtés. Clé versionnée → invalidation si le shape de la réponse change.
+// sessionStorage (pas localStorage) : cache éphémère par onglet, pas une persistance longue qui
+// afficherait des chiffres datés à la prochaine ouverture du navigateur.
+const CACHE_KEY = 'maicivy:gitstats:v1';
+
+// Lit le cache de session. try/catch car sessionStorage lève en navigation privée / quota plein →
+// on dégrade sans cache (ce n'est pas masquer une erreur métier, juste un accès navigateur faillible).
+function readSessionCache(): GitStatsResponse | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as GitStatsResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(data: GitStatsResponse): void {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    /* quota / mode privé → on ignore : le cache n'est qu'une optimisation, pas une source de vérité */
+  }
+}
+
 // Filtre les 6 derniers mois et formate les dates pour l'affichage
 function filterLast6Months(daily: GitDayStat[], locale: string) {
   const sixMonthsAgo = new Date();
@@ -82,7 +108,10 @@ export default function GitStatsPanel() {
         if (!res.ok) throw new Error('Failed to fetch git stats');
         return res.json();
       })
-      .then(setStats)
+      .then((data: GitStatsResponse) => {
+        setStats(data);
+        writeSessionCache(data); // mémorise pour la peinture instantanée du prochain montage
+      })
       .catch(err => setError(err.message))
       .finally(() => {
         setLoading(false);
@@ -90,9 +119,22 @@ export default function GitStatsPanel() {
       });
   };
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => {
+    // 1. Si on revient sur la page dans la même session, on peint le cache TOUT DE SUITE (zéro skeleton).
+    const cached = readSessionCache();
+    if (cached) {
+      setStats(cached);
+      setLoading(false);
+    }
+    // 2. On revalide en fond dans tous les cas : le backend répond instantanément (stale-while-revalidate),
+    //    donc ce fetch est quasi gratuit et rafraîchit l'affichage si les chiffres ont bougé.
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (loading) {
+  // Skeleton uniquement au TOUT premier chargement (pas de cache à peindre). Si on a du cache, on a
+  // déjà setLoading(false) → on saute directement au rendu, la revalidation se fait en silence.
+  if (loading && !stats) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -105,7 +147,9 @@ export default function GitStatsPanel() {
     );
   }
 
-  if (error || !stats) {
+  // Écran d'erreur SEULEMENT si on n'a aucune donnée à montrer. Si du cache est déjà peint, une
+  // revalidation de fond qui échoue ne doit PAS remplacer de bons chiffres par une page d'erreur.
+  if (!stats) {
     return (
       <div className="text-center text-gray-500 py-12">
         <p>{t('unavailable')}</p>

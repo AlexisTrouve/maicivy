@@ -1,28 +1,26 @@
-import React from 'react';
+// Mock jest GLOBAL de lucide-react via Proxy : TOUTE icône (CheckCircle2, ArrowRight, Layers, Clock…)
+// renvoie un <svg data-testid="...-icon">. Évite la liste figée d'avant qui cassait dès qu'un composant
+// utilisait une icône non listée ("Element type is invalid: undefined").
+// Fichier en CommonJS pur (require/module.exports) pour exporter un Proxy au niveau module.
+const React = require('react');
 
-// Mock all icons used in the project
-export const Download = (props: any) => <svg data-testid="download-icon" {...props} />;
-export const Loader2 = (props: any) => <svg data-testid="loader2-icon" className="animate-spin" {...props} />;
-export const X = (props: any) => <svg data-testid="x-icon" {...props} />;
-export const Calendar = (props: any) => <svg data-testid="calendar-icon" {...props} />;
-export const Briefcase = (props: any) => <svg data-testid="briefcase-icon" {...props} />;
-export const FileText = (props: any) => <svg data-testid="file-text-icon" {...props} />;
-export const ChevronDown = (props: any) => <svg data-testid="chevron-down-icon" {...props} />;
-export const ChevronUp = (props: any) => <svg data-testid="chevron-up-icon" {...props} />;
-export const Check = (props: any) => <svg data-testid="check-icon" {...props} />;
-export const AlertCircle = (props: any) => <svg data-testid="alert-circle-icon" {...props} />;
-export const MoreHorizontal = (props: any) => <svg data-testid="more-horizontal-icon" {...props} />;
-export const Settings = (props: any) => <svg data-testid="settings-icon" {...props} />;
-export const User = (props: any) => <svg data-testid="user-icon" {...props} />;
-export const Search = (props: any) => <svg data-testid="search-icon" {...props} />;
-export const Menu = (props: any) => <svg data-testid="menu-icon" {...props} />;
-export const Home = (props: any) => <svg data-testid="home-icon" {...props} />;
-export const Mail = (props: any) => <svg data-testid="mail-icon" {...props} />;
-export const Phone = (props: any) => <svg data-testid="phone-icon" {...props} />;
-export const MapPin = (props: any) => <svg data-testid="map-pin-icon" {...props} />;
-export const Linkedin = (props: any) => <svg data-testid="linkedin-icon" {...props} />;
-export const Github = (props: any) => <svg data-testid="github-icon" {...props} />;
-export const ExternalLink = (props: any) => <svg data-testid="external-link-icon" {...props} />;
-export const Sparkles = (props: any) => <svg data-testid="sparkles-icon" {...props} />;
-export const Lock = (props: any) => <svg data-testid="lock-icon" {...props} />;
-export const Eye = (props: any) => <svg data-testid="eye-icon" {...props} />;
+const handler = {
+  get(_target, name) {
+    if (name === '__esModule') return true;
+    if (name === 'default' || typeof name === 'symbol') return undefined;
+    // CheckCircle2 -> "check-circle2-icon", ExternalLink -> "external-link-icon", Github -> "github-icon"
+    const testid = String(name).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase() + '-icon';
+    return function MockIcon(props) {
+      props = props || {};
+      // Loader2 garde animate-spin (des tests vérifient le spinner). On fusionne avec la className passée.
+      const base = name === 'Loader2' ? 'animate-spin' : '';
+      const className = [base, props.className].filter(Boolean).join(' ');
+      return React.createElement(
+        'svg',
+        Object.assign({}, props, { 'data-testid': testid, className: className || undefined })
+      );
+    };
+  },
+};
+
+module.exports = new Proxy({}, handler);

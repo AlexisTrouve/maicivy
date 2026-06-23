@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { loadMessages } from '@/i18n/messages';
 import { LetterGenerator } from '@/components/letters/LetterGenerator';
 import { MessageGenerator } from '@/components/letters/MessageGenerator';
 import { AccessGate } from '@/components/letters/AccessGate';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
   const resolvedParams = params instanceof Promise ? await params : params;
   const locale = resolvedParams.locale || 'en';
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = loadMessages(locale);
 
   return {
     title: `${messages.letters.title} | maicivy`,

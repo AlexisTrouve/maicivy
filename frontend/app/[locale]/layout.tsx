@@ -10,7 +10,9 @@ import { VisitorHeartbeatProvider } from '@/components/providers/VisitorHeartbea
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { BackgroundProvider } from '@/components/background/BackgroundProvider';
 import { BackgroundHost } from '@/components/background/BackgroundHost';
+import ClickTracker from '@/components/analytics/ClickTracker';
 import { locales } from '@/i18n/config';
+import { loadMessages } from '@/i18n/messages';
 import '../globals.css';
 
 const inter = Inter({
@@ -39,14 +41,14 @@ export async function generateMetadata({
   //   (segment unique avec point, qui bypasse le middleware i18n via le matcher `.*\..*`). Sans
   //   cette garde, le layout rendait la homepage en HTTP 200 (fallback silencieux sur 'fr' dans
   //   i18n/request.ts) → faux signal de succès pour le scanner + 0 incrément du score sus (qui ne
-  //   bump que sur 4xx). notFound() ici coupe AUSSI l'import `@/messages/<locale>.json` ci-dessous,
-  //   qui throw sur une locale inexistante (d'où le <title> vide observé sur le soft-200).
+  //   bump que sur 4xx). notFound() ici coupe l'exécution AVANT loadMessages ci-dessous → une locale
+  //   hors liste blanche ne charge jamais de messages (et ne rend pas un soft-200 trompeur).
   // COMMENT : hasLocale (next-intl) teste l'appartenance à `locales` ; sinon notFound() lève
   //   NEXT_NOT_FOUND → rendu de app/not-found.tsx (racine, sans i18n) avec un statut 404 réel.
   if (!hasLocale(locales, locale)) {
     notFound();
   }
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = loadMessages(locale);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://maicivy.etheryale.com';
 
@@ -185,6 +187,9 @@ export default async function LocaleLayout({
 
                 {/* Contenu au-dessus de l'aurora — z-10 garantit le passage devant les blobs */}
                 <div className="relative z-10 flex min-h-screen flex-col">
+                  {/* Tracker de clics (heatmap) — listener global, aucun rendu. Monté ici une fois pour
+                      toutes les pages sous [locale]. */}
+                  <ClickTracker />
                   <Header />
                   <main className="flex-1">{children}</main>
                   <Footer />

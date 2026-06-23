@@ -87,14 +87,18 @@ func (s *GiteaStatsService) GetLanguageStats(ctx context.Context, force bool) (*
 		return &cached.Response, nil
 	}
 
-	// Cache périmé → refetch, mais fallback sur le stale si Gitea est down (pas de page vide).
-	resp, err := s.fetchLanguages(ctx)
-	if err != nil {
-		log.Warn().Err(err).Msg("gitlang: refetch failed, returning stale cache")
-		return &cached.Response, nil
-	}
-	s.saveLangCache(ctx, resp)
-	return resp, nil
+	// Cache périmé → stale-while-revalidate : on sert le stale tout de suite (la fiche skill s'affiche
+	// sans attendre) et on refetch en FOND, single-flight (langRefresher). saveLangCache reçoit le ctx
+	// détaché (Background) fourni par bgRefresher, sinon l'écriture cache mourrait avec la requête.
+	s.langRefresher.trigger(func(bgCtx context.Context) {
+		resp, err := s.fetchLanguages(bgCtx)
+		if err != nil {
+			log.Warn().Err(err).Msg("gitlang: background refetch failed (stale cache kept)")
+			return
+		}
+		s.saveLangCache(bgCtx, resp)
+	})
+	return &cached.Response, nil
 }
 
 // fetchAndCacheLanguages fait un fetch complet et persiste le résultat.

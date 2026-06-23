@@ -1,4 +1,91 @@
 {
+  "admin": {
+    "brand": "maicivy · admin",
+    "logout": "Déconnexion",
+    "nav": {
+      "cv": "CV depuis offre",
+      "messages": "Messages",
+      "letters": "Lettres",
+      "stats": "Stats privées",
+      "chat": "Agent"
+    },
+    "login": {
+      "password": "Mot de passe",
+      "submit": "Entrer",
+      "loading": "…",
+      "invalid": "Mot de passe invalide",
+      "networkError": "Erreur réseau"
+    },
+    "cv": {
+      "title": "CV depuis offre",
+      "help": "Colle une offre d'emploi (texte ou URL) → un CV adapté est généré en PDF, avec optimisation ATS invisible.",
+      "offerPlaceholder": "Colle ici le texte de l'offre d'emploi (ou une URL)…",
+      "generate": "Générer le CV",
+      "generating": "Génération… (~30s)",
+      "previewTitle": "Aperçu",
+      "download": "Télécharger le PDF",
+      "empty": "Le CV généré s'affichera ici.",
+      "loading": "Génération du CV en cours…"
+    },
+    "messages": {
+      "title": "Message plateforme",
+      "help": "Colle une mission (Malt, LinkedIn, Upwork) → un message de candidature prêt à envoyer est généré.",
+      "missionPlaceholder": "Colle ici la mission / l'annonce (Malt, LinkedIn, Upwork)…",
+      "tjmPlaceholder": "TJM €",
+      "generate": "Générer",
+      "generating": "Génération…",
+      "resultTitle": "Message",
+      "copy": "Copier",
+      "copied": "Copié ✓",
+      "empty": "Le message généré s'affichera ici.",
+      "loading": "Rédaction du message…"
+    },
+    "letters": {
+      "title": "Lettres",
+      "help": "Entreprise + offre → une paire de lettres (motivation + anti-motivation) est générée en PDF.",
+      "companyPlaceholder": "Nom de l'entreprise",
+      "offerPlaceholder": "Texte de l'offre (optionnel mais recommandé)…",
+      "generate": "Générer la paire",
+      "generating": "Génération…",
+      "progress": "Génération en cours…",
+      "done": "Paire générée ✓",
+      "downloadMotivation": "Télécharger — Motivation (PDF)",
+      "downloadAnti": "Télécharger — Anti-motivation (PDF)",
+      "empty": "La paire motivation / anti-motivation s'affichera ici.",
+      "failed": "Génération échouée"
+    },
+    "stats": {
+      "title": "Stats privées",
+      "loading": "Chargement…",
+      "error": "Impossible de charger les stats",
+      "aiTitle": "Coûts & usage IA",
+      "genToday": "générations aujourd'hui",
+      "lettersMonth": "lettres ce mois ({tokens} tokens)",
+      "model": "Modèle",
+      "lettersCount": "Lettres",
+      "tokens": "Tokens",
+      "cost": "Coût ~",
+      "noLetters": "Aucune lettre ce mois.",
+      "aiNote": "Coût estimé, lettres uniquement (CV / messages / chat ne persistent pas encore leur coût).",
+      "securityTitle": "Sécurité — {count} IP(s) suspecte(s)",
+      "noSus": "Aucune IP suspecte en ce moment. 🎉",
+      "analyticsTitle": "Analytics détaillées",
+      "byProfile": "Par profil détecté",
+      "topReferrers": "Top referrers",
+      "noReferrers": "Aucun referrer enregistré."
+    },
+    "chat": {
+      "title": "Agent",
+      "help": "Pose des questions sur ton portfolio (projets, skills, expériences, blog) — l'agent interroge maiProFiles en direct.",
+      "newConversation": "Nouvelle conversation",
+      "placeholder": "Écris ton message…",
+      "send": "Envoyer",
+      "thinking": "L'agent réfléchit…",
+      "empty": "Démarre une conversation avec l'agent.",
+      "noConversations": "Aucune conversation."
+    },
+    "errorPrefix": "Erreur"
+  },
   "metadata": {
     "title": "maicivy - CV Interactif Intelligent",
     "description": "CV interactif avec génération de lettres de motivation par IA"
@@ -130,6 +217,24 @@
     }
   },
   "cv": {
+    "devPortrait": {
+      "title": "Portrait Dev",
+      "subtitle": "Mon activité de développeur, en chiffres réels",
+      "loc": "lignes de code",
+      "langs": "{count} langages",
+      "commits": "commits",
+      "commitsSub": "6 derniers mois",
+      "repos": "repos actifs",
+      "genreTitle": "Mon genre récent",
+      "genreSub": "Commits par langage — 90 derniers jours vs baseline annuelle",
+      "momentumTitle": "Momentum",
+      "momentumValue": "{recent} commits ces 30 jours",
+      "momentumRatio": "×{ratio} vs le mois précédent",
+      "hotTitle": "Repos chauds en ce moment",
+      "hotCommits": "{count} commits",
+      "caveat": "Tendances directionnelles : langage dominant du repo, jours de commit agrégés (capés à ~70/repo).",
+      "detailLink": "Voir la heatmap détaillée"
+    },
     "title": "CV Dynamique",
     "adaptedTo": "CV adapté au profil :",
     "selectTheme": "Sélectionner un thème",
@@ -272,6 +377,14 @@
     }
   },
   "analytics": {
+    "testStats": {
+      "title": "Tests & Qualité",
+      "allGreen": "100% verts",
+      "total": "tests automatisés",
+      "backend": "backend (Go)",
+      "frontend": "frontend · {suites} suites",
+      "updated": "à jour le {date}"
+    },
     "title": "Analytics Dashboard",
     "subtitle": "Statistiques publiques en temps réel",
     "description": "Découvrez comment les visiteurs interagissent avec le site",
@@ -303,12 +416,16 @@
         "high": "Fort",
         "noData": "Aucune donnée d'interaction disponible",
         "interactions": "{count} interactions",
-        "based": "Basé sur {count} points d'interaction"
+        "based": "Basé sur {count} points d'interaction",
+        "explain": "Où les visiteurs cliquent (boutons & liens, toutes pages — 24h). Plus c'est chaud, plus c'est cliqué.",
+        "unknownElement": "Élément",
+        "topTitle": "Interactions principales"
       },
       "stats": {
         "visitors": "Visiteurs",
         "pageViews": "Pages Vues",
         "letters": "Lettres",
+        "blogReads": "Lectures blog",
         "conversion": "Conversion"
       }
     },
@@ -328,13 +445,16 @@
     "title": "Architecture & Stack Technique",
     "subtitle": "Découvrez les technologies et l'architecture derrière maicivy",
     "overview": "Vue d'Ensemble",
+    "systemDiagram": "Architecture Système",
     "fullStack": "Stack Technique Complète",
     "scraper": "Company Scraper Multi-Sources",
+    "scraperParallel": "RÉCUPÉRATION PARALLÈLE",
+    "scraperResult": "RÉSULTAT AGRÉGÉ",
     "features": "Fonctionnalités Techniques",
     "security": "Sécurité (OWASP Top 10)",
     "codeExample": "Exemple: Scraper Multi-Sources",
     "sourceCode": "Code Source",
-    "sourceCodeDesc": "Explorez le code complet sur GitHub - 100+ fichiers Go, 60+ composants React, 882 tests",
+    "sourceCodeDesc": "Explorez le code complet sur GitHub — 126 fichiers Go, 65 composants React, 1000+ tests",
     "viewOnGithub": "Voir sur GitHub",
     "backToCV": "Retour au CV",
     "layers": {
@@ -343,7 +463,8 @@
       "services": "SERVICES",
       "database": "DATABASE",
       "cache": "CACHE",
-      "aiProviders": "AI PROVIDERS"
+      "aiProviders": "AI PROVIDERS",
+      "edge": "EDGE & SÉCURITÉ"
     },
     "stacks": {
       "backend": {

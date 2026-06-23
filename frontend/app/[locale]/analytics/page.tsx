@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { loadMessages } from '@/i18n/messages';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+import TestStatsCard from '@/components/analytics/TestStatsCard';
 import RealtimeVisitors from '@/components/analytics/RealtimeVisitors';
 import ThemeStats from '@/components/analytics/ThemeStats';
 import LettersGenerated from '@/components/analytics/LettersGenerated';
@@ -15,7 +17,7 @@ import StatsOverview from '@/components/analytics/StatsOverview';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
   const resolvedParams = params instanceof Promise ? await params : params;
   const locale = resolvedParams.locale || 'en';
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = loadMessages(locale);
 
   return {
     title: `${messages.analytics.title} - maicivy`,
@@ -39,6 +41,12 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ loca
         <p className="text-muted-foreground">
           {t('subtitle')} - {t('description')}
         </p>
+      </div>
+
+      {/* Tests & Qualité — santé projet : nombre réel de tests automatisés (cf. TestStatsCard).
+          Le portrait dev (LOC/commits/tendances), lui, est sur le CV. */}
+      <div className="mb-8">
+        <TestStatsCard />
       </div>
 
       {/* Filters */}
@@ -99,8 +107,8 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ loca
 // Skeleton components pour loading states
 function StatsOverviewSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {[...Array(4)].map((_, i) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {[...Array(5)].map((_, i) => (
         <div key={i} className="rounded-lg border bg-card p-6 animate-pulse">
           <div className="h-6 bg-muted rounded w-1/2 mb-2" />
           <div className="h-8 bg-muted rounded w-3/4" />

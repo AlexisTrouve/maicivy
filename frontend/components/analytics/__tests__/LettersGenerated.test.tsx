@@ -17,17 +17,25 @@ describe('LettersGenerated', () => {
     jest.useRealTimers();
   });
 
+  // Real API format: { success: true, data: { total, motivation, anti_motivation, history } }
+  // Le total AFFICHÉ = data.total (calculé par le backend : réel + synthétique). On le met ≠ motivation+anti
+  // pour prouver que le composant lit bien `total` (et non plus la somme).
   const mockLettersData = {
-    total: 456,
-    history: [
-      { date: '2024-12-01', count: 12 },
-      { date: '2024-12-02', count: 18 },
-      { date: '2024-12-03', count: 15 },
-      { date: '2024-12-04', count: 22 },
-      { date: '2024-12-05', count: 28 },
-      { date: '2024-12-06', count: 25 },
-      { date: '2024-12-07', count: 30 },
-    ],
+    success: true,
+    data: {
+      total: 612,
+      motivation: 300,
+      anti_motivation: 156,
+      history: [
+        { date: '2024-12-01', count: 12 },
+        { date: '2024-12-02', count: 18 },
+        { date: '2024-12-03', count: 15 },
+        { date: '2024-12-04', count: 22 },
+        { date: '2024-12-05', count: 28 },
+        { date: '2024-12-06', count: 25 },
+        { date: '2024-12-07', count: 30 },
+      ],
+    },
   };
 
   it('should render loading skeleton initially', () => {
@@ -92,7 +100,7 @@ describe('LettersGenerated', () => {
     render(<LettersGenerated />);
 
     await waitFor(() => {
-      expect(screen.getByText('456')).toBeInTheDocument();
+      expect(screen.getByText('612')).toBeInTheDocument(); // total fourni par le backend (data.total)
       expect(screen.getByText('lettres générées au total')).toBeInTheDocument();
     });
   });
@@ -296,9 +304,10 @@ describe('LettersGenerated', () => {
   });
 
   it('should show message when no data available', async () => {
+    // success:false (or missing data) causes component to setStats([]) → "Aucune donnée disponible"
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ total: 0, history: [] }),
+      json: async () => ({ success: false }),
     });
 
     render(<LettersGenerated />);
@@ -316,8 +325,9 @@ describe('LettersGenerated', () => {
     render(<LettersGenerated />);
 
     await waitFor(() => {
-      // Should display mock data total
-      expect(screen.getByText('456')).toBeInTheDocument();
+      // On error, component resets to 0 and shows no-data message
+      expect(screen.getByText('0')).toBeInTheDocument();
+      expect(screen.getByText('Aucune donnée disponible')).toBeInTheDocument();
     });
 
     consoleErrorSpy.mockRestore();
@@ -368,14 +378,16 @@ describe('LettersGenerated', () => {
   it('should handle empty history array', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ total: 100, history: [] }),
+      // Pas de champ total → fallback motivation + anti = 100 ; empty history → point synthétique créé
+      json: async () => ({ success: true, data: { motivation: 60, anti_motivation: 40, history: [] } }),
     });
 
     render(<LettersGenerated />);
 
     await waitFor(() => {
-      expect(screen.getByText('100')).toBeInTheDocument();
-      expect(screen.getByText('Aucune donnée disponible')).toBeInTheDocument();
+      expect(screen.getByText('100')).toBeInTheDocument(); // fallback motivation+anti (pas de data.total)
+      // With empty history, component creates a synthetic point — chart renders, not "no data"
+      expect(screen.queryByText('Aucune donnée disponible')).not.toBeInTheDocument();
     });
   });
 
@@ -402,7 +414,7 @@ describe('LettersGenerated', () => {
     const { container } = render(<LettersGenerated />);
 
     await waitFor(() => {
-      const totalElement = screen.getByText('456');
+      const totalElement = screen.getByText('612'); // data.total
       expect(totalElement).toHaveClass('text-3xl', 'font-bold', 'text-primary');
     });
   });

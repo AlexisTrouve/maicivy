@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import Loading from '../loading';
+// Le loading réel vit sous app/[locale]/loading.tsx (routing par locale) — on teste le vrai composant.
+import Loading from '../[locale]/loading';
 
 // Mock LoadingSpinner component
 jest.mock('@/components/shared/LoadingSpinner', () => ({

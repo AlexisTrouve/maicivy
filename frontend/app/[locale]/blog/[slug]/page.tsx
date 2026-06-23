@@ -7,9 +7,9 @@ interface BlogPostPageProps {
   params: Promise<{ locale: string; slug: string }> | { locale: string; slug: string };
 }
 
-async function getPost(slug: string) {
+async function getPost(slug: string, lang?: string) {
   try {
-    return await blogApi.getPost(slug);
+    return await blogApi.getPost(slug, lang);
   } catch {
     return null;
   }
@@ -17,7 +17,7 @@ async function getPost(slug: string) {
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const resolvedParams = params instanceof Promise ? await params : params;
-  const post = await getPost(resolvedParams.slug);
+  const post = await getPost(resolvedParams.slug, resolvedParams.locale);
 
   if (!post) {
     return {
@@ -60,7 +60,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const resolvedParams = params instanceof Promise ? await params : params;
   const { locale, slug } = resolvedParams;
 
-  const post = await getPost(slug);
+  const post = await getPost(slug, locale);
 
   if (!post) {
     notFound();

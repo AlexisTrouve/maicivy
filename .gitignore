@@ -106,3 +106,9 @@ auto-sync.sh
 dry-run-test.sh
 sync-to-github*.ps1
 sync-to-github*.sh
+
+# Artefacts locaux & notes hors-projet — ne JAMAIS committer (le repo a un miroir public).
+# .melodicode/ = cache de l'IDE Melodicode. handoffclean57.md = note d'infra VPS57 sensible
+# (mentionne une attaque/migration) : protège d'un `git add .` accidentel qui fuiterait en public.
+.melodicode/
+handoffclean57.md

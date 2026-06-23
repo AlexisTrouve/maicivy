@@ -423,9 +423,14 @@ export const blogApi = {
       all: 'true',
     }, NO_CACHE),
 
-  // Get single post by slug
-  getPost: (slug: string) =>
-    api.get<import('./types').BlogPost>(`/api/v1/blog/posts/${slug}`, undefined, NO_CACHE),
+  // Get single post by slug. `lang` = locale du visiteur (fr|en) → l'article est servi dans
+  // cette langue (FR natif via maiProFiles, EN source). Sans lang → défaut backend (en).
+  getPost: (slug: string, lang?: string) =>
+    api.get<import('./types').BlogPost>(
+      `/api/v1/blog/posts/${slug}`,
+      lang ? { lang } : undefined,
+      NO_CACHE,
+    ),
 
   // Generate new post from project activity
   generate: (projectName: string, autoSelect = true) =>

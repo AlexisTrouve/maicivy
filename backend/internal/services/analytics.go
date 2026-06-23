@@ -20,7 +20,12 @@ type AnalyticsService struct {
 	db          *gorm.DB
 	redis       *redis.Client
 	pubSubTopic string
+	demo        *DemoMetrics // générateur procédural d'analytics "vivantes" (nil/off → 100% réel)
 }
+
+// SetDemoMetrics injecte le générateur synthétique (cf. demo_metrics.go). Appelé au boot dans main.go
+// une fois GiteaStatsService dispo. Idempotent ; nil ou disabled → aucun effet (passthrough réel).
+func (s *AnalyticsService) SetDemoMetrics(d *DemoMetrics) { s.demo = d }
 
 // NewAnalyticsService crée une nouvelle instance du service analytics
 func NewAnalyticsService(db *gorm.DB, rdb *redis.Client) *AnalyticsService {
@@ -201,16 +206,27 @@ func (s *AnalyticsService) GetRealtimeStats(ctx context.Context) (map[string]int
 		lettersGenerated = count
 	}
 
+	currentVisitors := currentVisitorsCmd.Val()
+
+	// Blend synthétique (DemoMetrics). R = vrais visiteurs uniques du jour pilote le gate : peu de vrais
+	// users → synthétique bas même avec gros commits ; beaucoup → le réel domine. Off/nil → no-op.
+	if s.demo.Enabled() {
+		R := float64(uniqueToday)
+		currentVisitors = s.demo.Online(ctx, currentVisitors, R)
+		uniqueToday = s.demo.VisitorsToday(ctx, uniqueToday, R)
+		totalEvents = s.demo.PageViews(ctx, totalEvents, R)
+	}
+
 	stats := map[string]interface{}{
-		"current_visitors": currentVisitorsCmd.Val(),
+		"current_visitors": currentVisitors,
 		"unique_today":     uniqueToday,
 		"total_events":     totalEvents,
 		"letters_today":    lettersGenerated,
 		"timestamp":        time.Now().Unix(),
 	}
 
-	// Mettre à jour Gauge Prometheus pour visiteurs actuels
-	metrics.UpdateCurrentVisitors(float64(currentVisitorsCmd.Val()))
+	// Mettre à jour Gauge Prometheus pour visiteurs actuels (valeur affichée)
+	metrics.UpdateCurrentVisitors(float64(currentVisitors))
 
 	return stats, nil
 }
@@ -304,6 +320,26 @@ func (s *AnalyticsService) GetStats(ctx context.Context, period string) (map[str
 	// Mettre à jour métrique Prometheus
 	metrics.UpdateConversionRate(conversionRate)
 
+	// Lectures blog RÉELLES : compteur Redis incrémenté par le handler blog quand un article est servi.
+	realBlogReads, _ := s.redis.Get(ctx, BlogReadsTotalKey).Int64()
+	blogReads := realBlogReads
+
+	// Blend synthétique. R = vrais visiteurs uniques pilote le gate. Off/nil → no-op (100% réel).
+	if s.demo.Enabled() {
+		R := float64(uniqueVisitors)
+		uniqueVisitors = s.demo.VisitorsToday(ctx, uniqueVisitors, R)
+		totalEvents = s.demo.PageViews(ctx, totalEvents, R)
+		lettersGenerated = s.demo.Letters(ctx, lettersGenerated, R)
+		blogReads = s.demo.BlogReadsTotal(ctx, realBlogReads, R)
+		// Conversion recalculée sur les valeurs AFFICHÉES, clampée à un plafond crédible (≤ 40%).
+		if uniqueVisitors > 0 {
+			conversionRate = float64(lettersGenerated) / float64(uniqueVisitors)
+		}
+		if conversionRate > 0.4 {
+			conversionRate = 0.4
+		}
+	}
+
 	stats := map[string]interface{}{
 		"period":            period,
 		"period_key":        periodKey,
@@ -311,6 +347,7 @@ func (s *AnalyticsService) GetStats(ctx context.Context, period string) (map[str
 		"letters_generated": lettersGenerated,
 		"unique_visitors":   uniqueVisitors,
 		"conversion_rate":   conversionRate,
+		"blog_reads":        blogReads,
 	}
 
 	return stats, nil
@@ -610,34 +647,71 @@ func (s *AnalyticsService) GetHeatmapData(ctx context.Context, pageURL string, h
 		return nil, err
 	}
 
-	// Agréger les interactions par position
-	heatmap := make(map[string]int)
+	// Agréger les interactions par position, en gardant le LIBELLÉ d'élément dominant. Avant, on
+	// n'agrégeait que le compte → le front affichait "Unknown" partout (le label existait dans
+	// event_data mais n'était jamais remonté).
+	type heatCell struct {
+		count    int
+		elements map[string]int
+	}
+	heatmap := make(map[string]*heatCell)
 	for _, event := range events {
-		if event.EventData != "" {
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(event.EventData), &data); err == nil {
-				if x, okX := data["x"].(float64); okX {
-					if y, okY := data["y"].(float64); okY {
-						key := fmt.Sprintf("%.0f,%.0f", x, y)
-						heatmap[key]++
-					}
-				}
-			}
+		if event.EventData == "" {
+			continue
+		}
+		var data map[string]interface{}
+		if json.Unmarshal([]byte(event.EventData), &data) != nil {
+			continue
+		}
+		x, okX := data["x"].(float64)
+		y, okY := data["y"].(float64)
+		if !okX || !okY {
+			continue
+		}
+		key := fmt.Sprintf("%.0f,%.0f", x, y)
+		cell := heatmap[key]
+		if cell == nil {
+			cell = &heatCell{elements: make(map[string]int)}
+			heatmap[key] = cell
+		}
+		cell.count++
+		if el, ok := data["element"].(string); ok && el != "" {
+			cell.elements[el]++
 		}
 	}
 
-	// Convertir en slice
+	// Convertir en slice (libellé = élément le plus fréquent à cette position).
 	result := make([]map[string]interface{}, 0, len(heatmap))
-	for key, count := range heatmap {
+	for key, cell := range heatmap {
 		var x, y float64
 		fmt.Sscanf(key, "%f,%f", &x, &y)
 		result = append(result, map[string]interface{}{
 			"x":         x,
 			"y":         y,
-			"count":     count,
-			"intensity": count, // Alias pour compatibilité frontend
+			"count":     cell.count,
+			"intensity": cell.count,
+			"element":   dominantElement(cell.elements),
 		})
 	}
 
+	// Blend synthétique : superpose des zones chaudes générées (labellisées, gatées par les vrais
+	// users) → heatmap lisible même quand les clics réels sont rares. Off/nil → no-op.
+	if s.demo.Enabled() {
+		today := time.Now().Format("2006-01-02")
+		R := float64(s.redis.PFCount(ctx, "analytics:visitors:unique:day:"+today).Val())
+		result = append(result, s.demo.HeatmapPoints(ctx, R)...)
+	}
+
 	return result, nil
+}
+
+// dominantElement retourne le libellé d'élément le plus fréquent à une position (vide si aucun).
+func dominantElement(elements map[string]int) string {
+	best, bestN := "", 0
+	for el, n := range elements {
+		if n > bestN {
+			best, bestN = el, n
+		}
+	}
+	return best
 }

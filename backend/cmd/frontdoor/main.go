@@ -54,9 +54,11 @@ func main() {
 			WebhookURL:    os.Getenv("SUS_WEBHOOK_URL"),
 			// Signal signature de path ACTIVÉ ici (le checkpoint voit tout le trafic).
 			ScannerPath: middleware.ScannerPathMatcher(middleware.AllScannerPatterns()...),
-			// Exemptions : owner via header (IP-indépendant) + IPs/CIDR stables (allowlist).
-			OwnerKey:  os.Getenv("MAICIVY_OWNER_API_KEY"),
-			Allowlist: splitCSV(os.Getenv("SUS_ALLOWLIST")),
+			// Exemptions : owner via header (IP-indépendant) + IPs/CIDR stables (allowlist) + badge
+			// dev (cookie maicivy_friend signé avec SESSION_SECRET, IP-indépendant, révocable).
+			OwnerKey:     os.Getenv("MAICIVY_OWNER_API_KEY"),
+			Allowlist:    splitCSV(os.Getenv("SUS_ALLOWLIST")),
+			FriendSecret: os.Getenv("SESSION_SECRET"),
 			// Types d'alerte mutés (loggés mais pas notifiés Discord). Défaut "php" : les scans
 			// webshell PHP sont du bruit (aucun PHP servi). CSV, ex "php,wordpress".
 			AlertMuteTypes: splitCSV(env("SUS_ALERT_MUTE_TYPES", "php")),

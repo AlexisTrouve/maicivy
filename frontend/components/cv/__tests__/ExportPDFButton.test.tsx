@@ -124,7 +124,7 @@ describe('ExportPDFButton', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/cv/export?theme=technical&format=pdf`
+        `${mockApiUrl}/api/v1/cv/export?theme=technical&format=pdf&lang=fr`
       );
     });
   });

@@ -2,11 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import SkillsCloud from '../SkillsCloud';
 
 // Mock framer-motion
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, layout, whileHover, variants, initial, animate, transition, ...props }: any) => <div {...props}>{children}</div>,
-  },
-}));
+// framer-motion mocké globalement (cf. __mocks__/framer-motion.tsx — couvre motion.button + AnimatePresence)
 
 describe('SkillsCloud', () => {
   afterEach(() => {
@@ -151,13 +147,14 @@ describe('SkillsCloud', () => {
   it('should display tooltip with skill details', () => {
     render(<SkillsCloud skills={mockSkills} />);
 
-    // The title attribute is on the motion.div itself, not parentElement
+    // The title attribute is on the motion.button itself.
+    // Format: t('badgeTitle', { name }) = "{name} — cliquez pour les détails"
     const goSkill = screen.getByText('Go').closest('[title]');
 
     expect(goSkill).toHaveAttribute('title');
+    // badgeTitle = "{name} — cliquez pour les détails"
     expect(goSkill?.getAttribute('title')).toContain('Go');
-    expect(goSkill?.getAttribute('title')).toContain('expert');
-    expect(goSkill?.getAttribute('title')).toContain('4 ans');
+    expect(goSkill?.getAttribute('title')).toContain('cliquez pour les détails');
   });
 
   it('should render legend explaining size meaning', () => {
@@ -178,8 +175,12 @@ describe('SkillsCloud', () => {
   it('should extract unique categories from skills', () => {
     render(<SkillsCloud skills={mockSkills} />);
 
-    // Should have 4 unique categories + "Toutes" button
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBe(5); // Toutes + backend + frontend + devops + database
+    // Should have 4 unique categories + "Toutes" filter button
+    // (Skill badge buttons are also buttons, so we check by the known filter labels)
+    expect(screen.getByRole('button', { name: 'Toutes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'backend' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'frontend' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'devops' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'database' })).toBeInTheDocument();
   });
 });

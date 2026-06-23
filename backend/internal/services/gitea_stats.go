@@ -22,6 +22,12 @@ type GiteaStatsService struct {
 	token    string
 	username string
 	client   *http.Client
+
+	// Verrous single-flight pour le rafraîchissement en fond (stale-while-revalidate). Un par cache :
+	// les stats (gitstats:v6) et les langages (gitlang:v1) ont des intervalles différents et se
+	// rafraîchissent indépendamment, donc deux verrous distincts.
+	statsRefresher bgRefresher
+	langRefresher  bgRefresher
 }
 
 // NewGiteaStatsService crée le service — nil si token manquant
@@ -159,19 +165,22 @@ func (s *GiteaStatsService) GetStats(ctx context.Context, force bool) (*GitStats
 		return &cached.Response, nil
 	}
 
-	// Cache périmé → fetch incrémental depuis le dernier fetch
+	// Cache périmé → STALE-WHILE-REVALIDATE : on rend le cache stale IMMÉDIATEMENT (le visiteur n'attend
+	// JAMAIS Gitea — c'était le « repull la planète à chaque fois ») et on rafraîchit en FOND. Le verrou
+	// single-flight (statsRefresher) garantit qu'un seul refetch incrémental tourne, même sous trafic.
+	// Le ctx passé à incrementalFetch est détaché (Background) par bgRefresher : la requête a déjà rendu
+	// le stale, son ctx est mort, mais saveCache doit aboutir pour peupler le cache frais.
 	log.Info().
 		Time("lastFetch", cached.FetchedAt).
-		Msg("gitstats: incremental fetch")
+		Msg("gitstats: serving stale, refreshing in background")
 
-	resp, err := s.incrementalFetch(ctx, cached)
-	if err != nil {
-		// En cas d'erreur, retourner le cache stale plutôt que rien
-		log.Warn().Err(err).Msg("gitstats: incremental fetch failed, returning stale cache")
-		return &cached.Response, nil
-	}
+	s.statsRefresher.trigger(func(bgCtx context.Context) {
+		if _, err := s.incrementalFetch(bgCtx, cached); err != nil {
+			log.Warn().Err(err).Msg("gitstats: background incremental fetch failed (stale cache kept)")
+		}
+	})
 
-	return resp, nil
+	return &cached.Response, nil
 }
 
 // fullFetchAndCache fait un full fetch et persiste en cache

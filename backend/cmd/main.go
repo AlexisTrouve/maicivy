@@ -109,6 +109,15 @@ func main() {
 		log.Warn().Msg("Gitea stats service not available — GITEA_STATS_TOKEN not configured")
 	}
 
+	// GitLab Stats Service — commits d'un projet partagé (REMO) filtrés sur l'auteur, mergés dans les
+	// gitstats. nil si GITLAB_STATS_TOKEN/PROJECT absents (feature désactivée proprement).
+	gitlabStatsService := services.NewGitLabStatsService(redisClient, cfg.GitLabStatsURL, cfg.GitLabStatsToken, cfg.GitLabStatsProject, cfg.GitLabStatsAuthors)
+	if gitlabStatsService != nil {
+		log.Info().Msg("GitLab stats service initialized")
+	} else {
+		log.Warn().Msg("GitLab stats service not available — GITLAB_STATS_TOKEN/PROJECT not configured")
+	}
+
 	// Le provider fetch /experiences, /skills, /projects et cache 5 min.
 	// Vedette = pins curés (maiprofiles) UNION top activité Gitea (via giteaStatsService).
 	contentProvider := services.NewMaiProFilesContentProvider(giteaStatsService)
@@ -118,6 +127,15 @@ func main() {
 	llmScoring := services.NewLLMScoringService(cfg.AnthropicBaseURL, cfg.AnthropicAPIKey, redisClient)
 	cvService := services.NewCVService(contentProvider, redisClient, llmScoring)
 	analyticsService := services.NewAnalyticsService(db, redisClient)
+
+	// DemoMetrics : générateur procédural d'analytics "vivantes" (seedé par les commits via
+	// giteaStatsService, gaté par les vrais users). Activé par DEMO_METRICS=true|1. Injecté dans
+	// l'analytics → le WS ET les endpoints héritent automatiquement du blend (point unique).
+	demoEnabled := os.Getenv("DEMO_METRICS") == "true" || os.Getenv("DEMO_METRICS") == "1"
+	analyticsService.SetDemoMetrics(services.NewDemoMetrics(giteaStatsService, redisClient, demoEnabled))
+	if demoEnabled {
+		log.Info().Msg("DemoMetrics ON — analytics synthétiques (seedées commits) activées")
+	}
 
 	// 8. Analytics middleware (après tracking pour avoir visitor_id)
 	analyticsMW := middleware.NewAnalytics(analyticsService)
@@ -214,10 +232,10 @@ func main() {
 
 	// blogHandler utilise mpfClient pour list/get/create/update/delete/publish
 	// et blogGeneratorService uniquement pour la génération IA (GeneratePost)
-	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, aiConfig.OwnerAPIKey)
+	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, redisClient, aiConfig.OwnerAPIKey)
 	timelineHandler := api.NewTimelineHandler(db, contentProvider)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
-	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService)
+	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService, gitlabStatsService)
 	swaggerHandler := api.NewSwaggerHandler()
 	visitorHandler := api.NewVisitorHandler(db, redisClient, analyticsService)
 
@@ -255,6 +273,7 @@ func main() {
 		CooldownDuration: 2 * time.Minute,      // cooldown entre 2 générations d'une même session
 		GlobalDailyMax:   aiGlobalDailyMax,     // circuit-breaker coût (0 = désactivé)
 		OwnerAPIKey:      aiConfig.OwnerAPIKey, // bypass total pour l'owner
+		SessionSecret:    cfg.SessionSecret,    // valide aussi le cookie admin (maicivy_admin) = owner
 	})
 
 	// Routes CV (Phase 2) — /cv/generate & /cv/tailor passent derrière le rate-limit IA
@@ -292,6 +311,20 @@ func main() {
 
 	// Routes Blog (Articles générés depuis commits)
 	blogHandler.RegisterRoutes(apiV1)
+
+	// Routes Admin — login owner (mot de passe → cookie maicivy_admin signé = privilèges owner).
+	// Le cookie est reconnu par aiRateLimitMW (cf. VerifyAdminCookie). Désactivé si ADMIN_PASSWORD vide.
+	adminHandler := api.NewAdminHandler(cfg.AdminPassword, cfg.SessionSecret)
+	adminHandler.RegisterRoutes(apiV1)
+
+	// Stats privées owner-only (GET /admin/stats) — coûts IA, sécurité/sus, analytics détaillées.
+	adminStatsHandler := api.NewAdminStatsHandler(db, redisClient, cfg.SessionSecret)
+	adminStatsHandler.RegisterRoutes(apiV1)
+
+	// Chat agent : persistance des conversations owner-only (mémoire durable). Le streaming réutilise
+	// /chat (owner → Opus + tools maiProFiles).
+	adminChatHandler := api.NewAdminChatHandler(db, cfg.SessionSecret)
+	adminChatHandler.RegisterRoutes(apiV1)
 
 	// Routes Timeline (Phase 5 - IMPLEMENTED)
 	apiV1.Get("/timeline", timelineHandler.GetTimeline)

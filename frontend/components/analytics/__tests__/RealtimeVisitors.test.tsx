@@ -104,12 +104,12 @@ describe('RealtimeVisitors', () => {
       expect(screen.getByText('En ligne')).toBeInTheDocument();
     });
 
-    // Simulate WebSocket message
+    // Simulate WebSocket message — backend format: { type, data: { current_visitors } }
     act(() => {
       if (mockWebSocket) {
         mockWebSocket.simulateMessage({
-          currentVisitors: 5,
-          timestamp: Date.now(),
+          type: 'heartbeat',
+          data: { current_visitors: 5, timestamp: Date.now() },
         });
       }
     });
@@ -135,14 +135,16 @@ describe('RealtimeVisitors', () => {
       expect(screen.getByText('En ligne')).toBeInTheDocument();
     });
 
-    // First message
+    // First message — backend format: { type, data: { current_visitors } }
     act(() => {
       if (mockWebSocket) {
         mockWebSocket.simulateMessage({
-          currentVisitors: 3,
-          timestamp: Date.now(),
+          type: 'heartbeat',
+          data: { current_visitors: 3, timestamp: Date.now() },
         });
       }
+    });
+    act(() => {
       jest.advanceTimersByTime(1100);
     });
 
@@ -154,10 +156,12 @@ describe('RealtimeVisitors', () => {
     act(() => {
       if (mockWebSocket) {
         mockWebSocket.simulateMessage({
-          currentVisitors: 7,
-          timestamp: Date.now(),
+          type: 'initial_stats',
+          data: { current_visitors: 7, timestamp: Date.now() },
         });
       }
+    });
+    act(() => {
       jest.advanceTimersByTime(1100);
     });
 
@@ -197,37 +201,45 @@ describe('RealtimeVisitors', () => {
       jest.advanceTimersByTime(100);
     });
 
-    // 0 visitors
-    expect(screen.getByText(/personne en ce moment/i)).toBeInTheDocument();
+    // 0 visitors — "personne" and "en ce moment" are in separate text nodes inside <p>
+    expect(screen.getByText((_content, element) => {
+      return element?.tagName === 'P' && (element?.textContent ?? '').includes('personne') && (element?.textContent ?? '').includes('en ce moment');
+    })).toBeInTheDocument();
 
-    // 1 visitor
+    // 1 visitor — backend format: { type, data: { current_visitors } }
     act(() => {
       if (mockWebSocket) {
         mockWebSocket.simulateMessage({
-          currentVisitors: 1,
-          timestamp: Date.now(),
+          type: 'heartbeat',
+          data: { current_visitors: 1, timestamp: Date.now() },
         });
       }
       jest.advanceTimersByTime(1100);
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/personne en ce moment/i)).toBeInTheDocument();
+      const p = screen.getByText((_content, element) => {
+        return element?.tagName === 'P' && (element?.textContent ?? '').includes('personne') && (element?.textContent ?? '').includes('en ce moment');
+      });
+      expect(p).toBeInTheDocument();
     });
 
     // Multiple visitors
     act(() => {
       if (mockWebSocket) {
         mockWebSocket.simulateMessage({
-          currentVisitors: 5,
-          timestamp: Date.now(),
+          type: 'heartbeat',
+          data: { current_visitors: 5, timestamp: Date.now() },
         });
       }
       jest.advanceTimersByTime(1100);
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/personnes en ce moment/i)).toBeInTheDocument();
+      const p = screen.getByText((_content, element) => {
+        return element?.tagName === 'P' && (element?.textContent ?? '').includes('personnes') && (element?.textContent ?? '').includes('en ce moment');
+      });
+      expect(p).toBeInTheDocument();
     });
   });
 

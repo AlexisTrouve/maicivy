@@ -22,7 +22,7 @@ type PortfolioEntry struct {
 	Title       string
 	Category    string
 	ShortDesc   string
-	LongDesc    string     // description.portfolio (Markdown complet)
+	LongDesc    string // description.portfolio (Markdown complet)
 	KeyFeatures []string
 	TechStack   []string
 	Stats       []StatItem
@@ -33,28 +33,44 @@ type PortfolioEntry struct {
 
 // ExperienceData contient la bio et les expériences professionnelles
 type ExperienceData struct {
-	Bio      string
-	BioFull  string
-	Headline string
-	TJM      string
-	Dispo    string
+	Bio             string
+	BioFull         string
+	Headline        string
+	TJM             string
+	Dispo           string
 	ExperienceYears int
-	Experience []ExperienceItem
-	Domains   []string
+	Experience      []ExperienceItem
+	Domains         []string
 }
 
-// ExperienceItem représente une expérience professionnelle
+// ExperienceItem représente une expérience professionnelle (vue chat/agent).
+// Enrichie au-delà du strict minimum : technos + accroche + catégorie permettent à l'agent de
+// répondre précisément ("chez X il a utilisé Y/Z") sans noyer le contexte (on garde Summary court,
+// pas les descriptions technique/fonctionnelle longues — coût tokens).
 type ExperienceItem struct {
-	Company string
-	Role    string
-	Period  string
-	Summary string
+	Company      string
+	Role         string
+	Period       string
+	Summary      string
+	Technologies []string // technos du poste (ex: VBA, Access, SQL) — pour répondre "quelle stack chez X"
+	Catchphrase  string   // accroche courte du poste (résumé d'une ligne)
+	Category     string   // fullstack | backend | … — axe du poste
 }
 
-// SkillCategory groupe des skills par catégorie
+// SkillDetail — une compétence avec son niveau et son ancienneté. POURQUOI : l'agent doit pouvoir
+// répondre "quel est son niveau en Rust" / "depuis combien de temps fait-il du Go". Level garde la
+// valeur maiProFiles (expert|advanced|intermediate|beginner) NON traduite : c'est une donnée passée
+// au LLM, qui la ré-exprime dans la langue de l'utilisateur (pas une string d'UI à i18n-er).
+type SkillDetail struct {
+	Name  string
+	Level string
+	Years int
+}
+
+// SkillCategory groupe des skills (avec niveau/années) par catégorie
 type SkillCategory struct {
 	Name   string
-	Skills []string
+	Skills []SkillDetail
 }
 
 // GlobalStats agrège les métriques globales du portfolio
@@ -138,34 +154,59 @@ func (s *PortfolioService) ListProjects(lang string) []PortfolioEntry {
 	return result
 }
 
-// ListSkills retourne les skills groupés (strong / familiar / domains).
-// Les noms de catégories sont en dur ici (UI interne), pas via maiProFiles.
-// lang est passé pour que les données de profil soient dans la bonne langue.
+// ListSkills retourne les skills curés, groupés par catégorie maiProFiles.
+// SOURCE = /skills (la MÊME que le CV : ~27 skills avec catégorie/niveau/années). AVANT on lisait
+// /profile (≈7 noms strong/familiar) → vue appauvrie pour l'agent. Pas de fallback /profile : si
+// /skills échoue on retourne nil (échec franc — doctrine anti-fallback), les deux viennent de la
+// même API de toute façon.
 func (s *PortfolioService) ListSkills(lang string) []SkillCategory {
-	profile, err := s.client.GetProfile(context.Background(), lang)
+	skills, err := s.client.GetSkills(context.Background(), lang)
 	if err != nil {
 		return nil
 	}
-
-	cats := []SkillCategory{}
-	if len(profile.Skills.Strong) > 0 {
-		cats = append(cats, SkillCategory{Name: "Langages (maîtrisés)", Skills: profile.Skills.Strong})
-	}
-	if len(profile.Skills.Familiar) > 0 {
-		cats = append(cats, SkillCategory{Name: "Langages (familiers)", Skills: profile.Skills.Familiar})
-	}
-	if len(profile.Domains) > 0 {
-		cats = append(cats, SkillCategory{Name: "Domaines d'expertise", Skills: profile.Domains})
-	}
-	return cats
+	return groupMPFSkillsByCategory(skills)
 }
 
-// GetExperience retourne la bio et l'expérience d'Alexi depuis /profile dans la langue demandée.
+// groupMPFSkillsByCategory regroupe les skills de /skills par leur catégorie maiProFiles (AI, Languages,
+// Backend, Frontend, DevOps…), en préservant l'ordre d'apparition (déterministe pour l'affichage et
+// les tests). Chaque skill garde son niveau + ses années (SkillDetail) pour que l'agent réponde
+// précisément sur la maîtrise.
+func groupMPFSkillsByCategory(skills []MPFSkill) []SkillCategory {
+	order := []string{}                 // catégories dans l'ordre de 1re apparition
+	byCat := map[string][]SkillDetail{} // catégorie → skills détaillés
+	for _, sk := range skills {
+		cat := sk.Category
+		if cat == "" {
+			cat = "Other" // garde-fou : skill sans catégorie (rare) regroupé à part, libellé neutre
+		}
+		if _, seen := byCat[cat]; !seen {
+			order = append(order, cat)
+		}
+		byCat[cat] = append(byCat[cat], SkillDetail{Name: sk.Name, Level: sk.Level, Years: sk.Years})
+	}
+	out := make([]SkillCategory, 0, len(order))
+	for _, cat := range order {
+		out = append(out, SkillCategory{Name: cat, Skills: byCat[cat]})
+	}
+	return out
+}
+
+// GetExperience retourne la bio (depuis /profile) ET le parcours pro détaillé (depuis /experiences).
+// POURQUOI le double fetch : /profile ne contient PAS les expériences → sans l'appel à /experiences,
+// l'agent ne sait rien du parcours (postes, entreprises, dates). On mappe les expériences vers une
+// vue légère (ExperienceItem : poste/boîte/période/résumé). Si /experiences échoue, le parcours est
+// vide mais la bio reste servie (échec franc loggué côté client, pas de fallback inventé).
 // lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
 func (s *PortfolioService) GetExperience(lang string) ExperienceData {
 	profile, err := s.client.GetProfile(context.Background(), lang)
 	if err != nil {
 		return ExperienceData{}
+	}
+
+	// Parcours pro : source = /experiences (curé, avec dates/résumés). Indépendant du fetch /profile.
+	var items []ExperienceItem
+	if exps, expErr := s.client.GetExperiences(context.Background(), lang); expErr == nil {
+		items = mapExperienceItems(exps)
 	}
 
 	return ExperienceData{
@@ -176,9 +217,50 @@ func (s *PortfolioService) GetExperience(lang string) ExperienceData {
 		Dispo:           "Disponible",
 		ExperienceYears: profile.ExperienceYears,
 		Domains:         profile.Domains,
-		// Les expériences pro détaillées ne sont pas dans /profile — champ vide pour l'instant
-		Experience: []ExperienceItem{},
+		Experience:      items,
 	}
+}
+
+// mapExperienceItems convertit les expériences maiProFiles (/experiences) en items légers pour le
+// chat : poste, entreprise, période, résumé court. On omet technos/catchphrase/descriptions longues
+// pour ne pas gonfler le contexte LLM — l'essentiel pour que l'agent parle du parcours.
+func mapExperienceItems(exps []MPFExperience) []ExperienceItem {
+	out := make([]ExperienceItem, 0, len(exps))
+	for _, e := range exps {
+		out = append(out, ExperienceItem{
+			Company:      e.Company,
+			Role:         e.Title,
+			Period:       formatExpPeriod(e.StartDate, e.EndDate),
+			Summary:      e.Description.Short,
+			Technologies: e.Technologies,
+			Catchphrase:  e.Catchphrase,
+			Category:     e.Category,
+		})
+	}
+	return out
+}
+
+// formatExpPeriod formate la période "AAAA-MM → AAAA-MM". end_date null (poste en cours) → plage
+// ouverte "AAAA-MM → …". Le "…" est volontairement neutre (pas de mot FR/EN en dur) : c'est une
+// donnée passée au LLM, qui la ré-exprime dans la langue de l'utilisateur.
+func formatExpPeriod(start string, end *string) string {
+	if start == "" {
+		return ""
+	}
+	if end == nil || *end == "" {
+		return start + " → …"
+	}
+	return start + " → " + *end
+}
+
+// GetProfile retourne le profil (identité, headline, bio, domaines, contact) depuis maiprofiles.
+// Données publiques (affichées sur le site) → exposable au chat. Vide si maiprofiles indispo.
+func (s *PortfolioService) GetProfile(lang string) MPFProfile {
+	profile, err := s.client.GetProfile(context.Background(), lang)
+	if err != nil || profile == nil {
+		return MPFProfile{}
+	}
+	return *profile
 }
 
 // GetStats retourne les stats globales du portfolio (données numériques, pas de traduction).
@@ -189,7 +271,10 @@ func (s *PortfolioService) GetStats() GlobalStats {
 	}
 
 	// Top 10 techs par usage
-	type stackItem struct{ name string; count int }
+	type stackItem struct {
+		name  string
+		count int
+	}
 	var top []stackItem
 	for name, count := range stats.Stack {
 		top = append(top, stackItem{name, count})
@@ -204,7 +289,9 @@ func (s *PortfolioService) GetStats() GlobalStats {
 	}
 	topNames := make([]string, 0, 10)
 	for i, item := range top {
-		if i >= 10 { break }
+		if i >= 10 {
+			break
+		}
 		topNames = append(topNames, fmt.Sprintf("%s (%d)", item.name, item.count))
 	}
 

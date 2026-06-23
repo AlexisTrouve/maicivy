@@ -12,6 +12,17 @@ const customJestConfig = {
   moduleNameMapper: {
     // Handle module aliases (this will be automatically configured for you soon)
     '^@/(.*)$': '<rootDir>/$1',
+    // next-intl / next-intl/server sont ESM pur (non transformés par next/jest) → mock qui résout
+    // les vraies traductions FR. Sans ça : `SyntaxError: Unexpected token 'export'` sur tout test i18n.
+    '^next-intl$': '<rootDir>/__mocks__/next-intl.tsx',
+    '^next-intl/server$': '<rootDir>/__mocks__/next-intl.tsx',
+    // next-intl/navigation : ESM pur, importé par @/i18n/navigation (createNavigation). Sans mock,
+    // tout test qui rend un composant utilisant le Link/usePathname localisé casse (Unexpected token 'export').
+    '^next-intl/navigation$': '<rootDir>/__mocks__/next-intl-navigation.tsx',
+    // framer-motion : ESM + nombreux motion.* / AnimatePresence → mock global complet (Proxy).
+    '^framer-motion$': '<rootDir>/__mocks__/framer-motion.tsx',
+    // next/navigation : hooks router/params neutres (évite "Cannot read 'locale'/'startsWith'").
+    '^next/navigation$': '<rootDir>/__mocks__/next-navigation.tsx',
     // Handle CSS imports (with CSS modules)
     '^.+\.module\.(css|sass|scss)$': 'identity-obj-proxy',
     // Handle CSS imports (without CSS modules)

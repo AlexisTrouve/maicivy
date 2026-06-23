@@ -88,9 +88,10 @@ describe('useTheme', () => {
 
     const { result } = renderHook(() => useTheme(), { wrapper })
 
-    // Now we force light mode by default, ignoring system preference
-    expect(result.current.theme).toBe('light')
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    // ThemeProvider reads matchMedia on mount (useEffect): no localStorage → system pref wins.
+    // System pref is dark here, so the initialised theme is 'dark'.
+    expect(result.current.theme).toBe('dark')
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
   })
 
   it('should toggle theme from light to dark', () => {

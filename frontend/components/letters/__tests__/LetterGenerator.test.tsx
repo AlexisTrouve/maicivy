@@ -9,12 +9,7 @@ jest.mock('lucide-react', () => ({
   Sparkles: ({ className }: any) => <div data-testid="sparkles-icon" className={className} />,
 }));
 
-// Mock framer-motion
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  },
-}));
+// framer-motion mocké globalement (cf. __mocks__/framer-motion.tsx)
 
 // Mock LetterPreview component
 jest.mock('../LetterPreview', () => ({
@@ -26,14 +21,15 @@ jest.mock('../LetterPreview', () => ({
   ),
 }));
 
-// Mock the API
+// Mock the API — le composant appelle generateAndWait (queue async + polling interne)
 jest.mock('@/lib/api', () => ({
   lettersApi: {
     generate: jest.fn(),
+    generateAndWait: jest.fn(),
   },
 }));
 
-const mockGenerate = lettersApi.generate as jest.MockedFunction<typeof lettersApi.generate>;
+const mockGenerate = lettersApi.generateAndWait as jest.MockedFunction<typeof lettersApi.generateAndWait>;
 
 describe('LetterGenerator', () => {
   beforeEach(() => {
@@ -73,7 +69,7 @@ describe('LetterGenerator', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Le nom doit contenir au moins 2 caractères/i)
+        screen.getByText(/Doit contenir au moins 2 caractères/i)
       ).toBeInTheDocument();
     });
   });
@@ -109,18 +105,19 @@ describe('LetterGenerator', () => {
     fireEvent.change(input, { target: { value: 'Tech Innovations Inc' } });
     fireEvent.click(submitButton);
 
-    // Should show loading state
+    // Should show loading state and button should be disabled simultaneously
     await waitFor(() => {
       expect(screen.getByText(/Génération en cours/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Génération en cours/i })).toBeDisabled();
     });
-
-    // Button should be disabled
-    expect(submitButton).toBeDisabled();
 
     // Fast-forward timers and resolve promise
     jest.advanceTimersByTime(100);
     await waitFor(() => {
-      expect(mockGenerate).toHaveBeenCalledWith({ companyName: 'Tech Innovations Inc' });
+      expect(mockGenerate).toHaveBeenCalledWith(
+        { company_name: 'Tech Innovations Inc', lang: 'fr' },
+        expect.any(Function)
+      );
     });
   });
 
