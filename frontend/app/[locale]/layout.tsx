@@ -117,13 +117,16 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
+        {/* Script anti-flash : pose la classe `dark` sur <html> AVANT le 1er paint (beforeInteractive),
+            sinon le visiteur verrait un flash clair puis bascule sombre. Dark est le défaut produit
+            (dark-first) → on n'écoute PAS `prefers-color-scheme` (un OS clair verrait sinon le site en
+            clair). Le choix explicite (localStorage `theme`, posé par le toggle) garde la priorité. */}
         <Script id="theme-script" strategy="beforeInteractive">
           {`
             (function() {
               try {
                 const theme = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const initialTheme = theme || (prefersDark ? 'dark' : 'light');
+                const initialTheme = theme || 'dark';
                 if (initialTheme === 'dark') {
                   document.documentElement.classList.add('dark');
                 } else {

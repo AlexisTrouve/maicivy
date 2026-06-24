@@ -100,17 +100,23 @@ func (l *LocalizationHelper) LocalizeProject(project models.Project, lang string
 	return localized
 }
 
-// IsValidLanguage checks if a language code is supported
+// IsValidLanguage indique si le CV a du contenu NATIF pour cette langue.
+// POURQUOI fr/en seulement : le modèle de contenu est bilingue (champs FR de base + *En), alimenté par
+// content_provider qui fetche explicitement fr+en depuis maiProFiles. de/it/zh n'ont pas de contenu natif.
 func (l *LocalizationHelper) IsValidLanguage(lang string) bool {
 	return lang == "fr" || lang == "en"
 }
 
-// GetDefaultLanguage returns the default language code
+// GetDefaultLanguage retourne la langue servie quand celle de l'utilisateur n'a PAS de contenu natif.
+// POURQUOI "en" et non "fr" : un visiteur de/it/zh (ou langue inconnue) ne doit jamais recevoir un CV en
+// FRANÇAIS — l'anglais est le défaut neutre/international. Le français reste servi à un visiteur fr (natif).
+// (Symétrique du repli côté chat : maiprofiles_client.fallbackLang.)
 func (l *LocalizationHelper) GetDefaultLanguage() string {
-	return "fr"
+	return "en"
 }
 
-// NormalizeLanguage ensures the language is valid, returning default if not
+// NormalizeLanguage mappe la locale de l'utilisateur vers la langue de contenu à servir :
+// fr/en → natif (servi tel quel) ; toute autre (de/it/zh, vide, inconnue) → anglais (GetDefaultLanguage).
 func (l *LocalizationHelper) NormalizeLanguage(lang string) string {
 	if l.IsValidLanguage(lang) {
 		return lang

@@ -22,13 +22,21 @@ const maiProFilesBaseURL = "https://maiprofiles.etheryale.com"
 // cacheTTL — durée de vie d'une entrée en cache (5 minutes)
 const cacheTTL = 5 * time.Minute
 
-// validLangs liste les langues acceptées par maiProFiles.
-// Toute autre valeur → le param ?lang= n'est pas envoyé (fallback FR côté API).
+// validLangs liste les langues pour lesquelles maiProFiles a réellement du contenu (fr/en + ka géorgien).
+// Toute autre langue est repliée sur l'anglais (cf. langSuffix / fallbackLang).
 var validLangs = map[string]bool{
 	"fr": true,
 	"en": true,
 	"ka": true,
 }
+
+// fallbackLang — langue de repli quand la langue demandée n'est pas servie par maiProFiles.
+// POURQUOI "en" et NON le défaut FR de l'API : le front expose de/it/zh, mais maiProFiles ne contient
+// du contenu QUE pour fr/en/ka. Sans repli explicite, un visiteur de/it/zh recevait des fiches en
+// FRANÇAIS (défaut silencieux de l'API) — incohérent avec une UI et une voix de chat allemandes.
+// On sert l'ANGLAIS à la place (neutre, international). La voix du LLM reste, elle, dans la langue de
+// l'utilisateur (géré côté chat_service, indépendant de ce repli données).
+const fallbackLang = "en"
 
 // --- Types API ---
 
@@ -134,9 +142,21 @@ func NewMaiProFilesClient() *MaiProFilesClient {
 
 // langSuffix retourne "&lang=<lang>" ou "?lang=<lang>" selon si la path contient déjà un "?".
 // Permet d'ajouter le paramètre lang à un path qui a déjà d'autres query params (ex: /blog/posts?page=1).
+//
+// Repli (décision B) :
+//   - lang servie par maiProFiles (fr/en/ka) → envoyée telle quelle ;
+//   - lang vide → AUCUN param (défaut API = FR). Réservé aux appels internes non liés à une locale
+//     visiteur (stats numériques, profil du prompt système) — on ne veut pas les basculer en EN ;
+//   - toute autre lang (de/it/zh…) → repli ANGLAIS (fallbackLang), pour ne JAMAIS servir du français
+//     à un visiteur de/it/zh.
 func langSuffix(path, lang string) string {
-	if !validLangs[lang] {
+	// lang vide = « défaut API » historique (FR) pour les appels internes : on n'ajoute pas de param.
+	if lang == "" {
 		return path
+	}
+	// Langue non servie par maiProFiles → repli sur l'anglais (et non le défaut FR silencieux).
+	if !validLangs[lang] {
+		lang = fallbackLang
 	}
 	// Détermine le séparateur selon la présence de query params existants
 	for _, ch := range path {
@@ -207,7 +227,7 @@ func (c *MaiProFilesClient) get(ctx context.Context, path string, lang string, o
 }
 
 // GetProfile retourne le profil complet dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (c *MaiProFilesClient) GetProfile(ctx context.Context, lang string) (*MPFProfile, error) {
 	var p MPFProfile
 	err := c.get(ctx, "/profile", lang, &p)
@@ -215,7 +235,7 @@ func (c *MaiProFilesClient) GetProfile(ctx context.Context, lang string) (*MPFPr
 }
 
 // ListProjects retourne tous les projets dans la langue demandée (sans description.portfolio).
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (c *MaiProFilesClient) ListProjects(ctx context.Context, lang string) ([]MPFProject, error) {
 	var projects []MPFProject
 	err := c.get(ctx, "/projects", lang, &projects)
@@ -223,7 +243,7 @@ func (c *MaiProFilesClient) ListProjects(ctx context.Context, lang string) ([]MP
 }
 
 // GetProject retourne les détails complets d'un projet par ID dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (c *MaiProFilesClient) GetProject(ctx context.Context, id string, lang string) (*MPFProject, error) {
 	var p MPFProject
 	err := c.get(ctx, "/projects/"+id, lang, &p)
@@ -239,7 +259,7 @@ func (c *MaiProFilesClient) GetStats(ctx context.Context) (*MPFGlobalStats, erro
 }
 
 // Search recherche des projets par mot-clé dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (c *MaiProFilesClient) Search(ctx context.Context, query string, lang string) ([]MPFProject, error) {
 	var results []MPFProject
 	path := "/search?q=" + url.QueryEscape(query)
@@ -471,7 +491,8 @@ type MPFBlogUpdateRequest struct {
 }
 
 // GetBlogPosts retourne la liste des posts publiés depuis maiProFiles (paginée) dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR (maiProFiles ignore le param).
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur EN ; "" → défaut API. (Le blog
+// n'est pas localisé côté maiProFiles → le param n'a en pratique pas d'effet, mais on reste cohérent.)
 // Résultats mis en cache TTL 5min avec clé par langue (invalidés explicitement après écriture).
 func (c *MaiProFilesClient) GetBlogPosts(ctx context.Context, page, perPage int, lang string) (*models.BlogPostListResponse, error) {
 	// Le path de base contient déjà des query params (page, per_page).
@@ -504,7 +525,7 @@ func (c *MaiProFilesClient) GetBlogPosts(ctx context.Context, page, perPage int,
 }
 
 // GetBlogPost retourne un post complet par son slug (avec content markdown) dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (c *MaiProFilesClient) GetBlogPost(ctx context.Context, postSlug string, lang string) (*models.BlogPost, error) {
 	path := "/blog/posts/" + url.PathEscape(postSlug)
 

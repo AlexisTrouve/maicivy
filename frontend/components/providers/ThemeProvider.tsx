@@ -25,16 +25,21 @@ interface ThemeProviderProps {
   defaultTheme?: Theme;
 }
 
-export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Read theme from localStorage or detect system preference
+    // QUOI : détermine le thème initial au montage. Le choix explicite de l'utilisateur (localStorage,
+    // posé par le toggle) gagne ; à défaut, on tombe sur `dark`.
+    // POURQUOI : dark est le défaut produit (esthétique dark-first). On n'écoute PLUS
+    // `prefers-color-scheme` — sinon un visiteur en OS clair verrait le site en clair et le « dark par
+    // défaut » ne s'afficherait jamais pour lui. localStorage reste prioritaire → on ne piétine pas un
+    // choix déjà fait.
+    // COMMENT : stored (null si jamais togglé) || 'dark'.
     const stored = localStorage.getItem('theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = stored || (prefersDark ? 'dark' : 'light');
+    const initialTheme = stored || 'dark';
 
     if (initialTheme !== defaultTheme) {
       setThemeState(initialTheme);
@@ -71,14 +76,16 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
   );
 }
 
-// Script to inject in <head> to prevent flash of wrong theme
+// Script anti-flash à injecter dans le <head> : pose la classe `dark` avant le paint.
+// ⚠️ DEAD CODE actuellement : le layout (app/[locale]/layout.tsx) a son propre <Script> inline et
+// n'importe PAS ce composant. On garde la logique alignée sur ThemeProvider (dark par défaut,
+// localStorage prioritaire, pas de prefers-color-scheme) pour éviter un piège si on le rebranche un jour.
 export function ThemeScript() {
   const themeScript = `
     (function() {
       try {
         const theme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialTheme = theme || (prefersDark ? 'dark' : 'light');
+        const initialTheme = theme || 'dark';
 
         if (initialTheme === 'dark') {
           document.documentElement.classList.add('dark');

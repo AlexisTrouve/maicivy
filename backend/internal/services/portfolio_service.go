@@ -141,7 +141,7 @@ func (s *PortfolioService) GetProject(name string, lang string) (PortfolioEntry,
 }
 
 // ListProjects retourne tous les projets dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (s *PortfolioService) ListProjects(lang string) []PortfolioEntry {
 	projects, err := s.client.ListProjects(context.Background(), lang)
 	if err != nil {
@@ -196,7 +196,7 @@ func groupMPFSkillsByCategory(skills []MPFSkill) []SkillCategory {
 // l'agent ne sait rien du parcours (postes, entreprises, dates). On mappe les expériences vers une
 // vue légère (ExperienceItem : poste/boîte/période/résumé). Si /experiences échoue, le parcours est
 // vide mais la bio reste servie (échec franc loggué côté client, pas de fallback inventé).
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (s *PortfolioService) GetExperience(lang string) ExperienceData {
 	profile, err := s.client.GetProfile(context.Background(), lang)
 	if err != nil {
@@ -304,7 +304,7 @@ func (s *PortfolioService) GetStats() GlobalStats {
 }
 
 // SearchProjects recherche des projets par mot-clé dans la langue demandée.
-// lang : "fr" | "en" | "ka" — toute autre valeur → fallback FR.
+// lang : "fr" | "en" | "ka" servies tel quel ; de/it/zh repliées sur l'ANGLAIS ; "" → défaut API (FR).
 func (s *PortfolioService) SearchProjects(query string, lang string) []PortfolioEntry {
 	results, err := s.client.Search(context.Background(), query, lang)
 	if err != nil {
