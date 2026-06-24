@@ -51,7 +51,11 @@ async function mockChatStream(page: Page) {
 // et le handler qui lit `input` (le bouton est disabled tant que input.trim() est vide).
 async function sendMessage(page: Page, text: string) {
   const ta = page.locator('textarea');
-  await ta.fill(text);
+  // pressSequentially (et non fill) : tape caractère par caractère → déclenche le onChange React de
+  // façon fiable, même sur WebKit où fill() ne commit pas toujours l'état → le bouton d'envoi (disabled
+  // tant que input.trim() est vide) restait disabled et le test flakait sur webkit/Safari.
+  await ta.click();
+  await ta.pressSequentially(text);
   const sendBtn = page.locator('textarea ~ button').first();
   await expect(sendBtn).toBeEnabled({ timeout: 5000 });
   await sendBtn.click();
