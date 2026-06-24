@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E des fiches ENRICHIES (skills avec niveau/années, expériences avec technos/accroche).
 // POURQUOI ce test existe : on a changé le shape des données poussées dans le panel droit —
@@ -24,12 +25,6 @@ function sse(toolName: string, data: unknown): string {
     '',
     '',
   ].join('\n');
-}
-
-function trackPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  return errors;
 }
 
 async function mockChatStream(page: Page, body: string) {

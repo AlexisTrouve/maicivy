@@ -496,7 +496,8 @@ export interface GitRepoStat {
   language: string;
   stars: number;
   updatedAt: string;
-  commits: number;        // total commits agrégés sur le repo (Gitea + GitLab si mergé)
+  commits: number;        // commits sur 6 mois (recalculé backend depuis l'union SHA, jamais accumulé)
+  commits30d: number;     // commits sur 30 jours glissants → badge "Repos chauds en ce moment"
   commitDays?: string[];  // dates "YYYY-MM-DD" des jours de commit (capé à ~70/repo côté backend)
 }
 

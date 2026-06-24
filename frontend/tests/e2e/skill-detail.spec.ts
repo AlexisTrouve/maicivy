@@ -1,19 +1,14 @@
 import { test, expect, Page } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E de la fiche détail d'un skill : charge réellement /fr/cv dans un navigateur, CLIQUE une pastille
 // de compétence, et vérifie que la fiche s'ouvre avec les stats puis se ferme. Doctrine : une UI
 // cliquable sans test qui clique pour de vrai = non vérifiée.
 // Tourne contre la prod : PLAYWRIGHT_TEST_BASE_URL=https://maicivy.etheryale.com
 
-function trackErrors(page: Page) {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
-  return { pageErrors };
-}
-
 test.describe('Skill detail (prod)', () => {
   test('clic sur une pastille → fiche détail ouverte avec stats, puis fermeture', async ({ page }) => {
-    const { pageErrors } = trackErrors(page);
+    const pageErrors = trackPageErrors(page);
     await page.goto('/fr/cv?theme=fullstack', { waitUntil: 'load' });
 
     // La page CV a une section #skills avec les pastilles (boutons data-testid="skill-badge-*").

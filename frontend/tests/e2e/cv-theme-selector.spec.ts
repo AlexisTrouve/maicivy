@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E du SÉLECTEUR DE PROFIL (thème) du CV. Doctrine : une UI cliquable sans test qui clique pour
 // de vrai = non vérifiée. Ce test ouvre le dropdown, choisit un autre profil, et vérifie que le CV
@@ -10,15 +11,9 @@ import { test, expect, Page } from '@playwright/test';
 //
 // Tourne contre la prod : PLAYWRIGHT_TEST_BASE_URL=https://maicivy.etheryale.com
 
-function trackErrors(page: Page) {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
-  return { pageErrors };
-}
-
 test.describe('CV profile selector (prod)', () => {
   test('sélectionner un profil change le CV (URL + libellé)', async ({ page }) => {
-    const { pageErrors } = trackErrors(page);
+    const pageErrors = trackPageErrors(page);
     await page.goto('/fr/cv?theme=fullstack', { waitUntil: 'load' });
 
     // Le sélecteur de profil est le seul Radix Select (role=combobox) de la page.

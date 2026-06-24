@@ -62,7 +62,8 @@ type RepoStat struct {
 	Language    string `json:"language"`
 	Stars       int    `json:"stars"`
 	UpdatedAt   string `json:"updatedAt"` // dernière MAJ du repo (push, tag, settings…) — PAS forcément du code
-	Commits     int    `json:"commits"`   // commits sur la fenêtre (affichage UI)
+	Commits     int    `json:"commits"`     // commits sur 6 mois — RECALCULÉ depuis l'union SHA, jamais accumulé
+	Commits30d  int    `json:"commits30d"`  // commits sur 30 jours glissants → badge "Repos chauds en ce moment"
 	// CommitDays = jours calendaires distincts (YYYY-MM-DD, triés) avec ≥1 commit sur la branche par
 	// défaut, fenêtre 6 mois. SOURCE UNIQUE du scoring vedette : âge = now-CommitDays[0],
 	// récence = now-CommitDays[len-1], régularité = len(CommitDays). Stocké comme ensemble pour que
@@ -84,6 +85,12 @@ type GitStatsResponse struct {
 type gitStatsCache struct {
 	Response  GitStatsResponse `json:"response"`
 	FetchedAt time.Time        `json:"fetchedAt"` // dernier fetch réussi
+	// RepoCommits : par repo, ensemble SHA→jour (YYYY-MM-DD) des commits sur la fenêtre 6 mois. SOURCE
+	// UNIQUE des compteurs par-repo (Commits + Commits30d), recalculés par UNION dédupliquée — JAMAIS
+	// accumulés (corrige le bug `r.Commits += c.Commits` qui empilait sans borne). Stocké HORS Response
+	// (cache only) pour ne pas gonfler le JSON public. Merge incrémental = union des SHA + rolloff 6 mois,
+	// exactement comme CommitDays mais clé par SHA (préserve le COMPTE, pas seulement les jours distincts).
+	RepoCommits map[string]map[string]string `json:"repoCommits,omitempty"`
 }
 
 // --- Types Gitea API ---
@@ -119,13 +126,17 @@ type repoResult struct {
 }
 
 const (
+	// v7 : compteur de commits PAR REPO recalculé depuis un ensemble SHA→jour (union dédupliquée +
+	// rolloff 6 mois) au lieu de l'accumulateur cassé `r.Commits += c.Commits` (empilait à chaque fetch
+	// de 30 min → blender-mcp à 9300 commits pour 0 jour d'activité). Ajout du champ Commits30d (badge
+	// "Repos chauds"). Bump de clé = full fetch propre au déploiement pour peupler RepoCommits.
 	// v6 : filtre des commits massifs rendu SYMÉTRIQUE (suppressions aussi, plus seulement additions).
 	// La migration LFS de ChineseClass (1599 ajouts, 1,19M suppressions) passait l'ancien filtre
 	// additions-seul et avait gonflé TotalDeleted dans le cache v5 ; le merge incrémental ne corrige
 	// pas une donnée déjà agrégée → bump de clé pour forcer un refetch complet qui réapplique le filtre.
 	// v5 : ajout des signaux de scoring vedette (FirstCommit/LastCommit/ActiveDays) → refetch requis.
 	// (v4 invalidait v3 et ses commits=0 erronés du bug sha=main, cf. listCommits.)
-	cacheKey       = "gitstats:v6"
+	cacheKey       = "gitstats:v7"
 	// Intervalle minimum entre deux fetches incrémentaux
 	minFetchInterval = 30 * time.Minute
 
@@ -142,7 +153,8 @@ const (
 // - Si pas de cache → full fetch
 func (s *GiteaStatsService) GetStats(ctx context.Context, force bool) (*GitStatsResponse, error) {
 	if s.redis == nil {
-		return s.fullFetch(ctx)
+		resp, _, err := s.fullFetch(ctx)
+		return resp, err
 	}
 
 	// Force refresh → vider le cache et refaire un full fetch
@@ -185,16 +197,17 @@ func (s *GiteaStatsService) GetStats(ctx context.Context, force bool) (*GitStats
 
 // fullFetchAndCache fait un full fetch et persiste en cache
 func (s *GiteaStatsService) fullFetchAndCache(ctx context.Context) (*GitStatsResponse, error) {
-	resp, err := s.fullFetch(ctx)
+	resp, repoCommits, err := s.fullFetch(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.saveCache(ctx, resp)
+	s.saveCache(ctx, resp, repoCommits)
 	return resp, nil
 }
 
-// fullFetch récupère toutes les stats depuis 6 mois (premier appel ou reset)
-func (s *GiteaStatsService) fullFetch(ctx context.Context) (*GitStatsResponse, error) {
+// fullFetch récupère toutes les stats depuis 6 mois (premier appel ou reset). Retourne aussi l'ensemble
+// SHA→jour par repo (repoCommits), persisté en cache pour le recalcul dédupliqué des compteurs.
+func (s *GiteaStatsService) fullFetch(ctx context.Context) (*GitStatsResponse, map[string]map[string]string, error) {
 	fetchCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -210,7 +223,7 @@ func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitSta
 
 	// Fetch seulement depuis le dernier fetch (avec 1h de marge pour les commits en retard)
 	since := cached.FetchedAt.Add(-1 * time.Hour)
-	newData, err := s.fetchStats(fetchCtx, since)
+	newData, freshRepoCommits, err := s.fetchStats(fetchCtx, since)
 	if err != nil {
 		return nil, err
 	}
@@ -251,18 +264,27 @@ func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitSta
 	}
 
 	// Repos : liste fraîche (métadonnée à jour) MAIS on fusionne l'activité avec le cache.
-	// - Commits : count affiché → on additionne (approx, sans rolloff fin — l'ordre relatif suffit pour l'UI).
+	// - Commits / Commits30d : RECALCULÉS depuis l'union dédupliquée des SHA (cache ∪ frais, rolloff
+	//   6 mois). Remplace l'ancien `r.Commits += c.Commits` qui empilait sans borne à chaque fetch de
+	//   30 min (recouvrement 1h re-compté) → blender-mcp affichait 9300 commits pour 0 jour d'activité.
+	//   La clé SHA garantit qu'un commit re-fetché n'est compté qu'une fois.
 	// - CommitDays : source du scoring vedette → UNION + rolloff 6 mois (cf. mergeCommitDays), sinon
 	//   le jour courant serait recompté à chaque fetch incrémental et la régularité gonflerait à tort.
 	cutoffDay := time.Now().AddDate(0, -6, 0).Format("2006-01-02")
+	cutoff30d := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 	cachedByName := make(map[string]RepoStat, len(cached.Response.Repos))
 	for _, r := range cached.Response.Repos {
 		cachedByName[r.Name] = r
 	}
+	mergedRepoCommits := make(map[string]map[string]string, len(newData.Repos))
 	mergedRepos := make([]RepoStat, len(newData.Repos))
 	for i, r := range newData.Repos {
 		c := cachedByName[r.Name]
-		r.Commits += c.Commits
+		merged := mergeRepoCommits(cached.RepoCommits[r.Name], freshRepoCommits[r.Name], cutoffDay)
+		if len(merged) > 0 {
+			mergedRepoCommits[r.Name] = merged
+		}
+		r.Commits, r.Commits30d = repoCommitCounts(merged, cutoff30d)
 		r.CommitDays = mergeCommitDays(c.CommitDays, r.CommitDays, cutoffDay)
 		mergedRepos[i] = r
 	}
@@ -277,7 +299,7 @@ func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitSta
 		Period:       "6months",
 	}
 
-	s.saveCache(ctx, resp)
+	s.saveCache(ctx, resp, mergedRepoCommits)
 
 	log.Info().
 		Int("newDays", len(newData.Daily)).
@@ -287,11 +309,12 @@ func (s *GiteaStatsService) incrementalFetch(ctx context.Context, cached *gitSta
 	return resp, nil
 }
 
-// fetchStats fait le vrai travail : fetch repos + commits depuis `since`, agrège
-func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*GitStatsResponse, error) {
+// fetchStats fait le vrai travail : fetch repos + commits depuis `since`, agrège. Retourne aussi
+// repoCommits (par repo : SHA→jour) → source dédupliquée des compteurs Commits / Commits30d.
+func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*GitStatsResponse, map[string]map[string]string, error) {
 	repos, err := s.listRepos(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list repos: %w", err)
+		return nil, nil, fmt.Errorf("list repos: %w", err)
 	}
 
 	log.Info().Int("repos", len(repos)).Time("since", since).Msg("gitstats: fetching commits")
@@ -326,7 +349,6 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 				log.Debug().Err(err).Str("repo", r.Name).Msg("skip commits")
 			} else {
 				res.commits = commits
-				res.repo.Commits = len(commits) // commit-count par repo (affichage UI)
 				// QUOI : ensemble des jours calendaires distincts avec commit → source du scoring vedette.
 				// POURQUOI : âge/récence/régularité s'en dérivent (cf. RepoStat.CommitDays) ; stocké
 				// comme ensemble trié pour que le merge incrémental soit une union sans double-comptage.
@@ -342,12 +364,27 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 	// Agrégation
 	dailyMap := make(map[string]*DayStat)
 	var repoStats []RepoStat
+	// repoCommits : par repo, ensemble SHA→jour des commits → source dédupliquée des compteurs affichés
+	// (Commits 6 mois + Commits30d). Hors GitStatsResponse : persisté dans le cache, pas servi au public.
+	repoCommits := make(map[string]map[string]string)
 	activeRepos := 0
+	cutoff30d := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 
 	for _, res := range results {
 		if res.repo.Name == "" {
 			continue
 		}
+
+		// SHA→jour dédupliqué de ce repo → compteurs (6 mois = len, 30j = sous-ensemble récent).
+		shaDay := make(map[string]string, len(res.commits))
+		for _, c := range res.commits {
+			shaDay[c.SHA] = c.Commit.Author.Date.Format("2006-01-02")
+		}
+		if len(shaDay) > 0 {
+			repoCommits[res.repo.Name] = shaDay
+		}
+		res.repo.Commits, res.repo.Commits30d = repoCommitCounts(shaDay, cutoff30d)
+
 		repoStats = append(repoStats, res.repo)
 
 		if len(res.commits) > 0 {
@@ -402,7 +439,7 @@ func (s *GiteaStatsService) fetchStats(ctx context.Context, since time.Time) (*G
 		TotalDeleted: totalDeleted,
 		ActiveRepos:  activeRepos,
 		Period:       "6months",
-	}, nil
+	}, repoCommits, nil
 }
 
 // isMassiveCommit signale un commit "tuyauterie" à exclure des agrégats LOC (additions/suppressions).
@@ -459,6 +496,42 @@ func mergeCommitDays(cached, fresh []string, cutoff string) []string {
 	return days
 }
 
+// mergeRepoCommits fusionne deux ensembles de commits (SHA→jour) d'un repo — cache + frais — en UNION
+// dédupliquée par SHA, puis élague ceux dont le jour est < cutoff (rolloff fenêtre 6 mois). C'est le
+// pendant de mergeCommitDays mais clé par SHA (et non par jour) : la clé SHA garantit qu'un commit
+// re-fetché (la fenêtre incrémentale a 1h de marge → recouvrement entre deux fetches de 30 min) n'est
+// compté QU'UNE fois. C'est ce qui corrige le bug d'empilement de l'ancien `r.Commits += c.Commits`
+// (compteur non borné — ex. blender-mcp affiché à 9300 commits pour 0 jour d'activité). Retour : map
+// non nil (possiblement vide), prête à être recomptée par repoCommitCounts.
+func mergeRepoCommits(cached, fresh map[string]string, cutoff string) map[string]string {
+	out := make(map[string]string, len(cached)+len(fresh))
+	for sha, day := range cached {
+		if day >= cutoff {
+			out[sha] = day
+		}
+	}
+	for sha, day := range fresh {
+		if day >= cutoff {
+			out[sha] = day
+		}
+	}
+	return out
+}
+
+// repoCommitCounts dérive les compteurs affichés d'un repo depuis son ensemble SHA→jour (déjà borné à
+// 6 mois par le merge) : total = nb de commits sur 6 mois, last30 = commits dont le jour >= cutoff30d
+// (fenêtre 30 jours glissants — ce qu'affiche le badge "Repos chauds en ce moment"). Recalcul pur depuis
+// l'ensemble dédupliqué → jamais accumulé. nil (repo sans commit / fork) → (0, 0).
+func repoCommitCounts(shaToDay map[string]string, cutoff30d string) (total, last30 int) {
+	for _, day := range shaToDay {
+		total++
+		if day >= cutoff30d {
+			last30++
+		}
+	}
+	return total, last30
+}
+
 // --- Cache Redis ---
 
 func (s *GiteaStatsService) loadCache(ctx context.Context) (*gitStatsCache, error) {
@@ -473,10 +546,11 @@ func (s *GiteaStatsService) loadCache(ctx context.Context) (*gitStatsCache, erro
 	return &cached, nil
 }
 
-func (s *GiteaStatsService) saveCache(ctx context.Context, resp *GitStatsResponse) {
+func (s *GiteaStatsService) saveCache(ctx context.Context, resp *GitStatsResponse, repoCommits map[string]map[string]string) {
 	cached := gitStatsCache{
-		Response:  *resp,
-		FetchedAt: time.Now(),
+		Response:    *resp,
+		FetchedAt:   time.Now(),
+		RepoCommits: repoCommits,
 	}
 	if data, err := json.Marshal(cached); err == nil {
 		// Pas de TTL — le cache persiste et se met à jour incrémentalement

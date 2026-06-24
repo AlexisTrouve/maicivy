@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E du cache sessionStorage de la page Git Stats. Doctrine : une UI sans test qui clique/navigue
 // pour de vrai = non vérifiée. On prouve ici le « stale-while-revalidate » CÔTÉ CLIENT :
@@ -12,15 +13,9 @@ const CACHE_KEY = 'maicivy:gitstats:v1';
 // .text-3xl.font-bold = les 4 valeurs KPI (le h1 "Git Stats" est en text-4xl → pas matché).
 const KPI = '.text-3xl.font-bold';
 
-function trackErrors(page: Page) {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
-  return { pageErrors };
-}
-
 test.describe('Git Stats — cache client (prod)', () => {
   test('revisite : peinture instantanée depuis sessionStorage (API ralentie)', async ({ page }) => {
-    const { pageErrors } = trackErrors(page);
+    const pageErrors = trackPageErrors(page);
 
     // ── 1. Première visite (cache froid : contexte Playwright neuf = sessionStorage vide) ───────────
     await page.goto('/fr/gitstats', { waitUntil: 'load' });

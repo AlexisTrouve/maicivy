@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E du filtre de tags du blog : charge réellement /fr/blog dans un navigateur, CLIQUE un
 // tag dans la sidebar, et vérifie que la grille d'articles se restreint au bon nombre, puis
@@ -8,15 +9,9 @@ import { test, expect, Page } from '@playwright/test';
 //
 // Tourne contre la prod : PLAYWRIGHT_TEST_BASE_URL=https://maicivy.etheryale.com
 
-function trackErrors(page: Page) {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
-  return { pageErrors };
-}
-
 test.describe('Blog — filtre par tag', () => {
   test('clic sur un tag → la grille se filtre au bon nombre, "Tous" réinitialise', async ({ page }) => {
-    const { pageErrors } = trackErrors(page);
+    const pageErrors = trackPageErrors(page);
     await page.goto('/fr/blog', { waitUntil: 'load' });
 
     // La sidebar de filtrage doit être présente.

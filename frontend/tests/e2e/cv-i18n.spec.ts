@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { isEnvironmentalPageError } from './helpers/pageErrors';
 
 // E2E i18n du CV : charge réellement /en/cv et /fr/cv dans un navigateur, vérifie que le contenu
 // s'affiche dans la bonne langue ET qu'aucune exception JS ne survient (hydratation incluse).
@@ -7,7 +8,10 @@ import { test, expect, Page } from '@playwright/test';
 function trackErrors(page: Page) {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
+  // Bruit cross-origin WebKit (« access control checks ») filtré — voir helpers/pageErrors.
+  page.on('pageerror', (e) => {
+    if (!isEnvironmentalPageError(e.message)) pageErrors.push(e.message);
+  });
   page.on('console', (m) => {
     if (m.type() === 'error') consoleErrors.push(m.text());
   });

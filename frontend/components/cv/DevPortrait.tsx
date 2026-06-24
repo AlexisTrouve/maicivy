@@ -137,7 +137,7 @@ export default async function DevPortrait({ locale }: { locale: string }) {
                 <span className="truncate font-medium">{r.name}</span>
                 <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                   {r.language && <span className="rounded bg-muted px-1.5 py-0.5">{r.language}</span>}
-                  {t('hotCommits', { count: r.commits })}
+                  {t('hotCommits', { count: r.commits30d })}
                 </span>
               </li>
             ))}

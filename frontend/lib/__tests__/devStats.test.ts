@@ -36,11 +36,11 @@ const git: GitStatsResponse = {
     { date: '2026-06-20', commits: 8, additions: 0, deletions: 0 },  // age 0  → recent
   ],
   repos: [
-    { name: 'goproj', description: '', language: 'Go', stars: 0, updatedAt: '2026-06-20', commits: 50,
+    { name: 'goproj', description: '', language: 'Go', stars: 0, updatedAt: '2026-06-20', commits: 50, commits30d: 8,
       commitDays: ['2026-06-20', '2026-06-19', '2026-06-18'] }, // 3 jours, tous dans 90j
-    { name: 'dartproj', description: '', language: 'Dart', stars: 0, updatedAt: '2026-06-18', commits: 40,
-      commitDays: ['2026-06-15', '2026-06-10'] },               // 2 jours dans 90j
-    { name: 'rustproj', description: '', language: 'Rust', stars: 0, updatedAt: '2026-01-02', commits: 5,
+    { name: 'dartproj', description: '', language: 'Dart', stars: 0, updatedAt: '2026-06-18', commits: 40, commits30d: 20,
+      commitDays: ['2026-06-15', '2026-06-10'] },               // 2 jours dans 90j ; plus chaud sur 30j
+    { name: 'rustproj', description: '', language: 'Rust', stars: 0, updatedAt: '2026-01-02', commits: 5, commits30d: 0,
       commitDays: ['2026-01-01'] },                             // hors 90j, dans 365j
   ],
 };
@@ -87,9 +87,10 @@ describe('devStats', () => {
     expect(m.ratio).toBe(0);
   });
 
-  it('hotRepos trie par updatedAt décroissant', () => {
+  it('hotRepos trie par commits des 30 derniers jours (pas par updatedAt)', () => {
     const hot = hotRepos(git.repos, 2);
-    expect(hot.map((r) => r.name)).toEqual(['goproj', 'dartproj']);
+    // dartproj (20 commits/30j) passe devant goproj (8) malgré un updatedAt plus ancien → tri par commits30d.
+    expect(hot.map((r) => r.name)).toEqual(['dartproj', 'goproj']);
   });
 
   it('buildDevPortrait agrège tout sans crasher', () => {

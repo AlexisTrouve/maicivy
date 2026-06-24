@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E du dashboard analytics avec le générateur procédural (DemoMetrics) actif. Vérifie dans un vrai
 // navigateur que la page rend les 5 cartes KPI — dont la NOUVELLE "Lectures blog" — sans erreur JS, et
@@ -8,8 +9,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Analytics — générateur (prod)', () => {
   test('5 cartes dont "Lectures blog", vie minimale, sans erreur JS ni sous-titre bidon', async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(e.message));
+    const errors = trackPageErrors(page);
 
     await page.goto('/fr/analytics', { waitUntil: 'load' });
 

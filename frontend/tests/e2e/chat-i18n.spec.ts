@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E du chat — parcours réel dans un navigateur : on tape un message, on l'envoie, et on vérifie
 // que la fiche projet s'ouvre dans le panel droit avec les LABELS dans la bonne langue (i18n chat.*).
@@ -33,12 +34,6 @@ function chatSSE(): string {
     '',
     '',
   ].join('\n');
-}
-
-function trackPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  return errors;
 }
 
 async function mockChatStream(page: Page) {

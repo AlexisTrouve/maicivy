@@ -231,7 +231,7 @@
       "momentumValue": "{recent} commits ces 30 jours",
       "momentumRatio": "×{ratio} vs le mois précédent",
       "hotTitle": "Repos chauds en ce moment",
-      "hotCommits": "{count} commits",
+      "hotCommits": "{count} commits · 30j",
       "caveat": "Tendances directionnelles : langage dominant du repo, jours de commit agrégés (capés à ~70/repo).",
       "detailLink": "Voir la heatmap détaillée"
     },

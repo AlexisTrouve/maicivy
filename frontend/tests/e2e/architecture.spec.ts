@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import testStats from '../../lib/test-stats.json';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E de la page /architecture après update : les métriques de tests sont LIVE (test-stats.json) et
 // l'ancien chiffre figé "882" a disparu. Vérifie aussi le rendu sans erreur JS.
@@ -7,8 +8,7 @@ import testStats from '../../lib/test-stats.json';
 
 test.describe('Architecture (prod)', () => {
   test('métriques de tests live + plus de chiffre figé périmé', async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(e.message));
+    const errors = trackPageErrors(page);
 
     await page.goto('/fr/architecture', { waitUntil: 'load' });
 

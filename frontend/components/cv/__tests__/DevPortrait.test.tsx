@@ -26,9 +26,9 @@ const GIT: GitStatsResponse = {
     { date: '2026-06-20', commits: 40, additions: 0, deletions: 0 }, // recent → 42
   ],
   repos: [
-    { name: 'goproj', description: '', language: 'Go', stars: 0, updatedAt: '2026-06-20', commits: 50,
+    { name: 'goproj', description: '', language: 'Go', stars: 0, updatedAt: '2026-06-20', commits: 50, commits30d: 12,
       commitDays: ['2026-06-20', '2026-06-19'] },
-    { name: 'dartproj', description: '', language: 'Dart', stars: 0, updatedAt: '2026-06-18', commits: 30,
+    { name: 'dartproj', description: '', language: 'Dart', stars: 0, updatedAt: '2026-06-18', commits: 30, commits30d: 4,
       commitDays: ['2026-06-15'] },
   ],
 };
@@ -60,7 +60,7 @@ describe('DevPortrait', () => {
     // Momentum : 42 commits ces 30 jours, ×4.2 vs le mois précédent (42/10)
     expect(screen.getByText(/42 commits ces 30 jours/)).toBeInTheDocument();
     expect(screen.getByText('×4.2 vs le mois précédent')).toBeInTheDocument();
-    // Repos chauds : le plus récent
+    // Repos chauds : le plus chaud sur 30j (goproj, 12 commits/30j)
     expect(screen.getByText('goproj')).toBeInTheDocument();
     // Lien vers le détail
     expect(screen.getByText('Voir la heatmap détaillée')).toBeInTheDocument();

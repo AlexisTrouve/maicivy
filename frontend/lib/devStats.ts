@@ -144,10 +144,18 @@ export function momentum(daily: GitDayStat[], windowDays: number): Momentum {
 
 // --- Repos chauds ---
 
-// Repos les plus récemment actifs (par updatedAt décroissant), tronqué à N. "Sur quoi je bosse
-// en ce moment" — on garde name/language/commits pour l'affichage.
+// Repos "chauds en ce moment" : triés par commits des 30 DERNIERS JOURS (décroissant), départagés par
+// updatedAt récent, tronqué à N. POURQUOI commits30d et non updatedAt seul : updatedAt bouge sur un
+// simple push de tag/réglage (pas du code), alors que le compte de commits sur 30j reflète l'activité
+// de DÉVELOPPEMENT réelle — ce que "chaud en ce moment" veut dire. C'est aussi ce qu'affiche le badge.
 export function hotRepos(repos: GitRepoStat[], n: number): GitRepoStat[] {
-  return [...repos].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, n);
+  return [...repos]
+    .sort(
+      (a, b) =>
+        (b.commits30d || 0) - (a.commits30d || 0) ||
+        (b.updatedAt || '').localeCompare(a.updatedAt || '')
+    )
+    .slice(0, n);
 }
 
 // --- Agrégat de haut niveau consommé par le composant ---

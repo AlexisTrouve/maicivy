@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackPageErrors } from './helpers/pageErrors';
 
 // E2E de la heatmap retravaillée. Avant : "Unknown" partout, quasi vide, illisible. Après : sous-titre
 // explicatif + points labellisés (zones synthétiques générées + clics réels, jamais "Unknown"/vide).
@@ -7,8 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Analytics — heatmap (prod)', () => {
   test('sous-titre explicatif + heatmap peuplée (données générées + réelles)', async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(e.message));
+    const errors = trackPageErrors(page);
 
     await page.goto('/fr/analytics', { waitUntil: 'load' });
 
