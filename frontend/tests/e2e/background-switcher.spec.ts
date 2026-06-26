@@ -178,3 +178,53 @@ test.describe('Fractal', () => {
     expect(nonEmpty).toBe(true);
   });
 });
+
+/**
+ * Schrödinger (plugin #4) — fonctions d'onde ψ(x,t) + équation en filigrane (Canvas 2D + <div>).
+ * On prouve l'option, le montage du canvas, le rendu non vide des paquets, ET la présence de la
+ * formule (exigée explicitement) dans la coquille.
+ */
+test.describe('Schrödinger', () => {
+  test('le sélecteur liste "Schrödinger"', async ({ page }) => {
+    await page.goto('/fr?bg=none');
+    await page.getByTestId('background-switcher').click();
+    await expect(page.getByTestId('bg-option-schrodinger')).toBeVisible();
+  });
+
+  test('?bg=schrodinger monte un canvas + affiche la formule', async ({ page }) => {
+    await page.goto('/fr?bg=schrodinger');
+    const host = page.locator(HOST);
+    await expect(host.locator('canvas')).toHaveCount(1, { timeout: 10000 });
+    // La formule de Schrödinger doit être rendue en filigrane (∂ψ/∂t présent dans le DOM du fond).
+    await expect(host).toContainText('∂ψ/∂t', { timeout: 10000 });
+    await expect(host).toContainText('ψ');
+  });
+
+  test('les paquets d\'onde rendent des pixels non vides (+ attraction souris)', async ({ page }) => {
+    await page.goto('/fr?bg=schrodinger');
+    await expect(page.locator(`${HOST} canvas`)).toHaveCount(1, { timeout: 10000 });
+
+    const vw = page.viewportSize();
+    const w = vw?.width ?? 1280;
+    const h = vw?.height ?? 720;
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move((w * i) / 9, (h * i) / 9);
+    }
+    await page.waitForTimeout(800);
+
+    const nonEmpty = await page.evaluate(() => {
+      const cv = document.querySelector(
+        '[data-testid="background-host"] canvas'
+      ) as HTMLCanvasElement | null;
+      if (!cv) return false;
+      const cx = cv.getContext('2d');
+      if (!cx) return false;
+      const data = cx.getImageData(0, 0, cv.width, cv.height).data;
+      for (let i = 3; i < data.length; i += 16) {
+        if (data[i] > 0) return true;
+      }
+      return false;
+    });
+    expect(nonEmpty).toBe(true);
+  });
+});

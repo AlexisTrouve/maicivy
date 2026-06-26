@@ -29,6 +29,12 @@ export const BACKGROUNDS: BackgroundManifestEntry[] = [
     mobile: false, // shader WebGL lourd — skip mobile pour v1
     load: () => import('./plugins/fractal'),
   },
+  {
+    id: 'schrodinger',
+    name: 'Schrödinger',
+    mobile: true, // Canvas 2D léger (3 paquets d'onde) + filigrane formule — OK sur mobile
+    load: () => import('./plugins/schrodinger'),
+  },
 ];
 
 // IDs spéciaux du sélecteur (pas des plugins de rendu).
