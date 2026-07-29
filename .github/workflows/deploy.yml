@@ -33,19 +33,29 @@ jobs:
     needs: [test-backend]
     runs-on: host
     steps:
-      - name: Pull + rebuild + health check
+      # Ce job N'A PLUS sa propre logique de déploiement : il appelle le MÊME script que
+      # le timer systemd (infra/autodeploy/auto-deploy.sh).
+      #
+      # POURQUOI : les deux avaient chacun leur copie (tag rollback, reset --hard, compose
+      # up --build) et aucun verrou commun. Un push proche d'un tick du timer lançait donc
+      # deux `docker compose up --build` concurrents sur le même projet ; le second recréait
+      # les conteneurs que le premier venait de démarrer → SIGTERM au backend tout neuf →
+      # `exited (0)` → deploy en échec. 3 fois en 30 jours, dont un 502 en prod.
+      #
+      # En appelant le script partagé, ce job hérite aussi du retour arrière sur échec, de
+      # l'alerte Discord et du garde-fou anti-boucle — qui n'existaient pas dans cette copie.
+      #
+      # MAICIVY_LOCK_WAIT : ce job est déclenché par un push précis, il doit donc ATTENDRE
+      # son tour plutôt que sauter (contrairement au timer, qui est un simple poller).
+      # Verrou non obtenu à temps = échec franc, jamais un « OK » silencieux.
+      #
+      # La COPIE dans /tmp n'est pas cosmétique : le script fait `git reset --hard` sur le
+      # dépôt qui le contient, donc il se réécrirait lui-même pendant que bash le lit (bash
+      # lit un script par morceaux) → ordre des commandes brouillé. L'unité systemd fait la
+      # même chose, avec un chemin DIFFÉRENT : deux copies vers le même fichier temporaire
+      # se corrompraient mutuellement, la copie ayant lieu avant la prise du verrou.
+      - name: Deploy (script partagé, verrou commun avec le timer systemd)
         run: |
           set -e
-          cd /home/debian/maicivy
-          # Filet de rollback avant rebuild
-          docker tag maicivy-backend:latest maicivy-backend:rollback-auto 2>/dev/null || true
-          git fetch origin main
-          git reset --hard origin/main
-          # Build backend + frontend depuis la source, recrée les containers modifiés.
-          docker compose up -d --build
-          # Force-recreate backend (--no-deps) pour appliquer tout changement d'env/compose
-          # (un simple up -d ne recrée pas sur un changement d'env seul).
-          docker compose up -d --no-deps --force-recreate backend
-          sleep 20
-          curl -sf http://localhost:8081/health >/dev/null
-          echo "Deploy OK: $(git rev-parse --short HEAD)"
+          cp /home/debian/maicivy/infra/autodeploy/auto-deploy.sh /tmp/maicivy-deploy-ci.sh
+          MAICIVY_LOCK_WAIT=600 bash /tmp/maicivy-deploy-ci.sh
