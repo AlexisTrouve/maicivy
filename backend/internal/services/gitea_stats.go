@@ -61,9 +61,9 @@ type RepoStat struct {
 	Description string `json:"description"`
 	Language    string `json:"language"`
 	Stars       int    `json:"stars"`
-	UpdatedAt   string `json:"updatedAt"` // dernière MAJ du repo (push, tag, settings…) — PAS forcément du code
-	Commits     int    `json:"commits"`     // commits sur 6 mois — RECALCULÉ depuis l'union SHA, jamais accumulé
-	Commits30d  int    `json:"commits30d"`  // commits sur 30 jours glissants → badge "Repos chauds en ce moment"
+	UpdatedAt   string `json:"updatedAt"`  // dernière MAJ du repo (push, tag, settings…) — PAS forcément du code
+	Commits     int    `json:"commits"`    // commits sur 6 mois — RECALCULÉ depuis l'union SHA, jamais accumulé
+	Commits30d  int    `json:"commits30d"` // commits sur 30 jours glissants → badge "Repos chauds en ce moment"
 	// CommitDays = jours calendaires distincts (YYYY-MM-DD, triés) avec ≥1 commit sur la branche par
 	// défaut, fenêtre 6 mois. SOURCE UNIQUE du scoring vedette : âge = now-CommitDays[0],
 	// récence = now-CommitDays[len-1], régularité = len(CommitDays). Stocké comme ensemble pour que
@@ -79,6 +79,12 @@ type GitStatsResponse struct {
 	TotalDeleted int        `json:"totalDeleted"`
 	ActiveRepos  int        `json:"activeRepos"`
 	Period       string     `json:"period"`
+	// GitlabDaily : commits GitLab SEULS par jour (sous-ensemble de Daily, déjà mergé dans le total).
+	// POURQUOI : le front superpose une 2e courbe « GitLab » sur le total du chart commits/jour pour
+	// visualiser l'apport du repo client partagé. COMMENT : injecté par le handler (h.gitlab.GetDaily),
+	// PAS pendant fetchStats → n'est JAMAIS écrit dans le cache Redis gitstats (donc pas de bump de clé).
+	// omitempty : absent si GitLab non configuré / merge échoué → le front dégrade en courbe total seule.
+	GitlabDaily []DayStat `json:"gitlabDaily,omitempty"`
 }
 
 // gitStatsCache — structure persistée en Redis, contient les données + le timestamp du dernier fetch
@@ -136,7 +142,7 @@ const (
 	// pas une donnée déjà agrégée → bump de clé pour forcer un refetch complet qui réapplique le filtre.
 	// v5 : ajout des signaux de scoring vedette (FirstCommit/LastCommit/ActiveDays) → refetch requis.
 	// (v4 invalidait v3 et ses commits=0 erronés du bug sha=main, cf. listCommits.)
-	cacheKey       = "gitstats:v7"
+	cacheKey = "gitstats:v7"
 	// Intervalle minimum entre deux fetches incrémentaux
 	minFetchInterval = 30 * time.Minute
 

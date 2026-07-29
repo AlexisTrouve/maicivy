@@ -142,6 +142,50 @@ export function momentum(daily: GitDayStat[], windowDays: number): Momentum {
   return { recent, previous, ratio: previous > 0 ? recent / previous : 0 };
 }
 
+// --- Streak (jours consécutifs avec ≥1 commit) ---
+// PAR REPO (badge sur chaque carte /gitstats) : on passe `repo.commitDays` (déjà des jours distincts
+// avec commit sur ce repo). GLOBAL (tous repos confondus) : on passe les dates de `daily` filtrées à
+// commits>0. Même fonction dans les deux cas — un jour actif est un jour actif, peu importe la source.
+
+export interface Streaks {
+  longest: number; // plus longue série de jours consécutifs sur la fenêtre de `days` (6 mois)
+  current: number; // série en cours à `todayIso` — 0 si le dernier jour actif date de plus d'1 jour
+}
+
+// Calcule la plus longue série ET la série en cours à partir d'une liste de jours actifs (doublons
+// tolérés, non triés). `todayIso` ("YYYY-MM-DD") est INJECTÉ plutôt que lu via `new Date()` : la
+// fonction reste pure/déterministe (même philosophie que le reste du module, cf. maxDay) — c'est
+// l'appelant (le composant, au moment du rendu) qui fournit la vraie date du jour.
+// COMMENT : 1. déduplique + trie les jours ; 2. parcourt en comptant les runs de jours consécutifs
+// (dayIndex(i) == dayIndex(i-1)+1) → longest = max des runs ; 3. current = le DERNIER run, mais
+// seulement si son dernier jour est aujourd'hui ou hier (grâce d'1 jour : on n'a pas encore "perdu"
+// la série tant que la journée n'est pas terminée sans commit).
+export function computeStreaks(days: string[], todayIso: string): Streaks {
+  const activeDays = Array.from(new Set(days))
+    .map(dayIndex)
+    .sort((a, b) => a - b);
+
+  if (activeDays.length === 0) return { longest: 0, current: 0 };
+
+  let longest = 1;
+  let run = 1;
+  for (let i = 1; i < activeDays.length; i++) {
+    run = activeDays[i] === activeDays[i - 1] + 1 ? run + 1 : 1;
+    longest = Math.max(longest, run);
+  }
+
+  const today = dayIndex(todayIso);
+  const lastActive = activeDays[activeDays.length - 1];
+  if (today - lastActive > 1) return { longest, current: 0 };
+
+  let current = 1;
+  for (let i = activeDays.length - 1; i > 0; i--) {
+    if (activeDays[i] === activeDays[i - 1] + 1) current++;
+    else break;
+  }
+  return { longest, current };
+}
+
 // --- Repos chauds ---
 
 // Repos "chauds en ce moment" : triés par commits des 30 DERNIERS JOURS (décroissant), départagés par

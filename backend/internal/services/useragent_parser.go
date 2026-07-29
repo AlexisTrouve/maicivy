@@ -242,14 +242,14 @@ func (p *UserAgentParser) GetDetailedInfo(ua string) map[string]interface{} {
 	deviceInfo, isBot := p.Parse(ua)
 
 	return map[string]interface{}{
-		"browser":          deviceInfo.Browser,
-		"os":               deviceInfo.OS,
-		"device_type":      deviceInfo.DeviceType,
-		"is_bot":           isBot,
+		"browser":           deviceInfo.Browser,
+		"os":                deviceInfo.OS,
+		"device_type":       deviceInfo.DeviceType,
+		"is_bot":            isBot,
 		"is_recruiter_tool": p.IsRecruiterTool(ua),
 		"is_developer_tool": p.IsDeveloperTool(ua),
-		"is_mobile":        deviceInfo.DeviceType == "mobile",
-		"is_tablet":        deviceInfo.DeviceType == "tablet",
-		"raw_user_agent":   ua,
+		"is_mobile":         deviceInfo.DeviceType == "mobile",
+		"is_tablet":         deviceInfo.DeviceType == "tablet",
+		"raw_user_agent":    ua,
 	}
 }

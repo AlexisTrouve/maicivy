@@ -450,6 +450,15 @@ export const blogApi = {
   // Delete a post
   delete: (id: number) =>
     api.delete<{ success: boolean; message: string }>(`/api/v1/blog/posts/${id}`),
+
+  // --- Follow par email (granularité par topic) ---
+  // Topics suivables = project_name distincts des articles publiés (pour les cases du formulaire).
+  getTopics: () =>
+    api.get<{ topics: string[] }>('/api/v1/blog/topics', undefined, NO_CACHE),
+
+  // Inscription email. topics vide = l'abonné veut TOUS les articles.
+  subscribe: (email: string, topics: string[]) =>
+    api.post<{ success: boolean; message: string }>('/api/v1/blog/subscribe', { email, topics }),
 };
 
 // Activity Feed API (Auto-sync from ProjectTracker)
@@ -479,4 +488,44 @@ export const activityApi = {
 export const messagesApi = {
   generate: (data: import('./types').GeneratePlatformMessageRequest) =>
     api.post<import('./types').PlatformMessageResponse>('/api/v1/messages/generate', data),
+};
+
+// Mailbox admin — ingestion IMAP (Malt...) + dispatch auto (owner-only, cookie maicivy_admin).
+export const mailboxApi = {
+  list: (params?: { page?: number; perPage?: number; platform?: string; unread?: boolean }) => {
+    const query: Record<string, string> = {};
+    if (params?.page) query.page = String(params.page);
+    if (params?.perPage) query.per_page = String(params.perPage);
+    if (params?.platform) query.platform = params.platform;
+    if (params?.unread) query.unread = 'true';
+    return api.get<import('./types').MailboxListResponse>(
+      '/api/v1/admin/mailbox',
+      Object.keys(query).length > 0 ? query : undefined,
+      NO_CACHE,
+    );
+  },
+
+  getById: (id: string) =>
+    api.get<import('./types').MailboxEmail>(`/api/v1/admin/mailbox/${id}`, undefined, NO_CACHE),
+
+  setRead: (id: string, read: boolean) =>
+    api.post<{ ok: boolean }>(`/api/v1/admin/mailbox/${id}/read`, { read }),
+
+  retryForward: (id: string) =>
+    api.post<{ ok: boolean; error?: string }>(`/api/v1/admin/mailbox/${id}/forward`),
+
+  // Cache-only : 404 (via ApiError.statusCode) si rien en cache pour cette langue — jamais de coût
+  // LLM juste en consultant un mail (cf. mailbox_translation_cache.go, allowTranslate=false).
+  getTranslation: (id: string, lang: string) =>
+    api.get<import('./types').MailboxTranslation>(
+      `/api/v1/admin/mailbox/${id}/translation`,
+      { lang },
+      NO_CACHE,
+    ),
+
+  // Déclenche la traduction si absente du cache (clic explicite "Traduire"), sert le cache sinon.
+  translateNow: (id: string, lang: string) =>
+    api.post<import('./types').MailboxTranslation>(
+      `/api/v1/admin/mailbox/${id}/translation?lang=${encodeURIComponent(lang)}`,
+    ),
 };

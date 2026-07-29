@@ -27,11 +27,11 @@ const (
 
 // DetectedProfile contient les informations de détection d'un visiteur
 type DetectedProfile struct {
-	ProfileType      ProfileType             `json:"profile_type"`
-	Confidence       int                     `json:"confidence"` // 0-100%
-	EnrichmentData   map[string]interface{}  `json:"enrichment_data,omitempty"`
-	DetectionSources []string                `json:"detection_sources"`
-	DeviceInfo       DeviceInfo              `json:"device_info"`
+	ProfileType      ProfileType            `json:"profile_type"`
+	Confidence       int                    `json:"confidence"` // 0-100%
+	EnrichmentData   map[string]interface{} `json:"enrichment_data,omitempty"`
+	DetectionSources []string               `json:"detection_sources"`
+	DeviceInfo       DeviceInfo             `json:"device_info"`
 }
 
 // DeviceInfo contient les informations du device du visiteur
@@ -182,7 +182,7 @@ func (s *ProfileDetectorService) detectFromReferer(referer string) (int, Profile
 
 	// Détection LinkedIn
 	if strings.Contains(refererLower, "linkedin.com/jobs") ||
-	   strings.Contains(refererLower, "linkedin.com/recruiter") {
+		strings.Contains(refererLower, "linkedin.com/recruiter") {
 		return 20, ProfileTypeRecruiter
 	}
 
@@ -223,7 +223,7 @@ func (s *ProfileDetectorService) analyzeEnrichmentData(data map[string]interface
 
 	// Analyse du company type
 	if strings.Contains(strings.ToLower(companyType), "recruiting") ||
-	   strings.Contains(strings.ToLower(industry), "recruiting") {
+		strings.Contains(strings.ToLower(industry), "recruiting") {
 		score += 40
 		profileType = ProfileTypeRecruiter
 	}
@@ -233,21 +233,21 @@ func (s *ProfileDetectorService) analyzeEnrichmentData(data map[string]interface
 		jobTitleLower := strings.ToLower(jobTitle)
 
 		if strings.Contains(jobTitleLower, "cto") ||
-		   strings.Contains(jobTitleLower, "chief technology") {
+			strings.Contains(jobTitleLower, "chief technology") {
 			score += 50
 			profileType = ProfileTypeCTO
 		} else if strings.Contains(jobTitleLower, "ceo") ||
-		          strings.Contains(jobTitleLower, "chief executive") {
+			strings.Contains(jobTitleLower, "chief executive") {
 			score += 50
 			profileType = ProfileTypeCEO
 		} else if strings.Contains(jobTitleLower, "tech lead") ||
-		          strings.Contains(jobTitleLower, "engineering manager") ||
-		          strings.Contains(jobTitleLower, "vp eng") {
+			strings.Contains(jobTitleLower, "engineering manager") ||
+			strings.Contains(jobTitleLower, "vp eng") {
 			score += 40
 			profileType = ProfileTypeTechLead
 		} else if strings.Contains(jobTitleLower, "recruiter") ||
-		          strings.Contains(jobTitleLower, "talent") ||
-		          strings.Contains(jobTitleLower, "hr") {
+			strings.Contains(jobTitleLower, "talent") ||
+			strings.Contains(jobTitleLower, "hr") {
 			score += 40
 			profileType = ProfileTypeRecruiter
 		}

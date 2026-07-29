@@ -273,6 +273,66 @@ func TestAIRateLimit_ConcurrentSameSession_OnlyOnePasses(t *testing.T) {
 		"une seule génération concurrente par session doit atteindre le handler (verrou in-flight)")
 }
 
+// TestAIRateLimit_KeyPrefixIsolatesCounters verrouille le budget DÉDIÉ chat : épuiser le quota
+// journalier d'une feature (KeyPrefix "ai", ex: CV/lettres) NE DOIT PAS bloquer une autre feature
+// (KeyPrefix "chat") pour la MÊME session. Avant ce fix, tout passait par "ratelimit:ai:..." → un
+// visiteur qui génère un CV puis va chatter pouvait se voir bloqué par le cooldown/quota du CV.
+func TestAIRateLimit_KeyPrefixIsolatesCounters(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rc := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+
+	sessionID := "shared-session"
+
+	// Épuiser le quota "ai" (CV/lettres) pour cette session — valeur (20) qui dépasse AUSSI le
+	// MaxPerDay de la route "chat" (20) : si le namespacing était cassé (les deux routes lisaient la
+	// même clé), la route "chat" serait bloquée elle aussi. Seule une vraie isolation la laisse passer.
+	rc.Set(context.Background(), "ratelimit:ai:"+sessionID+":daily", "20", 24*time.Hour)
+
+	app := fiber.New()
+	// Route "ai" (historique, KeyPrefix vide → "ai")
+	app.Use("/ai", AIRateLimit(AIRateLimitConfig{Redis: rc, MaxPerDay: 5}))
+	app.Get("/ai/test", func(c *fiber.Ctx) error { return c.SendString("OK") })
+	// Route "chat" (budget dédié, KeyPrefix "chat")
+	app.Use("/chat", AIRateLimit(AIRateLimitConfig{Redis: rc, KeyPrefix: "chat", MaxPerDay: 20}))
+	app.Get("/chat/test", func(c *fiber.Ctx) error { return c.SendString("OK") })
+
+	aiReq := httptest.NewRequest("GET", "/ai/test", nil)
+	aiReq.AddCookie(&http.Cookie{Name: "maicivy_session", Value: sessionID})
+	aiResp, _ := app.Test(aiReq)
+	assert.Equal(t, 429, aiResp.StatusCode, "quota 'ai' épuisé → bloqué sur la route 'ai'")
+
+	chatReq := httptest.NewRequest("GET", "/chat/test", nil)
+	chatReq.AddCookie(&http.Cookie{Name: "maicivy_session", Value: sessionID})
+	chatResp, _ := app.Test(chatReq)
+	assert.Equal(t, 200, chatResp.StatusCode, "quota 'chat' intact (namespace différent) → PAS bloqué")
+}
+
+// TestAIRateLimit_DefaultKeyPrefixIsAi verrouille la compatibilité ascendante : un KeyPrefix vide
+// doit produire EXACTEMENT les clés historiques "ratelimit:ai:...", pour ne pas invalider silencieusement
+// les compteurs déjà en prod pour CV/lettres/messages au moment du déploiement de ce changement.
+func TestAIRateLimit_DefaultKeyPrefixIsAi(t *testing.T) {
+	mr, _ := miniredis.Run()
+	defer mr.Close()
+	rc := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+
+	sessionID := "legacy-session"
+	// Pose la clé au format historique — si le code générait encore ce même format, la requête
+	// doit être bloquée (preuve que KeyPrefix vide ⇒ "ai", pas un autre défaut).
+	rc.Set(context.Background(), "ratelimit:ai:"+sessionID+":daily", "5", 24*time.Hour)
+
+	app := fiber.New()
+	app.Use(AIRateLimit(AIRateLimitConfig{Redis: rc, MaxPerDay: 5})) // KeyPrefix non renseigné
+
+	app.Get("/test", func(c *fiber.Ctx) error { return c.SendString("OK") })
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.AddCookie(&http.Cookie{Name: "maicivy_session", Value: sessionID})
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 429, resp.StatusCode, "KeyPrefix vide doit lire/écrire ratelimit:ai:... comme avant")
+}
+
 func TestFormatDuration(t *testing.T) {
 	tests := []struct {
 		duration time.Duration

@@ -8,8 +8,8 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/sashabaranov/go-openai"
 	"github.com/rs/zerolog/log"
+	"github.com/sashabaranov/go-openai"
 	"golang.org/x/time/rate"
 
 	"maicivy/internal/config"

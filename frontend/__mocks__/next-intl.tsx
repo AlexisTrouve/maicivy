@@ -18,7 +18,7 @@ function resolve(path: string): any {
 
 function makeT(namespace?: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (key: string, values?: Record<string, any>) => {
+  const t = (key: string, values?: Record<string, any>) => {
     const full = namespace ? `${namespace}.${key}` : key;
     let s = resolve(full);
     if (s == null) s = key; // clé absente → on rend la clé (comportement de fallback)
@@ -27,6 +27,13 @@ function makeT(namespace?: string) {
     }
     return s;
   };
+  // t.raw(key) : renvoie la valeur BRUTE (tableau/objet), sans interpolation — utilisé par les
+  // composants qui lisent des listes depuis les messages (ex: chat.hints).
+  t.raw = (key: string) => {
+    const full = namespace ? `${namespace}.${key}` : key;
+    return resolve(full);
+  };
+  return t;
 }
 
 export function useTranslations(namespace?: string) {

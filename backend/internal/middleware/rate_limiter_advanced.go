@@ -27,10 +27,10 @@ type RateLimitConfig struct {
 
 // BanConfig configures temporary banning for abusive IPs
 type BanConfig struct {
-	Enabled       bool          // Enable temporary bans
-	Threshold     int           // Number of violations before ban
-	Duration      time.Duration // Ban duration
-	ViolationTTL  time.Duration // How long to remember violations
+	Enabled      bool          // Enable temporary bans
+	Threshold    int           // Number of violations before ban
+	Duration     time.Duration // Ban duration
+	ViolationTTL time.Duration // How long to remember violations
 }
 
 func NewRateLimiterAdvanced(redisClient *redis.Client) *RateLimiterAdvanced {
@@ -49,7 +49,7 @@ func (rl *RateLimiterAdvanced) GlobalRateLimit() fiber.Handler {
 		Identifier: "ip",
 		Ban: BanConfig{
 			Enabled:      true,
-			Threshold:    5,  // 5 violations
+			Threshold:    5, // 5 violations
 			Duration:     time.Hour,
 			ViolationTTL: 10 * time.Minute,
 		},
@@ -82,7 +82,7 @@ func (rl *RateLimiterAdvanced) APIRateLimit() fiber.Handler {
 		KeyPrefix:  "ratelimit:api",
 		Identifier: "ip",
 		Ban: BanConfig{
-			Enabled:      false,
+			Enabled: false,
 		},
 	}
 	return rl.RateLimitWithConfig(config)
@@ -152,11 +152,11 @@ func (rl *RateLimiterAdvanced) RateLimitWithConfig(config RateLimitConfig) fiber
 			c.Set("Retry-After", fmt.Sprintf("%d", retryAfter))
 
 			return c.Status(429).JSON(fiber.Map{
-				"error":         "Too many requests",
-				"limit":         config.Limit,
-				"window":        config.Window.String(),
-				"retry_after":   retryAfter,
-				"reset_at":      resetAt,
+				"error":       "Too many requests",
+				"limit":       config.Limit,
+				"window":      config.Window.String(),
+				"retry_after": retryAfter,
+				"reset_at":    resetAt,
 			})
 		}
 

@@ -82,12 +82,12 @@ func TestIsRecruiterBot(t *testing.T) {
 // Test: calculateFinalConfidence
 func TestCalculateFinalConfidence(t *testing.T) {
 	tests := []struct {
-		name            string
-		userAgentScore  int
-		refererScore    int
-		ipScore         int
-		expectedMin     int
-		expectedMax     int
+		name           string
+		userAgentScore int
+		refererScore   int
+		ipScore        int
+		expectedMin    int
+		expectedMax    int
 	}{
 		{
 			name:           "All high scores",
@@ -171,10 +171,10 @@ func TestDetectFromUserAgent(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		userAgent         string
-		expectedScore     int
-		expectedType      ProfileType
+		name          string
+		userAgent     string
+		expectedScore int
+		expectedType  ProfileType
 	}{
 		{
 			name:          "LinkedIn App",

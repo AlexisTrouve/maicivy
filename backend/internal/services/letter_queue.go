@@ -23,7 +23,7 @@ const (
 // LetterJob représente un job de génération de lettre
 type LetterJob struct {
 	JobID       string    `json:"job_id"`
-	VisitorID   string    `json:"visitor_id"`    // Session ID du visiteur
+	VisitorID   string    `json:"visitor_id"` // Session ID du visiteur
 	CompanyName string    `json:"company_name"`
 	JobTitle    string    `json:"job_title,omitempty"`
 	JobOffer    string    `json:"job_offer,omitempty"` // Texte brut de l'offre d'emploi

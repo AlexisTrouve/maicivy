@@ -328,4 +328,3 @@ func BenchmarkRenderHTML(b *testing.B) {
 		service.renderHTML(letter)
 	}
 }
-

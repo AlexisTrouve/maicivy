@@ -117,6 +117,27 @@ services:
       GITLAB_STATS_TOKEN: ${GITLAB_STATS_TOKEN}
       GITLAB_STATS_PROJECT: ${GITLAB_STATS_PROJECT}
       GITLAB_STATS_AUTHORS: ${GITLAB_STATS_AUTHORS:-alexis,stillhammer}
+      # Mailbox (ingestion IMAP + dispatch auto — cf. CLAUDE.md §Mailbox). IMAP_USER/APP_PASSWORD/
+      # FORWARD_TO vides = job de polling désactivé (le panel admin reste consultable).
+      MAILBOX_IMAP_HOST: ${MAILBOX_IMAP_HOST:-imap.gmail.com}
+      MAILBOX_IMAP_PORT: ${MAILBOX_IMAP_PORT:-993}
+      MAILBOX_IMAP_USER: ${MAILBOX_IMAP_USER:-}
+      MAILBOX_IMAP_APP_PASSWORD: ${MAILBOX_IMAP_APP_PASSWORD:-}
+      MAILBOX_IMAP_FOLDER: ${MAILBOX_IMAP_FOLDER:-INBOX}
+      MAILBOX_ALLOWED_DOMAINS: ${MAILBOX_ALLOWED_DOMAINS:-malt.fr:malt,malt.com:malt}
+      MAILBOX_FORWARD_TO: ${MAILBOX_FORWARD_TO:-}
+      MAILBOX_FORWARD_FROM_EMAIL: ${MAILBOX_FORWARD_FROM_EMAIL:-mailbox@etheryale.com}
+      MAILBOX_FORWARD_FROM_NAME: ${MAILBOX_FORWARD_FROM_NAME:-Mailbox Etheryale}
+      MAILBOX_POLL_INTERVAL_SECONDS: ${MAILBOX_POLL_INTERVAL_SECONDS:-120}
+      # Repassé ici après avoir été perdu par erreur lors du revert Discord (commit 57373df) --
+      # les deux etaient bundles dans le meme commit d'origine, le revert a tout annule d'un coup.
+      MAILBOX_RELEVANCE_THRESHOLD: ${MAILBOX_RELEVANCE_THRESHOLD:-50}
+      # Rappel disponibilité Malt (2x/semaine par défaut) -- MALT_REMINDER_TO vide = désactivé.
+      MALT_REMINDER_TO: ${MALT_REMINDER_TO:-}
+      MALT_REMINDER_FROM_EMAIL: ${MALT_REMINDER_FROM_EMAIL:-mailbox@etheryale.com}
+      MALT_REMINDER_FROM_NAME: ${MALT_REMINDER_FROM_NAME:-Mailbox Etheryale}
+      MALT_REMINDER_DAYS: ${MALT_REMINDER_DAYS:-mon,thu}
+      MALT_REMINDER_HOUR_UTC: ${MALT_REMINDER_HOUR_UTC:-1}
       # Anti-abus : le sus-rate-limit a migré dans le service `frontdoor` (devant tout le trafic).
       # Ici ne reste que le circuit-breaker coût (spécifique aux générations IA du backend).
       AI_GLOBAL_DAILY_MAX: ${AI_GLOBAL_DAILY_MAX:-200} # circuit-breaker coût : plafond gén. IA/jour
@@ -153,6 +174,7 @@ services:
       args:
         - BUILDKIT_INLINE_CACHE=1
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+        - NEXT_PUBLIC_DISCORD_INVITE=${NEXT_PUBLIC_DISCORD_INVITE:-}
     # Tag explicite. Le frontend est buildé DEPUIS LA SOURCE sur le VPS (build Next.js +
     # deps 3D vérifié OK sur VPS142, 2026-06) — plus besoin d'override pour pin une image.
     image: maicivy-frontend:latest
@@ -162,6 +184,7 @@ services:
       API_URL: http://maicivy-backend:8080
       # Client-side: public URL
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      NEXT_PUBLIC_DISCORD_INVITE: ${NEXT_PUBLIC_DISCORD_INVITE:-}
       NODE_ENV: ${NODE_ENV:-development}
       # Bind to all interfaces for healthcheck to work
       HOSTNAME: 0.0.0.0

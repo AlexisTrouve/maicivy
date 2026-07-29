@@ -53,6 +53,56 @@ func fakeMaiProFiles(t *testing.T) *PortfolioService {
 	return &PortfolioService{client: &MaiProFilesClient{http: srv.Client(), baseURL: srv.URL}}
 }
 
+// mapProject DOIT exposer GithubURL/DemoURL à la fiche chat — avant ce fix, ces champs n'existaient
+// pas sur PortfolioEntry, donc ProjectFiche.tsx n'avait aucun lien cliquable vers le code/la démo
+// (BlogFiche, lui, en a un depuis le début — incohérence). Même logique de filtrage que le CV
+// (content_provider.go, mapProjectLinks/isGithubURL) : réutilisée ici, PAS réimplémentée.
+func TestMapProject_ExposesGithubAndDemoURL(t *testing.T) {
+	p := &MPFProject{
+		ID:   "maicivy",
+		Name: "maicivy",
+		Links: map[string]string{
+			"repo":    "github.com/AlexisTrouve/maicivy",
+			"demo":    "maicivy.etheryale.com",
+			"website": "alexistrouve.pro", // ni repo ni demo → doit rester ignoré ici
+		},
+	}
+	entry := mapProject(p)
+
+	if entry.GithubURL != "https://github.com/AlexisTrouve/maicivy" {
+		t.Errorf("GithubURL = %q, attendu https://github.com/AlexisTrouve/maicivy (scheme ajouté)", entry.GithubURL)
+	}
+	if entry.DemoURL != "https://maicivy.etheryale.com" {
+		t.Errorf("DemoURL = %q, attendu https://maicivy.etheryale.com (scheme ajouté)", entry.DemoURL)
+	}
+}
+
+// TestMapProject_HidesPrivateGiteaRepo verrouille la même règle que le CV : un lien "repo" qui ne
+// pointe PAS vers github.com (ex: Gitea privé StillHammer) reste MASQUÉ — pas de mur de login pour
+// un visiteur qui clique depuis le chat.
+func TestMapProject_HidesPrivateGiteaRepo(t *testing.T) {
+	p := &MPFProject{
+		ID:   "drifterra",
+		Name: "drifterra",
+		Links: map[string]string{
+			"repo": "git.etheryale.com/StillHammer/drifterra", // Gitea privé, pas github.com
+		},
+	}
+	entry := mapProject(p)
+
+	if entry.GithubURL != "" {
+		t.Errorf("GithubURL = %q, attendu vide (repo Gitea privé, pas github.com)", entry.GithubURL)
+	}
+}
+
+// TestMapProject_NoLinks : projet sans aucun lien → champs vides, pas de panic.
+func TestMapProject_NoLinks(t *testing.T) {
+	entry := mapProject(&MPFProject{ID: "x", Name: "x"})
+	if entry.GithubURL != "" || entry.DemoURL != "" {
+		t.Errorf("attendu GithubURL/DemoURL vides sans Links, got %+v", entry)
+	}
+}
+
 // L'agent DOIT pouvoir parler du parcours pro : GetExperience expose les expériences de /experiences.
 // AVANT ce fix, le champ Experience était une slice vide EN DUR → l'agent ne savait rien du parcours.
 func TestGetExperience_PopulatesFromExperiencesEndpoint(t *testing.T) {

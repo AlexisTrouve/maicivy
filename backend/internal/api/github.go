@@ -46,7 +46,7 @@ func (h *GitHubHandler) GetAuthURL(c *fiber.Ctx) error {
 	url, err := h.oauthService.GenerateAuthURL(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed_to_generate_auth_url",
+			"error":   "failed_to_generate_auth_url",
 			"message": err.Error(),
 		})
 	}
@@ -72,7 +72,7 @@ func (h *GitHubHandler) HandleCallback(c *fiber.Ctx) error {
 	profile, err := h.oauthService.HandleCallback(c.Context(), code, state)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "oauth_callback_failed",
+			"error":   "oauth_callback_failed",
 			"message": err.Error(),
 		})
 	}
@@ -84,8 +84,8 @@ func (h *GitHubHandler) HandleCallback(c *fiber.Ctx) error {
 	}()
 
 	return c.JSON(fiber.Map{
-		"success": true,
-		"username": profile.Username,
+		"success":      true,
+		"username":     profile.Username,
 		"connected_at": profile.ConnectedAt,
 	})
 }
@@ -128,7 +128,7 @@ func (h *GitHubHandler) TriggerSync(c *fiber.Ctx) error {
 	}()
 
 	return c.JSON(fiber.Map{
-		"status": "sync_started",
+		"status":   "sync_started",
 		"username": req.Username,
 	})
 }
@@ -147,7 +147,7 @@ func (h *GitHubHandler) GetStatus(c *fiber.Ctx) error {
 	status, err := h.syncService.GetSyncStatus(c.Context(), username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed_to_get_status",
+			"error":   "failed_to_get_status",
 			"message": err.Error(),
 		})
 	}
@@ -178,7 +178,7 @@ func (h *GitHubHandler) GetRepositories(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed_to_fetch_repos",
+			"error":   "failed_to_fetch_repos",
 			"message": err.Error(),
 		})
 	}
@@ -201,7 +201,7 @@ func (h *GitHubHandler) Disconnect(c *fiber.Ctx) error {
 
 	if err := h.syncService.DisconnectGitHub(c.Context(), username); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed_to_disconnect",
+			"error":   "failed_to_disconnect",
 			"message": err.Error(),
 		})
 	}

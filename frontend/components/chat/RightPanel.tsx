@@ -9,9 +9,12 @@ interface RightPanelProps {
   activeTabId: string | null;
   onTabClick: (id: string) => void;
   onTabClose: (id: string) => void;
+  // Clic sur un projet dans ProjectListFiche → envoie un message dans le chat (même mécanisme que
+  // les hints du LeftPanel) pour déclencher l'ouverture de sa fiche détail.
+  onProjectClick: (message: string) => void;
 }
 
-export function RightPanel({ tabs, activeTabId, onTabClick, onTabClose }: RightPanelProps) {
+export function RightPanel({ tabs, activeTabId, onTabClick, onTabClose, onProjectClick }: RightPanelProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <TabsPanel
@@ -19,6 +22,7 @@ export function RightPanel({ tabs, activeTabId, onTabClick, onTabClose }: RightP
         activeTabId={activeTabId}
         onTabClick={onTabClick}
         onTabClose={onTabClose}
+        onProjectClick={onProjectClick}
       />
     </div>
   );

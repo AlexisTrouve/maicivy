@@ -3,14 +3,41 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
-import { streamChat, ChatMessage } from '@/lib/chat-api';
+import { Send, Square } from 'lucide-react';
+import { streamChat, ChatMessage, ChatErrorCode, ChatErrorDetail, RateLimitInfo } from '@/lib/chat-api';
 import { MessageBubble, ToolBadge } from './MessageBubble';
 
 // Représente un item dans la liste d'affichage (message ou badge tool)
 type DisplayItem =
   | { kind: 'message'; role: 'user' | 'assistant'; content: string; id: string }
   | { kind: 'tool'; name: string; input: unknown; id: string };
+
+// TEXTAREA_MAX_HEIGHT : plafond de l'auto-resize (px) — au-delà, scroll interne plutôt que de manger
+// tout l'espace du panel. ~8 lignes à text-sm.
+const TEXTAREA_MAX_HEIGHT = 160;
+
+// chatErrorMessage — traduit un ChatErrorCode dans la langue courante. Le backend ne renvoie qu'un
+// code stable (jamais de texte), donc TOUTE la traduction se fait ici, comme le reste de l'UI.
+function chatErrorMessage(
+  t: (key: string, values?: Record<string, string | number>) => string,
+  code: ChatErrorCode,
+  detail?: ChatErrorDetail,
+): string {
+  switch (code) {
+    case 'network':
+      return t('errorNetwork');
+    case 'rate_limited':
+      return detail?.retryAfterSeconds
+        ? t('errorRateLimited', { seconds: detail.retryAfterSeconds })
+        : t('errorRateLimitedGeneric');
+    case 'server_error':
+      return t('errorServer');
+    case 'context_too_long':
+      return t('errorContextTooLong');
+    default:
+      return t('errorGeneric');
+  }
+}
 
 interface ChatPanelProps {
   // Remonte les données tool_result pour mettre à jour le panel droit
@@ -29,6 +56,8 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
   const [isStreaming, setIsStreaming] = useState(false);
   // Accumulateur pour le texte assistant en cours de streaming
   const [streamingText, setStreamingText] = useState('');
+  // Quota du budget dédié chat (X-RateLimit-* du backend) — null tant qu'aucune réponse n'est arrivée.
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -39,6 +68,15 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
     const el = messagesRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [items, streamingText]);
+
+  // Auto-resize du textarea : hauteur = contenu, plafonnée à TEXTAREA_MAX_HEIGHT (au-delà, scroll
+  // interne). Remplace le rows=2 fixe qui rendait un message un peu long minuscule et peu lisible.
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto'; // reset avant mesure — sinon scrollHeight ne rétrécit jamais
+    ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
+  }, [input]);
 
   // sendMessageWithText — logique d'envoi découplée de l'état input.
   // Appelée par sendMessage (via input) et par le trigger externe (hint click).
@@ -77,6 +115,7 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
           // Remonter au parent pour update du panel droit
           onToolResult(name, data);
         },
+        onRateLimitInfo: setRateLimitInfo,
         onDone: () => {
           // Finaliser : ajouter le message assistant comme item permanent
           if (accumulatedText) {
@@ -94,13 +133,13 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
           setStreamingText('');
           setIsStreaming(false);
         },
-        onError: (errorMsg) => {
+        onError: (code, detail) => {
           setItems((prev) => [
             ...prev,
             {
               kind: 'message',
               role: 'assistant',
-              content: t('error', { message: errorMsg }),
+              content: chatErrorMessage(t, code, detail),
               id: `error-${Date.now()}`,
             },
           ]);
@@ -111,6 +150,12 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
       abortRef.current.signal,
     );
   }, [isStreaming, history, onToolResult]);
+
+  // handleStop — interrompt la génération en cours. streamChat/chat-api.ts détecte l'AbortError et
+  // finalise (onDone) le texte déjà streamé au lieu d'afficher une erreur réseau.
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   // sendMessage — wrapper qui lit input et le réinitialise après envoi
   const sendMessage = useCallback(() => {
@@ -179,6 +224,12 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
 
       {/* Zone input */}
       <div className="border-t p-4">
+        {/* Quota restant — évite de découvrir le mur du rate-limit sans prévenir */}
+        {rateLimitInfo && (
+          <div className="text-xs text-muted-foreground/60 text-right mb-1.5">
+            {t('remainingQuota', { remaining: rateLimitInfo.remaining, limit: rateLimitInfo.limit })}
+          </div>
+        )}
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
@@ -186,18 +237,32 @@ export function ChatPanel({ onToolResult, externalMessage, onExternalMessageSent
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('inputPlaceholder')}
-            rows={2}
+            rows={1}
             disabled={isStreaming}
-            className="flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
+            className="flex-1 resize-none overflow-y-auto rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           />
-          <Button
-            onClick={sendMessage}
-            disabled={isStreaming || !input.trim()}
-            size="icon"
-            className="shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          {isStreaming ? (
+            <Button
+              onClick={handleStop}
+              size="icon"
+              variant="secondary"
+              className="shrink-0"
+              aria-label={t('stopGenerating')}
+              title={t('stopGenerating')}
+            >
+              <Square className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={sendMessage}
+              disabled={!input.trim()}
+              size="icon"
+              className="shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

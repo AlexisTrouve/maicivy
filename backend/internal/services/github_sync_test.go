@@ -137,18 +137,18 @@ func TestGitHubSyncService_GetAllRepositories(t *testing.T) {
 	// Créer des repos de test (2 publics, 1 privé)
 	repos := []models.GitHubRepository{
 		{
-			Username:    username,
-			RepoName:    "repo1",
-			FullName:    "testuser/repo1",
-			Stars:       100,
-			IsPrivate:   false,
+			Username:  username,
+			RepoName:  "repo1",
+			FullName:  "testuser/repo1",
+			Stars:     100,
+			IsPrivate: false,
 		},
 		{
-			Username:    username,
-			RepoName:    "private-repo",
-			FullName:    "testuser/private-repo",
-			Stars:       50,
-			IsPrivate:   true,
+			Username:  username,
+			RepoName:  "private-repo",
+			FullName:  "testuser/private-repo",
+			Stars:     50,
+			IsPrivate: true,
 		},
 	}
 
@@ -264,15 +264,15 @@ func TestTransformGitHubRepoToModel(t *testing.T) {
 	now := time.Now()
 
 	ghRepo := &github.Repository{
-		Name:        github.String("test-repo"),
-		FullName:    github.String("testuser/test-repo"),
-		Description: github.String("A test repository"),
-		HTMLURL:     github.String("https://github.com/testuser/test-repo"),
+		Name:            github.String("test-repo"),
+		FullName:        github.String("testuser/test-repo"),
+		Description:     github.String("A test repository"),
+		HTMLURL:         github.String("https://github.com/testuser/test-repo"),
 		StargazersCount: github.Int(42),
-		Language:    github.String("Go"),
-		Topics:      []string{"golang", "testing", "ci"},
-		Private:     github.Bool(false),
-		PushedAt:    &github.Timestamp{Time: now},
+		Language:        github.String("Go"),
+		Topics:          []string{"golang", "testing", "ci"},
+		Private:         github.Bool(false),
+		PushedAt:        &github.Timestamp{Time: now},
 	}
 
 	// Transformation manuelle (similaire au service)
@@ -312,9 +312,9 @@ func TestCacheInvalidation(t *testing.T) {
 
 	// Créer un repo
 	repo := &models.GitHubRepository{
-		Username: username,
-		RepoName: "test-repo",
-		FullName: username + "/test-repo",
+		Username:  username,
+		RepoName:  "test-repo",
+		FullName:  username + "/test-repo",
 		IsPrivate: false,
 	}
 	db.Create(repo)
@@ -332,9 +332,9 @@ func TestCacheInvalidation(t *testing.T) {
 
 	// Ajouter un nouveau repo en base
 	repo2 := &models.GitHubRepository{
-		Username: username,
-		RepoName: "test-repo-2",
-		FullName: username + "/test-repo-2",
+		Username:  username,
+		RepoName:  "test-repo-2",
+		FullName:  username + "/test-repo-2",
 		IsPrivate: false,
 	}
 	db.Create(repo2)

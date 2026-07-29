@@ -40,10 +40,10 @@ func TestIsMassiveCommit(t *testing.T) {
 // de la régularité à chaque fetch de 30 min), dédup, et rolloff des jours antérieurs au cutoff 6 mois.
 func TestMergeCommitDays(t *testing.T) {
 	cases := []struct {
-		name           string
-		cached, fresh  []string
-		cutoff         string
-		want           []string
+		name          string
+		cached, fresh []string
+		cutoff        string
+		want          []string
 	}{
 		{
 			name:   "union + dédup + tri",

@@ -10,21 +10,21 @@ import (
 
 // BlogPost représente un article de blog généré depuis des commits
 type BlogPost struct {
-	ID                 uint           `gorm:"primaryKey" json:"id"`
-	Slug               string         `gorm:"uniqueIndex;not null" json:"slug"`
-	Title              string         `gorm:"not null" json:"title"`
-	Summary            string         `json:"summary"`
-	Content            string         `gorm:"type:text" json:"content"`
-	ContentHTML        string         `gorm:"type:text" json:"content_html"`
-	ProjectName        string         `gorm:"index" json:"project_name"`
-	Tags               pq.StringArray `gorm:"type:text[]" json:"tags"`
-	GeneratedFromCommits CommitRefList `gorm:"type:jsonb" json:"generated_from_commits"`
-	CoverImageURL      string         `json:"cover_image_url,omitempty"`
-	ReadingTimeMinutes int            `json:"reading_time_minutes"`
-	Published          bool           `gorm:"default:false;index" json:"published"`
-	PublishedAt        *time.Time     `json:"published_at,omitempty"`
-	CreatedAt          time.Time      `json:"created_at"`
-	UpdatedAt          time.Time      `json:"updated_at"`
+	ID                   uint           `gorm:"primaryKey" json:"id"`
+	Slug                 string         `gorm:"uniqueIndex;not null" json:"slug"`
+	Title                string         `gorm:"not null" json:"title"`
+	Summary              string         `json:"summary"`
+	Content              string         `gorm:"type:text" json:"content"`
+	ContentHTML          string         `gorm:"type:text" json:"content_html"`
+	ProjectName          string         `gorm:"index" json:"project_name"`
+	Tags                 pq.StringArray `gorm:"type:text[]" json:"tags"`
+	GeneratedFromCommits CommitRefList  `gorm:"type:jsonb" json:"generated_from_commits"`
+	CoverImageURL        string         `json:"cover_image_url,omitempty"`
+	ReadingTimeMinutes   int            `json:"reading_time_minutes"`
+	Published            bool           `gorm:"default:false;index" json:"published"`
+	PublishedAt          *time.Time     `json:"published_at,omitempty"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
 }
 
 // TableName définit le nom de table
@@ -34,10 +34,10 @@ func (BlogPost) TableName() string {
 
 // CommitRef référence un commit utilisé pour générer l'article
 type CommitRef struct {
-	SHA       string `json:"sha"`
-	Message   string `json:"message"`
-	Date      string `json:"date"`
-	Project   string `json:"project"`
+	SHA     string `json:"sha"`
+	Message string `json:"message"`
+	Date    string `json:"date"`
+	Project string `json:"project"`
 }
 
 // CommitRefList est une liste de références de commits pour GORM JSONB
@@ -77,11 +77,11 @@ type BlogGenerateRequest struct {
 type BlogCreateRequest struct {
 	Title         string   `json:"title"`
 	Summary       string   `json:"summary"`
-	Content       string   `json:"content"`         // Markdown
+	Content       string   `json:"content"` // Markdown
 	ProjectName   string   `json:"project_name"`
 	Tags          []string `json:"tags"`
 	CoverImageURL string   `json:"cover_image_url,omitempty"`
-	Publish       bool     `json:"publish"`          // Si true, publie immédiatement
+	Publish       bool     `json:"publish"` // Si true, publie immédiatement
 }
 
 // BlogUpdateRequest représente une demande de mise à jour d'article

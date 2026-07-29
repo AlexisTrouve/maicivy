@@ -125,7 +125,7 @@ func (suite *VisitorHandlerTestSuite) TestGetVisitorStatus_HasAccess() {
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	assert.Equal(suite.T(), 3, result.VisitCount)
-	assert.True(suite.T(), result.HasAccessToAI) // 3 visites = accès
+	assert.True(suite.T(), result.HasAccessToAI)    // 3 visites = accès
 	assert.False(suite.T(), result.IsTargetProfile) // Unknown != cible
 }
 
@@ -161,7 +161,7 @@ func (suite *VisitorHandlerTestSuite) TestGetVisitorStatus_Recruiter() {
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	assert.Equal(suite.T(), "recruiter", result.ProfileDetected)
-	assert.True(suite.T(), result.HasAccessToAI) // Recruteur = accès immédiat
+	assert.True(suite.T(), result.HasAccessToAI)   // Recruteur = accès immédiat
 	assert.True(suite.T(), result.IsTargetProfile) // Recruteur = cible
 }
 
@@ -264,7 +264,7 @@ func (suite *VisitorHandlerTestSuite) TestGetVisitorStatus_Developer() {
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	assert.Equal(suite.T(), "developer", result.ProfileDetected)
-	assert.False(suite.T(), result.HasAccessToAI) // Seulement 2 visites
+	assert.False(suite.T(), result.HasAccessToAI)   // Seulement 2 visites
 	assert.False(suite.T(), result.IsTargetProfile) // Developer != cible
 }
 

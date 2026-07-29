@@ -5,7 +5,7 @@ type CVTheme struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
-	Icon        string             `json:"icon"`               // Emoji or icon identifier
+	Icon        string             `json:"icon"`       // Emoji or icon identifier
 	TagWeights  map[string]float64 `json:"tagWeights"` // tag → poids (0.0-1.0)
 }
 

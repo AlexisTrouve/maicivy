@@ -20,11 +20,11 @@ type Project struct {
 	TechnicalDescription  string `gorm:"type:text" json:"technicalDescription"`
 
 	// i18n - English translations
-	TitleEn                  string `gorm:"type:varchar(255);column:title_en" json:"titleEn,omitempty"`
-	DescriptionEn            string `gorm:"type:text;column:description_en" json:"descriptionEn,omitempty"`
-	CatchphraseEn            string `gorm:"type:varchar(200);column:catchphrase_en" json:"catchphraseEn,omitempty"`
-	FunctionalDescriptionEn  string `gorm:"type:text;column:functional_description_en" json:"functionalDescriptionEn,omitempty"`
-	TechnicalDescriptionEn   string `gorm:"type:text;column:technical_description_en" json:"technicalDescriptionEn,omitempty"`
+	TitleEn                 string `gorm:"type:varchar(255);column:title_en" json:"titleEn,omitempty"`
+	DescriptionEn           string `gorm:"type:text;column:description_en" json:"descriptionEn,omitempty"`
+	CatchphraseEn           string `gorm:"type:varchar(200);column:catchphrase_en" json:"catchphraseEn,omitempty"`
+	FunctionalDescriptionEn string `gorm:"type:text;column:functional_description_en" json:"functionalDescriptionEn,omitempty"`
+	TechnicalDescriptionEn  string `gorm:"type:text;column:technical_description_en" json:"technicalDescriptionEn,omitempty"`
 
 	// URLs
 	GithubURL string `gorm:"type:varchar(500)" json:"githubUrl" validate:"omitempty,url"`

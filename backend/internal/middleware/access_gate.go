@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 
-	"maicivy/internal/models"
 	"gorm.io/gorm"
+	"maicivy/internal/models"
 )
 
 // AccessGateConfig configuration pour le middleware d'accès IA

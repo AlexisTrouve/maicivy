@@ -11,7 +11,14 @@ import (
 
 // AIRateLimitConfig configuration pour le rate limiting IA
 type AIRateLimitConfig struct {
-	Redis            *redis.Client
+	Redis *redis.Client
+	// KeyPrefix : espace de noms Redis pour les compteurs PAR SESSION/IP (cooldown, daily, in-flight).
+	// Vide → "ai" (comportement historique, partagé par CV/lettres/messages). Une valeur dédiée
+	// (ex: "chat") isole complètement les compteurs d'une feature : épuiser le quota CV ne bloque
+	// plus le chat de la même session, et vice versa. Le circuit-breaker GLOBAL (globalDailyKey),
+	// lui, reste volontairement PARTAGÉ par toutes les features quel que soit KeyPrefix — c'est le
+	// garde-fou de coût agrégé, pas un quota par feature.
+	KeyPrefix        string
 	MaxPerDay        int           // Nombre maximum de générations par jour par session (défaut: 5)
 	MaxPerDayPerIP   int           // Nombre maximum de générations par jour par IP (défaut: 3)
 	CooldownDuration time.Duration // Temps d'attente entre générations (défaut: 2 minutes)
@@ -40,6 +47,12 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 	maxPerDayPerIP := config.MaxPerDayPerIP
 	if maxPerDayPerIP <= 0 {
 		maxPerDayPerIP = 3
+	}
+	// Défaut namespace si non configuré — préserve exactement les clés historiques ("ratelimit:ai:...")
+	// pour CV/lettres/messages qui ne passent pas KeyPrefix.
+	keyPrefix := config.KeyPrefix
+	if keyPrefix == "" {
+		keyPrefix = "ai"
 	}
 
 	return func(c *fiber.Ctx) error {
@@ -94,7 +107,7 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 		// COMMENT : SETNX atomique → une seule requête par session progresse à la fois ; les autres
 		// reçoivent 429 "génération en cours". Libéré via defer en sortie de middleware (et TTL
 		// backstop si crash). Fail-open si Redis HS (cohérent : ne pas casser le service).
-		inflightKey := fmt.Sprintf("ratelimit:ai:%s:inflight", sessionID)
+		inflightKey := fmt.Sprintf("ratelimit:%s:%s:inflight", keyPrefix, sessionID)
 		if acquired, lockErr := config.Redis.SetNX(ctx, inflightKey, "1", aiInflightTTL).Result(); lockErr == nil && !acquired {
 			ttl, _ := config.Redis.TTL(ctx, inflightKey).Result()
 			c.Set("Retry-After", fmt.Sprintf("%d", int(ttl.Seconds())))
@@ -111,7 +124,7 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 		// lockErr != nil → Redis HS → on continue sans verrou (fail-open).
 
 		// --- Vérification Cooldown (2 minutes) ---
-		cooldownKey := fmt.Sprintf("ratelimit:ai:%s:cooldown", sessionID)
+		cooldownKey := fmt.Sprintf("ratelimit:%s:%s:cooldown", keyPrefix, sessionID)
 		cooldownExists, err := config.Redis.Exists(ctx, cooldownKey).Result()
 
 		if err != nil {
@@ -140,7 +153,7 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 		}
 
 		// --- Vérification Limite Journalière (5/jour) ---
-		dailyKey := fmt.Sprintf("ratelimit:ai:%s:daily", sessionID)
+		dailyKey := fmt.Sprintf("ratelimit:%s:%s:daily", keyPrefix, sessionID)
 		countStr, err := config.Redis.Get(ctx, dailyKey).Result()
 
 		var count int
@@ -186,7 +199,7 @@ func AIRateLimit(config AIRateLimitConfig) fiber.Handler {
 		// --- Vérification Limite Journalière par IP ---
 		// Protège contre le bypass via incognito ou renouvellement de session
 		ip := c.IP()
-		ipDailyKey := fmt.Sprintf("ratelimit:ai:ip:%s:daily", ip)
+		ipDailyKey := fmt.Sprintf("ratelimit:%s:ip:%s:daily", keyPrefix, ip)
 		ipCountStr, err := config.Redis.Get(ctx, ipDailyKey).Result()
 
 		var ipCount int

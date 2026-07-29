@@ -63,7 +63,7 @@ func TestAnalyticsService_TrackEvent(t *testing.T) {
 
 	// Créer événement
 	eventData := map[string]interface{}{
-		"path": "/cv",
+		"path":  "/cv",
 		"theme": "backend",
 	}
 	eventDataJSON, _ := json.Marshal(eventData)

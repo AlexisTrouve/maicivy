@@ -69,6 +69,15 @@ tmp/
 temp/
 *.tmp
 *.bak
+# Résidus d'édition & de merge. POURQUOI : `testing_helpers.go.bak`, `validations.ts.bak` et
+# `validations.patch` avaient été COMMITÉS (un .gitignore n'agit pas sur un fichier déjà tracké,
+# ils survivaient donc à `*.bak`) — retirés le 2026-07-29. On élargit pour couvrir toute la famille :
+# .orig/.rej = artefacts de merge/`git apply` ratés, .patch/.diff = patchs jetables appliqués puis
+# oubliés. Un patch qu'on veut vraiment versionner reste possible via `git add -f`.
+*.orig
+*.rej
+*.patch
+*.diff
 
 # Build artifacts
 dist/
@@ -76,6 +85,14 @@ dist/
 # Binaires Go compilés (outils migrate/seed) — ne JAMAIS committer (23 Mo de cruft retirés du repo)
 backend/migrate
 backend/seed
+# Exécutables Windows, PARTOUT (pas seulement backend/ : `backend/*.exe` laissait passer la racine).
+# POURQUOI : 303 Mo de binaires `go build` traînaient hors index (backend.exe, main.exe, main2.exe,
+# main2.exe~, cmd.exe, onetime_backfill.exe) — un seul `git add -f` ou un .gitignore assoupli les
+# poussait vers le miroir GitHub public. Le `~` est déjà couvert par `*~` (section IDE).
+*.exe
+# Sous-dossier parasite créé par un `go build -o docs/...` lancé depuis backend/ au lieu de la racine :
+# recrée un `backend/backend/docs/api/openapi.yaml` doublon de `backend/docs/api/openapi.yaml`.
+backend/backend/
 build/
 *.tar.gz
 *.zip

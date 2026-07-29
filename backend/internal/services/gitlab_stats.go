@@ -139,26 +139,77 @@ func (s *GitLabStatsService) save(ctx context.Context, daily []DayStat) {
 	}
 }
 
-// fetchDaily pagine les commits sur 6 mois, filtre par auteur, agrège par jour.
+// fetchDaily agrège les commits d'Alexis sur 6 mois par jour, en DEUX passes complémentaires.
+//
+// POURQUOI deux passes : on veut à la fois (a) l'historique complet AVEC les lignes add/del par commit,
+// et (b) les commits des branches de feature NON mergées (sinon une grosse journée poussée sur une branche
+// affiche « 0 commit »). Or `with_stats=true` (nécessaire pour les lignes) combiné à `all=true` (toutes
+// branches, tous auteurs = milliers de commits) est PROHIBITIF : une seule page dépasse 60 s → timeout →
+// historique tronqué aux jours récents (bug observé : 66 jours → 4). On sépare donc :
+//   - Passe 1 : branche par défaut, AVEC stats → historique mergé complet + lignes réelles (rapide, 1 branche).
+//   - Passe 2 : TOUTES les branches, SANS stats → rattrape les commits de feature non mergés (comptés,
+//     mais sans lignes : du travail non mergé n'a pas à peser dans les totaux de lignes, juste l'activité).
+//
+// La dédup par SHA est PARTAGÉE entre les passes : un commit vu en passe 1 (avec ses lignes) n'est pas
+// recompté en passe 2 ; seuls les SHA propres aux branches de feature s'ajoutent (lignes = 0).
 func (s *GitLabStatsService) fetchDaily(ctx context.Context) ([]DayStat, error) {
-	fetchCtx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	// 120 s : passe 1 (branche défaut + stats) + passe 2 (all branches sans stats, ~20 s mesuré).
+	fetchCtx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	since := time.Now().AddDate(0, -6, 0).Format(time.RFC3339)
 	dailyMap := make(map[string]*DayStat)
+	seen := make(map[string]struct{}) // SHA déjà comptés, partagé entre les deux passes
 
-	for page := 1; page <= 50; page++ { // garde-fou pagination (50*100 = 5000 commits max)
-		path := fmt.Sprintf("/api/v4/projects/%s/repository/commits?with_stats=true&per_page=100&since=%s&page=%d",
-			url.PathEscape(s.projectID), url.QueryEscape(since), page)
+	// Passe 1 : branche par défaut, avec stats de lignes.
+	if err := s.collect(fetchCtx, since, false, true, dailyMap, seen); err != nil {
+		return nil, err
+	}
+	// Passe 2 : toutes les branches, sans stats (rattrapage feature-branches).
+	if err := s.collect(fetchCtx, since, true, false, dailyMap, seen); err != nil {
+		return nil, err
+	}
+
+	daily := make([]DayStat, 0, len(dailyMap))
+	for _, d := range dailyMap {
+		daily = append(daily, *d)
+	}
+	sort.Slice(daily, func(i, j int) bool { return daily[i].Date < daily[j].Date })
+	log.Info().Int("days", len(daily)).Msg("gitlabstats: fetch done")
+	return daily, nil
+}
+
+// collect pagine les commits du projet et les agrège dans dailyMap (commits d'Alexis par jour), en
+// dédupliquant par SHA via `seen` (partagé entre passes). allBranches=true ajoute `all=true` (toutes
+// branches). withStats=true ajoute `with_stats=true` (lignes add/del par commit) ; sinon add/del restent
+// à 0 (et le filtre commit-massif, qui a besoin des lignes, ne s'applique de fait pas — sans objet ici).
+func (s *GitLabStatsService) collect(ctx context.Context, since string, allBranches, withStats bool, dailyMap map[string]*DayStat, seen map[string]struct{}) error {
+	stats := ""
+	if withStats {
+		stats = "with_stats=true&"
+	}
+	all := ""
+	if allBranches {
+		all = "all=true&"
+	}
+	for page := 1; page <= 60; page++ { // garde-fou pagination (60*100 = 6000 commits ; ~2800 mesuré)
+		path := fmt.Sprintf("/api/v4/projects/%s/repository/commits?%s%sper_page=100&since=%s&page=%d",
+			url.PathEscape(s.projectID), stats, all, url.QueryEscape(since), page)
 		var commits []gitlabCommit
-		if err := s.get(fetchCtx, path, &commits); err != nil {
-			return nil, err
+		if err := s.get(ctx, path, &commits); err != nil {
+			return err
 		}
 		for _, c := range commits {
+			// Un commit déjà compté (vu en passe 1, ou atteignable depuis une autre branche) ne recompte pas.
+			if _, dup := seen[c.ID]; dup {
+				continue
+			}
+			seen[c.ID] = struct{}{}
 			if !s.matchesAuthor(c.AuthorName) {
 				continue
 			}
 			// Exclure les commits "tuyauterie" (import/vendoring/migration) — même seuil que gitea.
+			// Sans stats (passe 2), Additions/Deletions valent 0 → jamais massif, tout commit compte.
 			if c.Stats.Additions > massiveCommitThreshold || c.Stats.Deletions > massiveCommitThreshold {
 				continue
 			}
@@ -176,14 +227,7 @@ func (s *GitLabStatsService) fetchDaily(ctx context.Context) ([]DayStat, error) 
 			break
 		}
 	}
-
-	daily := make([]DayStat, 0, len(dailyMap))
-	for _, d := range dailyMap {
-		daily = append(daily, *d)
-	}
-	sort.Slice(daily, func(i, j int) bool { return daily[i].Date < daily[j].Date })
-	log.Info().Int("days", len(daily)).Msg("gitlabstats: fetch done")
-	return daily, nil
+	return nil
 }
 
 // matchesAuthor : vrai si le nom d'auteur contient (insensible à la casse) un des auteurs configurés.

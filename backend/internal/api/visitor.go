@@ -146,9 +146,9 @@ type HeartbeatRequest struct {
 
 // HeartbeatResponse représente la réponse d'un heartbeat
 type HeartbeatResponse struct {
-	Success       bool  `json:"success"`
-	Timestamp     int64 `json:"timestamp"`
-	ActiveVisitors int  `json:"active_visitors,omitempty"`
+	Success        bool  `json:"success"`
+	Timestamp      int64 `json:"timestamp"`
+	ActiveVisitors int   `json:"active_visitors,omitempty"`
 }
 
 // Heartbeat endpoint pour marquer un visiteur comme actif

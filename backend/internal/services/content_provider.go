@@ -19,12 +19,12 @@ import (
 // models internes. Implémenté par MaiProFilesContentProvider.
 //
 // QUOI : remplace l'ancien content.Loader (qui lisait des .md locaux). Même API sync
-//   (méthodes sans ctx/lang, renvoient des slices) → drop-in : CVService, CVGenerationService
-//   et LetterGenerator l'utilisent sans changement de leur logique interne.
+// (méthodes sans ctx/lang, renvoient des slices) → drop-in : CVService, CVGenerationService
+// et LetterGenerator l'utilisent sans changement de leur logique interne.
 // POURQUOI : maiprofiles est désormais la SOURCE DE VÉRITÉ UNIQUE. Le contenu local = supprimé.
 // COMMENT : fetch maiprofiles en FR (primaire) + EN (best-effort), mappe vers models.* avec le
-//   FR en champs principaux et l'EN dans les champs *En → la LocalizationHelper existante
-//   (qui choisit FR/EN sur ces champs) continue de fonctionner telle quelle.
+// FR en champs principaux et l'EN dans les champs *En → la LocalizationHelper existante
+// (qui choisit FR/EN sur ces champs) continue de fonctionner telle quelle.
 type ContentProvider interface {
 	GetExperiences(lang string) []models.Experience
 	GetSkills(lang string) []models.Skill
@@ -463,8 +463,8 @@ func featuredScore(commitDays []string, now time.Time) float64 {
 	if err1 != nil || err2 != nil {
 		return 0
 	}
-	ageDays := now.Sub(first).Hours() / 24  // longévité (1er commit dans la fenêtre)
-	lastDays := now.Sub(last).Hours() / 24  // récence (dernier commit de code)
+	ageDays := now.Sub(first).Hours() / 24 // longévité (1er commit dans la fenêtre)
+	lastDays := now.Sub(last).Hours() / 24 // récence (dernier commit de code)
 
 	ageNorm := math.Min(1, ageDays/featAgeCapDays)
 	regNorm := math.Min(1, float64(len(commitDays))/featActiveDaysCap)
@@ -490,7 +490,7 @@ func mapProjects(fr, en []MPFProject, autoFeatured map[string]bool) []models.Pro
 			Description:  p.Description.Short,
 			Category:     p.Category,
 			Technologies: nonNil(p.Stack),
-			Tags:         nonNil(p.Tags), // catégorisation (flags-concept inclus) → matching skill, pas affichage
+			Tags:         nonNil(p.Tags),                   // catégorisation (flags-concept inclus) → matching skill, pas affichage
 			Featured:     p.Featured || autoFeatured[p.ID], // pin curé OU top activité Gitea (mix)
 			InProgress:   status == "wip" || status == "in_progress" || status == "beta",
 			Links:        mapProjectLinks(p.Links),

@@ -27,7 +27,7 @@ func TestBuildLangStats(t *testing.T) {
 		"TypeScript": 76,
 	}
 
-	resp := buildLangStats(in)
+	resp := buildLangStats(in, nil)
 
 	// Fusion : une seule entrée "go", octets sommés.
 	goStat, ok := resp.Languages["go"]
@@ -61,11 +61,38 @@ func TestBuildLangStats(t *testing.T) {
 
 // TestBuildLangStatsEmpty : map vide → réponse vide cohérente (pas de nil panic).
 func TestBuildLangStatsEmpty(t *testing.T) {
-	resp := buildLangStats(map[string]int{})
+	resp := buildLangStats(map[string]int{}, nil)
 	if resp == nil {
 		t.Fatal("réponse nil")
 	}
 	if len(resp.Languages) != 0 || resp.TotalLOC != 0 || resp.TotalBytes != 0 {
 		t.Errorf("attendu vide, got %+v", resp)
+	}
+	if len(resp.Repos) != 0 {
+		t.Errorf("attendu Repos vide, got %+v", resp.Repos)
+	}
+}
+
+// TestBuildLangStatsPerRepo vérifie la ventilation LOC par repo (octets/38, même diviseur que le
+// global) — SOURCE du "LOC par projet" affiché sur /gitstats. Indépendante de la fusion par langage :
+// un repo garde sa propre conversion, pas d'agrégation croisée entre repos.
+func TestBuildLangStatsPerRepo(t *testing.T) {
+	byLang := map[string]int{"Go": 380, "TypeScript": 76}
+	repoBytes := map[string]int{
+		"drifterra":  380, // 380/38 = 10
+		"Melodicode": 76,  // 76/38 = 2
+		"empty-repo": 0,   // 0 octet → absent du résultat (pas de LOC = pas d'entrée, pas un zéro bruyant)
+	}
+
+	resp := buildLangStats(byLang, repoBytes)
+
+	if got := resp.Repos["drifterra"]; got != 10 {
+		t.Errorf("Repos[drifterra] = %d, want 10 (380/38)", got)
+	}
+	if got := resp.Repos["Melodicode"]; got != 2 {
+		t.Errorf("Repos[Melodicode] = %d, want 2 (76/38)", got)
+	}
+	if _, ok := resp.Repos["empty-repo"]; ok {
+		t.Errorf("Repos[empty-repo] ne devrait pas exister (0 octet), got %+v", resp.Repos)
 	}
 }

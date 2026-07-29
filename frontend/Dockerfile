@@ -23,6 +23,9 @@ WORKDIR /app
 # Build arguments for Next.js
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Lien d'invitation Discord (bouton "Rejoindre" du blog). Vide = bouton masqué (système prêt, inactif).
+ARG NEXT_PUBLIC_DISCORD_INVITE=
+ENV NEXT_PUBLIC_DISCORD_INVITE=${NEXT_PUBLIC_DISCORD_INVITE}
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules

@@ -16,6 +16,8 @@ interface ProjectData {
   TechStack: string[];
   Stats: StatItem[];
   SkillsTags: string[];
+  GithubURL?: string;
+  DemoURL?: string;
 }
 
 interface ProjectFicheProps {
@@ -35,6 +37,32 @@ export function ProjectFiche({ data }: ProjectFicheProps) {
         <h2 className="text-lg font-bold text-foreground leading-tight">{data.Title}</h2>
         <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{data.ShortDesc}</p>
       </div>
+
+      {/* Liens — GithubURL n'est renseigné QUE si le repo est public (github.com), cf. backend */}
+      {(data.GithubURL || data.DemoURL) && (
+        <div className="flex gap-2">
+          {data.GithubURL && (
+            <a
+              href={data.GithubURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              {t('viewOnGithub')}
+            </a>
+          )}
+          {data.DemoURL && (
+            <a
+              href={data.DemoURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-center rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              {t('viewDemo')}
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Tech stack */}
       <div>

@@ -37,11 +37,11 @@ type ExperienceDetail struct {
 // UserProfile : profil utilisateur pour personnalisation
 type UserProfile struct {
 	Name        string             `json:"name"`
-	Address     string             `json:"address"`      // Adresse complète
-	PostalCode  string             `json:"postal_code"`  // Code postal
-	City        string             `json:"city"`         // Ville
-	Email       string             `json:"email"`        // Email
-	Phone       string             `json:"phone"`        // Téléphone
+	Address     string             `json:"address"`     // Adresse complète
+	PostalCode  string             `json:"postal_code"` // Code postal
+	City        string             `json:"city"`        // Ville
+	Email       string             `json:"email"`       // Email
+	Phone       string             `json:"phone"`       // Téléphone
 	CurrentRole string             `json:"current_role"`
 	Skills      []string           `json:"skills"`
 	Experience  int                `json:"experience_years"`
@@ -63,9 +63,9 @@ type LetterResponse struct {
 
 // PlatformMessageRequest : requête de génération de message plateforme (Malt, LinkedIn...)
 type PlatformMessageRequest struct {
-	Mission  string `json:"mission" validate:"required,min=20"`   // Description de la mission copiée-collée
+	Mission  string `json:"mission" validate:"required,min=20"`                       // Description de la mission copiée-collée
 	Platform string `json:"platform" validate:"omitempty,oneof=malt linkedin upwork"` // Plateforme cible
-	TJM      int    `json:"tjm" validate:"omitempty,min=50,max=5000"` // Tarif journalier en euros
+	TJM      int    `json:"tjm" validate:"omitempty,min=50,max=5000"`                 // Tarif journalier en euros
 	Lang     string `json:"lang" validate:"omitempty,oneof=fr en"`
 }
 

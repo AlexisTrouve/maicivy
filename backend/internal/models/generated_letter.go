@@ -26,10 +26,10 @@ type GeneratedLetter struct {
 	Content     string     `gorm:"type:text;not null" json:"content" validate:"required"`
 
 	// Métadonnées génération
-	AIModel      string `gorm:"type:varchar(50)" json:"ai_model"`       // "claude-3" ou "gpt-4"
-	TokensUsed   int    `gorm:"default:0" json:"tokens_used"`           // Tracking coûts
-	GenerationMS int    `gorm:"default:0" json:"generation_ms"`         // Temps de génération en ms
-	CompanyInfo  string `gorm:"type:jsonb" json:"company_info"`         // Données entreprise scrapées (JSON)
+	AIModel      string `gorm:"type:varchar(50)" json:"ai_model"` // "claude-3" ou "gpt-4"
+	TokensUsed   int    `gorm:"default:0" json:"tokens_used"`     // Tracking coûts
+	GenerationMS int    `gorm:"default:0" json:"generation_ms"`   // Temps de génération en ms
+	CompanyInfo  string `gorm:"type:jsonb" json:"company_info"`   // Données entreprise scrapées (JSON)
 
 	// Flags
 	Downloaded bool `gorm:"default:false" json:"downloaded"` // Tracking PDF téléchargé

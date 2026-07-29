@@ -114,8 +114,9 @@ export default function AdminChatTool() {
       onToolCall: (name) => setTools((ts) => [...ts, name]),
       onToolResult: () => {},
       onDone: () => {},
-      onError: (msg) => {
-        acc += `\n[${msg}]`;
+      onError: (code, detail) => {
+        // Outil interne (owner) — pas de traduction, juste le code brut pour debug.
+        acc += `\n[${code}${detail?.retryAfterSeconds ? `:${detail.retryAfterSeconds}s` : ''}]`;
         setStreamText(acc);
       },
     });

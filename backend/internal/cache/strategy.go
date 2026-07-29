@@ -57,7 +57,7 @@ func (cs *CacheService) SetCV(ctx context.Context, theme string, cvData interfac
 // GetLetter retrieves generated letter from cache
 func (cs *CacheService) GetLetter(ctx context.Context, companyName, letterType string) (string, error) {
 	// Hash company name to avoid excessively long keys
-	hash := fmt.Sprintf("%x", companyName) // In production, use crypto/sha256
+	hash := fmt.Sprintf("%x", companyName)               // In production, use crypto/sha256
 	key := fmt.Sprintf("letter:%s:%s", hash, letterType) // "motivation" or "anti-motivation"
 	val, err := cs.client.Get(ctx, key).Result()
 	if err == redis.Nil {

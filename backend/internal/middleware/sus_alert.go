@@ -61,10 +61,10 @@ func maybeAlertSusIP(cfg SusConfig, c *fiber.Ctx, ip string, score float64) {
 // classifyAttack catégorise une vague de scan à partir de ses chemins récents.
 // QUOI : renvoie un label de type d'attaque ("php", "wordpress", "env", "config", "mixed", "unknown").
 // POURQUOI : permet de muter certains types d'alertes (cf. SusConfig.AlertMuteTypes) — ex un scan
-//   webshell PHP est du bruit sur maicivy (aucun PHP servi), on ne veut pas la notif Discord.
+// webshell PHP est du bruit sur maicivy (aucun PHP servi), on ne veut pas la notif Discord.
 // COMMENT : compte les chemins par catégorie (insensible casse, 1ère catégorie qui matche ; ".php"
-//   testé en premier → un /wp-login.php compte comme "php"). La catégorie strictement majoritaire
-//   (> moitié des chemins) donne le label ; sinon "mixed".
+// testé en premier → un /wp-login.php compte comme "php"). La catégorie strictement majoritaire
+// (> moitié des chemins) donne le label ; sinon "mixed".
 func classifyAttack(paths []string) string {
 	if len(paths) == 0 {
 		return "unknown"

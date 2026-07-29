@@ -10,7 +10,7 @@ import (
 type GenerateLetterRequest struct {
 	CompanyName string `json:"company_name" validate:"required,min=2,max=200"`
 	JobTitle    string `json:"job_title,omitempty" validate:"omitempty,min=2,max=200"` // Optionnel
-	JobOffer    string `json:"job_offer,omitempty" validate:"omitempty,max=5000"`       // Texte brut de l'offre d'emploi (optionnel)
+	JobOffer    string `json:"job_offer,omitempty" validate:"omitempty,max=5000"`      // Texte brut de l'offre d'emploi (optionnel)
 	Theme       string `json:"theme,omitempty" validate:"omitempty,oneof=backend frontend fullstack devops data ai"`
 	Lang        string `json:"lang,omitempty" validate:"omitempty,oneof=fr en"` // Langue: fr (défaut) ou en
 }
@@ -35,12 +35,12 @@ type LetterGenerationResponse struct {
 
 // LetterJobStatus status d'un job de génération
 type LetterJobStatus struct {
-	JobID   string `json:"job_id"`
-	Status  string `json:"status"`  // "queued", "processing", "completed", "failed"
-	Progress int   `json:"progress"` // 0-100
+	JobID    string `json:"job_id"`
+	Status   string `json:"status"`   // "queued", "processing", "completed", "failed"
+	Progress int    `json:"progress"` // 0-100
 
 	// Si completed
-	LetterMotivationID     *string `json:"letter_motivation_id,omitempty"` // UUID as string
+	LetterMotivationID     *string `json:"letter_motivation_id,omitempty"`      // UUID as string
 	LetterAntiMotivationID *string `json:"letter_anti_motivation_id,omitempty"` // UUID as string
 
 	// Si failed
@@ -95,13 +95,13 @@ type LetterHistoryItem struct {
 
 // AccessStatusResponse status d'accès aux fonctionnalités IA
 type AccessStatusResponse struct {
-	HasAccess         bool   `json:"has_access"`
-	CurrentVisits     int    `json:"current_visits"`
-	RequiredVisits    int    `json:"required_visits"`
-	VisitsRemaining   int    `json:"visits_remaining"`
-	ProfileDetected   string `json:"profile_detected,omitempty"`
-	AccessGrantedBy   string `json:"access_granted_by"` // "visits" ou "profile"
-	Message           string `json:"message"`
+	HasAccess       bool   `json:"has_access"`
+	CurrentVisits   int    `json:"current_visits"`
+	RequiredVisits  int    `json:"required_visits"`
+	VisitsRemaining int    `json:"visits_remaining"`
+	ProfileDetected string `json:"profile_detected,omitempty"`
+	AccessGrantedBy string `json:"access_granted_by"` // "visits" ou "profile"
+	Message         string `json:"message"`
 }
 
 // RateLimitStatusResponse status du rate limiting IA

@@ -3,10 +3,9 @@
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChatPanel } from '@/components/chat/ChatPanel';
-import { LeftPanel } from '@/components/chat/LeftPanel';
+import { LeftPanel, Tip } from '@/components/chat/LeftPanel';
 import { RightPanel } from '@/components/chat/RightPanel';
 import { Tab } from '@/components/chat/TabsPanel';
-import { Tip } from '@/components/chat/TipBar';
 
 // Force dynamic rendering (pas de SSR — page interactive)
 export const dynamic = 'force-dynamic';
@@ -40,6 +39,10 @@ export default function ChatPage() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [tips, setTips] = useState<Tip[]>([]);
+  // Questions de relance contextuelles (tool suggest_followups) — remplacent le pool statique de
+  // hints dans le LeftPanel tant que le LLM en propose de nouvelles. Écrasées (pas accumulées) à
+  // chaque nouvelle suggestion : les anciennes ne sont plus pertinentes une fois le sujet dépassé.
+  const [followups, setFollowups] = useState<string[]>([]);
 
   // Message externe déclenché depuis LeftPanel (hint click)
   const [externalMessage, setExternalMessage] = useState<string | null>(null);
@@ -119,6 +122,14 @@ export default function ChatPage() {
         setTips((prev) => [...prev, newTip].slice(-MAX_TIPS));
         break;
       }
+
+      // --- Questions de relance contextuelles (remplacent les hints statiques dans le LeftPanel) ---
+      case 'suggest_followups': {
+        const followupData = data as { questions?: string[] } | null;
+        if (!followupData?.questions?.length) break;
+        setFollowups(followupData.questions);
+        break;
+      }
     }
   }, [pushTab]);
 
@@ -161,6 +172,7 @@ export default function ChatPage() {
           tips={tips}
           onTipClose={handleTipClose}
           onHintClick={handleHintClick}
+          followups={followups}
         />
       </div>
 
@@ -180,6 +192,7 @@ export default function ChatPage() {
           activeTabId={activeTabId}
           onTabClick={handleTabClick}
           onTabClose={handleTabClose}
+          onProjectClick={handleHintClick}
         />
       </div>
     </div>

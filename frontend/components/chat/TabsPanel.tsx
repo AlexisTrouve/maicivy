@@ -22,17 +22,18 @@ interface TabsPanelProps {
   activeTabId: string | null;
   onTabClick: (id: string) => void;
   onTabClose: (id: string) => void;
+  onProjectClick: (message: string) => void;
 }
 
 // Rendu de la fiche correspondant au panelType de l'onglet actif
-function FicheContent({ tab }: { tab: Tab }) {
+function FicheContent({ tab, onProjectClick }: { tab: Tab; onProjectClick: (message: string) => void }) {
   switch (tab.panelType) {
     case 'project':
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return <ProjectFiche data={tab.data as any} />;
     case 'project_list':
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <ProjectListFiche data={tab.data as any} />;
+      return <ProjectListFiche data={tab.data as any} onProjectClick={onProjectClick} />;
     case 'skills':
     case 'experience':
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,7 +49,7 @@ function FicheContent({ tab }: { tab: Tab }) {
   }
 }
 
-export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose }: TabsPanelProps) {
+export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose, onProjectClick }: TabsPanelProps) {
   const t = useTranslations('chat');
   // Aucun onglet → fiche par défaut
   if (tabs.length === 0) {
@@ -98,7 +99,7 @@ export function TabsPanel({ tabs, activeTabId, onTabClick, onTabClose }: TabsPan
 
       {/* Contenu de l'onglet actif — key force le remount + animation au changement d'onglet */}
       <div key={activeTab.id} className="flex-1 overflow-y-auto animate-in slide-in-from-right-3 fade-in duration-200">
-        <FicheContent tab={activeTab} />
+        <FicheContent tab={activeTab} onProjectClick={onProjectClick} />
       </div>
     </div>
   );

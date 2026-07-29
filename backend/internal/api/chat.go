@@ -4,23 +4,34 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 
+	"maicivy/internal/middleware"
 	"maicivy/internal/services"
 )
+
+// chatCooldownDuration : TTL du cooldown posé après chaque message. Volontairement TRÈS court (pas
+// 2 minutes comme CV/lettres) — un chat conversationnel doit encaisser des messages rapprochés. Sert
+// uniquement à absorber un double-clic/replay accidentel ; le verrou in-flight (anti-TOCTOU, déjà
+// dans AIRateLimit) couvre déjà le cas des requêtes concurrentes.
+const chatCooldownDuration = 2 * time.Second
 
 // ChatHandler gère les endpoints de la feature chat portfolio
 type ChatHandler struct {
 	chatService *services.ChatService
+	redis       *redis.Client
 	ownerAPIKey string
 }
 
 // NewChatHandler crée un ChatHandler
-func NewChatHandler(chatService *services.ChatService, ownerAPIKey string) *ChatHandler {
+func NewChatHandler(chatService *services.ChatService, redisClient *redis.Client, ownerAPIKey string) *ChatHandler {
 	return &ChatHandler{
 		chatService: chatService,
+		redis:       redisClient,
 		ownerAPIKey: ownerAPIKey,
 	}
 }
@@ -83,5 +94,22 @@ func (h *ChatHandler) StreamChat(c *fiber.Ctx) error {
 		}
 	})
 
+	// SetBodyStreamWriter est SYNCHRONE (bloque jusqu'à la fin du stream) : à ce point le tour de
+	// chat est terminé (succès ou erreur SSE mi-stream — les deux ont consommé du token Claude, donc
+	// comptent pareil, pas de distinction). Alimente le budget dédié chat (KeyPrefix "chat") posé par
+	// chatRateLimitMW — sans cet appel le quota/circuit-breaker global ne bougerait jamais pour le chat.
+	h.incrementRateLimit(c)
+
 	return nil
+}
+
+// incrementRateLimit incrémente les compteurs de rate-limit du budget chat après un tour terminé.
+// no-op si redis absent (contexte de test) ; IncrementAIRateLimit ignore lui-même l'owner (bypass).
+func (h *ChatHandler) incrementRateLimit(c *fiber.Ctx) {
+	if h.redis == nil {
+		return
+	}
+	if err := middleware.IncrementAIRateLimit(c, h.redis, chatCooldownDuration); err != nil {
+		log.Error().Err(err).Msg("ChatHandler: failed to increment chat rate limit")
+	}
 }

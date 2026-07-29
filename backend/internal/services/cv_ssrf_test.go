@@ -18,8 +18,12 @@ func TestIsBlockedFetchIP(t *testing.T) {
 		"10.1.2.3", "192.168.1.1", "172.16.0.1", // RFC1918
 		"fd00::1",         // ULA
 		"169.254.169.254", // metadata cloud (link-local)
-		"100.85.89.83",    // Tailscale (CGNAT) — projectmind
-		"0.0.0.0",         // unspecified
+		// Tailscale (CGNAT 100.64.0.0/10). Adresse GÉNÉRIQUE volontairement : c'est la plage
+		// entière qui est bloquée, pas une machine précise — mettre l'IP réelle d'un hôte du
+		// tailnet ne renforce en rien le test et divulguerait la topologie interne dans le
+		// miroir GitHub public (cf. .claude/SYNC_GITHUB.md).
+		"100.64.0.1",
+		"0.0.0.0", // unspecified
 	}
 	for _, s := range blocked {
 		require.True(t, isBlockedFetchIP(net.ParseIP(s)), "%s doit être bloqué (interne)", s)

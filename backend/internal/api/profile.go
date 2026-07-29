@@ -34,13 +34,13 @@ func NewProfileHandler(
 
 // DetectProfileResponse structure de la réponse de détection
 type DetectProfileResponse struct {
-	Success        bool                       `json:"success"`
-	ProfileType    string                     `json:"profile_type"`
-	Confidence     int                        `json:"confidence"`
-	EnrichmentData map[string]interface{}     `json:"enrichment_data,omitempty"`
-	DeviceInfo     services.DeviceInfo        `json:"device_info"`
-	Sources        []string                   `json:"detection_sources"`
-	BypassEnabled  bool                       `json:"bypass_enabled"`
+	Success        bool                   `json:"success"`
+	ProfileType    string                 `json:"profile_type"`
+	Confidence     int                    `json:"confidence"`
+	EnrichmentData map[string]interface{} `json:"enrichment_data,omitempty"`
+	DeviceInfo     services.DeviceInfo    `json:"device_info"`
+	Sources        []string               `json:"detection_sources"`
+	BypassEnabled  bool                   `json:"bypass_enabled"`
 }
 
 // GetDetect détecte manuellement le profil du visiteur (endpoint de debug)
@@ -166,8 +166,8 @@ func (h *ProfileHandler) PostEnableBypass(c *fiber.Ctx) error {
 func (h *ProfileHandler) GetStats(c *fiber.Ctx) error {
 	// Requête SQL pour obtenir les stats par type de profil
 	type ProfileStats struct {
-		ProfileType string `json:"profile_type"`
-		Count       int    `json:"count"`
+		ProfileType   string  `json:"profile_type"`
+		Count         int     `json:"count"`
 		AvgConfidence float64 `json:"avg_confidence"`
 	}
 
@@ -198,10 +198,10 @@ func (h *ProfileHandler) GetStats(c *fiber.Ctx) error {
 		Count(&totalVisitors)
 
 	return c.JSON(fiber.Map{
-		"success":         true,
-		"stats_by_type":   stats,
-		"total_detected":  totalDetected,
-		"total_visitors":  totalVisitors,
-		"detection_rate":  float64(totalDetected) / float64(totalVisitors) * 100,
+		"success":        true,
+		"stats_by_type":  stats,
+		"total_detected": totalDetected,
+		"total_visitors": totalVisitors,
+		"detection_rate": float64(totalDetected) / float64(totalVisitors) * 100,
 	})
 }

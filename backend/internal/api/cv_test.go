@@ -148,7 +148,7 @@ func TestGetCV_BackendTheme(t *testing.T) {
 			{Skill: models.Skill{Name: "Go", Level: models.SkillLevelExpert, Category: "backend"}},
 			{Skill: models.Skill{Name: "PostgreSQL", Level: models.SkillLevelAdvanced, Category: "database"}},
 		},
-		Projects: []services.ScoredProjectResponse{},
+		Projects:    []services.ScoredProjectResponse{},
 		GeneratedAt: now,
 	}
 
@@ -377,8 +377,8 @@ func BenchmarkGetCV(b *testing.B) {
 		Experiences: []services.ScoredExperienceResponse{
 			{Experience: models.Experience{Title: "Backend Dev", Company: "Test", StartDate: time.Now()}},
 		},
-		Skills:   []services.ScoredSkillResponse{},
-		Projects: []services.ScoredProjectResponse{},
+		Skills:      []services.ScoredSkillResponse{},
+		Projects:    []services.ScoredProjectResponse{},
 		GeneratedAt: time.Now(),
 	}
 

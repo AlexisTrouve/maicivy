@@ -1,5 +1,53 @@
-# Force LF sur les scripts shell : ils tournent sur Linux (VPS). Un CRLF (édité depuis
-# Windows) casserait le shebang (`#!/usr/bin/env bash\r` → bad interpreter).
+# ============================================================================
+# MAICIVY - Normalisation des fins de ligne
+# ============================================================================
+#
+# QUOI : tout fichier texte est stocké en LF dans le dépôt ET posé en LF dans
+# l'arbre de travail, quelle que soit la machine.
+#
+# POURQUOI : le repo est développé sous Windows (`core.autocrlf=true` au niveau
+# système) mais déployé dans des conteneurs Linux, et miroité sur un dépôt public.
+# Sans règle globale, chaque outil qui réécrit un fichier (gofmt, prettier, un
+# agent) reflippe ses fins de ligne et produit un diff « fichier entier modifié »
+# alors que le contenu est identique — 441 des 711 fichiers trackés avaient du
+# CRLF figé dans l'index, dont 36 `.sh` que la règle ci-dessous était pourtant
+# censée protéger : elle avait été ajoutée sans jamais renormaliser l'existant.
+#
+# COMMENT :
+#  1. `* text=auto eol=lf` — git détecte le binaire tout seul et laisse les
+#     fichiers binaires intacts ; tout le reste est normalisé LF à l'ajout et
+#     restitué LF au checkout.
+#  2. Les exceptions qui ont BESOIN de CRLF sont déclarées après (l'ordre compte :
+#     la dernière règle qui matche gagne).
+#  3. Les binaires connus sont marqués explicitement — ceinture et bretelles pour
+#     ne jamais dépendre de la seule heuristique de détection.
+#
+# ⚠️ Poser ce fichier ne suffit PAS à corriger l'existant : il faut un
+# `git add --renormalize .` une fois (fait dans le commit qui introduit ce fichier).
+
+* text=auto eol=lf
+
+# --- Scripts shell : ils tournent sur Linux (VPS). Un CRLF (édité depuis Windows)
+# casserait le shebang (`#!/usr/bin/env bash\r` → bad interpreter). Redondant avec
+# la règle globale, conservé comme documentation de l'intention d'origine.
 *.sh text eol=lf
 START.sh text eol=lf
 STOP.sh text eol=lf
+
+# --- Batch Windows : cmd.exe peut mal parser un `.bat` en LF (labels/goto tronqués).
+# Seul type de fichier du repo qui exige réellement le CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# --- Binaires : jamais de conversion de fins de ligne (corromprait le contenu).
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary

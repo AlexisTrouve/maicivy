@@ -20,8 +20,8 @@ test.describe('Admin auth (prod)', () => {
     await page.getByTestId('admin-password').fill(ADMIN_PW!);
     await page.getByTestId('admin-submit').click();
 
-    // Entré dans le panneau gardé
-    await expect(page.getByTestId('admin-home')).toBeVisible({ timeout: 12000 });
+    // Entré dans le panneau gardé (home = outil "CV depuis offre")
+    await expect(page.getByTestId('admin-cv-tool')).toBeVisible({ timeout: 12000 });
     await expect(page).toHaveURL(/\/admin\/?$/);
 
     // Déconnexion → retour au login

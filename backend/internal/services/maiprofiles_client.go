@@ -42,15 +42,15 @@ const fallbackLang = "en"
 
 // MPFProfile représente la réponse de GET /profile
 type MPFProfile struct {
-	Name            string         `json:"name"`
-	Headline        string         `json:"headline"`
-	Location        string         `json:"location"`
-	ExperienceYears int            `json:"experience_years"`
-	Contact         MPFContact     `json:"contact"`
-	Bio             MPFBio         `json:"bio"`
-	Skills          MPFSkills      `json:"skills"`
-	Domains         []string       `json:"domains"`
-	Links           MPFLinks       `json:"links"`
+	Name            string     `json:"name"`
+	Headline        string     `json:"headline"`
+	Location        string     `json:"location"`
+	ExperienceYears int        `json:"experience_years"`
+	Contact         MPFContact `json:"contact"`
+	Bio             MPFBio     `json:"bio"`
+	Skills          MPFSkills  `json:"skills"`
+	Domains         []string   `json:"domains"`
+	Links           MPFLinks   `json:"links"`
 }
 
 type MPFContact struct {
@@ -109,10 +109,10 @@ type MPFScreenshot struct {
 
 // MPFGlobalStats représente GET /stats
 type MPFGlobalStats struct {
-	Projects  int            `json:"projects"`
-	TotalLOC  int            `json:"total_loc"`
-	TotalTests int           `json:"total_tests"`
-	Stack     map[string]int `json:"stack"`
+	Projects   int            `json:"projects"`
+	TotalLOC   int            `json:"total_loc"`
+	TotalTests int            `json:"total_tests"`
+	Stack      map[string]int `json:"stack"`
 }
 
 // --- Cache générique ---
@@ -396,21 +396,21 @@ func (c *MaiProFilesClient) doWriteRequest(ctx context.Context, method, path str
 // Champs identiques à models.BlogPost mais sans les tags GORM ni les types SQL.
 // Utilisé pour désérialiser la réponse avant de convertir vers models.BlogPost.
 type MPFBlogPost struct {
-	ID                   int              `json:"id"`
-	Slug                 string           `json:"slug"`
-	Title                string           `json:"title"`
-	Summary              string           `json:"summary"`
-	Content              string           `json:"content"`
-	ContentHTML          *string          `json:"content_html"`
-	ProjectName          string           `json:"project_name"`
-	Tags                 []string         `json:"tags"`
+	ID                   int                `json:"id"`
+	Slug                 string             `json:"slug"`
+	Title                string             `json:"title"`
+	Summary              string             `json:"summary"`
+	Content              string             `json:"content"`
+	ContentHTML          *string            `json:"content_html"`
+	ProjectName          string             `json:"project_name"`
+	Tags                 []string           `json:"tags"`
 	GeneratedFromCommits []models.CommitRef `json:"generated_from_commits"`
-	CoverImageURL        string           `json:"cover_image_url,omitempty"`
-	ReadingTimeMinutes   int              `json:"reading_time_minutes"`
-	Published            bool             `json:"published"`
-	PublishedAt          *string          `json:"published_at,omitempty"` // RFC3339 string depuis l'API
-	CreatedAt            string           `json:"created_at"`
-	UpdatedAt            string           `json:"updated_at"`
+	CoverImageURL        string             `json:"cover_image_url,omitempty"`
+	ReadingTimeMinutes   int                `json:"reading_time_minutes"`
+	Published            bool               `json:"published"`
+	PublishedAt          *string            `json:"published_at,omitempty"` // RFC3339 string depuis l'API
+	CreatedAt            string             `json:"created_at"`
+	UpdatedAt            string             `json:"updated_at"`
 }
 
 // MPFBlogListResponse représente la réponse paginée de GET /blog/posts
@@ -588,14 +588,23 @@ func (c *MaiProFilesClient) CreateBlogPost(ctx context.Context, post *models.Blo
 // UpdateBlogPost met à jour un post dans maiProFiles via PUT /blog/posts/{id}.
 // Nécessite MAIPROFILES_API_KEY. Invalide le cache du post et de la liste.
 func (c *MaiProFilesClient) UpdateBlogPost(ctx context.Context, id int, post *models.BlogPost) (*models.BlogPost, error) {
-	payload := MPFBlogUpdateRequest{
-		Title:   &post.Title,
-		Summary: &post.Summary,
-		Content: &post.Content,
-		Tags:    post.Tags,
+	// Update PARTIEL : on n'envoie QUE les champs réellement fournis. POURQUOI : un *string non-nil
+	// pointant sur "" n'est PAS omis par omitempty — un title/summary/content ABSENT du body partait
+	// donc en "" et écrasait le post côté maiProFiles (qui fait un merge superficiel {**post, **body}).
+	// Incident 2026-06-29 : un PUT de cover seule a effacé titre+summary+content. COMMENT : on ne pose
+	// le pointeur que si la valeur est non vide, exactement comme cover_image_url / content_html le
+	// faisaient déjà juste en dessous. Conséquence assumée : on ne peut pas BLANCHIR un champ via
+	// update (envoyer "" volontairement) — comportement qu'on ne veut jamais pour un post de blog.
+	payload := MPFBlogUpdateRequest{Tags: post.Tags}
+	if post.Title != "" {
+		payload.Title = &post.Title
 	}
-	// Si le contenu change, re-rendre content_html (goldmark) pour garder le HTML synchro.
+	if post.Summary != "" {
+		payload.Summary = &post.Summary
+	}
 	if post.Content != "" {
+		payload.Content = &post.Content
+		// Le contenu change → re-rendre content_html (goldmark) pour garder le HTML synchro.
 		h := markdownToHTML(post.Content)
 		payload.ContentHTML = &h
 	}

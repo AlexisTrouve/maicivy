@@ -72,8 +72,8 @@ func (h *MessagesHandler) GenerateMessage(c *fiber.Ctx) error {
 	content, metrics, err := h.letterGenerator.GeneratePlatformMessage(c.Context(), req, model)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Generation failed",
-			"code":  "GENERATION_ERROR",
+			"error":   "Generation failed",
+			"code":    "GENERATION_ERROR",
 			"details": err.Error(),
 		})
 	}

@@ -26,12 +26,16 @@ const (
 
 // ChatEvent est envoyé dans le channel SSE vers le handler
 type ChatEvent struct {
-	Type    ChatEventType   `json:"type"`
-	Delta   string          `json:"delta,omitempty"`   // pour type="text"
-	Name    string          `json:"name,omitempty"`    // pour tool_call / tool_result
-	Input   json.RawMessage `json:"input,omitempty"`   // pour tool_call
-	Data    interface{}     `json:"data,omitempty"`    // pour tool_result
-	Message string          `json:"message,omitempty"` // pour error
+	Type  ChatEventType   `json:"type"`
+	Delta string          `json:"delta,omitempty"` // pour type="text"
+	Name  string          `json:"name,omitempty"`  // pour tool_call / tool_result
+	Input json.RawMessage `json:"input,omitempty"` // pour tool_call
+	Data  interface{}     `json:"data,omitempty"`  // pour tool_result
+	// Code : pour type="error" — identifiant STABLE ("generic" | "context_too_long"), jamais un texte
+	// traduit. Le backend n'a aucune notion de la langue du visiteur (contrairement aux tools, qui
+	// reçoivent `language` en paramètre) ; c'est le frontend qui traduit le code via next-intl, comme
+	// toute autre string UI du projet (règle i18n : jamais de phrase en dur, y compris côté erreurs).
+	Code string `json:"code,omitempty"`
 }
 
 // ChatMessage représente un tour de conversation (historique)
@@ -92,40 +96,32 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 	// Boucle agentic (max 5 tours pour éviter les boucles infinies)
 	const maxTurns = 5
 	for turn := 0; turn < maxTurns; turn++ {
-		resp, err := s.client.Messages.New(ctx, anthropic.MessageNewParams{
+		stream := s.client.Messages.NewStreaming(ctx, anthropic.MessageNewParams{
 			Model:     anthropic.Model(model),
-			MaxTokens: 600, // réduit pour rester sous la limite proxy ~7300 tokens
+			MaxTokens: maxResponseTokens,
 			System: []anthropic.TextBlockParam{
 				{Text: prompt},
 			},
 			Messages: messages,
 			Tools:    tools, // []anthropic.ToolUnionParam
 		})
+		resp, err := accumulateStream(stream, eventCh)
 		if err != nil {
 			log.Error().Err(err).Msg("ChatService: Claude API error")
-			// Détecter une limite de taille atteinte (erreur proxy ou contexte trop long)
-			errMsg := err.Error()
-			userMsg := "Désolé, quelque chose s'est mal passé. Veuillez réessayer."
-			if strings.Contains(errMsg, "too large") || strings.Contains(errMsg, "token") ||
-				strings.Contains(errMsg, "context") || strings.Contains(errMsg, "limit") ||
-				strings.Contains(errMsg, "413") || strings.Contains(errMsg, "Request too large") {
-				userMsg = "Cette conversation est devenue trop longue. Commencez une nouvelle conversation pour continuer."
-			}
-			eventCh <- ChatEvent{Type: ChatEventError, Message: userMsg}
+			eventCh <- ChatEvent{Type: ChatEventError, Code: classifyChatError(err.Error())}
 			return
 		}
 
-		// Traiter les blocs de réponse
+		// Traiter les blocs de réponse (resp est le Message COMPLET, accumulé par accumulateStream —
+		// même shape qu'un appel non-streaming, cette partie ne change pas)
 		hasToolUse := false
 		var assistantContent []anthropic.ContentBlockParamUnion
 
 		for _, block := range resp.Content {
 			switch b := block.AsAny().(type) {
 			case anthropic.TextBlock:
-				// Envoyer le texte d'un coup (MVP sync)
-				if b.Text != "" {
-					eventCh <- ChatEvent{Type: ChatEventText, Delta: b.Text}
-				}
+				// Le texte a déjà été streamé delta par delta par accumulateStream — ici on ne fait
+				// que reconstruire le contenu pour l'historique du tour suivant.
 				assistantContent = append(assistantContent, anthropic.NewTextBlock(b.Text))
 
 			case anthropic.ToolUseBlock:
@@ -189,19 +185,105 @@ func (s *ChatService) Chat(ctx context.Context, message string, history []ChatMe
 	eventCh <- ChatEvent{Type: ChatEventDone}
 }
 
-// buildMessages convertit l'historique ChatMessage en params Anthropic.
-// On ne garde que les 6 derniers messages (3 échanges) pour rester sous la
-// limite de ~7300 tokens du proxy etheryale.
-func (s *ChatService) buildMessages(history []ChatMessage, newMessage string) []anthropic.MessageParam {
-	var messages []anthropic.MessageParam
+// streamEventIterator — sous-ensemble de *ssestream.Stream[anthropic.MessageStreamEventUnion] requis
+// par accumulateStream (Next/Current/Err). Le type concret du SDK le satisfait DÉJÀ structurellement
+// (typage structurel Go) — cette interface existe uniquement pour pouvoir tester accumulateStream
+// avec un stream FAKE (fixtures JSON), sans dépendance réseau ni mock du client Anthropic.
+type streamEventIterator interface {
+	Next() bool
+	Current() anthropic.MessageStreamEventUnion
+	Err() error
+}
 
-	// Tronquer l'historique : garder les 6 derniers messages max
-	const maxHistory = 6
-	if len(history) > maxHistory {
-		history = history[len(history)-maxHistory:]
+// accumulateStream consomme un stream d'events Anthropic, forwarde les deltas de texte EN TEMPS RÉEL
+// dans eventCh (vrai streaming — avant ce fix, Chat() attendait la réponse complète puis l'envoyait
+// d'un seul ChatEventText, le curseur "streaming" du frontend était cosmétique), et retourne le
+// Message final accumulé — même shape qu'un appel non-streaming, donc le reste de la boucle agentic
+// (détection tool_use, construction de l'historique) n'a pas eu besoin de changer.
+func accumulateStream(stream streamEventIterator, eventCh chan<- ChatEvent) (*anthropic.Message, error) {
+	msg := &anthropic.Message{}
+	for stream.Next() {
+		event := stream.Current()
+		if err := msg.Accumulate(event); err != nil {
+			return nil, err
+		}
+		if cbd, ok := event.AsAny().(anthropic.ContentBlockDeltaEvent); ok {
+			if td, ok := cbd.Delta.AsAny().(anthropic.TextDelta); ok && td.Text != "" {
+				eventCh <- ChatEvent{Type: ChatEventText, Delta: td.Text}
+			}
+		}
+	}
+	if err := stream.Err(); err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
+// classifyChatError catégorise une erreur de l'API Claude en code stable. PUR (pas d'appel réseau) —
+// testable directement, sans mocker le client Anthropic. "context_too_long" couvre les erreurs de
+// dépassement de contexte/taille (limite du modèle, ou message individuel anormalement volumineux —
+// le proxy etheryale lui-même n'impose aucune limite, cf. maxHistoryTokens) ; tout le reste tombe en
+// "generic". Le texte affiché à l'utilisateur est construit côté frontend à partir de ce code
+// (traduit dans sa langue) — jamais de phrase en dur ici.
+func classifyChatError(errMsg string) string {
+	if strings.Contains(errMsg, "too large") || strings.Contains(errMsg, "token") ||
+		strings.Contains(errMsg, "context") || strings.Contains(errMsg, "limit") ||
+		strings.Contains(errMsg, "413") || strings.Contains(errMsg, "Request too large") {
+		return "context_too_long"
+	}
+	return "generic"
+}
+
+// maxResponseTokens : longueur MAX d'une réponse Claude. Reposait sur 600, justifié par la même
+// fausse prémisse des "~7300 tokens proxy" que l'historique (cf. maxHistoryTokens ci-dessous) — le
+// proxy etheryale n'impose aucune limite. 600 coupait des réponses substantielles en plein milieu de
+// phrase. 1500 laisse la place à une explication complète (ex: comparer deux projets, détailler une
+// architecture) sans rallonger le coût des réponses courtes — MaxTokens est un PLAFOND, pas une
+// cible : Claude s'arrête naturellement à end_turn bien avant pour une réponse conversationnelle
+// normale, seules les réponses qui auraient été tronquées avant en bénéficient.
+const maxResponseTokens = 1500
+
+// maxHistoryTokens : budget défensif sur l'historique envoyé à Claude — PAS une contrainte externe
+// réelle. Le proxy etheryale (ai.etheryale.com) n'impose aucune limite de tokens (cf.
+// documentationGlobal/EtheryaleProxy.md : "pas de limite de tokens, pas de troncature, juste un
+// throttle 20 RPM avec file d'attente"). L'ancien plafond "6 derniers messages" reposait sur un
+// chiffre (~7300 tokens) qui ne correspondait à rien de documenté ni côté proxy ni côté modèle
+// (Haiku/Opus ont un contexte de 200k tokens) — une hypothèse jamais reprouvée. 40k tokens reste
+// largement sous ce qu'autorise le budget dédié chat (20 messages/jour/session, cf. chatRateLimitMW) :
+// même en pire cas (longs messages), une journée pleine n'atteint jamais ce plafond en pratique —
+// c'est un garde-fou contre une conversation anormalement longue, pas la vraie limite.
+const maxHistoryTokens = 40_000
+
+// approxCharsPerToken : heuristique standard (pas de tokenizer exact — un appel réseau supplémentaire
+// pour un simple garde-fou défensif serait disproportionné en coût/latence).
+const approxCharsPerToken = 4
+
+// estimateTokens approxime le nombre de tokens d'un texte. PUR, testable sans dépendance externe.
+func estimateTokens(s string) int {
+	return len(s) / approxCharsPerToken
+}
+
+// buildMessages convertit l'historique ChatMessage en params Anthropic. Garde autant de messages
+// RÉCENTS que possible tant que leur total estimé reste sous maxHistoryTokens — ne coupe que les
+// plus anciens si l'historique déborde (contrairement à l'ancien plafond fixe "6 derniers messages").
+func (s *ChatService) buildMessages(history []ChatMessage, newMessage string) []anthropic.MessageParam {
+	kept := make([]ChatMessage, 0, len(history))
+	total := 0
+	for i := len(history) - 1; i >= 0; i-- {
+		t := estimateTokens(history[i].Content)
+		if total+t > maxHistoryTokens {
+			break
+		}
+		total += t
+		kept = append(kept, history[i])
+	}
+	// kept a été rempli du plus récent au plus ancien → remettre en ordre chronologique.
+	for i, j := 0, len(kept)-1; i < j; i, j = i+1, j-1 {
+		kept[i], kept[j] = kept[j], kept[i]
 	}
 
-	for _, msg := range history {
+	var messages []anthropic.MessageParam
+	for _, msg := range kept {
 		if msg.Role == "user" {
 			messages = append(messages, anthropic.NewUserMessage(anthropic.NewTextBlock(msg.Content)))
 		} else if msg.Role == "assistant" {
@@ -209,7 +291,7 @@ func (s *ChatService) buildMessages(history []ChatMessage, newMessage string) []
 		}
 	}
 
-	// Ajouter le message courant
+	// Ajouter le message courant (toujours inclus, hors budget — c'est la question posée, pas de l'historique)
 	messages = append(messages, anthropic.NewUserMessage(anthropic.NewTextBlock(newMessage)))
 	return messages
 }
@@ -349,6 +431,23 @@ func (s *ChatService) buildTools() []anthropic.ToolUnionParam {
 					"description": "Emoji optionnel (💡, 🚀, ⚡...)",
 				},
 			}, "text")),
+
+		// --- Tool de relance (remplace le pool de hints statiques par des suggestions contextuelles) ---
+		makeTool("suggest_followups",
+			"Propose 2 à 3 questions de relance pertinentes en te basant sur CE QUI VIENT D'ÊTRE DIT. "+
+				"Appelle ce tool à la fin d'une réponse substantielle (pas pour un simple bonjour/merci). "+
+				"Formule chaque question à la première personne, comme si l'UTILISATEUR la posait "+
+				"(ex: 'Quels sont tes projets en Rust ?'), dans la langue de la conversation — elles "+
+				"remplacent les suggestions génériques affichées dans la barre latérale.",
+			withLang(map[string]interface{}{
+				"questions": map[string]interface{}{
+					"type":        "array",
+					"items":       map[string]interface{}{"type": "string"},
+					"description": "2 à 3 questions de relance courtes, formulées comme si l'utilisateur les posait",
+					"minItems":    2,
+					"maxItems":    3,
+				},
+			}, "questions")),
 	}
 }
 
@@ -443,9 +542,25 @@ func (s *ChatService) executeTool(name string, input interface{}) (interface{}, 
 		}
 		return resp, nil
 
-	// add_tip — pas de logique backend, le frontend gère l'affichage via le tool_result
+	// add_tip — pas de fetch backend : le frontend affiche le tip depuis CE tool_result (page.tsx,
+	// case 'add_tip' lit data.text/data.icon). Il faut donc échoer l'input du LLM, PAS un stub —
+	// un {"ok": true} laissait tipData.text toujours undefined → le tip n'était jamais affiché.
 	case "add_tip":
-		return map[string]bool{"ok": true}, nil
+		text, _ := inputMap["text"].(string)
+		icon, _ := inputMap["icon"].(string)
+		return map[string]string{"text": text, "icon": icon}, nil
+
+	// suggest_followups — même principe que add_tip : pas de fetch, on échoe les questions choisies
+	// par le LLM pour que le frontend les affiche (LeftPanel, en remplacement du pool de hints statiques).
+	case "suggest_followups":
+		raw, _ := inputMap["questions"].([]interface{})
+		questions := make([]string, 0, len(raw))
+		for _, q := range raw {
+			if s, ok := q.(string); ok && s != "" {
+				questions = append(questions, s)
+			}
+		}
+		return map[string][]string{"questions": questions}, nil
 
 	default:
 		return nil, fmt.Errorf("outil inconnu: %s", name)

@@ -34,23 +34,23 @@ func NewRepoScanner(redis *redis.Client, reposDir string) *RepoScanner {
 
 // ScanResult représente le résultat du scan
 type ScanResult struct {
-	LastUpdated string          `json:"last_updated"`
+	LastUpdated string           `json:"last_updated"`
 	Projects    []ScannedProject `json:"projects"`
 	Stats       ScanStats        `json:"stats"`
 }
 
 // ScannedProject représente un projet scanné
 type ScannedProject struct {
-	Name          string         `json:"name"`
-	Description   string         `json:"description"`
-	RepoURL       string         `json:"repo_url"`
-	Category      string         `json:"category"`
-	Showcase      bool           `json:"showcase"`
-	Languages     []string       `json:"languages"`
-	Commits7d     int            `json:"commits_7d"`
-	Commits30d    int            `json:"commits_30d"`
+	Name          string          `json:"name"`
+	Description   string          `json:"description"`
+	RepoURL       string          `json:"repo_url"`
+	Category      string          `json:"category"`
+	Showcase      bool            `json:"showcase"`
+	Languages     []string        `json:"languages"`
+	Commits7d     int             `json:"commits_7d"`
+	Commits30d    int             `json:"commits_30d"`
 	RecentCommits []ScannedCommit `json:"recent_commits"`
-	LastActivity  string         `json:"last_activity"`
+	LastActivity  string          `json:"last_activity"`
 }
 
 // ScannedCommit représente un commit scanné
@@ -70,17 +70,17 @@ type ScanStats struct {
 
 // showcaseProjects définit les projets à mettre en avant
 var showcaseProjects = map[string]bool{
-	"maicivy":                 true,
-	"ProjectTracker":          true,
-	"videotomp3transcriptor":  true,
+	"maicivy":                true,
+	"ProjectTracker":         true,
+	"videotomp3transcriptor": true,
 }
 
 // projectDescriptions contient les descriptions des projets
 var projectDescriptions = map[string]string{
-	"maicivy":                 "Portfolio/CV automatisé avec sync GitHub",
-	"ProjectTracker":          "Outil de suivi de projets multi-repos",
-	"videotomp3transcriptor":  "Convertisseur vidéo vers MP3 avec transcription",
-	"confluent":               "Projet Confluent",
+	"maicivy":                "Portfolio/CV automatisé avec sync GitHub",
+	"ProjectTracker":         "Outil de suivi de projets multi-repos",
+	"videotomp3transcriptor": "Convertisseur vidéo vers MP3 avec transcription",
+	"confluent":              "Projet Confluent",
 }
 
 // Scan effectue le scan de tous les repos
@@ -270,21 +270,21 @@ func (s *RepoScanner) getRecentCommits(repoPath string, limit int) ([]ScannedCom
 
 func (s *RepoScanner) detectLanguages(repoPath string) ([]string, error) {
 	langMap := map[string]string{
-		".go":    "Go",
-		".ts":    "TypeScript",
-		".tsx":   "TypeScript",
-		".js":    "JavaScript",
-		".jsx":   "JavaScript",
-		".py":    "Python",
-		".rs":    "Rust",
-		".cpp":   "C++",
-		".c":     "C",
-		".java":  "Java",
-		".rb":    "Ruby",
-		".php":   "PHP",
-		".swift": "Swift",
-		".kt":    "Kotlin",
-		".vue":   "Vue",
+		".go":     "Go",
+		".ts":     "TypeScript",
+		".tsx":    "TypeScript",
+		".js":     "JavaScript",
+		".jsx":    "JavaScript",
+		".py":     "Python",
+		".rs":     "Rust",
+		".cpp":    "C++",
+		".c":      "C",
+		".java":   "Java",
+		".rb":     "Ruby",
+		".php":    "PHP",
+		".swift":  "Swift",
+		".kt":     "Kotlin",
+		".vue":    "Vue",
 		".svelte": "Svelte",
 	}
 

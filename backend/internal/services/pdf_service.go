@@ -19,7 +19,7 @@ import (
 // PDFService gère la génération de PDFs
 type PDFService struct {
 	templates    *template.Template
-	hasTemplates bool       // true si des templates ont été chargés depuis le disque
+	hasTemplates bool         // true si des templates ont été chargés depuis le disque
 	profileImg   template.URL // data URI base64 de la photo de profil (vide si absent)
 }
 
@@ -274,34 +274,34 @@ func (s *PDFService) renderCVHTML(cv *AdaptiveCVResponse, lang, stealthText stri
 func getLabels(lang string) map[string]string {
 	labels := map[string]map[string]string{
 		"fr": {
-			"cv":                   "CV",
-			"experiences":          "Expériences Professionnelles",
-			"skills":               "Compétences",
-			"projects":             "Projets",
-			"present":              "Présent",
-			"years":                "ans",
-			"yr":                   "a",
-			"generated_on":         "Généré le",
-			"theme":                "Thème",
-			"other_experiences":    "Autres expériences",
-			"other_projects":       "Autres projets",
-			"languages":            "Langues",
-			"soft_skills":          "Soft Skills",
+			"cv":                "CV",
+			"experiences":       "Expériences Professionnelles",
+			"skills":            "Compétences",
+			"projects":          "Projets",
+			"present":           "Présent",
+			"years":             "ans",
+			"yr":                "a",
+			"generated_on":      "Généré le",
+			"theme":             "Thème",
+			"other_experiences": "Autres expériences",
+			"other_projects":    "Autres projets",
+			"languages":         "Langues",
+			"soft_skills":       "Soft Skills",
 		},
 		"en": {
-			"cv":                   "Resume",
-			"experiences":          "Professional Experience",
-			"skills":               "Skills",
-			"projects":             "Projects",
-			"present":              "Present",
-			"years":                "years",
-			"yr":                   "y",
-			"generated_on":         "Generated on",
-			"theme":                "Theme",
-			"other_experiences":    "Other experience",
-			"other_projects":       "Other projects",
-			"languages":            "Languages",
-			"soft_skills":          "Soft Skills",
+			"cv":                "Resume",
+			"experiences":       "Professional Experience",
+			"skills":            "Skills",
+			"projects":          "Projects",
+			"present":           "Present",
+			"years":             "years",
+			"yr":                "y",
+			"generated_on":      "Generated on",
+			"theme":             "Theme",
+			"other_experiences": "Other experience",
+			"other_projects":    "Other projects",
+			"languages":         "Languages",
+			"soft_skills":       "Soft Skills",
 		},
 	}
 

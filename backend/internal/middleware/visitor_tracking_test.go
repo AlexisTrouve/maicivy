@@ -1,4 +1,5 @@
 //go:build ignore
+
 // Ce fichier teste une ancienne API (NewVisitorTracking / MockRedisClient)
 // qui n'existe plus. Désactivé jusqu'à réécriture complète.
 

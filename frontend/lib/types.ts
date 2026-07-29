@@ -509,6 +509,9 @@ export interface GitStatsResponse {
   totalDeleted: number;
   activeRepos: number;
   period: string;
+  // Commits GitLab seuls par jour (sous-ensemble de `daily`). Optionnel : absent si GitLab non
+  // configuré côté backend. Sert à superposer une 2e courbe « GitLab » sur le chart commits/jour.
+  gitlabDaily?: GitDayStat[];
 }
 
 // LOC par langage (backend GET /api/v1/cv/loc) — alimente la fiche détail d'un skill.
@@ -534,4 +537,56 @@ export interface LangStatsResponse {
   totalLoc: number;
   totalBytes: number;
   period: string;
+  // repos : clé = nom du repo Gitea → LOC approximée. Consommé par GitStatsPanel pour afficher la
+  // taille de chaque projet dans la liste "Repos actifs" (merge par nom avec GitStatsResponse.repos).
+  repos: Record<string, number>;
+}
+
+// Mailbox admin (ingestion IMAP + dispatch auto — cf. backend internal/api/mailbox.go)
+
+// Résumé liste (GET /admin/mailbox) — JAMAIS de body_text (potentiellement volumineux, réservé au détail).
+export interface MailboxEmailSummary {
+  id: string;
+  from_address: string;
+  from_domain: string;
+  platform: string;
+  subject: string;
+  received_at: string;
+  read: boolean;
+  forwarded_at?: string | null;
+  forward_error?: string;
+  // Filtre de pertinence LLM (cf. backend services.MailboxRelevanceEvaluator). is_opportunity=false
+  // → relevance_score absent (jamais 0, qui se lirait comme "jugé et mauvais") : rien n'a été évalué,
+  // ce n'est pas une proposition de mission (newsletter/digest/notif de compte).
+  is_opportunity: boolean;
+  relevance_score?: number;
+  relevance_reason?: string;
+  // relevance_link : URL principale (voir/postuler à la mission) extraite par l'agent. Court, inclus
+  // dans le résumé liste (contrairement à relevance_cot, potentiellement long, réservé au détail).
+  relevance_link?: string;
+  forward_blocked: boolean;
+}
+
+// Détail complet (GET /admin/mailbox/:id) — inclut body_text ET relevance_cot (le raisonnement
+// pas-à-pas de l'agent — en anglais, contenu technique interne, pas de l'UI i18n).
+export interface MailboxEmail extends MailboxEmailSummary {
+  message_id: string;
+  imap_uid: number;
+  body_text: string;
+  relevance_cot?: string;
+}
+
+export interface MailboxListResponse {
+  emails: MailboxEmailSummary[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+// Traduction à la demande d'un mail capté (GET/POST /admin/mailbox/:id/translation?lang=xx) — cache
+// permanent côté backend, un seul appel LLM par (mail, langue) pour toujours.
+export interface MailboxTranslation {
+  subject: string;
+  body: string;
 }

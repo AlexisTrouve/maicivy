@@ -2,19 +2,28 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Tip } from './TipBar';
 import { pickHints, Hint } from './hints';
+
+// Un tip contextuel affiché dans la zone haute du panel gauche (persistant jusqu'à fermeture ×).
+export interface Tip {
+  id: string;
+  text: string;
+  icon?: string;
+}
 
 interface LeftPanelProps {
   tips: Tip[];
   onTipClose: (id: string) => void;
   onHintClick: (message: string) => void;
+  // Questions de relance contextuelles (tool suggest_followups, LLM) — priorité intermédiaire entre
+  // les tips et le pool statique de hints (cf. priorité ci-dessous).
+  followups: string[];
 }
 
 // LeftPanel — panel gauche (20%) avec tips Claude et hints cliquables.
-// Priorité : si des tips sont présents, on les affiche (max 3 FIFO).
-// Sinon : hints aléatoires en boutons pill + bouton refresh.
-export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
+// Priorité d'affichage : tips (max 3 FIFO) > relances contextuelles (LLM, suggest_followups) >
+// hints statiques aléatoires (pool fixe, fallback quand la conversation n'a encore rien suggéré).
+export function LeftPanel({ tips, onTipClose, onHintClick, followups }: LeftPanelProps) {
   const t = useTranslations('chat');
   // Pool de hints localisé (messages/*.json → chat.hints), lu via t.raw (renvoie le tableau brut).
   const allHints = t.raw('hints') as Hint[];
@@ -37,6 +46,7 @@ export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
   }, [allHints]);
 
   const hasTips = tips.length > 0;
+  const hasFollowups = !hasTips && followups.length > 0;
 
   return (
     <div className="flex flex-col h-full overflow-hidden border-r bg-muted/10">
@@ -64,8 +74,29 @@ export function LeftPanel({ tips, onTipClose, onHintClick }: LeftPanelProps) {
             </div>
           ))}
         </div>
+      ) : hasFollowups ? (
+        /* Zone relances — questions contextuelles générées par le LLM (suggest_followups) */
+        <div className="flex flex-col h-full p-3 gap-3">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t('followupsHeader')}
+          </span>
+          <div className="flex flex-col gap-1.5">
+            {followups.map((question, i) => (
+              <button
+                key={i}
+                onClick={() => onHintClick(question)}
+                className="text-left px-3 py-2 rounded-lg text-xs text-muted-foreground
+                           bg-background border border-border/50
+                           hover:border-primary/40 hover:text-foreground hover:bg-primary/5
+                           transition-colors cursor-pointer leading-snug"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
       ) : (
-        /* Zone hints — boutons cliquables quand pas de tips */
+        /* Zone hints — boutons cliquables quand pas de tips ni de relances contextuelles */
         <div className="flex flex-col h-full p-3 gap-3">
           {/* Header hints */}
           <div className="flex items-center justify-between">

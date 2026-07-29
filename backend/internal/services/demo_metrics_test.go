@@ -48,7 +48,7 @@ func TestCommitSeed_Potentials(t *testing.T) {
 	assert.Greater(t, active.lettersPotential(), quiet.lettersPotential())
 	assert.Greater(t, active.visitorsPotential(), quiet.visitorsPotential())
 	assert.Greater(t, active.onlinePotential(), quiet.onlinePotential())
-	assert.LessOrEqual(t, active.onlinePotential(), 11.0)               // borné
+	assert.LessOrEqual(t, active.onlinePotential(), 11.0)                    // borné
 	assert.LessOrEqual(t, active.visitorsPotential(), demoFloorVisitors+291) // borné
 }
 

@@ -29,6 +29,13 @@ type PortfolioEntry struct {
 	SkillsTags  []string
 	Status      string
 	Tags        []string
+	// GithubURL/DemoURL : mêmes règles que le CV (cf. content_provider.go mapProjectLinks/isGithubURL)
+	// — réutilisées, pas réimplémentées. GithubURL n'est renseigné QUE si le lien repo pointe vers
+	// github.com (les Gitea privés StillHammer sont TOUS privés → lien mort/mur de login masqué).
+	// Alimente le lien cliquable de ProjectFiche.tsx (avant ce champ : aucun lien, incohérent avec
+	// BlogFiche qui en a un depuis le début).
+	GithubURL string
+	DemoURL   string
 }
 
 // ExperienceData contient la bio et les expériences professionnelles
@@ -332,6 +339,17 @@ func mapProject(p *MPFProject) PortfolioEntry {
 		stats = append(stats, StatItem{Label: "Modules", Value: fmt.Sprintf("%d", p.Stats.Modules)})
 	}
 
+	// GithubURL (filtré github.com uniquement) / DemoURL — mêmes helpers que le CV (content_provider.go).
+	var githubURL, demoURL string
+	for k, v := range p.Links {
+		if githubURL == "" && isRepoLinkKey(k) && isGithubURL(v) {
+			githubURL = ensureScheme(v)
+		}
+		if demoURL == "" && isDemoLinkKey(k) {
+			demoURL = ensureScheme(v)
+		}
+	}
+
 	return PortfolioEntry{
 		Name:       p.ID,
 		Title:      p.Name,
@@ -343,6 +361,8 @@ func mapProject(p *MPFProject) PortfolioEntry {
 		SkillsTags: p.Tags,
 		Status:     p.Status,
 		Tags:       p.Tags,
+		GithubURL:  githubURL,
+		DemoURL:    demoURL,
 	}
 }
 

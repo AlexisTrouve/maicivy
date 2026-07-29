@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/gosimple/slug"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
-	"github.com/alecthomas/chroma/v2/styles"
 	"gorm.io/gorm"
 
 	"maicivy/internal/models"

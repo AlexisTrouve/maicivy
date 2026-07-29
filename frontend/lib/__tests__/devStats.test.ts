@@ -4,6 +4,7 @@ import {
   recentGenre,
   momentum,
   hotRepos,
+  computeStreaks,
   buildDevPortrait,
 } from '../devStats';
 import { GitStatsResponse, LangStatsResponse } from '../types';
@@ -91,6 +92,37 @@ describe('devStats', () => {
     const hot = hotRepos(git.repos, 2);
     // dartproj (20 commits/30j) passe devant goproj (8) malgré un updatedAt plus ancien → tri par commits30d.
     expect(hot.map((r) => r.name)).toEqual(['dartproj', 'goproj']);
+  });
+
+  it('computeStreaks : longest ignore les trous, current = 0 si le dernier jour actif date de >1j', () => {
+    const days = [
+      '2026-06-01', '2026-06-02', '2026-06-03', // run de 3 (06-01..06-03)
+      '2026-06-10', '2026-06-11',                // run de 2 (06-10..06-11)
+    ];
+    // "Aujourd'hui" = 06-20 → dernier jour actif (06-11) vieux de 9 jours → streak en cours = 0.
+    const s = computeStreaks(days, '2026-06-20');
+    expect(s.longest).toBe(3);
+    expect(s.current).toBe(0);
+  });
+
+  it('computeStreaks : current compte la série se terminant hier ou aujourd’hui', () => {
+    const days = ['2026-06-18', '2026-06-19', '2026-06-20'];
+    // "Aujourd'hui" = 06-21 → dernier jour actif = hier (06-20) → streak toujours en cours, 3 jours.
+    expect(computeStreaks(days, '2026-06-21').current).toBe(3);
+    // "Aujourd'hui" = 06-20 (jour même, déjà commité) → streak en cours aussi, 3 jours.
+    expect(computeStreaks(days, '2026-06-20').current).toBe(3);
+    // "Aujourd'hui" = 06-22 → dernier jour actif vieux de 2 jours → streak cassée.
+    expect(computeStreaks(days, '2026-06-22').current).toBe(0);
+  });
+
+  it('computeStreaks : liste vide → 0/0 sans crasher', () => {
+    expect(computeStreaks([], '2026-06-20')).toEqual({ longest: 0, current: 0 });
+  });
+
+  it('computeStreaks : déduplique les jours en double (repo.commitDays comme daily filtrée)', () => {
+    const s = computeStreaks(['2026-06-20', '2026-06-20', '2026-06-19'], '2026-06-20');
+    expect(s.longest).toBe(2);
+    expect(s.current).toBe(2);
   });
 
   it('buildDevPortrait agrège tout sans crasher', () => {

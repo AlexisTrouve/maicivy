@@ -1,8 +1,69 @@
 package services
 
-import "testing"
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 // Verrouille le filtre auteur (un repo GitLab partagé : ne compter QUE les commits d'Alexis) + le merge.
+
+// Régression : fetchDaily doit (1) compter le travail des branches de feature — passe all=true — sinon
+// « 0 commit » pour du non-mergé ; (2) garder les lignes add/del de la branche par défaut — passe
+// with_stats ; (3) dédupliquer par SHA entre les deux passes ; (4) filtrer teammates + commits massifs.
+// Le mock distingue les passes par le paramètre `all`.
+func TestGitLabFetchDaily_TwoPasses(t *testing.T) {
+	var sawAll, sawStats bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		if q.Get("with_stats") == "true" {
+			sawStats = true
+		}
+		if q.Get("page") != "1" { // pas de page 2 → fin de pagination
+			_, _ = w.Write([]byte(`[]`))
+			return
+		}
+		if q.Get("all") == "true" {
+			// Passe 2 (toutes branches, SANS stats) : "aaa" (déjà vu en passe 1 → dédup) + "ddd"
+			// (commit de feature d'Alexis, non mergé, sans lignes).
+			sawAll = true
+			_, _ = w.Write([]byte(`[
+			  {"id":"aaa","author_name":"Alexis Trouvé","committed_date":"2026-07-20T11:00:00Z","stats":{"additions":0,"deletions":0}},
+			  {"id":"ddd","author_name":"Alexis Trouvé","committed_date":"2026-07-20T14:00:00Z","stats":{"additions":0,"deletions":0}}
+			]`))
+			return
+		}
+		// Passe 1 (branche par défaut, AVEC stats) : "aaa" (Alexis, lignes), "bbb" (teammate), "ccc" (massif).
+		_, _ = w.Write([]byte(`[
+		  {"id":"aaa","author_name":"Alexis Trouvé","committed_date":"2026-07-20T10:00:00Z","stats":{"additions":10,"deletions":2}},
+		  {"id":"bbb","author_name":"Yulin27","committed_date":"2026-07-20T12:00:00Z","stats":{"additions":5,"deletions":0}},
+		  {"id":"ccc","author_name":"Alexis Trouvé","committed_date":"2026-07-20T13:00:00Z","stats":{"additions":60000,"deletions":0}}
+		]`))
+	}))
+	defer srv.Close()
+
+	s := NewGitLabStatsService(nil, srv.URL, "tok", "123", "alexis")
+	daily, err := s.fetchDaily(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sawStats {
+		t.Error("passe 1 doit demander with_stats=true (lignes de la branche par défaut)")
+	}
+	if !sawAll {
+		t.Error("passe 2 doit demander all=true (commits des branches de feature)")
+	}
+	// aaa (passe 1, compté 1× avec lignes) + ddd (passe 2, feature, sans lignes) = 2 commits ;
+	// bbb (teammate) et ccc (massif) exclus ; aaa NON recompté en passe 2 (dédup SHA).
+	if len(daily) != 1 || daily[0].Date != "2026-07-20" || daily[0].Commits != 2 {
+		t.Fatalf("daily = %+v, want 2 commits le 2026-07-20 (aaa+ddd, dedup+filtres)", daily)
+	}
+	// Lignes = celles d'aaa uniquement (ddd n'a pas de stats) → +10/-2.
+	if daily[0].Additions != 10 || daily[0].Deletions != 2 {
+		t.Errorf("stats = +%d/-%d, want +10/-2 (lignes de la branche défaut seule)", daily[0].Additions, daily[0].Deletions)
+	}
+}
 
 func TestGitLabMatchesAuthor(t *testing.T) {
 	s := NewGitLabStatsService(nil, "", "tok", "76946006", "alexis, stillhammer")
@@ -10,7 +71,7 @@ func TestGitLabMatchesAuthor(t *testing.T) {
 		t.Fatal("service nil malgré une config valide")
 	}
 	cases := map[string]bool{
-		"Alexis Trouvé": true,  // contient "alexis"
+		"Alexis Trouvé": true, // contient "alexis"
 		"alexis":        true,
 		"StillHammer":   true,  // contient "stillhammer"
 		"Yulin27":       false, // teammate → exclu

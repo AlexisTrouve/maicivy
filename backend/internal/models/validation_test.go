@@ -249,7 +249,7 @@ func (suite *ValidationTestSuite) TestVisitor_ValidCreation() {
 
 	assert.NoError(suite.T(), result.Error)
 	assert.NotEqual(suite.T(), uuid.Nil, visitor.ID)
-	assert.True(suite.T(), visitor.HasAccessToAI()) // Recruiter = accès immédiat même avec 1 visite
+	assert.True(suite.T(), visitor.HasAccessToAI())   // Recruiter = accès immédiat même avec 1 visite
 	assert.True(suite.T(), visitor.IsTargetProfile()) // Recruiter = cible
 }
 
@@ -277,10 +277,10 @@ func (suite *ValidationTestSuite) TestVisitor_UniqueSessionID() {
 
 func (suite *ValidationTestSuite) TestVisitor_HasAccessToAI() {
 	tests := []struct {
-		name        string
-		visitCount  int
-		profile     ProfileType
-		expectedAI  bool
+		name       string
+		visitCount int
+		profile    ProfileType
+		expectedAI bool
 	}{
 		{"1 visit unknown", 1, ProfileTypeUnknown, false},
 		{"2 visits unknown", 2, ProfileTypeUnknown, false},

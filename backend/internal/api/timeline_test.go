@@ -82,11 +82,11 @@ func seedTimelineData(t *testing.T, db *gorm.DB) {
 			InProgress:     true,
 		},
 		{
-			Title:          "Old Project",
-			Description:    "Archived project",
-			Technologies:   pq.StringArray{"Python", "Django"},
-			Category:       "backend",
-			InProgress:     false,
+			Title:        "Old Project",
+			Description:  "Archived project",
+			Technologies: pq.StringArray{"Python", "Django"},
+			Category:     "backend",
+			InProgress:   false,
 		},
 	}
 

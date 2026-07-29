@@ -17,9 +17,9 @@ import (
 
 // ProfileEnrichmentMiddleware enrichit automatiquement les visiteurs avec détection de profil
 type ProfileEnrichmentMiddleware struct {
-	db                *gorm.DB
-	redis             *goredis.Client
-	profileDetector   *services.ProfileDetectorService
+	db              *gorm.DB
+	redis           *goredis.Client
+	profileDetector *services.ProfileDetectorService
 }
 
 // NewProfileEnrichmentMiddleware crée une nouvelle instance du middleware

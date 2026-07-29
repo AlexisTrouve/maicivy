@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
 	"maicivy/internal/models"
 	"maicivy/internal/services"
@@ -20,15 +21,18 @@ type BlogHandler struct {
 	mpfClient     *services.MaiProFilesClient    // CRUD blog → maiProFiles
 	blogGenerator *services.BlogGeneratorService // Génération IA markdown
 	redis         *redis.Client                  // compteur de lectures (blog:reads:total) — best-effort
+	db            *gorm.DB                       // abonnés email (blog_subscribers) — Subscribe/GetTopics
 	ownerAPIKey   string
 }
 
-// NewBlogHandler crée une nouvelle instance. rdb sert au compteur de lectures (peut être nil).
-func NewBlogHandler(mpfClient *services.MaiProFilesClient, blogGenerator *services.BlogGeneratorService, rdb *redis.Client, ownerAPIKey string) *BlogHandler {
+// NewBlogHandler crée une nouvelle instance. rdb sert au compteur de lectures (peut être nil) ;
+// db sert à la capture des abonnés email (subscribe).
+func NewBlogHandler(mpfClient *services.MaiProFilesClient, blogGenerator *services.BlogGeneratorService, rdb *redis.Client, db *gorm.DB, ownerAPIKey string) *BlogHandler {
 	return &BlogHandler{
 		mpfClient:     mpfClient,
 		blogGenerator: blogGenerator,
 		redis:         rdb,
+		db:            db,
 		ownerAPIKey:   ownerAPIKey,
 	}
 }
@@ -52,6 +56,12 @@ func (h *BlogHandler) RegisterRoutes(router fiber.Router) {
 	blog.Get("/posts", h.ListPosts)
 	blog.Get("/posts/:slug", h.GetPost)
 	blog.Get("/feed.xml", h.GetRSSFeed)
+	// Follow par email — public : liste des topics suivables + inscription (cf. blog_subscribe.go)
+	blog.Get("/topics", h.GetTopics)
+	blog.Post("/subscribe", h.Subscribe)
+	// Désinscription — public, GET (lien email) + POST (List-Unsubscribe one-click)
+	blog.Get("/unsubscribe", h.Unsubscribe)
+	blog.Post("/unsubscribe", h.Unsubscribe)
 
 	// Admin routes — protégées par X-Owner-Key
 	admin := blog.Group("", h.ownerOnly)
@@ -153,6 +163,21 @@ func (h *BlogHandler) CreatePost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "create_failed",
 			"message": err.Error(),
+		})
+	}
+
+	// Newsletter : un article PUBLIÉ est envoyé aux abonnés concernés (async + anti-doublon par slug,
+	// cf. newsletter.go) → la création n'est jamais bloquée/échouée par l'envoi.
+	// POURQUOI `post` et pas `created` : maiProFiles ne ré-écho pas toujours le slug dans la réponse
+	// (incident connu, cf. blog.py) ; le client a rempli post.Slug = toSlug(title) sur le pointeur
+	// d'entrée → c'est la source fiable du slug.
+	if req.Publish {
+		h.sendNewsletterAsync(newsletterPost{
+			Title:       post.Title,
+			Summary:     post.Summary,
+			Slug:        post.Slug,
+			ProjectName: post.ProjectName,
+			Locale:      "fr",
 		})
 	}
 

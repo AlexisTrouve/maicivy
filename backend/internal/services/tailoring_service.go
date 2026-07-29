@@ -12,8 +12,8 @@ type TailorRequest struct {
 	JobDescription string   `json:"job_description"`
 	CompanyName    string   `json:"company_name"`
 	MatchedSkills  []string `json:"matched_skills"` // depuis SkillMatcher d'indeed-outreach
-	Theme          string   `json:"theme"`           // optionnel : auto-pick si vide
-	Lang           string   `json:"lang"`            // "fr" ou "en", défaut "fr"
+	Theme          string   `json:"theme"`          // optionnel : auto-pick si vide
+	Lang           string   `json:"lang"`           // "fr" ou "en", défaut "fr"
 }
 
 // themeSkillMap : mapping skills → thème CV le plus adapté
@@ -30,7 +30,7 @@ var themeSkillMap = map[string][]string{
 // Combine scoring adaptatif, réécriture LLM des expériences et couche stealth ATS.
 type TailoringService struct {
 	cvService  CVServiceInterface
-	aiService  *AIService  // nil si AI non configurée — dégradé graceful
+	aiService  *AIService // nil si AI non configurée — dégradé graceful
 	pdfService *PDFService
 }
 

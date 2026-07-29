@@ -36,6 +36,11 @@ type LangStatsResponse struct {
 	TotalLOC   int                 `json:"totalLoc"`
 	TotalBytes int                 `json:"totalBytes"`
 	Period     string              `json:"period"`
+	// Repos : clé = nom du repo Gitea → LOC approximée (octets/avgBytesPerLine, tous langages
+	// confondus). Ventilation du MÊME fetch que Languages (repoLanguages est déjà appelé par repo,
+	// juste sommé ailleurs) — pas d'appel Gitea supplémentaire. Consommé par le frontend gitstats
+	// pour afficher la taille de chaque projet dans la liste "Repos actifs".
+	Repos map[string]int `json:"repos"`
 }
 
 // langStatsCache — structure persistée en Redis (données + timestamp du dernier fetch).
@@ -45,8 +50,10 @@ type langStatsCache struct {
 }
 
 const (
-	// langCacheKey — clé Redis dédiée (séparée de gitstats:v6). v1 = premier schéma.
-	langCacheKey = "gitlang:v1"
+	// langCacheKey — clé Redis dédiée (séparée de gitstats:v7). v2 = ajout du champ Repos (LOC par
+	// repo, cf. LangStatsResponse.Repos) → bump pour forcer un refetch propre au déploiement au lieu
+	// d'attendre langRefreshInterval (6h) pour peupler le nouveau champ.
+	langCacheKey = "gitlang:v2"
 
 	// langRefreshInterval — intervalle mini entre deux recalculs. Long EXPRÈS : la répartition des
 	// langages d'un portfolio bouge en jours/semaines, pas en minutes. Garantit qu'on ne re-pull
@@ -126,7 +133,8 @@ func (s *GiteaStatsService) fetchLanguages(ctx context.Context) (*LangStatsRespo
 	log.Info().Int("repos", len(repos)).Msg("gitlang: fetching languages per repo")
 
 	// Agrégation concurrente protégée par mutex (max 5 goroutines, comme gitstats).
-	totals := make(map[string]int) // nom de langage Gitea brut → octets
+	totals := make(map[string]int)    // nom de langage Gitea brut → octets (tous repos confondus)
+	repoBytes := make(map[string]int) // nom de repo → octets (tous langages confondus, MÊME fetch)
 	var mu sync.Mutex
 	sem := make(chan struct{}, 5)
 	var wg sync.WaitGroup
@@ -149,13 +157,14 @@ func (s *GiteaStatsService) fetchLanguages(ctx context.Context) (*LangStatsRespo
 			mu.Lock()
 			for lang, bytes := range langs {
 				totals[lang] += bytes
+				repoBytes[name] += bytes
 			}
 			mu.Unlock()
 		}(repo.Name)
 	}
 	wg.Wait()
 
-	return buildLangStats(totals), nil
+	return buildLangStats(totals, repoBytes), nil
 }
 
 // repoLanguages interroge /repos/{owner}/{repo}/languages → map langage→octets.
@@ -174,8 +183,9 @@ func (s *GiteaStatsService) repoLanguages(ctx context.Context, repoName string) 
 // buildLangStats convertit la map octets brute en réponse finale. PUR (testable sans réseau).
 // COMMENT : 1. normalise + fusionne les noms qui collapse vers la même clé (ex: "Go" et "go") en
 // sommant leurs octets ; 2. dérive LOC = octets / avgBytesPerLine une fois la fusion faite (et non
-// par nom, pour ne pas accumuler les arrondis) ; 3. calcule les totaux.
-func buildLangStats(byBytes map[string]int) *LangStatsResponse {
+// par nom, pour ne pas accumuler les arrondis) ; 3. calcule les totaux ; 4. convertit repoBytes en
+// LOC par repo avec le MÊME diviseur (repoBytes peut être nil — cas des tests existants/legacy).
+func buildLangStats(byBytes map[string]int, repoBytes map[string]int) *LangStatsResponse {
 	// 1. Fusion par clé normalisée
 	merged := make(map[string]int, len(byBytes))
 	for name, b := range byBytes {
@@ -192,11 +202,22 @@ func buildLangStats(byBytes map[string]int) *LangStatsResponse {
 		totalLOC += loc
 	}
 
+	// 4. LOC par repo — un repo à 0 octet (vide/inconnu) n'a pas d'entrée : pas de LOC affichable,
+	// pas un zéro qu'on afficherait à tort comme "0 ligne".
+	repos := make(map[string]int, len(repoBytes))
+	for name, b := range repoBytes {
+		if b <= 0 {
+			continue
+		}
+		repos[name] = b / avgBytesPerLine
+	}
+
 	return &LangStatsResponse{
 		Languages:  langs,
 		TotalLOC:   totalLOC,
 		TotalBytes: totalBytes,
 		Period:     "all-time",
+		Repos:      repos,
 	}
 }
 

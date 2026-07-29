@@ -17,10 +17,10 @@ import (
 
 // ActivityFeedService gère la récupération et le stockage du feed d'activité
 type ActivityFeedService struct {
-	db       *gorm.DB
-	redis    *redis.Client
-	feedURL  string
-	client   *http.Client
+	db      *gorm.DB
+	redis   *redis.Client
+	feedURL string
+	client  *http.Client
 }
 
 // NewActivityFeedService crée une nouvelle instance

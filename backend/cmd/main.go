@@ -219,6 +219,78 @@ func main() {
 
 	// 7b. Gitea Stats Service : créé plus haut (consommé par le content provider pour la vedette).
 
+	// Mailbox Service : ingestion IMAP de la boîte pro existante (où Malt notifie déjà) + dispatch
+	// auto vers une adresse tierce fixe. nil si MAILBOX_IMAP_USER/MAILBOX_IMAP_APP_PASSWORD/
+	// MAILBOX_FORWARD_TO absents (même convention que Gitea/GitLab stats) — le handler admin reste
+	// enregistré pour la consultation, seul le job de polling ne démarre pas (cf. plus bas).
+	mailboxConfig := config.LoadMailboxConfig()
+	var mailboxService *services.MailboxService
+	if mailboxConfig.Configured() {
+		mailboxFetcher, err := services.NewGmailImapFetcher(
+			mailboxConfig.ImapHost, mailboxConfig.ImapPort,
+			mailboxConfig.ImapUser, mailboxConfig.ImapAppPassword, mailboxConfig.ImapFolder,
+		)
+		if err != nil {
+			log.Warn().Err(err).Msg("Mailbox service not available — connexion IMAP échouée")
+		} else {
+			// Même relai exim VPS57 que la newsletter (NEWSLETTER_SMTP_HOST/PORT) — pas de nouvelle
+			// variable d'env dupliquée pour la même IP.
+			mailboxSMTPHost := os.Getenv("NEWSLETTER_SMTP_HOST")
+			if mailboxSMTPHost == "" {
+				mailboxSMTPHost = "100.108.169.92"
+			}
+			mailboxSMTPPort := os.Getenv("NEWSLETTER_SMTP_PORT")
+			if mailboxSMTPPort == "" {
+				mailboxSMTPPort = "25"
+			}
+			mailboxAllowlist := services.ParseMailboxAllowlist(mailboxConfig.AllowedDomains)
+
+			// Filtre de pertinence LLM (cf. services.mailbox_relevance.go) — juge si une opportunité
+			// Malt captée correspond au profil avant transfert auto. nil (mêmes credentials absents
+			// que le reste des features IA) → filtre désactivé, tout est transféré comme avant lui.
+			mailboxRelevanceService := services.NewMailboxRelevanceService(
+				cfg.AnthropicBaseURL, cfg.AnthropicAPIKey,
+				services.NewPortfolioService(), mailboxConfig.RelevanceThreshold,
+			)
+			// IMPORTANT : ne JAMAIS passer mailboxRelevanceService (typé *MailboxRelevanceService,
+			// potentiellement nil) directement à NewMailboxService — un pointeur nil affecté à un
+			// paramètre d'interface produit une interface NON-nil (classique piège Go), et
+			// `s.relevance == nil` dans MailboxService ne détecterait jamais ce cas → panic au premier
+			// appel. On ne construit l'interface que si le service concret est réellement non-nil.
+			var mailboxRelevance services.MailboxRelevanceEvaluator
+			if mailboxRelevanceService != nil {
+				mailboxRelevance = mailboxRelevanceService
+				log.Info().Int("threshold", mailboxConfig.RelevanceThreshold).Msg("Mailbox relevance filter initialized")
+			} else {
+				log.Warn().Msg("Mailbox relevance filter not available — Anthropic credentials not configured (tout sera transféré sans filtrage)")
+			}
+
+			mailboxService = services.NewMailboxService(
+				db, mailboxFetcher, mailboxAllowlist,
+				mailboxSMTPHost+":"+mailboxSMTPPort,
+				mailboxConfig.ForwardTo, mailboxConfig.ForwardFromEmail, mailboxConfig.ForwardFromName,
+				nil, // relay nil → services.SendViaRelay (le vrai relai)
+				mailboxRelevance,
+			)
+			log.Info().Msg("Mailbox service initialized")
+		}
+	} else {
+		log.Warn().Msg("Mailbox service not available — MAILBOX_IMAP_USER/MAILBOX_IMAP_APP_PASSWORD/MAILBOX_FORWARD_TO not configured")
+	}
+
+	// Traduction à la demande des mails captés (cf. services.mailbox_translation.go) — indépendante de
+	// mailboxConfig.Configured() : utile même sans IMAP actif tant que des mails existent déjà en DB
+	// (backfill). nil (mêmes credentials Anthropic absentes que le reste des features IA) → handler
+	// répond 503 sur /translation, jamais de panic (même piège nil-interface que mailboxRelevance ci-
+	// dessus).
+	mailboxTranslationService := services.NewMailboxTranslationService(cfg.AnthropicBaseURL, cfg.AnthropicAPIKey)
+	var mailboxTranslator services.MailboxTranslator
+	if mailboxTranslationService != nil {
+		mailboxTranslator = mailboxTranslationService
+	} else {
+		log.Warn().Msg("Mailbox translation not available — Anthropic credentials not configured")
+	}
+
 	// 8. Initialiser handlers
 	healthHandler := api.NewHealthHandler(db, redisClient)
 	cvHandler := api.NewCVHandler(cvService, tailoringService, cvGenerationService, redisClient)
@@ -232,7 +304,7 @@ func main() {
 
 	// blogHandler utilise mpfClient pour list/get/create/update/delete/publish
 	// et blogGeneratorService uniquement pour la génération IA (GeneratePost)
-	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, redisClient, aiConfig.OwnerAPIKey)
+	blogHandler := api.NewBlogHandler(mpfClient, blogGeneratorService, redisClient, db, aiConfig.OwnerAPIKey)
 	timelineHandler := api.NewTimelineHandler(db, contentProvider)
 	profileHandler := api.NewProfileHandler(db, redisClient, profileDetector)
 	gitStatsHandler := api.NewGitStatsHandler(giteaStatsService, gitlabStatsService)
@@ -326,6 +398,12 @@ func main() {
 	adminChatHandler := api.NewAdminChatHandler(db, cfg.SessionSecret)
 	adminChatHandler.RegisterRoutes(apiV1)
 
+	// Mailbox admin (consultation des mails captés + retry manuel de transfert) — handler TOUJOURS
+	// enregistré (consultation possible même si l'IMAP n'est pas configuré) ; mailboxService peut être
+	// nil (cf. plus haut), seul /forward renvoie alors 503.
+	mailboxHandler := api.NewMailboxHandler(db, cfg.SessionSecret, mailboxService, mailboxTranslator)
+	mailboxHandler.RegisterRoutes(apiV1)
+
 	// Routes Timeline (Phase 5 - IMPLEMENTED)
 	apiV1.Get("/timeline", timelineHandler.GetTimeline)
 	apiV1.Get("/timeline/categories", timelineHandler.GetCategories)
@@ -336,11 +414,27 @@ func main() {
 	apiV1.Get("/profile/current", profileHandler.GetCurrentProfile)
 
 	// Routes Chat portfolio (interface conversationnelle avec tool_use)
+	// Budget dédié (PAS aiRateLimitMW/CV-lettres) : un chat conversationnel a un usage très différent
+	// d'une génération one-shot — épuiser son quota CV ne doit plus jamais bloquer une conversation
+	// en cours (bug découvert : chat.go n'incrémentait aucun compteur mais héritait quand même des
+	// blocages CV/lettres via le namespace partagé "ratelimit:ai:..."). KeyPrefix "chat" isole
+	// complètement les compteurs ; le circuit-breaker coût GLOBAL (aiGlobalDailyMax), lui, reste
+	// partagé à dessein — cf. doc de AIRateLimitConfig.KeyPrefix.
+	chatRateLimitMW := middleware.AIRateLimit(middleware.AIRateLimitConfig{
+		Redis:          redisClient,
+		KeyPrefix:      "chat",
+		MaxPerDay:      20, // 20 messages/jour par session — budget dédié conversationnel
+		MaxPerDayPerIP: 15, // 15/jour par IP — filet anti-incognito, volontairement < MaxPerDay
+		GlobalDailyMax: aiGlobalDailyMax,
+		OwnerAPIKey:    aiConfig.OwnerAPIKey,
+		SessionSecret:  cfg.SessionSecret,
+	})
+
 	portfolioService := services.NewPortfolioService()
 	chatService := services.NewChatService(aiConfig, portfolioService, blogGeneratorService)
-	chatHandler := api.NewChatHandler(chatService, aiConfig.OwnerAPIKey)
+	chatHandler := api.NewChatHandler(chatService, redisClient, aiConfig.OwnerAPIKey)
 	chatGroup := apiV1.Group("/chat")
-	chatGroup.Post("/stream", aiRateLimitMW, chatHandler.StreamChat)
+	chatGroup.Post("/stream", chatRateLimitMW, chatHandler.StreamChat)
 
 	// Routes Visitor (Tracking & Access Gate)
 	apiV1.Get("/visitors/check", visitorHandler.CheckVisitorStatus)
@@ -386,6 +480,42 @@ func main() {
 		log.Warn().Msg("Letter generation worker not started - dependencies missing")
 	}
 
+	// Job 4: Mailbox poll (ingestion IMAP + retry transferts) — démarre SEULEMENT si le service a pu
+	// être construit (credentials présents ET connexion IMAP réussie, cf. plus haut).
+	var mailboxPollJob *jobs.MailboxPollJob
+	if mailboxService != nil {
+		mailboxPollJob = jobs.NewMailboxPollJob(mailboxService, time.Duration(mailboxConfig.PollIntervalSeconds)*time.Second)
+		go mailboxPollJob.Start(ctx)
+		log.Info().Msg("Mailbox poll job started")
+	}
+
+	// Job 5: rappel disponibilité Malt (2x/semaine par défaut) — indépendant de l'IMAP, juste un
+	// envoi SMTP périodique. Même relai exim VPS57 que mailbox/newsletter (pas de nouvelle variable
+	// d'env dupliquée pour la même IP).
+	maltReminderConfig := config.LoadMaltReminderConfig()
+	var maltReminderJob *jobs.MaltReminderJob
+	if maltReminderConfig.Configured() {
+		reminderSMTPHost := os.Getenv("NEWSLETTER_SMTP_HOST")
+		if reminderSMTPHost == "" {
+			reminderSMTPHost = "100.108.169.92"
+		}
+		reminderSMTPPort := os.Getenv("NEWSLETTER_SMTP_PORT")
+		if reminderSMTPPort == "" {
+			reminderSMTPPort = "25"
+		}
+		maltReminderService := services.NewMaltReminderService(
+			redisClient, reminderSMTPHost+":"+reminderSMTPPort,
+			maltReminderConfig.To, maltReminderConfig.FromEmail, maltReminderConfig.FromName,
+			maltReminderConfig.Days, maltReminderConfig.HourUTC,
+			nil, // relay nil → services.SendViaRelay (le vrai relai)
+		)
+		maltReminderJob = jobs.NewMaltReminderJob(maltReminderService)
+		go maltReminderJob.Start(ctx)
+		log.Info().Msg("Malt reminder job started")
+	} else {
+		log.Warn().Msg("Malt reminder not available — MALT_REMINDER_TO not configured")
+	}
+
 	// 11. Graceful shutdown
 	go func() {
 		addr := fmt.Sprintf("%s:%s", cfg.ServerHost, cfg.ServerPort)
@@ -410,6 +540,15 @@ func main() {
 	log.Info().Msg("Stopping background jobs...")
 	cancel()                 // Arrêter analytics cleanup job
 	githubAutoSyncJob.Stop() // Arrêter GitHub auto-sync job
+	if mailboxPollJob != nil {
+		mailboxPollJob.Stop()
+		if err := mailboxService.Close(); err != nil {
+			log.Warn().Err(err).Msg("mailbox: échec fermeture connexion IMAP")
+		}
+	}
+	if maltReminderJob != nil {
+		maltReminderJob.Stop()
+	}
 
 	// Arrêter le serveur HTTP
 	if err := app.ShutdownWithTimeout(30 * time.Second); err != nil {

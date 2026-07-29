@@ -7,11 +7,11 @@ import "testing"
 
 func TestEnsureScheme(t *testing.T) {
 	cases := map[string]string{
-		"git.etheryale.com/x":   "https://git.etheryale.com/x",
-		"github.com/a/b":        "https://github.com/a/b",
-		"https://github.com/a":  "https://github.com/a",
-		"http://demo.local":     "http://demo.local",
-		"":                      "",
+		"git.etheryale.com/x":  "https://git.etheryale.com/x",
+		"github.com/a/b":       "https://github.com/a/b",
+		"https://github.com/a": "https://github.com/a",
+		"http://demo.local":    "http://demo.local",
+		"":                     "",
 	}
 	for in, want := range cases {
 		if got := ensureScheme(in); got != want {

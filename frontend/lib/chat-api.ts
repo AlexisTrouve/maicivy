@@ -16,7 +16,29 @@ export interface ChatEvent {
   name?: string;        // pour tool_call / tool_result
   input?: unknown;      // pour tool_call
   data?: unknown;       // pour tool_result
-  message?: string;     // pour error
+  code?: string;        // pour type="error" — identifiant stable ("generic" | "context_too_long")
+}
+
+// ChatErrorCode : catégories d'erreur distinguées côté UI (chaque appelant de streamChat traduit
+// dans la langue du visiteur — jamais de texte en dur ici, cf. règle i18n du projet).
+// - 'network' : fetch a échoué avant même d'atteindre le serveur (coupure, DNS, CORS...).
+// - 'rate_limited' : 429 du middleware AIRateLimit (cooldown ou limite journalière — potentiellement
+//   déclenchée par une génération CV/lettre PRÉCÉDENTE de la même session, pas forcément par le chat).
+// - 'server_error' : réponse HTTP non-2xx autre que 429 (5xx, etc.).
+// - 'context_too_long' : erreur SSE mi-stream, conversation trop longue pour le modèle/proxy.
+// - 'generic' : toute autre erreur SSE mi-stream, ou corps de réponse absent.
+export type ChatErrorCode = 'network' | 'rate_limited' | 'server_error' | 'context_too_long' | 'generic';
+
+export interface ChatErrorDetail {
+  retryAfterSeconds?: number; // renseigné pour 'rate_limited' quand le serveur l'a fourni
+}
+
+// RateLimitInfo — quota du budget dédié chat (cf. chatRateLimitMW backend, 20/jour par défaut),
+// lu depuis les headers X-RateLimit-Limit/X-RateLimit-Remaining déjà renvoyés par le middleware
+// (jusque-là jamais exploités côté frontend — l'utilisateur découvrait le mur sans prévenir).
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
 }
 
 interface StreamChatCallbacks {
@@ -24,7 +46,29 @@ interface StreamChatCallbacks {
   onToolCall: (name: string, input: unknown) => void;
   onToolResult: (name: string, data: unknown) => void;
   onDone: () => void;
-  onError: (msg: string) => void;
+  onError: (code: ChatErrorCode, detail?: ChatErrorDetail) => void;
+  // Optionnel : pas toutes les réponses ne portent ces headers (ex: 429 cooldown/in-flight, qui ne
+  // remplissent pas X-RateLimit-* — seuls la limite journalière et le succès le font).
+  onRateLimitInfo?: (info: RateLimitInfo) => void;
+}
+
+// readRateLimitInfo extrait le quota des headers, si présents et cohérents. Headers.get() est
+// insensible à la casse (spec Fetch) — peu importe que le serveur envoie "X-Ratelimit-Limit" (Go
+// canonicalise ainsi) ou "X-RateLimit-Limit".
+function readRateLimitInfo(response: Response): RateLimitInfo | undefined {
+  const limit = Number(response.headers.get('X-RateLimit-Limit'));
+  const remaining = Number(response.headers.get('X-RateLimit-Remaining'));
+  if (!Number.isFinite(limit) || limit <= 0 || !Number.isFinite(remaining) || remaining < 0) {
+    return undefined;
+  }
+  return { limit, remaining };
+}
+
+// isAbortError — vrai si l'exception vient d'un AbortController.abort() (bouton "stop" utilisateur),
+// PAS d'une vraie coupure réseau. Sur abort volontaire on finalise (onDone) le texte déjà streamé
+// au lieu d'afficher un message d'erreur — l'utilisateur sait qu'il a arrêté, ce n'est pas une panne.
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError';
 }
 
 /**
@@ -49,17 +93,39 @@ export async function streamChat(
       signal,
     });
   } catch (err) {
-    callbacks.onError(err instanceof Error ? err.message : 'Network error');
+    if (isAbortError(err)) {
+      callbacks.onDone();
+      return;
+    }
+    callbacks.onError('network');
     return;
   }
 
   if (!response.ok) {
-    callbacks.onError(`HTTP ${response.status}: ${response.statusText}`);
+    if (response.status === 429) {
+      const rateLimitInfo = readRateLimitInfo(response);
+      if (rateLimitInfo) callbacks.onRateLimitInfo?.(rateLimitInfo);
+      // Corps JSON du middleware AIRateLimit : { retry_after: <secondes>, ... } — best-effort, un
+      // corps non-JSON/absent ne doit pas faire planter le parsing, juste omettre le détail.
+      let retryAfterSeconds: number | undefined;
+      try {
+        const body = await response.json();
+        if (typeof body?.retry_after === 'number') retryAfterSeconds = body.retry_after;
+      } catch {
+        /* corps non-JSON — pas de détail, le message générique de rate-limit suffit */
+      }
+      callbacks.onError('rate_limited', { retryAfterSeconds });
+    } else {
+      callbacks.onError('server_error');
+    }
     return;
   }
 
+  const rateLimitInfo = readRateLimitInfo(response);
+  if (rateLimitInfo) callbacks.onRateLimitInfo?.(rateLimitInfo);
+
   if (!response.body) {
-    callbacks.onError('No response body');
+    callbacks.onError('generic');
     return;
   }
 
@@ -106,11 +172,18 @@ export async function streamChat(
             callbacks.onDone();
             return;
           case 'error':
-            callbacks.onError(event.message ?? 'Unknown error');
+            callbacks.onError(event.code === 'context_too_long' ? 'context_too_long' : 'generic');
             return;
         }
       }
     }
+  } catch (err) {
+    if (isAbortError(err)) {
+      callbacks.onDone();
+    } else {
+      callbacks.onError('generic');
+    }
+    return;
   } finally {
     reader.releaseLock();
   }

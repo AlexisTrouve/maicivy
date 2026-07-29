@@ -62,6 +62,10 @@ func RunAutoMigrations(db *gorm.DB) error {
 		{&models.ActivityStats{}, "activity_stats"},
 		{&models.BlogPost{}, "blog_posts"},
 		{&models.ChatConversation{}, "chat_conversations"},
+		{&models.BlogSubscriber{}, "blog_subscribers"},
+		{&models.MailboxEmail{}, "mailbox_emails"},
+		{&models.MailboxCursor{}, "mailbox_cursors"},
+		{&models.MailboxEmailTranslation{}, "mailbox_email_translations"},
 	}
 
 	for _, m := range otherModels {

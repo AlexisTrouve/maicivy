@@ -159,9 +159,9 @@ func (s *GitHubSyncService) GetSyncStatus(ctx context.Context, username string) 
 	if err := s.db.Where("username = ?", username).First(&profile).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &SyncStatus{
-				Connected:  false,
-				LastSync:   0,
-				RepoCount:  0,
+				Connected: false,
+				LastSync:  0,
+				RepoCount: 0,
 			}, nil
 		}
 		return nil, fmt.Errorf("database error: %w", err)
@@ -172,10 +172,10 @@ func (s *GitHubSyncService) GetSyncStatus(ctx context.Context, username string) 
 	s.db.Model(&models.GitHubRepository{}).Where("username = ?", username).Count(&count)
 
 	return &SyncStatus{
-		Connected:  true,
-		Username:   profile.Username,
-		LastSync:   profile.SyncedAt,
-		RepoCount:  int(count),
+		Connected: true,
+		Username:  profile.Username,
+		LastSync:  profile.SyncedAt,
+		RepoCount: int(count),
 	}, nil
 }
 

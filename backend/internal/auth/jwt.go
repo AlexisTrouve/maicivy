@@ -251,7 +251,7 @@ func (m *JWTManager) IsRevoked(tokenString string) bool {
 func DefaultJWTManager(secretKey string) *JWTManager {
 	return NewJWTManager(
 		secretKey,
-		time.Hour,        // Access token: 1 hour
-		24*7*time.Hour,   // Refresh token: 7 days
+		time.Hour,      // Access token: 1 hour
+		24*7*time.Hour, // Refresh token: 7 days
 	)
 }

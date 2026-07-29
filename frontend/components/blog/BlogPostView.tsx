@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/types';
+import { FollowBlock } from './FollowBlock';
 
 interface BlogPostViewProps {
   post: BlogPost;
@@ -145,6 +146,12 @@ export function BlogPostView({ post, locale = 'fr' }: BlogPostViewProps) {
         ) : (
           <div className="whitespace-pre-wrap">{post.content}</div>
         )}
+      </div>
+
+      {/* Follow par email — placé juste après l'article : le lecteur qui vient de finir est
+          exactement celui qui veut un moyen de revenir (retour user réel). */}
+      <div className="mb-12">
+        <FollowBlock locale={locale} />
       </div>
 
       {/* Commits source */}

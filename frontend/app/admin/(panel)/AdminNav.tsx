@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/admin/letters', key: 'letters' },
   { href: '/admin/stats', key: 'stats' },
   { href: '/admin/chat', key: 'chat' },
+  { href: '/admin/mailbox', key: 'mailbox' },
 ];
 
 export default function AdminNav() {

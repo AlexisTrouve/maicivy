@@ -46,6 +46,9 @@ func (h *GitStatsHandler) GetGitStats(c *fiber.Ctx) error {
 	if h.gitlab != nil {
 		if gitlabDaily, glErr := h.gitlab.GetDaily(c.Context(), force); glErr == nil {
 			services.MergeGitLabDaily(stats, gitlabDaily)
+			// Exposer AUSSI la série GitLab isolée : le front la trace en 2e courbe (« GitLab » vs
+			// « Total »). Assigné après le merge, hors cache Redis → pas de pollution du blob gitstats.
+			stats.GitlabDaily = gitlabDaily
 		} else {
 			log.Warn().Err(glErr).Msg("gitstats: GitLab merge skipped (Gitea-only)")
 		}
