@@ -1,0 +1,1837 @@
+/*
+ * dossier-vivant.module.css — la scène du dossier vivant, portée de la maquette validée
+ * (maquette.src.html). Positions fines calculées en TS (lib/dossier-vivant/scene.ts) ; ici, la
+ * matière : couleurs, typographie, états.
+ *
+ * Jetons : toute couleur vit dans .root. Palette de la page /montagne (nuit, or, ivoire). Le BLEU
+ * acier est réservé à la machine (curseurs d'agents, appels d'outils, états « au travail ») : « ce
+ * que la machine fait » ne se confond pas avec « ce qui compte », en or (doctrine du panneau admin).
+ * L'or est un SIGNAL : filets, projets retenus, une seule action pleine par écran (« Lancer
+ * l'équipe », puis « Télécharger le dossier »).
+ *
+ * Polices : celles du site, auto-hébergées par next/font — Inter (--font-inter, layout) et la serif
+ * de la montagne (--font-montagne-serif, lib/montagne/fonts.ts). Aucune requête vers un CDN.
+ */
+
+.root {
+  /* Or des boutons pleins : #d9b45f sous un texte #0b0d12 → contraste 9,9:1 ; survol #f0d590 →
+     12,6:1. Vérifié par lib/dossier-vivant/__tests__/contrast.test.ts (seuil 4,5:1). La maquette
+     posait un encre oklch trop claire sur un or trop sombre (4,13:1). */
+  --dv-gold: #d9b45f;
+  --dv-gold-bright: #f0d590;
+  --dv-gold-ink: #0b0d12;
+  --dv-paper: oklch(10.5% 0.012 262);
+  --dv-paper-2: oklch(16% 0.016 258);
+  --dv-paper-3: oklch(8% 0.01 262);
+  --dv-veil: oklch(10.5% 0.012 262 / 0.22);
+  --dv-glass: oklch(13% 0.014 260 / 0.94);
+  --dv-ink: oklch(93% 0.025 85);
+  --dv-ink-2: oklch(84% 0.014 250);
+  --dv-muted: oklch(71% 0.016 250);
+  --dv-rule: oklch(30% 0.016 255);
+  --dv-rule-strong: oklch(42% 0.018 255);
+  --dv-accent: oklch(79% 0.11 85);
+  --dv-accent-soft: oklch(79% 0.11 85 / 0.45);
+  --dv-accent-bright: oklch(89% 0.095 88);
+  --dv-lit: oklch(22% 0.035 82);
+  --dv-machine: oklch(76% 0.075 245);
+  --dv-machine-soft: oklch(76% 0.075 245 / 0.55);
+  /* Arrêt d'un run réel : toujours accompagné du glyphe ✕ (la couleur seule ne dit pas l'état). */
+  --dv-alert: oklch(74% 0.12 30);
+  --dv-shadow: oklch(4% 0.01 262 / 0.9);
+  --dv-tint-foundations: oklch(55% 0.035 245 / 0.55);
+  --dv-tint-tooling: oklch(58% 0.03 135 / 0.55);
+  --dv-tint-engines: oklch(58% 0.05 320 / 0.55);
+  --dv-tint-works: oklch(62% 0.05 40 / 0.55);
+  --dv-serif: var(--font-montagne-serif), 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  --dv-sans: var(--font-inter), 'Segoe UI', system-ui, sans-serif;
+  --dv-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  --dv-bar-h: 56px;
+  /* L'en-tête du site, posé au-dessus de la page (components/layout/Header : h-16, 64 px, contrat
+     déjà tenu par /chat). Grand écran : la scène se loge SOUS lui, il reste visible pendant le run.
+     Téléphone : 0 (bloc compact plus bas) — 64 px de plus y couperaient l'équipe ; la scène garde
+     tout l'écran sous la barre et le lancement défile juste sous l'en-tête (DossierVivant). */
+  --dv-head-h: 64px;
+  --dv-radius: 10px;
+  --dv-radius-tile: 8px;
+  --dv-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Hauteur de la scène = le premier écran sous la barre (et sous l'en-tête du site, grand écran).
+     `svh` (barre d'adresse DÉPLOYÉE) et non `dvh` : la page défile, et sur téléphone la barre
+     d'adresse se replie en défilant — avec `dvh`, la scène changerait de taille (et se remesurerait)
+     sous le doigt du lecteur. */
+  --dv-screen-h: calc(100vh - var(--dv-bar-h) - var(--dv-head-h));
+
+  /* Une vraie page qui défile : la scène au premier écran, le dossier déroulé et le pied dessous.
+     (Avant : `position: fixed; inset: 0; overflow: hidden` — rien ne défilait jamais.) */
+  position: relative;
+  min-height: 100vh;
+  background: var(--dv-paper);
+  color: var(--dv-ink);
+  font-family: var(--dv-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+@supports (height: 100svh) {
+  .root {
+    --dv-screen-h: calc(100svh - var(--dv-bar-h) - var(--dv-head-h));
+  }
+}
+.root :where(h1, h2, h3) {
+  margin: 0;
+  font-family: var(--dv-serif);
+  font-weight: 500;
+  font-synthesis: none;
+  overflow-wrap: break-word;
+  min-width: 0;
+  text-wrap: balance;
+}
+.root :where(p) {
+  margin: 0;
+}
+.root :where(ul) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.root :focus-visible {
+  outline: 2px solid var(--dv-accent-bright);
+  outline-offset: 2px;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.ico {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Barre : marque à gauche, contrôles de lecture à droite. Filet d'or en tête = surface d'Alexis ;
+   la ligne de progression (or) dit où l'on en est. COLLANTE : dans le flux, juste sous l'en-tête du
+   site (qui défile avec la page, lib/immersiveRoutes.ts), puis collée en haut de l'écran une fois
+   l'en-tête parti — pause, rejouer et l'état du run restent à portée pendant qu'on lit le dossier.
+   `fixed` la poserait à 0 PAR-DESSUS l'en-tête. Aucun ancêtre ne rogne (layout.tsx) : le collage
+   tient jusqu'au bas de `.root`. --- */
+.bar {
+  position: sticky;
+  top: 0;
+  height: var(--dv-bar-h);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  /* Contrôles à droite : la marque n'est plus là (sauf téléphone couché, où elle pousse elle-même
+     les contrôles par sa marge). */
+  justify-content: flex-end;
+  padding-inline: 24px;
+  /* Le verre posé sur le papier : la teinte d'avant (la barre ne couvrait que le fond de la page),
+     mais opaque — le dossier défile désormais SOUS la barre et ne doit pas transparaître. */
+  background: linear-gradient(var(--dv-glass), var(--dv-glass)), var(--dv-paper);
+  border-bottom: 1px solid var(--dv-rule);
+}
+.bar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--dv-accent-soft);
+}
+/* Nom d'Alexis dans la barre : MASQUÉ par défaut. L'en-tête du site, rendu juste au-dessus, le porte
+   déjà — deux « Alexis Trouvé » empilés, retiré à la demande d'Alexis (09/11). Il ne reparaît que sur
+   téléphone couché, seul format où l'en-tête du site est masqué (Header.tsx) : il y reste le retour
+   à l'accueil. */
+.wordmark {
+  display: none;
+  font-family: var(--dv-serif);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--dv-ink);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.caption {
+  font-size: 13px;
+  color: var(--dv-muted);
+  white-space: nowrap;
+}
+.captionFailed {
+  color: var(--dv-alert);
+}
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--dv-accent);
+  transform-origin: 0 50%;
+}
+.btnQuiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding-inline: 12px;
+  border: 1px solid var(--dv-rule-strong);
+  border-radius: 6px;
+  background: var(--dv-paper-2);
+  color: var(--dv-ink-2);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 120ms var(--dv-ease),
+    color 120ms var(--dv-ease);
+}
+.btnQuiet:hover {
+  border-color: var(--dv-muted);
+  color: var(--dv-ink);
+}
+.btnQuiet:active {
+  background: var(--dv-paper-3);
+}
+.btnQuiet:disabled {
+  border-color: var(--dv-rule);
+  color: var(--dv-muted);
+  cursor: not-allowed;
+}
+
+/* --- Page : le premier écran (la scène) et, une fois le dossier déroulé, sa feuille — DossierVivant
+   pose alors la hauteur en ligne. `overflow-x: clip` (et non hidden) : rogne l'entrée de l'équipe
+   (40 px à droite) sans devenir un conteneur de défilement. --- */
+.page {
+  position: relative;
+  height: var(--dv-screen-h);
+  overflow-x: clip;
+}
+
+/* --- Scène : tout l'écran sous la barre — TOUJOURS l'écran, même page allongée (`measure` la lit). --- */
+.stage {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--dv-screen-h);
+  overflow: hidden;
+}
+
+/* Ouverture : la montagne se montre ENTIÈRE, sous le premier écran — la page s'allonge jusqu'à son
+   pied (DossierVivant › pageH, scene.ts › introFoot) et la scène cesse de la rogner. La page, elle,
+   rogne sur ses deux axes (`clip`, pas un conteneur de défilement) : le fond peint, plus large et
+   plus haut que les rangs, ne déborde ni sur la barre ni sur le pied de page. Au lancement, la
+   scène reprend son cadre : la montagne part de là où elle était rognée avant, la chorégraphie ne
+   bouge pas. */
+.root[data-phase='intro'] .page {
+  overflow: clip;
+}
+.root[data-phase='intro'] .stage {
+  overflow: visible;
+}
+
+/* --- Ouverture : la voix d'Alexis, puis le champ du visiteur. --- */
+.hero {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 0;
+}
+.hero h1 {
+  /* Retour à la ligne de la maquette validée (« … d’agents IA / qui tournent … ») : pas de balance. */
+  text-wrap: wrap;
+  max-width: 30ch;
+  text-align: center;
+  font-size: clamp(2.6rem, 3.3vw, 4.1rem);
+  line-height: 1.06;
+  color: var(--dv-ink);
+}
+.composer {
+  position: relative;
+  width: min(820px, 100%);
+  margin-top: 24px;
+  display: grid;
+  gap: 8px;
+}
+.composer label {
+  font-size: 15px;
+  color: var(--dv-ink-2);
+}
+.need,
+.who {
+  background: var(--dv-paper-2);
+  color: var(--dv-ink);
+  border: 1px dashed var(--dv-rule-strong);
+  border-radius: var(--dv-radius-tile);
+  font: inherit;
+}
+.need {
+  height: 118px;
+  resize: none;
+  padding: 12px 16px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+/* Régime owner : le champ s'écrit pour de vrai — filet plein au lieu du pointillé du rejeu. */
+.need[data-editable],
+.who[data-editable] {
+  border-style: solid;
+}
+.liveError {
+  margin: 0;
+  font-size: 14px;
+  color: var(--dv-alert);
+}
+.composerRow {
+  display: flex;
+  gap: 12px;
+}
+.who {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding-inline: 16px;
+  font-size: 15px;
+}
+.btnGold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding-inline: 24px;
+  border: 1px solid var(--dv-gold);
+  border-radius: var(--dv-radius-tile);
+  background: var(--dv-gold);
+  color: var(--dv-gold-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms var(--dv-ease);
+}
+.btnGold:hover,
+.btnGold:active {
+  background: var(--dv-gold-bright);
+}
+.btnGold:active {
+  transform: scale(0.97);
+}
+
+/* --- La montagne : repère de la géométrie grand écran (pyramid.ts), mise à l'échelle par un transform. --- */
+.mtn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.art {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  mask-composite: intersect;
+}
+.art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--dv-veil);
+}
+.links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.link {
+  fill: none;
+  stroke: var(--dv-accent);
+  stroke-width: 1;
+  stroke-opacity: 0.2;
+}
+.linkEnd {
+  fill: var(--dv-accent-bright);
+  opacity: 0.35;
+}
+.thread {
+  fill: none;
+  stroke: var(--dv-accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.threadEnd {
+  fill: var(--dv-accent-bright);
+}
+.scan {
+  stroke: var(--dv-machine);
+  stroke-width: 1.2;
+}
+
+.card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--dv-accent-soft);
+  border-radius: var(--dv-radius-tile);
+  background: var(--dv-paper-2);
+  box-shadow: 0 22px 44px -18px var(--dv-shadow);
+}
+/* Tuiles et cartes cliquables (grand écran) : des boutons qui gardent exactement la matière du bloc —
+   tout ce que la feuille de style du navigateur impose à un bouton est rendu à l'héritage du div. */
+button.card,
+button.tile {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--dv-accent-soft);
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.cardCover {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.cardMono {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-family: var(--dv-serif);
+  font-size: 64px;
+  color: var(--dv-accent-bright);
+}
+/* Icône du dépôt (ProjectMark), quand la carte n'a pas de capture : au centre, entière. */
+.cardIcon {
+  position: absolute;
+  inset: 15%;
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+.cardName {
+  padding: 8px;
+  text-align: center;
+  font-family: var(--dv-serif);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--dv-ink);
+  background: var(--dv-paper-3);
+  border-top: 1px solid var(--dv-accent-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card[data-state='reading'] {
+  border-color: var(--dv-machine);
+}
+.card[data-state='lit'] {
+  border-color: var(--dv-accent-bright);
+}
+.card[data-state='lit']::after {
+  opacity: 1;
+  border-color: var(--dv-accent);
+}
+
+.tile {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--tint, var(--dv-rule));
+  border-radius: var(--dv-radius-tile);
+  background: var(--dv-paper-2);
+  box-shadow: 0 6px 18px -8px var(--dv-shadow);
+}
+.tile[data-stratum='foundations'] {
+  --tint: var(--dv-tint-foundations);
+}
+.tile[data-stratum='tooling'] {
+  --tint: var(--dv-tint-tooling);
+}
+.tile[data-stratum='engines'] {
+  --tint: var(--dv-tint-engines);
+}
+.tile[data-stratum='works'] {
+  --tint: var(--dv-tint-works);
+}
+.mono {
+  font-family: var(--dv-serif);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--dv-ink-2);
+}
+/* Icône du dépôt du projet (ProjectMark) à la place du monogramme : même place, même encombrement
+   (62 % de la tuile), arrondi léger — elle se lit comme une marque posée sur la tuile. */
+.markIcon {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+/* Nom sous la tuile, sur une PLAQUE opaque (lib/dossier-vivant/labels.ts pour le pourquoi) :
+   - visible pour un projet retenu et pour le visiteur ; pour les autres, au survol seulement (la
+     tuile passe alors au-dessus de ses voisines) — 71 noms à la fois ne se lisaient pas ;
+   - plaque de la couleur de la nuit, sans transparence : les filets d'or et la peinture passent
+     DESSOUS, jamais à travers le texte. Encre ivoire sur nuit : contraste ~16:1 ;
+   - largeur au plus --lw (place laissée par les voisins nommés), lignes au plus --lines (place
+     laissée par le rang du dessous), toutes deux calculées par labels.ts. Jamais de coupure dans un
+     mot : sur une ligne, un nom trop long finit par « … » ; sur deux, la seconde aussi ;
+   - la taille vient de --lbl : 13 px À L'ÉCRAN quelle que soit l'échelle de la montagne. Interligne
+     repris de LABEL.lineHeight. */
+.tileName {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  width: max-content;
+  max-width: var(--lw, 160px);
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--dv-paper);
+  box-shadow: 0 2px 8px -2px var(--dv-shadow);
+  font-size: var(--lbl, 14px);
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--dv-ink);
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  display: -webkit-box;
+  -webkit-line-clamp: var(--lines, 2);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.tileName[data-lines='1'] {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tile[data-state='lit'] .tileName,
+.tile[data-visitor] .tileName,
+.tile:hover .tileName,
+.tile:focus-visible .tileName {
+  visibility: visible;
+}
+/* Survolée, la tuile passe devant ses voisines et retrouve sa pleine opacité : une tuile écartée
+   est mise en retrait par une opacité EN LIGNE (MountainScene), que sa plaque hériterait — le nom
+   survolé sortirait gris et translucide. `!important` est le seul moyen de primer sur le style en ligne. */
+.tile:hover,
+.tile:focus-visible {
+  z-index: 3;
+  opacity: 1 !important;
+}
+.tile[data-state='candidate'] {
+  border-color: var(--dv-machine-soft);
+}
+.tile[data-state='reading'] {
+  border-color: var(--dv-machine);
+}
+/* Projet retenu : bordure d'or et un fond À PEINE chauffé. Un signal, pas un aplat. */
+.tile[data-state='lit'],
+.tile[data-visitor] {
+  border-color: var(--dv-accent);
+  background: var(--dv-lit);
+}
+.tile[data-state='lit'] .mono,
+.tile[data-visitor] .mono {
+  color: var(--dv-accent-bright);
+}
+.ping {
+  position: absolute;
+  border: 1.5px solid var(--dv-accent-bright);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* --- Bandeau des projets retenus (téléphone seulement, KeptProjects) : le plus récent en tête ; les
+   plus anciens se lisent en le faisant glisser au doigt. Or = signal « retenu », comme les tuiles. --- */
+.kept {
+  position: absolute;
+  /* Sous l'équipe (6) : à la remise, l'équipe s'étend sur toute la scène et le dossier le recouvre. */
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.kept::-webkit-scrollbar {
+  display: none;
+}
+.kept > li {
+  flex: none;
+}
+/* La pastille est un bouton de 44 px de haut (cible tactile) qui porte la pastille de 28 px. */
+.keptChip {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.keptChip:disabled {
+  cursor: default;
+}
+.keptPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 3px;
+  border: 1px solid var(--dv-accent);
+  border-radius: 6px;
+  background: var(--dv-lit);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--dv-ink);
+  white-space: nowrap;
+}
+.keptIcon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.keptMono {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--dv-paper-3);
+  font-family: var(--dv-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dv-accent-bright);
+}
+
+/* --- Curseurs d'agents (repère de la scène, taille réelle) : la machine, donc en bleu acier. --- */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 8;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  pointer-events: none;
+}
+.cursor svg {
+  width: 16px;
+  height: 18px;
+  fill: var(--dv-machine);
+  stroke: var(--dv-paper);
+  stroke-width: 1.2;
+}
+.cursorTag {
+  margin-top: 12px;
+  padding: 2px 8px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--dv-ink);
+  background: var(--dv-paper-3);
+  border: 1px solid var(--dv-machine);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+/* --- Le passage : le champ du visiteur se replie en tuile et rejoint le sommet. --- */
+.ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 9;
+  border: 1px solid var(--dv-accent);
+  background: var(--dv-paper-2);
+  overflow: hidden;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+.ghostText {
+  position: absolute;
+  inset: 0;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--dv-ink-2);
+}
+.ghostMono {
+  font-family: var(--dv-serif);
+  font-weight: 600;
+  color: var(--dv-accent-bright);
+}
+
+/* --- L'équipe : orchestrateur en tête, quatre colonnes de sous-agents, le dossier dessous. --- */
+.team {
+  position: absolute;
+  z-index: 6;
+  overflow: hidden;
+}
+/* Déroulée, la feuille dépasse la boîte de l'équipe vers le bas : plus rien à rogner. */
+.team[data-unrolled] {
+  overflow: visible;
+}
+.orch {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 128px;
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(0, 1fr) auto;
+  gap: 24px;
+  padding: 16px 24px;
+  background: var(--dv-paper-2);
+  border: 1px solid var(--dv-rule);
+  border-radius: var(--dv-radius);
+}
+.agentName {
+  font-family: var(--dv-sans);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--dv-ink);
+}
+.model {
+  font-size: 13px;
+  color: var(--dv-muted);
+}
+.state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--dv-ink-2);
+  white-space: nowrap;
+  min-width: 0;
+}
+.state > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.state[data-status='working'] {
+  color: var(--dv-machine);
+}
+.state[data-status='done'] {
+  color: var(--dv-ink);
+}
+.threadList {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.threadList li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--dv-ink-2);
+  white-space: nowrap;
+  min-width: 0;
+}
+.threadList li .ico {
+  align-self: center;
+  color: var(--dv-muted);
+}
+.threadList li[data-dir='up'] .ico {
+  color: var(--dv-accent);
+}
+.threadList li[data-dir='down'] .ico {
+  color: var(--dv-machine);
+}
+.threadList b {
+  font-weight: 600;
+  color: var(--dv-ink);
+  flex: none;
+}
+.msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.totals {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--dv-muted);
+}
+.totals b {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dv-ink);
+}
+
+.fan {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+}
+.fanPath {
+  fill: none;
+  stroke: var(--dv-rule-strong);
+  stroke-width: 1;
+}
+.fanPath[data-live] {
+  stroke: var(--dv-machine-soft);
+}
+.packet {
+  fill: var(--dv-machine);
+}
+.packet[data-dir='up'] {
+  fill: var(--dv-accent-bright);
+}
+
+.cols {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: grid;
+  /* grid-template-columns : posé par AgentTeam, une colonne par sous-agent du run. */
+  gap: 12px;
+}
+.col {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 12px 12px 0;
+  background: var(--dv-paper-2);
+  border: 1px solid var(--dv-rule);
+  border-radius: var(--dv-radius);
+  overflow: hidden;
+}
+.nShort {
+  display: none;
+}
+/* Colonne étroite : le nom court, pour que l'en-tête garde la même hauteur partout. */
+@container (max-width: 180px) {
+  .nLong {
+    display: none;
+  }
+  .nShort {
+    display: inline;
+  }
+}
+.colName {
+  font-family: var(--dv-sans);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--dv-ink);
+}
+.colMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  column-gap: 8px;
+  font-size: 13px;
+  color: var(--dv-muted);
+}
+.colMeta > span {
+  white-space: nowrap;
+}
+.act {
+  margin-top: 12px;
+  min-height: 2.9em;
+  font-family: var(--dv-mono);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dv-machine);
+  overflow-wrap: anywhere;
+}
+.log {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-block: 8px 12px;
+  overflow: hidden;
+  border-top: 1px solid var(--dv-rule);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 36px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 36px);
+}
+.log li {
+  display: flex;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--dv-ink-2);
+}
+.log li .ico {
+  margin-top: 2px;
+  color: var(--dv-muted);
+}
+.log li[data-kind='keep'] {
+  color: var(--dv-ink);
+}
+.log li[data-kind='keep'] .ico {
+  color: var(--dv-accent);
+}
+.log li[data-kind='drop'] {
+  color: var(--dv-muted);
+}
+.log li[data-kind='question'] .ico {
+  color: var(--dv-machine);
+}
+.log li[data-kind='done'] .ico {
+  color: var(--dv-ink);
+}
+
+/* --- Le dossier : une feuille qui monte par-dessus les colonnes quand les agents ont fini. --- */
+.dossier {
+  container-type: inline-size;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px;
+  background: var(--dv-paper-2);
+  border: 1px solid var(--dv-rule);
+  border-radius: var(--dv-radius);
+  box-shadow: 0 -18px 40px -24px var(--dv-shadow);
+}
+.dossier[data-ready] {
+  border-top-color: var(--dv-accent);
+}
+/* Déroulée (remise jouée) : la feuille prend la hauteur de son contenu, au moins celle de la boîte,
+   et son corps cesse de défiler — c'est la page qui défile. */
+.dossier[data-unrolled] {
+  bottom: auto;
+  min-height: 100%;
+}
+.dossier[data-unrolled] .dosBody {
+  flex: 1 0 auto;
+  overflow: visible;
+}
+.dosHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--dv-rule);
+}
+.dosHead h2 {
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--dv-ink);
+}
+.dosHead p {
+  font-size: 14.5px;
+  color: var(--dv-muted);
+  white-space: pre-line;
+}
+.dosSide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.dosBody {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.dosInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  column-gap: 40px;
+  row-gap: 16px;
+  padding-top: 16px;
+}
+@container (max-width: 700px) {
+  .dosInner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.sec h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--dv-ink);
+  margin-bottom: 8px;
+}
+.sec[data-status='waiting'] h3 {
+  color: var(--dv-muted);
+}
+.sec h3 small {
+  font-family: var(--dv-sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--dv-muted);
+}
+.sec[data-status='writing'] h3 small {
+  color: var(--dv-machine);
+}
+.sec p,
+.sec li {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--dv-ink-2);
+  max-width: 62ch;
+}
+.sec p.lead {
+  color: var(--dv-ink);
+}
+.sec ul {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+.sec li {
+  display: flex;
+  gap: 8px;
+}
+.sec li .ico {
+  margin-top: 4px;
+  color: var(--dv-accent);
+}
+.wide {
+  grid-column: 1 / -1;
+}
+/* Le schéma a sa taille en pixels (PipelineDiagram : échelle ≥ 0,82, jamais > 1) ; le cadre ne
+   fait que mesurer la largeur offerte. Pas de `width:100%` : il écrasait les libellés à 7 px. */
+.diagramBox {
+  width: 100%;
+  margin-block: 4px 8px;
+}
+.diagram {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.dgBox {
+  fill: var(--dv-paper-3);
+  stroke: var(--dv-rule-strong);
+  stroke-width: 1;
+}
+.dgBox[data-human] {
+  stroke: var(--dv-ink-2);
+}
+.dgT {
+  fill: var(--dv-ink);
+  font-family: var(--dv-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.dgS {
+  fill: var(--dv-muted);
+  font-family: var(--dv-sans);
+  font-size: 12px;
+}
+.dgEdge {
+  fill: none;
+  stroke: var(--dv-ink-2);
+  stroke-width: 1.2;
+}
+.dgEdge[data-dashed] {
+  stroke-dasharray: 4 4;
+}
+.dgHead {
+  fill: var(--dv-ink-2);
+}
+.dgN {
+  fill: var(--dv-accent);
+  font-family: var(--dv-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.dgRing {
+  fill: var(--dv-paper-2);
+  stroke: var(--dv-accent);
+  stroke-width: 1;
+}
+.proofs {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+  font-size: 14px;
+}
+.proofs th {
+  padding: 0 12px 8px 0;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dv-muted);
+  border-bottom: 1px solid var(--dv-rule);
+}
+.proofs td {
+  padding: 8px 12px 8px 0;
+  vertical-align: top;
+  color: var(--dv-ink-2);
+  border-bottom: 1px solid var(--dv-rule);
+}
+.proofs td:not(:first-child) {
+  white-space: nowrap;
+}
+.proofs .none {
+  color: var(--dv-muted);
+}
+.proofs td.num {
+  text-align: right;
+  color: var(--dv-ink);
+}
+.proofs th.num {
+  text-align: right;
+}
+.proj {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.projMono {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--dv-accent);
+  border-radius: 6px;
+  font-family: var(--dv-serif);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--dv-accent-bright);
+}
+.projIcon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+/* Le projet d'une ligne de preuve, quand il a une fleur : un bouton sans matière propre. */
+.projButton {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.proofs tr[data-openable] {
+  cursor: pointer;
+}
+.proofs tr[data-openable]:hover .proj b {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.proj b {
+  display: block;
+  font-weight: 600;
+  color: var(--dv-ink);
+}
+.proj > span > span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dv-muted);
+}
+.proofs a {
+  color: var(--dv-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.sec .also {
+  margin-top: 8px;
+  max-width: none;
+  font-size: 13.5px;
+  color: var(--dv-muted);
+}
+/* Compétences mobilisées : le tableau des preuves, sans monogramme. La marque « nommée dans le
+   besoin » est un SIGNAL or (glyphe ◆ + libellé), jamais un aplat. */
+.skillsLead {
+  max-width: none !important;
+  font-size: 13.5px !important;
+  color: var(--dv-muted) !important;
+}
+.skills td {
+  white-space: normal !important;
+}
+.skillName {
+  display: block;
+  font-weight: 600;
+  color: var(--dv-ink);
+}
+.skillNeed {
+  display: block;
+  font-size: 12.5px;
+  color: var(--dv-accent);
+}
+.skillSources {
+  color: var(--dv-muted) !important;
+  font-size: 13px;
+}
+.nextActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.btnLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding-inline: 16px;
+  border: 1px solid var(--dv-rule-strong);
+  border-radius: var(--dv-radius-tile);
+  color: var(--dv-ink);
+  font-size: 14.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 120ms var(--dv-ease);
+}
+.btnLine:hover {
+  border-color: var(--dv-muted);
+}
+.readyState {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--dv-machine);
+  white-space: nowrap;
+}
+.readyState[data-status='done'] {
+  color: var(--dv-ink);
+}
+
+/* --- Pied de page : sous la scène, toujours là. Liens neutres — aucun or (doctrine). --- */
+.footer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 24px 24px 32px;
+  border-top: 1px solid var(--dv-rule);
+}
+.footerLead {
+  font-size: 14px;
+  color: var(--dv-muted);
+}
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.footerLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--dv-ink-2);
+  font-size: 14.5px;
+  text-decoration: none;
+  transition:
+    border-color 120ms var(--dv-ease),
+    color 120ms var(--dv-ease);
+}
+.footerLink:hover {
+  border-color: var(--dv-rule-strong);
+  color: var(--dv-ink);
+}
+
+.unavailable {
+  position: absolute;
+  inset: var(--dv-bar-h) 0 0 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--dv-muted);
+}
+
+/*
+ * --- TÉLÉPHONE (portrait sous 760 px, ou couché : à l'horizontale et 500 px de haut au plus) :
+ * la densité du téléphone. En portrait, la même histoire lue de haut en bas. ---
+ * Mesures = scene.ts › layoutFor (COMPACT_MAX_WIDTH, LANDSCAPE_MAX_HEIGHT) : la géométrie (TS) et
+ * la matière (ici) basculent ensemble. Le téléphone COUCHÉ lit ce bloc puis le suivant, qui rétablit
+ * ce qu'il fait comme le grand écran (côte à côte, barre sur une ligne).
+ * Tout ce qui suit est confiné à ces blocs : le grand écran ne lit aucune de ces règles.
+ * Règles tenues partout : cible tactile ≥ 44 px, aucun texte sous 11,5 px, rien qui déborde à droite.
+ */
+@media (max-width: 759px), (orientation: landscape) and (max-height: 500px) {
+  .root {
+    /* Deux rangées : la marque et les contrôles, puis la mention du rejeu sur toute la largeur. */
+    --dv-bar-h: 76px;
+    /* La scène garde tout l'écran sous la barre ; l'en-tête du site est au-dessus, dans le flux. */
+    --dv-head-h: 0px;
+  }
+
+  /* Barre : `.controls` s'efface (display: contents) pour que la mention passe à la ligne
+     sous la marque ; pause et rejouer deviennent des boutons-icônes de 44 px (libellé gardé pour
+     les lecteurs d'écran, masqué à l'œil). */
+  .bar {
+    flex-wrap: wrap;
+    align-content: center;
+    column-gap: 4px;
+    padding-inline: 12px;
+  }
+  .wordmark {
+    align-items: center;
+    min-height: 44px;
+    margin-right: auto;
+    font-size: 20px;
+  }
+  .controls {
+    display: contents;
+  }
+  .caption {
+    order: 3;
+    flex-basis: 100%;
+    padding-bottom: 6px;
+    font-size: 12.5px;
+    line-height: 1.3;
+    white-space: normal;
+  }
+  .btnQuiet {
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .btnQuiet > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .btnQuiet .ico {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Ouverture : champ et bouton empilés, pleine largeur, 48 px de haut ; 16 px dans les champs
+     (en dessous, iOS zoome la page au focus). */
+  .hero {
+    padding: 20px 16px 0;
+  }
+  .hero h1 {
+    max-width: none;
+    font-size: 1.85rem;
+    line-height: 1.1;
+  }
+  .composer {
+    margin-top: 16px;
+  }
+  .composer label {
+    font-size: 14px;
+  }
+  .need {
+    height: 128px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+  .composerRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .who {
+    flex: none;
+    height: 48px;
+    padding-inline: 12px;
+    font-size: 16px;
+  }
+  .btnGold {
+    height: 48px;
+  }
+
+  /* Montagne entière à ~0,2 : noms et monogrammes y feraient 4 px — retirés (le bandeau des
+     retenus porte les noms). Traits et bordures compensent l'échelle (--inv, MountainScene) pour
+     garder un pixel à l'écran ; un projet retenu devient un carré d'or plein, lisible d'un coup
+     d'œil (un signal, pas un aplat) — voir plus bas, il porte aussi sa marque. */
+  /* `[data-lines]` : la règle grand écran `.tileName[data-lines='1']` (display: block) est plus
+     spécifique que `.tileName` seul — sans lui, les noms reviennent géants sur téléphone. */
+  .tileName,
+  .tileName[data-lines],
+  .cardName,
+  .cardMono,
+  .mono,
+  .markIcon {
+    display: none;
+  }
+  .tile {
+    border-width: calc(1px * var(--inv, 1));
+    border-radius: calc(3px * var(--inv, 1));
+  }
+  .tile[data-state='candidate'],
+  .tile[data-state='reading'] {
+    border-width: calc(1.5px * var(--inv, 1));
+  }
+  .tile[data-state='lit'],
+  .tile[data-visitor] {
+    border-color: var(--dv-accent-bright);
+    background: var(--dv-accent);
+  }
+  /* Projet retenu IDENTIFIABLE : la tuile allumée grandit jusqu'à 22 px À L'ÉCRAN, quelle que soit
+     l'échelle (0,38 × --inv : 22/58 de la tuile du repère, divisé par l'échelle de la montagne), et
+     porte l'icône de son dépôt — ou son monogramme, en encre sombre sur l'or. Mêmes marques que le
+     bandeau des retenus : l'œil relie la tuile à sa pastille. `scale` (propriété individuelle) et
+     non `transform`, que la descente des rangs occupe déjà (MountainScene). Bordure et rayon en
+     unités du repère, comptées pour donner ~1,5 px et 5 px à l'écran une fois agrandis. */
+  .tile[data-state='lit'],
+  .tile[data-visitor] {
+    z-index: 1;
+    scale: calc(0.38 * var(--inv, 1));
+    border-width: 4px;
+    border-radius: 13px;
+  }
+  .tile[data-state='lit'] .mono,
+  .tile[data-visitor] .mono {
+    display: block;
+    /* 30 unités du repère × 22/58 = 11,5 px à l'écran : le plancher de lecture. */
+    font-size: 30px;
+    line-height: 1;
+    color: var(--dv-gold-ink);
+  }
+  .tile[data-state='lit'] .markIcon {
+    display: block;
+    width: 84%;
+    height: 84%;
+    border-radius: 8px;
+  }
+  .card {
+    border-width: calc(1px * var(--inv, 1));
+    border-radius: calc(4px * var(--inv, 1));
+  }
+  .card::after {
+    display: none;
+  }
+  .card[data-state='lit'] {
+    border-width: calc(2px * var(--inv, 1));
+  }
+  .thread {
+    stroke-width: calc(1.4px * var(--inv, 1));
+  }
+  .scan {
+    stroke-width: calc(1.2px * var(--inv, 1));
+  }
+  .ping {
+    border-width: calc(1.5px * var(--inv, 1));
+    border-radius: calc(4px * var(--inv, 1));
+  }
+  .cursorTag {
+    margin-top: 10px;
+    padding: 1px 6px;
+    font-size: 12px;
+  }
+
+  /* Orchestrateur sur trois lignes : nom + totaux, état (+ modèle), DERNIER message seul.
+     Hauteur fixe : DossierVivant la mesure une fois pour placer les colonnes. */
+  .orch {
+    height: 96px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'who totals'
+      'thread thread';
+    gap: 2px 12px;
+    padding: 8px 12px;
+  }
+  .orch > :first-child {
+    grid-area: who;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    min-width: 0;
+  }
+  .agentName {
+    font-size: 15px;
+  }
+  .model {
+    font-size: 12.5px;
+  }
+  .orch .state {
+    flex-basis: 100%;
+    margin-top: 0;
+    font-size: 13px;
+  }
+  .threadList {
+    grid-area: thread;
+  }
+  .threadList li {
+    font-size: 13.5px;
+  }
+  .threadList li:not(:last-child) {
+    display: none;
+  }
+  .totals {
+    grid-area: totals;
+    gap: 0;
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .totals b {
+    font-size: 14px;
+  }
+
+  /* Colonnes en grille (AgentTeam › columnsPerRow) : nom, état, appel en cours sur une ligne,
+     dernières notes. Modèle et tokens par agent quittent la colonne : les totaux les portent. */
+  .cols {
+    gap: 8px;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .col {
+    padding: 8px 10px 0;
+  }
+  .colName {
+    font-size: 14px;
+  }
+  .colMeta {
+    display: none;
+  }
+  .col .state {
+    margin-top: 2px;
+    font-size: 12.5px;
+  }
+  .act {
+    margin-top: 4px;
+    min-height: 1.45em;
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .log {
+    gap: 4px;
+    padding-block: 4px 6px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
+  }
+  .log li {
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+
+  /* Dossier : pendant le travail, seul son en-tête dépasse sous les colonnes (titre + état sur une
+     ligne) ; remis, il prend tout l'écran et se lit en défilant. `.dosSide` s'efface pour que le
+     bouton de téléchargement passe sous le titre, pleine largeur. */
+  .dossier {
+    padding: 12px 14px 0;
+  }
+  .dosHead {
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+  }
+  .dosHead > :first-child {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .dosHead h2 {
+    font-size: 24px;
+  }
+  .dosHead p {
+    font-size: 13.5px;
+    /* Pas de « $. » seul en dernière ligne : la colonne est étroite à côté de l'état. */
+    text-wrap: pretty;
+  }
+  .dosSide {
+    display: contents;
+  }
+  .dosSide .btnGold {
+    flex-basis: 100%;
+  }
+  .readyState {
+    font-size: 13.5px;
+  }
+  .dosBody {
+    overscroll-behavior: contain;
+    padding-bottom: 24px;
+  }
+  .sec h3 {
+    flex-wrap: wrap;
+    column-gap: 8px;
+    font-size: 20px;
+  }
+  .sec p,
+  .sec li {
+    font-size: 15px;
+  }
+
+  /* Tableaux (preuves, compétences) → fiches : la première cellule (le projet, la compétence) sur
+     toute la largeur, les autres deux à deux, chacune précédée de son en-tête (`data-label`). */
+  .proofs thead {
+    display: none;
+  }
+  .proofs,
+  .proofs tbody,
+  .proofs tr,
+  .proofs td {
+    display: block;
+  }
+  .proofs tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    padding-block: 10px;
+    border-bottom: 1px solid var(--dv-rule);
+  }
+  .proofs td {
+    padding: 0;
+    border: 0;
+  }
+  .proofs td:not(:first-child) {
+    white-space: normal;
+  }
+  .proofs td:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+  }
+  .proofs td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    color: var(--dv-muted);
+  }
+  .proofs td.num {
+    text-align: left;
+  }
+  .proofs a {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .btnLine {
+    height: 48px;
+  }
+  .footer {
+    padding: 20px 12px 28px;
+  }
+}
+
+/*
+ * --- TÉLÉPHONE COUCHÉ : côte à côte (scene.ts › landscapeGeometry), densité du téléphone. ---
+ * Lit APRÈS le bloc précédent et n'en défait que ce qui suppose un écran haut : barre sur deux
+ * rangées, ouverture empilée, orchestrateur sur trois lignes de 96 px.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  .root {
+    --dv-bar-h: 52px;
+  }
+  /* Barre sur une ligne : marque, mention du rejeu (rognée si la langue l'allonge), boutons-icônes. */
+  .bar {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  /* Seul format sans l'en-tête du site : la marque revient ici (cf. .wordmark). */
+  .wordmark {
+    display: inline-flex;
+  }
+  .controls {
+    display: flex;
+    min-width: 0;
+    gap: 8px;
+  }
+  .caption {
+    order: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Ouverture sur deux colonnes : la voix à gauche, le champ et le bouton à droite — empilés, ils
+     ne tiendraient pas dans ~240 px de haut. */
+  .hero {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 20px 0;
+  }
+  .hero h1 {
+    flex: 0 1 34%;
+    text-align: left;
+    font-size: 1.45rem;
+  }
+  .composer {
+    flex: 1 1 0;
+    max-width: 560px;
+    margin-top: 0;
+  }
+  .need {
+    height: 84px;
+  }
+  .composerRow {
+    flex-direction: row;
+  }
+  .who {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Orchestrateur sur deux lignes et demie : nom et état, totaux en une ligne, dernier message. */
+  .orch {
+    height: 78px;
+    padding: 6px 12px;
+  }
+  .totals {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    white-space: nowrap;
+  }
+  .act {
+    margin-top: 2px;
+  }
+  /* Dossier remis : en-tête sur UNE rangée (titre et destinataire à gauche, bouton à droite) — empilé
+     comme en portrait, il prenait les deux tiers des ~220 px et ne laissait qu'une ligne à lire. */
+  .dossier {
+    padding-top: 8px;
+  }
+  .dosHead {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding-bottom: 8px;
+  }
+  .dosHead h2 {
+    font-size: 20px;
+  }
+  .dosHead p {
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .dosSide {
+    display: flex;
+    flex: none;
+    gap: 12px;
+  }
+  .dosSide .btnGold {
+    flex-basis: auto;
+    height: 44px;
+  }
+}
+
+/* Mouvement réduit : le lancement saute à la fin (DossierVivant) ; aucune transition CSS non plus. */
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Impression = le téléchargement du dossier : seule la feuille sort, sur papier clair. */
+@media print {
+  .root {
+    --dv-paper: #fdfcf9;
+    --dv-paper-2: #fdfcf9;
+    --dv-paper-3: #f4f2ec;
+    --dv-ink: #1f2430;
+    --dv-ink-2: #2f3542;
+    --dv-muted: #5a6070;
+    --dv-rule: #d4d6dc;
+    --dv-rule-strong: #a9adb7;
+    --dv-accent: #8a6a1f;
+    --dv-accent-bright: #7a5c17;
+    position: static;
+    overflow: visible;
+  }
+  .bar,
+  .hero,
+  .mtn,
+  .orch,
+  .fan,
+  .cols,
+  .cursor,
+  .ghost,
+  .noPrint {
+    display: none !important;
+  }
+  .page,
+  .stage,
+  .team,
+  .dossier {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    box-shadow: none;
+    border: 0;
+    height: auto !important;
+  }
+  .dosBody {
+    overflow: visible;
+  }
+  .dosInner {
+    transform: none !important;
+  }
+}

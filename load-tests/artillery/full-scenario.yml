@@ -1,0 +1,181 @@
+# Artillery load testing configuration
+# Full user journey scenario: CV browsing -> Letter generation -> Analytics
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Phase 1: Warm up
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+
+    # Phase 2: Ramp up
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up to 50 users/sec"
+
+    # Phase 3: Sustained load
+    - duration: 180
+      arrivalRate: 50
+      name: "Sustained load"
+
+    # Phase 4: Spike
+    - duration: 60
+      arrivalRate: 100
+      name: "Spike test"
+
+    # Phase 5: Ramp down
+    - duration: 60
+      arrivalRate: 50
+      rampTo: 10
+      name: "Ramp down"
+
+  # Variables
+  variables:
+    themes:
+      - "backend"
+      - "frontend"
+      - "fullstack"
+      - "devops"
+      - "cpp"
+    companies:
+      - "Google"
+      - "Microsoft"
+      - "Apple"
+      - "Amazon"
+      - "Meta"
+
+  # Plugins
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+
+  # Defaults
+  defaults:
+    headers:
+      User-Agent: "Artillery/LoadTest"
+      Accept: "application/json"
+
+# Scenarios
+scenarios:
+  # Scenario 1: CV browsing (80% of users)
+  - name: "CV Browsing"
+    weight: 80
+    flow:
+      # Set session ID
+      - function: "setSessionID"
+
+      # Homepage
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+      # Browse CV with different themes
+      - get:
+          url: "/api/cv?theme={{ $randomString(themes) }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: experiences
+          capture:
+            - json: "$.experiences[0].id"
+              as: "experienceID"
+
+      # Get experiences list
+      - get:
+          url: "/api/experiences?page=1&limit=20"
+          expect:
+            - statusCode: 200
+
+      # Get skills
+      - get:
+          url: "/api/skills"
+          expect:
+            - statusCode: 200
+
+      # Get projects
+      - get:
+          url: "/api/projects?featured=true"
+          expect:
+            - statusCode: 200
+
+      # Think time
+      - think: 2
+
+  # Scenario 2: Letter generation (15% of users)
+  - name: "Letter Generation"
+    weight: 15
+    flow:
+      - function: "setSessionID"
+
+      # Check access gate
+      - get:
+          url: "/api/letters/access-gate"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.can_generate"
+              as: "canGenerate"
+
+      # Generate letter (if allowed)
+      - post:
+          url: "/api/letters/generate"
+          json:
+            company_name: "{{ $randomString(companies) }}"
+            letter_type: "motivation"
+          expect:
+            - statusCode: [200, 429]
+          ifTrue: "canGenerate"
+
+      # Get letter history
+      - get:
+          url: "/api/letters/history"
+          expect:
+            - statusCode: 200
+
+      - think: 3
+
+  # Scenario 3: Analytics dashboard (5% of users)
+  - name: "Analytics Dashboard"
+    weight: 5
+    flow:
+      # Real-time analytics
+      - get:
+          url: "/api/analytics/realtime"
+          expect:
+            - statusCode: 200
+
+      # CV theme stats
+      - get:
+          url: "/api/analytics/cv-themes"
+          expect:
+            - statusCode: 200
+
+      # Letter stats
+      - get:
+          url: "/api/analytics/letters-stats"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+# Custom functions
+processor: "./artillery-functions.js"
+
+# Performance expectations
+ensure:
+  thresholds:
+    # Response time thresholds
+    - "p95 < 1000"        # 95th percentile < 1s
+    - "p99 < 2000"        # 99th percentile < 2s
+    - "median < 300"      # Median < 300ms
+
+    # Error rate threshold
+    - "http.response_time.errors < 1"  # < 1% errors
+
+# Output
+# Run with: artillery run full-scenario.yml
+# With report: artillery run --output report.json full-scenario.yml
+# Generate HTML report: artillery report report.json

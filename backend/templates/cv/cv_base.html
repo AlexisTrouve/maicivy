@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="UTF-8">
+<title>CV — {{.RoleTitle}}</title>
+<style>
+/* Design « montagne de nuit » (maquette A, validée 2026-11-09) : tout le document est sombre.
+   Palette = celle du site public (frontend/tailwind.config.ts) : surface.base #060911 pour la
+   page, surface.raised pour les cartes, surface.inset pour la colonne latérale. L'or (#d9b45f)
+   est UN signal : le titre de poste, et rien d'autre. Aucun bleu : sur le site il est réservé au
+   système, ici les accents sont « clair de lune » (gris bleuté).
+
+   ⚠️ Fond sombre partout = le principe « sombre sur sombre » change de nature. Dans l'ancien
+   gabarit clair, la couche .stealth (#0f172a) n'était invisible QUE parce qu'une carte blanche la
+   couvrait : exposée, elle se lisait (bug ProRequestManager, 2026-09-07). Ici chaque texte caché
+   est AUSSI à une unité du fond sur lequel il est posé : couvert par la carte, ou exposé par
+   erreur, il reste invisible. Deux protections au lieu d'une. Verrouillé par
+   cv_template_stealth_test.go.
+
+   POLICES : le PDF ne doit dépendre d'aucune police absente de l'image Docker du backend.
+   DejaVu et WenQuanYi viennent des paquets Debian ; Cormorant Garamond SemiBold (OFL) n'a pas de
+   paquet : son TTF est versionné dans backend/fonts/ et installé par le Dockerfile (fc-cache). */
+/* Marge 0 sur TOUTES les pages : mesuré, Chromium ne peint PAS la marge @page avec le fond de
+   la racine — une marge haute en page 2 y laisse une bande blanche. La carte qui ouvre la page 2
+   reste donc collée au bord (comme dans le gabarit de prod). */
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  /* Le fond de la racine se propage à TOUTE la page imprimée, page 2 comprise : sans lui, la
+     zone sous la grille resterait blanche sur la dernière page. */
+  background: #060911;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body {
+  /* Pile inchangée par rapport à l'ancien gabarit clair (budget du strip et zh mesurés dessus).
+     CJK : WenQuanYi Micro Hei (TrueType) AVANT Noto CJK (CFF → Type3 dans le PDF Chromium,
+     mots chinois non extractibles). Mesuré le 2026-10-16. Latin : DejaVu en tête. */
+  font-family: 'DejaVu Sans', 'Noto Sans', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.5;
+  color: #c3cbd8;
+  background: #060911;
+  width: 210mm;
+}
+/* Serif des titres : Cormorant Garamond, la serif de la montagne du site (lib/montagne/fonts.ts).
+   Elle n'a pas d'idéogrammes : le chinois retombe sur WenQuanYi (TrueType), PAS sur Noto Serif
+   CJK — celle-ci est en CFF, que Chromium convertit en Type3 : les titres zh deviendraient
+   non extractibles. */
+.serif, .header-name, .section-label, .exp-title, .proj-title {
+  font-family: 'Cormorant Garamond', 'WenQuanYi Micro Hei', 'DejaVu Serif', serif;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.page {
+  display: grid;
+  grid-template-columns: 1fr 70mm;
+  grid-template-rows: auto 1fr auto;
+  min-height: 297mm;
+}
+
+/* ─── HEADER : ciel de nuit, crête en bas ────────────────── */
+.header {
+  grid-column: 1 / -1;
+  background: #0c1424;
+  color: #eef1f6;
+  /* 26px en haut : bande UNIE réservée au strip ATS. 46px en bas : la crête. Le contenu reste
+     au milieu, il ne touche ni l'une ni l'autre. */
+  padding: 26px 32px 46px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  /* QUOI : le header est le bloc conteneur du strip ATS (.header-stealth) ET de la crête, et
+     les borne.
+     POURQUOI : sans `position: relative`, le span absolu du strip prend l'ICB pour bloc
+     conteneur et se pose à sa position statique, soit l'angle haut-gauche du content-box
+     du header — c'est-à-dire PILE sur la photo de profil. Étant positionné, il se peint
+     AU-DESSUS de l'<img> : le texte sombre devient lisible sur la photo. Mesuré le 2026-09-07
+     sur les PDF de prod, export standard ET /cv/generate.
+     COMMENT : `relative` ramène le bloc conteneur sur le header ; `overflow: hidden`
+     garantit qu'un strip trop long est rogné dans le bandeau au lieu de déborder sur la page. */
+  position: relative;
+  overflow: hidden;
+}
+/* La crête : deux plans de montagne. Le plan avant est peint dans la couleur EXACTE de la page —
+   la page « est » la montagne, le bandeau est le ciel. Elle vit dans le padding bas : elle ne
+   recouvre jamais la photo ni le texte, et la bande du strip (en haut) reste un aplat. */
+.ridge {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 40px;
+  display: block;
+}
+/* .header-stealth : strip ATS épinglé dans la bande de padding HAUTE (la basse porte la crête).
+   POURQUOI là : `align-items: center` laisse les bandes de padding totalement VIDES — c'est le
+   seul endroit du bandeau où du texte ne peut recouvrir ni la photo ni un glyphe clair (nom,
+   rôle). Recouvrir l'un ou l'autre rend le strip visible. La bande haute (26px) contient le
+   strip entier (top 5 + 16 de haut) : verrouillé par TestHeaderStealth_EstBorneEtClippe.
+   Même boîte que l'ancien gabarit (16px, police 5px, 32px de marge latérale) : le
+   budgetStripATS (780) mesuré sur cette boîte reste valable. Police fixée explicitement : le
+   budget dépend de la largeur des glyphes DejaVu. Hauteur bornée + overflow: hidden → un strip
+   long est rogné, et le texte rogné reste dans le flux texte du PDF.
+   Couleur = fond du bandeau décalé d'une unité, PAS exacte : Chromium retire du stream un texte
+   de la couleur exacte du fond, on perdrait le bénéfice ATS en croyant l'avoir caché. */
+.header-stealth {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  top: 5px;
+  height: 16px;
+  overflow: hidden;
+  font-family: 'DejaVu Sans', 'Noto Sans', 'WenQuanYi Micro Hei', sans-serif;
+  font-size: 5px;
+  line-height: 5px;
+  color: #0c1425; /* fond #0c1424 + 1 */
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.profile-photo {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid #2c3a55;
+  flex-shrink: 0;
+}
+.header-name {
+  font-size: 27pt;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.2px;
+  color: #eef1f6;
+}
+/* LE signal or du document : ce qu'Alexis est. */
+.header-role {
+  font-size: 10pt;
+  color: #d9b45f;
+  font-weight: 600;
+  margin-top: 6px;
+  letter-spacing: 0.3px;
+}
+.header-meta {
+  font-size: 7pt;
+  color: #7d889c;
+  margin-top: 4px;
+}
+.header-contact {
+  text-align: right;
+  font-size: 7.5pt;
+  color: #a7b1c2;
+  line-height: 1.85;
+}
+.header-contact a { color: #c9d2df; text-decoration: none; }
+
+/* ─── COLONNES ───────────────────────────────────────────── */
+.main {
+  padding: 18px 22px 22px 32px;
+}
+.sidebar {
+  background: #080d18;
+  border-left: 1px solid #151d2d;
+  padding: 18px 18px 22px;
+}
+
+/* ─── TITRES DE SECTION ──────────────────────────────────── */
+.section { margin-bottom: 20px; }
+/* .ats-anchor : intitulé « ATS » caché au-dessus du titre visible — évite les capitales
+   espacées extraites lettre par lettre (« E D U C A T I O N »).
+   Couleur fixée PAR COLONNE (règles ci-dessous) : à une unité de SON fond → invisible, mais
+   ≠ fond strict → Chromium encode le texte. PAS d'opacity (corrompt ToUnicode).
+   Mesuré le 2026-10-16 : une couleur unique rendait l'ancre d'une colonne visible sur le fond
+   de l'autre. Verrouillé par TestAtsAnchor_CouleurAccordeeAuFondDeSaColonne. */
+.ats-anchor {
+  font-family: 'DejaVu Sans', 'Noto Sans', 'WenQuanYi Micro Hei', sans-serif;
+  font-size: 7px;
+  display: block;
+  line-height: 7px;
+  margin: 0;
+  padding: 0;
+}
+.main .ats-anchor { color: #060912; }    /* fond #060911 */
+.sidebar .ats-anchor { color: #080d19; } /* fond #080d18 */
+.section-label {
+  font-size: 13pt;
+  font-weight: 600;
+  color: #e6eaf0;
+  letter-spacing: 0.2px; /* pas de capitales espacées : extraction lettre par lettre */
+  border-bottom: 1px solid #1c2638;
+  padding-bottom: 3px;
+  margin-bottom: 11px;
+  /* Un titre ne termine jamais une page : il part avec son premier contenu. Mesuré le
+     2026-10-16 : « PROJETS » / « 项目 » seul au pied de la page 1 (fullstack, backend, fr et zh).
+     Les deux formes : `page-break-after` pour les moteurs anciens. Verrouillé par
+     TestSectionLabel_JamaisSeulEnBasDePage. */
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* ─── EXPÉRIENCES ────────────────────────────────────────── */
+.exp-wrap {
+  position: relative;
+  margin-bottom: 10px;
+  page-break-inside: avoid;
+}
+/* Couche stealth : sous la carte (z-index 0), couverte par elle (z-index 1, fond opaque).
+   Couleur = fond de la page + 1 : si une carte venait à ne pas la couvrir, elle resterait
+   invisible quand même — c'est la seconde protection du tout-sombre. Texte sombre : pas le
+   « white text trick » que les ATS recherchent. */
+.stealth {
+  position: absolute;
+  /* 3px de retrait : aucun glyphe de la couche ne passe sous un BORD de carte. Mesuré le
+     2026-11-09 (maquette ET ancien gabarit clair) : au bas d'une mini-carte de hauteur
+     fractionnaire, le bord anticrénelé du contenu opaque laisse transparaître une ligne de
+     pixels de la couche (écart 79 à 90/255 sur fond clair). Verrouillé par
+     TestStealth_RetraitDuBordDeCarte. */
+  inset: 3px;
+  z-index: 0;
+  /* Le texte rogné n'est PAS tout entier dans le flux PDF : Chromium écarte les lignes rognées
+     trop loin du bord. Mesuré dans l'image de prod (2026-11-09, couche MelodiCode, 830 car.) :
+     7px/8px avec le retrait de 3px perdait 12 mots, contre 2 sans retrait ; 6px/7px en perd 1.
+     Une couche plus dense est sans effet sur la mise en page visible (position absolue). */
+  font-size: 6px;
+  color: #060912;
+  line-height: 7px;
+  overflow: hidden;
+  padding: 2px;
+  pointer-events: none;
+  user-select: none;
+}
+.exp-card {
+  position: relative;
+  z-index: 1;
+  background: #111a2b;
+  border: 1px solid #1c2638;
+  border-left: 2px solid #8ea2bd;
+  padding: 9px 13px 10px;
+  border-radius: 0 5px 5px 0;
+}
+.exp-card.minor { border-left-color: #2c3a55; }
+.exp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.exp-title {
+  font-weight: 600;
+  font-size: 12.5pt;
+  line-height: 1.15;
+  color: #eef1f6;
+}
+.exp-company {
+  font-size: 8pt;
+  color: #9aa7ba;
+  margin-top: 2px;
+}
+.exp-dates {
+  font-size: 7.5pt;
+  color: #7d889c;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+.exp-catch {
+  font-size: 8.3pt;
+  color: #c3cbd8;
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+/* ─── RÉSUMÉ ─────────────────────────────────────────────── */
+.summary {
+  margin-bottom: 18px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid #2c3a55;
+}
+.summary-text {
+  font-size: 8.6pt;
+  color: #c3cbd8;
+  line-height: 1.6;
+}
+
+/* ─── PASTILLES ──────────────────────────────────────────── */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 7px;
+}
+.pill {
+  background: #0b1220;
+  color: #b8c3d4;
+  border: 1px solid #243049;
+  border-radius: 3px;
+  padding: 0 6px;
+  font-size: 6.5pt;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+/* ─── PROJETS ────────────────────────────────────────────── */
+.proj-wrap {
+  position: relative;
+  margin-bottom: 8px;
+  page-break-inside: avoid;
+}
+.proj-card {
+  position: relative;
+  z-index: 1;
+  background: #111a2b;
+  border: 1px solid #1c2638;
+  border-radius: 5px;
+  padding: 8px 12px 9px;
+}
+.proj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.proj-title {
+  font-weight: 600;
+  font-size: 11.5pt;
+  line-height: 1.2;
+  color: #eef1f6;
+}
+.proj-row .pills { margin-top: 1px; justify-content: flex-end; }
+.proj-catch {
+  font-size: 7.6pt;
+  color: #a7b1c2;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.other-projects-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+.mini-proj {
+  position: relative;
+  border: 1px solid #1c2638;
+  border-radius: 4px;
+  page-break-inside: avoid;
+  overflow: hidden;
+  /* QUOI : `display: flex` pour que .mini-proj-content occupe TOUTE la hauteur de la cellule.
+     POURQUOI : les cellules d'une même rangée de grille s'étirent à la hauteur de la plus
+     haute. Une carte courte laissait donc du vide sous son contenu — et la couche .stealth,
+     elle, s'étend sur toute la cellule : ses lignes du bas s'affichaient dans ce vide, coupées
+     en plein milieu d'une phrase. Mesuré le 2026-09-07 sur le PDF de prod (carte
+     ProRequestManager).
+     COMMENT : le contenu devient un flex item étiré (align-items: stretch par défaut), donc
+     son fond opaque couvre la couche sur toute la hauteur. Verrouillé par
+     TestMiniProj_ContenuCouvreTouteLaCellule. */
+  display: flex;
+}
+.mini-proj-content {
+  position: relative;
+  z-index: 1;
+  background: #111a2b;
+  padding: 6px 9px;
+  flex: 1 1 auto;
+}
+.mini-proj-title {
+  font-family: 'Cormorant Garamond', 'WenQuanYi Micro Hei', 'DejaVu Serif', serif;
+  font-weight: 600;
+  font-size: 10pt;
+  line-height: 1.2;
+  color: #eef1f6;
+}
+.mini-proj-catch {
+  font-size: 6.6pt;
+  color: #a7b1c2;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+/* Ligne de preuve : un FAIT (« en production · 94 k lignes ») — plus clair que l'accroche,
+   sans être de l'or (l'or est déjà pris par le titre de poste). */
+.proj-proof, .mini-proj-proof {
+  color: #dde3ec;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.proj-proof { font-size: 7pt; }
+.mini-proj-proof { font-size: 6pt; }
+.mini-proj-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+}
+.mini-pill {
+  background: #0b1220;
+  color: #9aa7ba;
+  border-radius: 2px;
+  padding: 0 4px;
+  font-size: 5.5pt;
+  font-weight: 600;
+}
+
+/* ─── COMPÉTENCES (colonne) ──────────────────────────────── */
+.skill-group { margin-bottom: 15px; }
+.skill-cat {
+  font-size: 6.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7d889c;
+  margin-bottom: 7px;
+}
+.skill-item { margin-bottom: 7px; }
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.skill-name {
+  font-size: 8pt;
+  font-weight: 600;
+  color: #dde3ec;
+}
+.skill-lvl {
+  font-size: 6.5pt;
+  color: #7d889c;
+}
+.bar {
+  height: 2px;
+  background: #1a2336;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: #8ea2bd;
+  border-radius: 1px;
+}
+.edu-school { font-size: 8pt; font-weight: 600; color: #dde3ec; }
+.edu-detail { font-size: 7pt; color: #7d889c; margin-top: 2px; }
+
+/* ─── PIED ───────────────────────────────────────────────── */
+.footer {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 6.5pt;
+  color: #4a5568;
+  padding: 8px;
+  border-top: 1px solid #151d2d;
+}
+
+/* ─── GRAS CHINOIS ───────────────────────────────────────── */
+/* QUOI : sur un CV zh, tout ce qui est en 600 passe en 700.
+   POURQUOI : WenQuanYi Micro Hei n'a pas de graisse grasse. Chromium la simule à 700, PAS à
+   600 : les noms chinois sortaient maigres à côté des noms latins en gras (mesuré le
+   2026-10-16). Les titres serif en 600 retombent sur WenQuanYi pour les idéogrammes : même
+   règle. Pas de contour de glyphe (text stroke) : mesuré, il fait extraire certains mots en
+   double. Verrouillé par TestGrasZh_700PourLesTitresEn600. */
+html[lang="zh"] .pill, html[lang="zh"] .proj-title, html[lang="zh"] .mini-proj-title,
+html[lang="zh"] .proj-proof, html[lang="zh"] .mini-proj-proof, html[lang="zh"] .mini-pill,
+html[lang="zh"] .skill-name, html[lang="zh"] .section-label, html[lang="zh"] .exp-title,
+html[lang="zh"] .header-role { font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══ HEADER ══════════════════════════════════════════ -->
+  <div class="header">
+    {{/* Strip ATS : .header-stealth, bande unie du haut du bandeau. Jamais en style inline. */}}
+    {{if .StealthText}}<span class="header-stealth">{{.StealthText}}</span>{{end}}
+    <div class="header-left">
+      {{if .ProfileImg}}<img src="{{.ProfileImg}}" class="profile-photo" alt="Alexis Trouvé">{{end}}
+      <div>
+        <div class="header-name">Alexis Trouvé</div>
+        <div class="header-role">{{.RoleTitle}}</div>
+        <div class="header-meta">{{index .Labels "header_meta"}}</div>
+      </div>
+    </div>
+    <div class="header-contact">
+      <div>alexistrouve.pro@gmail.com</div>
+      <div>+33 6 95 11 09 67</div>
+      <div><a href="https://github.com/AlexisTrouve">github.com/AlexisTrouve</a></div>
+      <div><a href="https://maicivy.etheryale.com">maicivy.etheryale.com</a></div>
+      <div>{{index .Labels "location"}}</div>
+    </div>
+    {{/* Crête : plan lointain (entre ciel et page), plan proche (couleur exacte de la page).
+         Vectorielle, quelques centaines d'octets dans le PDF. */}}
+    <svg class="ridge" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 40 L0 26 L70 18 L130 24 L210 9 L270 17 L330 12 L410 22 L480 6 L540 15 L600 11 L680 21 L750 8 L820 18 L880 13 L940 20 L1000 15 L1000 40 Z" fill="#09101d"/>
+      <path d="M0 40 L0 33 L90 27 L160 32 L240 22 L300 29 L380 25 L450 31 L520 20 L600 28 L660 24 L740 32 L810 23 L890 29 L950 26 L1000 30 L1000 40 Z" fill="#060911"/>
+    </svg>
+  </div>
+
+  <!-- ═══ MAIN ════════════════════════════════════════════ -->
+  <div class="main">
+
+    {{/* Résumé LLM (CV taillé sur une offre) en priorité, sinon le pitch du thème dans la langue
+         du CV (cf. config.CVTheme.Pitch) ; aucun des deux → bloc absent. */}}
+    {{if .Summary}}
+    <div class="summary"><div class="summary-text">{{.Summary}}</div></div>
+    {{else if .Pitch}}
+    <div class="summary"><div class="summary-text">{{.Pitch}}</div></div>
+    {{end}}
+
+    {{if .Experiences}}
+    <div class="section">
+      <div class="section-label"><span class="ats-anchor">{{index .Labels "ats_experiences"}}</span>{{index .Labels "experiences"}}</div>
+
+      {{range $i, $exp := .Experiences}}
+      <div class="exp-wrap">
+        <div class="stealth">{{$exp.Title}} {{$exp.Company}} {{range $exp.Technologies}}{{.}} {{end}}{{$exp.Catchphrase}}. {{chunkWords $exp.Description 30}}</div>
+
+        <div class="exp-card{{if lt .Score 0.3}} minor{{end}}">
+          <div class="exp-header">
+            <div>
+              <div class="exp-title">{{.Title}}</div>
+              <div class="exp-company">{{.Company}}</div>
+            </div>
+            <div class="exp-dates">
+              {{.StartDate.Format "01/2006"}} —
+              {{if .EndDate}}{{.EndDate.Format "01/2006"}}{{else}}{{index $.Labels "present"}}{{end}}
+            </div>
+          </div>
+          {{if .Catchphrase}}<div class="exp-catch">{{.Catchphrase}}</div>{{end}}
+          {{if .Technologies}}
+          <div class="pills">{{range .Technologies}}<span class="pill">{{.}}</span>{{end}}</div>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+    {{if .TopProjects}}
+    <div class="section">
+      <div class="section-label">{{index .Labels "projects"}}</div>
+
+      {{range .TopProjects}}
+      <div class="proj-wrap">
+        <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{.Catchphrase}}. {{chunkWords .Description 30}}</div>
+        {{/* Carte visible : titre court + 5 technos max + accroche + ligne de preuve.
+             La liste COMPLÈTE des technos reste dans le .stealth ci-dessus (ATS) : la couper à
+             l'écran ne retire aucun mot-clé du flux texte. */}}
+        <div class="proj-card">
+          <div class="proj-row">
+            <div class="proj-title">{{shortTitle .Title}}</div>
+            {{if .Technologies}}
+            <div class="pills">{{range firstN .Technologies 5}}<span class="pill">{{.}}</span>{{end}}</div>
+            {{end}}
+          </div>
+          {{if .Catchphrase}}<div class="proj-catch">{{.Catchphrase}}</div>{{end}}
+          {{if .Proof}}<div class="proj-proof">{{.Proof}}</div>{{end}}
+        </div>
+      </div>
+      {{end}}
+
+      {{if .OtherProjects}}
+      <div class="other-projects-grid">
+        {{range .OtherProjects}}
+        <div class="mini-proj">
+          <div class="stealth">{{.Title}} {{range .Technologies}}{{.}} {{end}}{{chunkWords .Description 30}}</div>
+          <div class="mini-proj-content">
+            <div class="mini-proj-title">{{shortTitle .Title}}</div>
+            {{if .Catchphrase}}<div class="mini-proj-catch">{{.Catchphrase}}</div>{{end}}
+            {{if .Proof}}<div class="mini-proj-proof">{{.Proof}}</div>{{end}}
+            {{if .Technologies}}
+            <div class="mini-proj-pills">{{range firstN .Technologies 5}}<span class="mini-pill">{{.}}</span>{{end}}</div>
+            {{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+  </div><!-- .main -->
+
+  <!-- ═══ SIDEBAR ═════════════════════════════════════════ -->
+  <div class="sidebar">
+    {{if .SkillGroups}}
+    <div class="section">
+      <div class="section-label">{{index .Labels "skills"}}</div>
+      {{range .SkillGroups}}
+      <div class="skill-group">
+        <div class="skill-cat">{{.Category}}</div>
+        {{range .Skills}}
+        <div class="skill-item">
+          <div class="skill-row">
+            <span class="skill-name">{{.Name}}</span>
+            <span class="skill-lvl">{{.YearsExperience}}{{index $.Labels "yr"}}</span>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: {{levelWidth .Level}}%;"></div></div>
+        </div>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+    <div class="section">
+      <div class="section-label">{{index .Labels "languages"}}</div>
+      <div class="skill-group">
+        <div class="skill-item">
+          <div class="skill-row"><span class="skill-name">{{index .Labels "lang_fr"}}</span><span class="skill-lvl">{{index .Labels "lvl_native"}}</span></div>
+          <div class="bar"><div class="bar-fill" style="width:100%;"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-row"><span class="skill-name">{{index .Labels "lang_en"}}</span><span class="skill-lvl">{{index .Labels "lvl_bilingual"}}</span></div>
+          <div class="bar"><div class="bar-fill" style="width:90%;"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-row"><span class="skill-name">{{index .Labels "lang_ja"}}</span><span class="skill-lvl">{{index .Labels "lvl_basic"}}</span></div>
+          <div class="bar"><div class="bar-fill" style="width:20%;"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-row"><span class="skill-name">{{index .Labels "lang_zh"}}</span><span class="skill-lvl">{{index .Labels "lvl_basic"}}</span></div>
+          <div class="bar"><div class="bar-fill" style="width:15%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">{{index .Labels "soft_skills"}}</div>
+      <div class="pills">
+        <span class="pill">{{index .Labels "soft_organisation"}}</span>
+        <span class="pill">{{index .Labels "soft_automation"}}</span>
+        <span class="pill">{{index .Labels "soft_ai"}}</span>
+        <span class="pill">{{index .Labels "soft_rpg"}}</span>
+        <span class="pill">{{index .Labels "soft_learning"}}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label"><span class="ats-anchor">{{index .Labels "ats_education"}}</span>{{index .Labels "education"}}</div>
+      <div class="skill-group">
+        <div class="skill-cat">{{index .Labels "degree"}}</div>
+        <div class="edu-school">Epitech Nantes</div>
+        <div class="edu-detail">2017 · {{index .Labels "degree_detail"}}</div>
+      </div>
+    </div>
+  </div><!-- .sidebar -->
+
+  <div class="footer">maicivy.etheryale.com</div>
+
+</div><!-- .page -->
+</body>
+</html>

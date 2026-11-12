@@ -1,0 +1,260 @@
+{
+ "lang": "zh",
+ "title": "设计方案书",
+ "subtitle": [
+  "致 Inès Morel，Tessera 首席技术官",
+  "由5个智能体用时 0:37 完成，成本 0.096 美元。"
+ ],
+ "sections": [
+  {
+   "id": "need",
+   "title": "需求重述",
+   "blocks": [
+    {
+     "type": "lead",
+     "text": "六个人每天处理 1,400 张工单，敏感案例始终由人掌控。"
+    },
+    {
+     "type": "item",
+     "text": "只有当知识库中的来源能够支撑时，才自动回复。"
+    },
+    {
+     "type": "item",
+     "text": "按明确规则转交人工，并附上工单与上下文。"
+    },
+    {
+     "type": "item",
+     "text": "每一个决策都留下可读的记录。"
+    }
+   ]
+  },
+  {
+   "id": "architecture",
+   "title": "建议的架构",
+   "blocks": [
+    {
+     "type": "diagram",
+     "diagram": {
+      "label": "建议的流程：工单、分拣、回复、校验、发送，另有人工队列和决策日志",
+      "journal": "决策日志，每张工单一行",
+      "width": 476,
+      "height": 148,
+      "margin": 2,
+      "scale": 1,
+      "journalY": 124,
+      "journalH": 24,
+      "boxH": 40,
+      "boxes": [
+       {
+        "x": 0,
+        "y": 36,
+        "w": 72,
+        "title": "工单",
+        "subtitle": "流入",
+        "human": false
+       },
+       {
+        "x": 104,
+        "y": 36,
+        "w": 99,
+        "title": "分拣器",
+        "subtitle": "轻量模型",
+        "human": false
+       },
+       {
+        "x": 235,
+        "y": 0,
+        "w": 121,
+        "title": "回复器",
+        "subtitle": "引用知识库",
+        "human": false
+       },
+       {
+        "x": 388,
+        "y": 0,
+        "w": 88,
+        "title": "校验",
+        "subtitle": "不用大模型",
+        "human": false
+       },
+       {
+        "x": 235,
+        "y": 72,
+        "w": 121,
+        "title": "人工队列",
+        "subtitle": "附简报",
+        "human": true
+       }
+      ],
+      "edges": [
+       {
+        "d": "M72,56H98",
+        "head": "M104,56l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M203,50C219,50 219,20 229,20",
+        "head": "M235,20l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M203,62C219,62 219,92 229,92",
+        "head": "M235,92l-6,-3.5v7z",
+        "dashed": true
+       },
+       {
+        "d": "M356,20H382",
+        "head": "M388,20l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M432,40V92H362",
+        "head": "M356,92l6,-3.5v7z",
+        "dashed": true
+       }
+      ],
+      "steps": [
+       {
+        "n": 1,
+        "x": 88,
+        "y": 56
+       },
+       {
+        "n": 3,
+        "x": 219,
+        "y": 77
+       },
+       {
+        "n": 2,
+        "x": 432,
+        "y": 66
+       }
+      ]
+     }
+    },
+    {
+     "type": "item",
+     "text": "工单只被引用，绝不被执行。"
+    },
+    {
+     "type": "item",
+     "text": "任何发送之前，先经过不依赖大模型的校验。"
+    },
+    {
+     "type": "item",
+     "text": "只有当分拣器拿不准时，才调用更强的模型。"
+    }
+   ]
+  },
+  {
+   "id": "proofs",
+   "title": "证明这一点的项目",
+   "blocks": [
+    {
+     "type": "proof",
+     "projectId": "melodicode",
+     "why": "协调者把任务委派给相互隔离的智能体；由人做决定。",
+     "demo": {
+      "kind": "video",
+      "url": "https://maiprofiles.etheryale.com/images/img_84394adc"
+     }
+    },
+    {
+     "type": "proof",
+     "projectId": "openclaw_platform",
+     "why": "智能体 SaaS：敏感操作由客户确认。"
+    },
+    {
+     "type": "proof",
+     "projectId": "envoia",
+     "why": "外部内容无法左右系统的行动。"
+    },
+    {
+     "type": "proof",
+     "projectId": "maicivy",
+     "why": "本网站：七个由智能体驱动的管理工具。",
+     "demo": {
+      "kind": "site",
+      "url": "http://localhost:3000/fr"
+     }
+    },
+    {
+     "type": "also",
+     "projectIds": [
+      "momos",
+      "claude_orchestrator",
+      "civjdr_roman",
+      "demiurgos_game_master",
+      "anthropic_vendor_proxy"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "contribution",
+   "title": "Alexis 带来的价值",
+   "blocks": [
+    {
+     "type": "item",
+     "text": "从架构设计到上线运行，端到端负责。"
+    },
+    {
+     "type": "item",
+     "text": "安全护栏用代码实现，并像其他部分一样经过测试。"
+    },
+    {
+     "type": "item",
+     "text": "每张工单的成本可度量，并通过模型分级加以控制。"
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "下一步",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "text": "先通 30 分钟电话，确定工单系统、敏感类别和语言。然后用您的一批工单样本做出原型。"
+    },
+    {
+     "type": "contact"
+    }
+   ]
+  }
+ ],
+ "labels": {
+  "project": "项目",
+  "status": "状态",
+  "lines": "代码行",
+  "tests": "测试",
+  "demo": "演示",
+  "video": "视频",
+  "site": "网站",
+  "none": "无公开演示",
+  "also": "同样入选：{names}。",
+  "contact": "联系 Alexis",
+  "replayNote": "回放示例：预先录制的场景，未调用 AI。项目数据取自真实项目档案。",
+  "statuses": {
+   "production": "已上线",
+   "active": "活跃",
+   "wip": "进行中",
+   "R&D": "研发",
+   "retired": "已停用"
+  },
+  "skills": {
+   "title": "所用技能",
+   "lead": "根据作为证据的项目自动关联：这些项目所运用的 Alexis 个人技能，以及它们共同使用的技术。",
+   "skill": "技能",
+   "level": "水平",
+   "source": "见于",
+   "need": "需求中提及",
+   "technologies": "多个证据项目共用的技术",
+   "levels": {
+    "expert": "专家",
+    "advanced": "高级",
+    "intermediate": "中级",
+    "beginner": "入门"
+   }
+  }
+ }
+}

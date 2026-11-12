@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Palette UNIQUE du site public — la nuit de la montagne. Il n'y a plus de mode clair.
+     Chaque teinte est RELEVÉE dans l'univers déjà validé, pas inventée :
+       background  #04060b  ciel de la montagne (montagne.module.css › .sky, bandeau d'origine)
+       card        #0b111c  panneaux de la fleur (MontagneFlower, FlowerCard)
+       secondary / muted / accent  #121b2c  surface relevée de la montagne
+       foreground  #efe6d2  ivoire du nom et de la voix (MontagneVoice)
+       muted-fg    #9aa2ab  --dv-muted (dossier-vivant.module.css)
+       border      #282e36  --dv-rule
+       ring        #d9b45f  or du focus de la montagne (focus-visible:ring-gold)
+       destructive #ed8d7d  --dv-alert (toujours doublé d'un glyphe ✕ dans l'UI)
+     `primary` n'est PAS l'or : doctrine — l'or marque UNE action principale par écran, pas tous
+     les boutons. Le primaire est l'ivoire, encre sombre dessus (--dv-gold-ink #0b0d12). */
+  :root {
+    --background: 223 47% 2.9%;
+    --foreground: 41 48% 88%;
+    --card: 219 44% 7.6%;
+    --card-foreground: 41 48% 88%;
+    --popover: 219 44% 7.6%;
+    --popover-foreground: 41 48% 88%;
+    --primary: 41 48% 88%;
+    --primary-foreground: 223 24% 5.7%;
+    --secondary: 219 42% 12.2%;
+    --secondary-foreground: 41 48% 88%;
+    --muted: 219 42% 12.2%;
+    --muted-foreground: 212 9% 63.7%;
+    --accent: 219 42% 12.2%;
+    --accent-foreground: 41 48% 88%;
+    --destructive: 9 76% 71%;
+    --destructive-foreground: 223 24% 5.7%;
+    --border: 214 15% 18.4%;
+    --input: 214 15% 18.4%;
+    --ring: 42 62% 61.2%;
+    --radius: 0.5rem;
+    /* Repli de la police de titre hors des deux surfaces (pages racines sans layout public). */
+    --font-heading: ui-serif, Georgia, serif;
+  }
+
+  /* Site public (posé sur le <body> de app/[locale]/layout.tsx) : titres dans la serif de la
+     montagne (lib/montagne/fonts.ts). Le chinois n'est pas dans ses glyphes : repli sur une serif
+     CJK du système, comme .serif de montagne.module.css. */
+  .site-public {
+    --font-heading: var(--font-montagne-serif), 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  }
+  /* :where() garde la spécificité de .site-public seule : une classe utilitaire posée sur un titre
+     (font-sans, font-mono) l'emporte toujours. */
+  .site-public :where(h1, h2, h3) {
+    font-family: var(--font-heading);
+  }
+
+  /* Panneau admin — figé tel qu'il était. QUOI : les valeurs exactes que l'admin résolvait avant la
+     refonte (l'ancien :root, puisque son <html> n'a jamais porté `.dark`) et sa police de titre.
+     POURQUOI : app/admin partage ce fichier et tailwind.config ; sans ce bloc, la palette de la
+     montagne repeindrait ses bordures par défaut (`* { border-border }`) et ses titres passeraient
+     en serif. L'admin a son propre langage (surface-*, gold) et ne doit pas bouger. COMMENT : posé
+     sur .admin-surface, classe du <body> de app/admin/layout.tsx — toute la sous-arborescence (et
+     les portails Radix, montés dans <body>) en hérite. */
+  .admin-surface {
+    --background: 0 0% 98%;
+    --foreground: 222.2 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47% 11%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --font-heading: var(--font-poppins), sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+/* Curseur clignotant pour le streaming */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ─── Panneau admin — surface et filets dorés ─────────────────────────
+   POURQUOI ici et pas en classes Tailwind : ces deux effets reposent sur un
+   pseudo-élément et sur des dégradés à plusieurs arrêts, que les utilitaires ne
+   savent pas exprimer sans une chaîne arbitraire illisible répétée à chaque appel.
+
+   Portée : classes préfixées `admin-`, appliquées uniquement sous /admin. Le site
+   public ne les référence nulle part. */
+
+/* Fond du panneau : slate profond + une lueur dorée très diluée en haut à gauche,
+   qui ancre visuellement la sidebar sans éclairer la zone de travail. Les
+   pourcentages restent volontairement faibles (~4 %) — au-delà, l'or vire au brun
+   sale sur les dalles non calibrées. */
+.admin-surface {
+  background-color: #060911;
+  background-image:
+    radial-gradient(60rem 40rem at 0% -10%, rgba(217, 180, 95, 0.05), transparent 60%),
+    radial-gradient(50rem 30rem at 100% 0%, rgba(56, 130, 246, 0.04), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Filet doré sur l'arête supérieure d'un panneau. Dégradé transparent → or →
+   transparent : le trait s'éteint sur les bords au lieu de se terminer net, ce qui
+   évite l'effet « bordure ajoutée » et le fait lire comme une lumière rasante.
+   Le parent DOIT être `relative` (les primitives s'en chargent). */
+.admin-hairline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  top: 0;
+  height: 1px;
+  /* Trois arrêts plutôt qu'un : le cœur du trait monte à 0.85 pour être franchement visible, mais
+     s'éteint vite de part et d'autre. Un dégradé à deux arrêts donnait un trait uniformément pâle —
+     visible nulle part, présent partout. */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(217, 180, 95, 0.25) 20%,
+    rgba(240, 213, 144, 0.85) 50%,
+    rgba(217, 180, 95, 0.25) 80%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Lueur dorée diffuse SOUS le filet, à l'intérieur du panneau. Sépare un panneau qui porte le
+   livrable d'un panneau ordinaire, sans ajouter ni bordure ni couleur de fond — donc sans réduire
+   la lisibilité du texte qu'il contient. */
+.admin-hairline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4rem;
+  background: linear-gradient(180deg, rgba(217, 180, 95, 0.07), transparent);
+  pointer-events: none;
+  border-radius: inherit;
+}

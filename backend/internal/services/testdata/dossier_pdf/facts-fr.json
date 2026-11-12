@@ -1,0 +1,3359 @@
+{
+ "_source": "Instantané du 2026-11-05 : GET /api/v1/montagne?lang=fr (maicivy), GET /projects?lang=fr et GET /skills?lang=fr (maiProFiles) — seuls les champs lus par le PDF du dossier.",
+ "nodes": [
+  {
+   "id": "aissia_celuna",
+   "name": "AISSIA (CELUNA)",
+   "monogram": "AI"
+  },
+  {
+   "id": "anthropic_vendor_proxy",
+   "name": "Anthropic Vendor Proxy",
+   "monogram": "AV"
+  },
+  {
+   "id": "aria_desktop_assistant",
+   "name": "Aria",
+   "monogram": "Ar"
+  },
+  {
+   "id": "ats_screener",
+   "name": "ATS Screener",
+   "monogram": "AS"
+  },
+  {
+   "id": "auguryale",
+   "name": "auguryale",
+   "monogram": "Au"
+  },
+  {
+   "id": "aurelm_gm_toolkit",
+   "name": "Aurelm",
+   "monogram": "Au"
+  },
+  {
+   "id": "aveg",
+   "name": "AVEG",
+   "monogram": "AV"
+  },
+  {
+   "id": "blockchain_trilogy",
+   "name": "Blockchain Trilogy",
+   "monogram": "BT"
+  },
+  {
+   "id": "bseej",
+   "name": "BSeeJ",
+   "monogram": "BS"
+  },
+  {
+   "id": "civjdr",
+   "name": "CivJDR",
+   "monogram": "CJ"
+  },
+  {
+   "id": "civjdr_roman",
+   "name": "CivJDR Roman",
+   "monogram": "CN"
+  },
+  {
+   "id": "class_generator_2",
+   "name": "Class Generator 2.0",
+   "monogram": "CG"
+  },
+  {
+   "id": "claude_orchestrator",
+   "name": "ClaudeOrchestrator",
+   "monogram": "CO"
+  },
+  {
+   "id": "claudeduo_messaging",
+   "name": "ClaudeDuo",
+   "monogram": "CD"
+  },
+  {
+   "id": "clawkit_installer",
+   "name": "ClawKit",
+   "monogram": "CK"
+  },
+  {
+   "id": "coco_seo",
+   "name": "CoconSEO",
+   "monogram": "CS"
+  },
+  {
+   "id": "codeur_notify",
+   "name": "Codeur Notify",
+   "monogram": "CN"
+  },
+  {
+   "id": "confluent_language",
+   "name": "Confluent",
+   "monogram": "Co"
+  },
+  {
+   "id": "daedalium",
+   "name": "Daedalium",
+   "monogram": "Da"
+  },
+  {
+   "id": "daos",
+   "name": "DAOS (Dawi: Age of Stone)",
+   "monogram": "DA"
+  },
+  {
+   "id": "demiurgos_game_master",
+   "name": "Demiurgos",
+   "monogram": "De"
+  },
+  {
+   "id": "drifterra",
+   "name": "Drifterra",
+   "monogram": "Dr"
+  },
+  {
+   "id": "eikon",
+   "name": "Eikon",
+   "monogram": "Ei"
+  },
+  {
+   "id": "emergika",
+   "name": "Emergika",
+   "monogram": "Em"
+  },
+  {
+   "id": "envoia",
+   "name": "EnvoIA",
+   "monogram": "EI"
+  },
+  {
+   "id": "etheryale_api_gateway",
+   "name": "Etheryale",
+   "monogram": "Et"
+  },
+  {
+   "id": "etheryale_dashboard",
+   "name": "Etheryale Dashboard",
+   "monogram": "ED"
+  },
+  {
+   "id": "etheryale_duo",
+   "name": "etheryale_duo",
+   "monogram": "ED"
+  },
+  {
+   "id": "etheryale_studio",
+   "name": "Etheryale Studio",
+   "monogram": "ES"
+  },
+  {
+   "id": "feed_generator",
+   "name": "Feed Generator",
+   "monogram": "FG"
+  },
+  {
+   "id": "fractax",
+   "name": "FractaX",
+   "monogram": "FX"
+  },
+  {
+   "id": "freelance_os",
+   "name": "Freelance OS",
+   "monogram": "FO"
+  },
+  {
+   "id": "gitea_commit_brief_mcp",
+   "name": "Gitea Commit Brief MCP",
+   "monogram": "GC"
+  },
+  {
+   "id": "github_claude_scraper",
+   "name": "GitHub Claude Co-Author Scraper",
+   "monogram": "GC"
+  },
+  {
+   "id": "goldentoken",
+   "name": "GoldenToken",
+   "monogram": "GT"
+  },
+  {
+   "id": "grimorium_rag_screenwriting",
+   "name": "Grimorium",
+   "monogram": "Gr"
+  },
+  {
+   "id": "grove_engine",
+   "name": "GroveEngine",
+   "monogram": "GE"
+  },
+  {
+   "id": "hanasuba_nutrition",
+   "name": "Hanasuba",
+   "monogram": "Ha"
+  },
+  {
+   "id": "haomirai",
+   "name": "Haomirai",
+   "monogram": "Ha"
+  },
+  {
+   "id": "iliodys",
+   "name": "Iliodys",
+   "monogram": "Il"
+  },
+  {
+   "id": "indeed_outreach",
+   "name": "IndeedOutreach",
+   "monogram": "IO"
+  },
+  {
+   "id": "knowledgemapper",
+   "name": "KnowledgeMapper",
+   "monogram": "KM"
+  },
+  {
+   "id": "ladderkeg",
+   "name": "ladderKeg",
+   "monogram": "LK"
+  },
+  {
+   "id": "lecodeurfou",
+   "name": "LeCodeurFou",
+   "monogram": "LC"
+  },
+  {
+   "id": "linkedin_ghost",
+   "name": "LinkedIn Ghost",
+   "monogram": "LG"
+  },
+  {
+   "id": "liveconf",
+   "name": "LiveConf",
+   "monogram": "LC"
+  },
+  {
+   "id": "luceriane_rag",
+   "name": "LucerianeRAG",
+   "monogram": "LR"
+  },
+  {
+   "id": "magistryale",
+   "name": "Magistryale",
+   "monogram": "Ma"
+  },
+  {
+   "id": "maicivy",
+   "name": "maicivy",
+   "monogram": "Ma"
+  },
+  {
+   "id": "megura_colony_ml",
+   "name": "MeguraColony ML",
+   "monogram": "MM"
+  },
+  {
+   "id": "melodicode",
+   "name": "MelodiCode",
+   "monogram": "MC"
+  },
+  {
+   "id": "mobile_command",
+   "name": "Mobile Command",
+   "monogram": "MC"
+  },
+  {
+   "id": "momos",
+   "name": "Momos",
+   "monogram": "Mo"
+  },
+  {
+   "id": "monkey_scraper",
+   "name": "MonkeyScraper",
+   "monogram": "MS"
+  },
+  {
+   "id": "omniscyra_news_aggregator",
+   "name": "Omniscyra",
+   "monogram": "Om"
+  },
+  {
+   "id": "openclaw_platform",
+   "name": "OpenClaw Platform",
+   "monogram": "OP"
+  },
+  {
+   "id": "project_tracker",
+   "name": "ProjectTracker",
+   "monogram": "PT"
+  },
+  {
+   "id": "projectmind",
+   "name": "ProjectMind",
+   "monogram": "PM"
+  },
+  {
+   "id": "reddit_mcp_server",
+   "name": "Reddit MCP Server",
+   "monogram": "RM"
+  },
+  {
+   "id": "rifting_void",
+   "name": "Rifting Void",
+   "monogram": "RV"
+  },
+  {
+   "id": "secondvoice_translation",
+   "name": "SecondVoice",
+   "monogram": "SV"
+  },
+  {
+   "id": "seo_generator",
+   "name": "SEO Generator",
+   "monogram": "SG"
+  },
+  {
+   "id": "solengine",
+   "name": "SolEngine",
+   "monogram": "SE"
+  },
+  {
+   "id": "soliano",
+   "name": "Soliano",
+   "monogram": "So"
+  },
+  {
+   "id": "sourcefinder",
+   "name": "SourceFinder",
+   "monogram": "SF"
+  },
+  {
+   "id": "theomen",
+   "name": "Theomen",
+   "monogram": "Th"
+  },
+  {
+   "id": "totp_vault",
+   "name": "TOTP Vault",
+   "monogram": "TV"
+  },
+  {
+   "id": "twitter_scraper",
+   "name": "twitterScraper",
+   "monogram": "TS"
+  },
+  {
+   "id": "unreal_engine_ai_suite",
+   "name": "Suite de développement IA pour Unreal Engine",
+   "monogram": "UE"
+  },
+  {
+   "id": "vault_system",
+   "name": "VaultSystem",
+   "monogram": "VS"
+  },
+  {
+   "id": "veracite",
+   "name": "Veracite",
+   "monogram": "Ve"
+  },
+  {
+   "id": "video_to_mp3_transcriptor",
+   "name": "Video to MP3 Transcriptor",
+   "monogram": "VM"
+  },
+  {
+   "id": "wanmira",
+   "name": "WanMira",
+   "monogram": "WM"
+  },
+  {
+   "id": "warfactoryracine",
+   "name": "Warfactory",
+   "monogram": "Wa"
+  },
+  {
+   "id": "wechat_homework_bot",
+   "name": "WeChat Homework Bot",
+   "monogram": "WH"
+  }
+ ],
+ "projects": [
+  {
+   "id": "aissia_celuna",
+   "status": "active",
+   "stats": {
+    "loc": 18257,
+    "tests": 133
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "groveengine",
+    "sqlite",
+    "nlohmann/json",
+    "spdlog",
+    "cpp-httplib",
+    "catch2",
+    "espeak-ng",
+    "whisper.cpp",
+    "vosk",
+    "pocketsphinx",
+    "claude api",
+    "openai api",
+    "mcp"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "cmake",
+    "groveengine",
+    "hot-reload",
+    "pub/sub messaging",
+    "mcp",
+    "json-rpc",
+    "sqlite",
+    "tts",
+    "stt",
+    "llm api",
+    "catch2",
+    "desktop application",
+    "Architecture Logicielle",
+    "AI / LLM Integration",
+    "MCP (Model Context Protocol)",
+    "Programmation systèmes"
+   ]
+  },
+  {
+   "id": "anthropic_vendor_proxy",
+   "status": "production",
+   "stats": {
+    "loc": 333,
+    "tests": 0
+   },
+   "stack": [
+    "node.js",
+    "express.js",
+    "http proxy",
+    "sse streaming"
+   ],
+   "tags": [
+    "node.js",
+    "express.js",
+    "rest api",
+    "api gateway",
+    "http proxy",
+    "sse",
+    "streaming",
+    "api integration",
+    "devops",
+    "infrastructure",
+    "ai integration",
+    "backend",
+    "failover",
+    "api design",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "aria_desktop_assistant",
+   "status": "production",
+   "stats": {
+    "loc": 28346,
+    "tests": 51
+   },
+   "stack": [
+    "flutter",
+    "node.js",
+    "express",
+    "sqlite",
+    "playwright",
+    "docx",
+    "pptxgenjs",
+    "exceljs",
+    "pdf-parse",
+    "mammoth",
+    "riverpod",
+    "gorouter",
+    "dio",
+    "better-sqlite3",
+    "multer"
+   ],
+   "tags": [
+    "flutter",
+    "desktop",
+    "node.js",
+    "ai",
+    "full-stack",
+    "cross-platform",
+    "streaming",
+    "sse",
+    "sqlite",
+    "playwright",
+    "e2e-testing",
+    "office-generation",
+    "i18n",
+    "localization",
+    "ai-integration",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "ats_screener",
+   "status": "production",
+   "stats": {
+    "loc": 0,
+    "tests": 0
+   },
+   "stack": [
+    "sveltekit",
+    "svelte",
+    "typescript",
+    "firebase",
+    "firestore",
+    "vercel",
+    "pdfjs",
+    "mammoth",
+    "gemma",
+    "llama",
+    "groq",
+    "vitest",
+    "playwright"
+   ],
+   "tags": [
+    "sveltekit",
+    "typescript",
+    "firebase",
+    "vercel",
+    "ai integration",
+    "nlp",
+    "frontend",
+    "full-stack",
+    "open source",
+    "saas",
+    "privacy-first",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "aurelm_gm_toolkit",
+   "status": "production",
+   "stats": {
+    "loc": 80093,
+    "tests": 720
+   },
+   "stack": [
+    "flutter",
+    "dart",
+    "python",
+    "typescript",
+    "discord.py",
+    "openai sdk",
+    "ollama",
+    "openrouter",
+    "aiohttp",
+    "sqlite",
+    "riverpod",
+    "gorouter",
+    "drift orm",
+    "better-sqlite3",
+    "mkdocs",
+    "inno setup"
+   ],
+   "tags": [
+    "python",
+    "flutter",
+    "dart",
+    "typescript",
+    "machine learning",
+    "nlp",
+    "llm integration",
+    "desktop application",
+    "discord bot",
+    "sqlite",
+    "entity extraction",
+    "ai agent",
+    "agent tooling",
+    "spatial reasoning",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "Machine Learning",
+    "MCP (Model Context Protocol)"
+   ]
+  },
+  {
+   "id": "blockchain_trilogy",
+   "status": "active",
+   "stats": {
+    "loc": 1135,
+    "tests": 0
+   },
+   "stack": [
+    "rust",
+    "axum",
+    "tokio",
+    "flutter",
+    "riverpod",
+    "dio",
+    "gorouter",
+    "clap",
+    "reqwest",
+    "ed25519-dalek",
+    "sha2",
+    "thiserror",
+    "anyhow",
+    "freezed",
+    "fl_chart",
+    "flutter_secure_storage"
+   ],
+   "tags": [
+    "rust",
+    "flutter",
+    "blockchain",
+    "rest api",
+    "systems programming",
+    "mobile development",
+    "cryptography",
+    "ed25519",
+    "sha-256",
+    "axum",
+    "tokio",
+    "riverpod",
+    "full-stack",
+    "cli",
+    "pow",
+    "clean architecture",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "class_generator_2",
+   "status": "production",
+   "stats": {
+    "loc": 112503,
+    "tests": 172
+   },
+   "stack": [
+    "javascript",
+    "vanilla js",
+    "es6 modules",
+    "node.js",
+    "openai",
+    "deepseek"
+   ],
+   "tags": [
+    "javascript",
+    "vanilla js",
+    "node.js",
+    "ai integration",
+    "openai api",
+    "edtech",
+    "architecture design",
+    "event-driven systems",
+    "module pattern",
+    "web application development",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "claudeduo_messaging",
+   "status": "retired",
+   "stats": {
+    "loc": 2027,
+    "tests": 0
+   },
+   "stack": [
+    "node.js",
+    "express.js",
+    "sqlite",
+    "better-sqlite3",
+    "mcp sdk",
+    "javascript"
+   ],
+   "tags": [
+    "node.js",
+    "express.js",
+    "sqlite",
+    "rest api",
+    "long-polling",
+    "authentication",
+    "api development",
+    "javascript",
+    "real-time systems",
+    "mcp",
+    "backend",
+    "messaging",
+    "ai infrastructure",
+    "API Development",
+    "Architecture Logicielle",
+    "MCP (Model Context Protocol)"
+   ]
+  },
+  {
+   "id": "claude_orchestrator",
+   "status": "production",
+   "stats": {
+    "loc": 2686,
+    "tests": 82
+   },
+   "stack": [
+    "python",
+    "asyncio",
+    "pydantic",
+    "git",
+    "gitea",
+    "github",
+    "claude api",
+    "yaml",
+    "json",
+    "pytest"
+   ],
+   "tags": [
+    "python",
+    "asyncio",
+    "ai",
+    "llm",
+    "devops",
+    "automation",
+    "git",
+    "ci/cd",
+    "pydantic",
+    "api integration",
+    "process automation",
+    "claude api",
+    "production",
+    "microservices",
+    "orchestration",
+    "Automatisation",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "clawkit_installer",
+   "status": "production",
+   "stats": {
+    "loc": 13724,
+    "tests": 57
+   },
+   "stack": [
+    "electron",
+    "electron-builder",
+    "node.js",
+    "javascript",
+    "express",
+    "better-sqlite3",
+    "bytenode",
+    "nat-upnp",
+    "node-fetch",
+    "codemagic",
+    "launchd",
+    "powershell",
+    "sse"
+   ],
+   "tags": [
+    "electron",
+    "node.js",
+    "javascript",
+    "desktop application",
+    "cross-platform",
+    "license management",
+    "reverse proxy",
+    "sse streaming",
+    "windows",
+    "macos",
+    "ci/cd",
+    "sqlite",
+    "express",
+    "installer",
+    "API Development",
+    "Architecture Logicielle",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "coco_seo",
+   "status": "production",
+   "stats": {
+    "loc": 69977,
+    "tests": 1059
+   },
+   "stack": [
+    "flutter",
+    "rust",
+    "python",
+    "mysql",
+    "docker",
+    "actix-web",
+    "tokio",
+    "sqlx",
+    "riverpod",
+    "go_router",
+    "aiohttp",
+    "claude api",
+    "prometheus",
+    "wordpress",
+    "woocommerce"
+   ],
+   "tags": [
+    "flutter",
+    "rust",
+    "python",
+    "mysql",
+    "docker",
+    "saas",
+    "seo",
+    "ai",
+    "microservices",
+    "api",
+    "wordpress",
+    "production",
+    "full-stack",
+    "Architecture Logicielle",
+    "AI / LLM Integration",
+    "Automatisation",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "codeur_notify",
+   "status": "active",
+   "stats": {
+    "loc": 0,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "claude haiku",
+    "discord webhooks",
+    "rss parsing",
+    "json"
+   ],
+   "tags": [
+    "python",
+    "automation",
+    "ai integration",
+    "claude",
+    "discord",
+    "web scraping",
+    "lead generation",
+    "rss",
+    "api integration",
+    "data analysis",
+    "microservices",
+    "production",
+    "Scraping",
+    "Automatisation",
+    "AI / LLM Integration",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "confluent_language",
+   "status": "production",
+   "stats": {
+    "loc": 46629,
+    "tests": 192
+   },
+   "stack": [
+    "node.js",
+    "express",
+    "claude api",
+    "json",
+    "jwt",
+    "bcrypt",
+    "express-rate-limit",
+    "server-sent events",
+    "svg",
+    "html",
+    "playwright",
+    "pm2",
+    "nginx",
+    "python",
+    "rest api"
+   ],
+   "tags": [
+    "natural language processing",
+    "linguistics",
+    "conlang",
+    "writing system",
+    "llm agent",
+    "prompt engineering",
+    "claude api",
+    "node.js",
+    "express",
+    "svg rendering",
+    "playwright",
+    "pm2",
+    "worldbuilding",
+    "game development",
+    "AI / LLM Integration",
+    "API Development",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "demiurgos_game_master",
+   "status": "production",
+   "stats": {
+    "loc": 58602,
+    "tests": 1112
+   },
+   "stack": [
+    "python",
+    "fastapi",
+    "uvicorn",
+    "pytest",
+    "sqlite",
+    "openai-sdk",
+    "flutter",
+    "dart",
+    "react",
+    "vite",
+    "websocket",
+    "yaml",
+    "pm2",
+    "debian"
+   ],
+   "tags": [
+    "python",
+    "fastapi",
+    "sqlite",
+    "flutter",
+    "react",
+    "llm",
+    "ai",
+    "agent",
+    "game engine",
+    "websocket",
+    "full-stack",
+    "api",
+    "backend",
+    "AI / LLM Integration",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle",
+    "API Development",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "etheryale_dashboard",
+   "status": "production",
+   "stats": {
+    "loc": 9876,
+    "tests": 112
+   },
+   "stack": [
+    "flutter",
+    "flutter web",
+    "riverpod",
+    "gorouter",
+    "dio",
+    "flutter_localizations",
+    "intl",
+    "fl_chart",
+    "stripe",
+    "jwt",
+    "node.js",
+    "rest api",
+    "sqlite",
+    "nginx"
+   ],
+   "tags": [
+    "flutter",
+    "flutter web",
+    "riverpod",
+    "gorouter",
+    "saas",
+    "dashboard",
+    "stripe",
+    "payment",
+    "i18n",
+    "localization",
+    "gamification",
+    "jwt",
+    "rest api",
+    "frontend",
+    "state management",
+    "ui/ux",
+    "production",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "etheryale_api_gateway",
+   "status": "production",
+   "stats": {
+    "loc": 9876,
+    "tests": 112
+   },
+   "stack": [
+    "node.js",
+    "express.js",
+    "sqlite",
+    "better-sqlite3",
+    "jwt",
+    "bcrypt",
+    "stripe",
+    "flutter",
+    "jest",
+    "supertest",
+    "docker",
+    "docker-compose",
+    "nginx",
+    "node-cron",
+    "express-rate-limit",
+    "http-proxy-middleware"
+   ],
+   "tags": [
+    "node.js",
+    "express.js",
+    "sqlite",
+    "rest api",
+    "stripe integration",
+    "jwt authentication",
+    "flutter",
+    "docker",
+    "saas backend",
+    "api gateway",
+    "billing",
+    "payments",
+    "rate limiting",
+    "multi-tenant",
+    "account rotation",
+    "webhook handling",
+    "API Development",
+    "Architecture Logicielle",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "feed_generator",
+   "status": "production",
+   "stats": {
+    "loc": 2448,
+    "tests": 36
+   },
+   "stack": [
+    "python",
+    "python 3",
+    "mypy",
+    "pytest",
+    "gpt-4 vision",
+    "openai api",
+    "rss",
+    "atom",
+    "feedgen",
+    "asyncio",
+    "node.js"
+   ],
+   "tags": [
+    "python",
+    "data engineering",
+    "ai integration",
+    "content automation",
+    "gpt-4",
+    "web scraping",
+    "rss",
+    "type hints",
+    "mypy",
+    "pytest",
+    "pipeline",
+    "api integration",
+    "production",
+    "data pipeline",
+    "openai",
+    "asyncio",
+    "Scraping",
+    "AI / LLM Integration",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "gitea_commit_brief_mcp",
+   "status": "production",
+   "stats": {
+    "loc": 1297,
+    "tests": 23
+   },
+   "stack": [
+    "typescript",
+    "node.js",
+    "mcp sdk",
+    "gitea rest api",
+    "zod",
+    "fetch"
+   ],
+   "tags": [
+    "typescript",
+    "node.js",
+    "mcp",
+    "rest api integration",
+    "gitea",
+    "git",
+    "developer tools",
+    "api development",
+    "ai integration",
+    "automation",
+    "MCP (Model Context Protocol)",
+    "API Development",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "github_claude_scraper",
+   "status": "active",
+   "stats": {
+    "loc": 0,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "pygithub",
+    "camoufox",
+    "beautifulsoup",
+    "mongodb",
+    "docker",
+    "docker-compose"
+   ],
+   "tags": [
+    "python",
+    "web scraping",
+    "github api",
+    "beautifulsoup",
+    "mongodb",
+    "data engineering",
+    "lead generation",
+    "api automation",
+    "docker",
+    "data pipeline",
+    "pygithub",
+    "camoufox",
+    "browser automation",
+    "Scraping",
+    "API Development"
+   ]
+  },
+  {
+   "id": "grimorium_rag_screenwriting",
+   "status": "production",
+   "stats": {
+    "loc": 1454,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "fastapi",
+    "uvicorn",
+    "starlette",
+    "mcp",
+    "chromadb",
+    "sentence-transformers",
+    "anthropic claude",
+    "qwen3",
+    "openrouter",
+    "pdfplumber",
+    "pytesseract",
+    "pillow",
+    "sqlite"
+   ],
+   "tags": [
+    "rag",
+    "python",
+    "fastapi",
+    "chromadb",
+    "embeddings",
+    "sentence-transformers",
+    "mcp",
+    "claude",
+    "openrouter",
+    "qwen3",
+    "pdf processing",
+    "ocr",
+    "vector search",
+    "sqlite",
+    "AI / LLM Integration",
+    "MCP (Model Context Protocol)",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "grove_engine",
+   "status": "active",
+   "stats": {
+    "loc": 124750,
+    "tests": 1055
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "bgfx",
+    "sdl2",
+    "sdl2_mixer",
+    "catch2",
+    "spdlog",
+    "nlohmann_json",
+    "ffmpeg",
+    "stb_truetype",
+    "miniz",
+    "threadsanitizer",
+    "gitea actions",
+    "windows",
+    "linux"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "game-development",
+    "systems-programming",
+    "engine-development",
+    "cmake",
+    "cross-platform",
+    "performance-optimization",
+    "real-time-systems",
+    "module-systems",
+    "hot-reload",
+    "bgfx",
+    "2d-rendering",
+    "multithreading",
+    "ai-assisted-development",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "API Development"
+   ]
+  },
+  {
+   "id": "hanasuba_nutrition",
+   "status": "production",
+   "stats": {
+    "loc": 24539,
+    "tests": 235
+   },
+   "stack": [
+    "rust",
+    "axum",
+    "tokio",
+    "sqlx",
+    "postgresql",
+    "redis",
+    "websocket",
+    "jwt",
+    "argon2",
+    "totp",
+    "prometheus",
+    "docker",
+    "docker compose",
+    "nginx",
+    "reqwest"
+   ],
+   "tags": [
+    "rust",
+    "axum",
+    "tokio",
+    "sqlx",
+    "postgresql",
+    "redis",
+    "rest api",
+    "websocket",
+    "jwt authentication",
+    "docker",
+    "prometheus",
+    "database design",
+    "async rust",
+    "nutrition software",
+    "API Development",
+    "Architecture Logicielle",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "haomirai",
+   "status": "active",
+   "stats": {
+    "loc": 39300,
+    "tests": 443
+   },
+   "stack": [
+    "flutter",
+    "dart",
+    "riverpod",
+    "gorouter",
+    "freezed",
+    "dio",
+    "jwt",
+    "websocket",
+    "material design 3",
+    "mockito",
+    "python",
+    "camoufox",
+    "github actions",
+    "docker"
+   ],
+   "tags": [
+    "flutter",
+    "dart",
+    "riverpod",
+    "gorouter",
+    "freezed",
+    "cross-platform",
+    "state management",
+    "rest api",
+    "jwt authentication",
+    "material design",
+    "dio http client",
+    "e2e testing",
+    "camoufox",
+    "github actions",
+    "productivity app",
+    "Architecture Logicielle",
+    "API Development",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "indeed_outreach",
+   "status": "production",
+   "stats": {
+    "loc": 2544,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "playwright",
+    "beautifulsoup",
+    "sqlite",
+    "claude api",
+    "clearbit api",
+    "skyvern",
+    "maicivy",
+    "smtp",
+    "discord webhooks"
+   ],
+   "tags": [
+    "python",
+    "web scraping",
+    "playwright",
+    "ai/llm integration",
+    "claude api",
+    "email automation",
+    "smtp",
+    "sqlite",
+    "beautifulsoup",
+    "browser automation",
+    "cold email",
+    "lead generation",
+    "api integration",
+    "automation",
+    "bot development",
+    "Scraping",
+    "AI / LLM Integration",
+    "Automatisation",
+    "Bot Development"
+   ]
+  },
+  {
+   "id": "knowledgemapper",
+   "status": "active",
+   "stats": {
+    "loc": 0,
+    "tests": 0
+   },
+   "stack": [
+    "typescript",
+    "node.js",
+    "d3.js",
+    "ai entity extraction",
+    "chokidar",
+    "markdown",
+    "rest/ws api"
+   ],
+   "tags": [
+    "typescript",
+    "node.js",
+    "ai",
+    "data visualization",
+    "d3.js",
+    "graph algorithms",
+    "knowledge management",
+    "developer tools",
+    "documentation",
+    "api",
+    "file watcher",
+    "markdown",
+    "AI / LLM Integration",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "linkedin_ghost",
+   "status": "active",
+   "stats": {
+    "loc": 3207,
+    "tests": 0
+   },
+   "stack": [
+    "python 3.11",
+    "camoufox",
+    "linkedin-api",
+    "claude",
+    "sqlite",
+    "loguru",
+    "async python",
+    "firefox"
+   ],
+   "tags": [
+    "python",
+    "browser automation",
+    "camoufox",
+    "social media automation",
+    "ai integration",
+    "sqlite",
+    "async python",
+    "web scraping",
+    "api integration",
+    "llm",
+    "automation",
+    "AI / LLM Integration",
+    "Scraping",
+    "Bot Development",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "liveconf",
+   "status": "production",
+   "stats": {
+    "loc": 8162,
+    "tests": 97
+   },
+   "stack": [
+    "python",
+    "fastapi",
+    "uvicorn",
+    "websocket",
+    "asyncio",
+    "sounddevice",
+    "pyaudiowpatch",
+    "wasapi",
+    "silero vad",
+    "pytorch",
+    "numpy",
+    "gpt-4o-transcribe",
+    "anthropic claude",
+    "flutter",
+    "dart"
+   ],
+   "tags": [
+    "python",
+    "fastapi",
+    "flutter",
+    "dart",
+    "audio processing",
+    "wasapi",
+    "real-time systems",
+    "ai integration",
+    "gpt-4o",
+    "claude",
+    "transcription",
+    "desktop application",
+    "windows",
+    "websocket",
+    "async",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "maicivy",
+   "status": "production",
+   "stats": {
+    "loc": 93586,
+    "tests": 1415
+   },
+   "stack": [
+    "go",
+    "fiber",
+    "gorm",
+    "postgresql",
+    "redis",
+    "next.js",
+    "typescript",
+    "tailwind css",
+    "next-intl",
+    "claude api",
+    "openai",
+    "chromedp",
+    "colly",
+    "docker",
+    "nginx",
+    "playwright"
+   ],
+   "tags": [
+    "go",
+    "next.js",
+    "typescript",
+    "postgresql",
+    "redis",
+    "docker",
+    "claude api",
+    "full-stack",
+    "websocket",
+    "pdf",
+    "i18n",
+    "production",
+    "AI / LLM Integration",
+    "API Development",
+    "Architecture Logicielle",
+    "DevOps",
+    "Scraping"
+   ]
+  },
+  {
+   "id": "megura_colony_ml",
+   "status": "wip",
+   "stats": {
+    "loc": 490,
+    "tests": 0
+   },
+   "stack": [
+    "c++20",
+    "cmake",
+    "immintrin",
+    "avx-512",
+    "x86-64",
+    "cpuid",
+    "gcc",
+    "msvc",
+    "groveengine",
+    "yaml"
+   ],
+   "tags": [
+    "c++",
+    "c++20",
+    "avx-512",
+    "simd",
+    "cmake",
+    "neural networks",
+    "game development",
+    "multi-agent systems",
+    "systems programming",
+    "prototype",
+    "research",
+    "Machine Learning",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "melodicode",
+   "status": "production",
+   "stats": {
+    "loc": 303979,
+    "tests": 11426
+   },
+   "stack": [
+    "flutter",
+    "dart",
+    "riverpod",
+    "anthropic api",
+    "websocket",
+    "mcp",
+    "firebase",
+    "desktop_multi_window",
+    "webview_windows",
+    "systemd",
+    "projectmind",
+    "gitea",
+    "powershell"
+   ],
+   "tags": [
+    "flutter",
+    "dart",
+    "ai",
+    "llm",
+    "agent systems",
+    "desktop application",
+    "developer tools",
+    "api integration",
+    "real-time streaming",
+    "state management",
+    "test automation",
+    "multi-window",
+    "remote daemon",
+    "mcp",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "MCP (Model Context Protocol)",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "mobile_command",
+   "status": "wip",
+   "stats": {
+    "loc": 269,
+    "tests": 0
+   },
+   "stack": [
+    "c++17",
+    "groveengine",
+    "cmake",
+    "mingw",
+    "gcc"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "game-development",
+    "cmake",
+    "game-engine-architecture",
+    "systems-programming",
+    "hot-reload",
+    "dynamic-loading",
+    "game-design",
+    "cross-platform-development",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "monkey_scraper",
+   "status": "production",
+   "stats": {
+    "loc": 3861,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "camoufox",
+    "asyncio",
+    "aiohttp",
+    "beautifulsoup4",
+    "lxml",
+    "click",
+    "camoufox-captcha"
+   ],
+   "tags": [
+    "web scraping",
+    "python",
+    "browser automation",
+    "captcha solving",
+    "asyncio",
+    "api integration",
+    "cli development",
+    "beautifulsoup",
+    "spa scraping",
+    "session management",
+    "Scraping",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "omniscyra_news_aggregator",
+   "status": "active",
+   "stats": {
+    "loc": 78692,
+    "tests": 436
+   },
+   "stack": [
+    "go",
+    "postgresql",
+    "pgx",
+    "goose",
+    "sql",
+    "sdmx",
+    "next.js",
+    "typescript",
+    "react",
+    "tailwind css",
+    "zustand",
+    "cytoscape.js",
+    "electron",
+    "playwright",
+    "systemd",
+    "gitea actions"
+   ],
+   "tags": [
+    "go",
+    "postgresql",
+    "sdmx",
+    "finance",
+    "data engineering",
+    "archivage",
+    "open data",
+    "next.js",
+    "typescript",
+    "systemd",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "openclaw_platform",
+   "status": "production",
+   "stats": {
+    "loc": 133324,
+    "tests": 440
+   },
+   "stack": [
+    "fastapi",
+    "next.js",
+    "typescript",
+    "postgresql",
+    "redis",
+    "docker",
+    "python",
+    "alembic"
+   ],
+   "tags": [
+    "python",
+    "fastapi",
+    "next.js",
+    "typescript",
+    "postgresql",
+    "redis",
+    "docker",
+    "rest-api",
+    "saas-architecture",
+    "full-stack-development",
+    "ai-integration",
+    "multi-tenant",
+    "API Development",
+    "Architecture Logicielle",
+    "AI / LLM Integration",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "reddit_mcp_server",
+   "status": "production",
+   "stats": {
+    "loc": 0,
+    "tests": 0
+   },
+   "stack": [
+    "typescript",
+    "node.js",
+    "mcp",
+    "reddit api",
+    "zod"
+   ],
+   "tags": [
+    "typescript",
+    "node.js",
+    "mcp",
+    "rest api integration",
+    "reddit api",
+    "developer tools",
+    "ai integration",
+    "open source",
+    "MCP (Model Context Protocol)",
+    "API Development"
+   ]
+  },
+  {
+   "id": "rifting_void",
+   "status": "active",
+   "stats": {
+    "loc": 3600,
+    "tests": 0
+   },
+   "stack": [
+    "c++17",
+    "groveengine",
+    "bgfxrenderer",
+    "cmake"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "game development",
+    "cmake",
+    "hex grid",
+    "turn-based combat",
+    "game engine architecture",
+    "game design",
+    "renderer development",
+    "systems programming",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "secondvoice_translation",
+   "status": "production",
+   "stats": {
+    "loc": 4366,
+    "tests": 0
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "vcpkg",
+    "imgui",
+    "openai whisper api",
+    "claude api",
+    "alsa",
+    "directsound",
+    "openssl",
+    "curl",
+    "nlohmann-json"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "audio processing",
+    "real-time systems",
+    "cross-platform development",
+    "ai integration",
+    "cmake",
+    "imgui",
+    "openai api",
+    "claude api",
+    "desktop application",
+    "native ui",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "seo_generator",
+   "status": "active",
+   "stats": {
+    "loc": 42965,
+    "tests": 283
+   },
+   "stack": [
+    "node.js",
+    "express",
+    "ws",
+    "axios",
+    "undici",
+    "googleapis",
+    "google-spreadsheet",
+    "aws-sdk",
+    "pino",
+    "moonshot",
+    "nodemailer",
+    "claude",
+    "openai",
+    "google gemini",
+    "mistral",
+    "deepseek"
+   ],
+   "tags": [
+    "node.js",
+    "express",
+    "ai automation",
+    "seo content generation",
+    "multi-llm orchestration",
+    "google sheets api",
+    "workflow automation",
+    "batch processing",
+    "content marketing",
+    "api integration",
+    "websocket",
+    "rest api",
+    "pipeline builder",
+    "content publishing",
+    "AI / LLM Integration",
+    "Automatisation",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "unreal_engine_ai_suite",
+   "status": "production",
+   "stats": {
+    "loc": 3282,
+    "tests": 21
+   },
+   "stack": [
+    "python",
+    "c++",
+    "typescript",
+    "unreal engine",
+    "mcp sdk"
+   ],
+   "tags": [
+    "unreal engine",
+    "c++",
+    "game development",
+    "python",
+    "api development",
+    "blueprint visual scripting",
+    "ai integration",
+    "mcp",
+    "game architecture",
+    "performance optimization",
+    "AI / LLM Integration",
+    "MCP (Model Context Protocol)",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "wanmira",
+   "status": "production",
+   "stats": {
+    "loc": 19255,
+    "tests": 416
+   },
+   "stack": [
+    "python",
+    "claude api",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "requests",
+    "pyyaml",
+    "sqlite",
+    "gitea api",
+    "projectmind",
+    "json-rpc",
+    "discord webhooks",
+    "linkedin api",
+    "git",
+    "markdown"
+   ],
+   "tags": [
+    "python",
+    "ai",
+    "claude api",
+    "agents",
+    "content generation",
+    "multi-channel publishing",
+    "plugin architecture",
+    "fastapi",
+    "sqlite",
+    "yaml configuration",
+    "tdd",
+    "privacy",
+    "Automatisation",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "API Development",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "wechat_homework_bot",
+   "status": "production",
+   "stats": {
+    "loc": 1600,
+    "tests": 0
+   },
+   "stack": [
+    "wechat mini program",
+    "wxml",
+    "wxss",
+    "javascript",
+    "node.js",
+    "postgresql",
+    "openai whisper api",
+    "gpt-4",
+    "tencent cloud cos",
+    "weui"
+   ],
+   "tags": [
+    "wechat",
+    "mini program",
+    "node.js",
+    "ai",
+    "gpt-4",
+    "whisper",
+    "edtech",
+    "postgresql",
+    "tencent cloud",
+    "mobile",
+    "audio processing",
+    "chinese",
+    "saas",
+    "AI / LLM Integration",
+    "API Development",
+    "Automatisation",
+    "Bot Development"
+   ]
+  },
+  {
+   "id": "video_to_mp3_transcriptor",
+   "status": "production",
+   "stats": {
+    "loc": 10548,
+    "tests": 0
+   },
+   "stack": [
+    "node.js",
+    "express.js",
+    "javascript",
+    "openai api",
+    "claude",
+    "yt-dlp",
+    "ffmpeg",
+    "multer",
+    "commander.js",
+    "server-sent events",
+    "python",
+    "camoufox",
+    "playwright",
+    "nginx",
+    "pm2"
+   ],
+   "tags": [
+    "node.js",
+    "express",
+    "javascript",
+    "rest api",
+    "sse",
+    "openai",
+    "claude",
+    "whisper",
+    "transcription",
+    "translation",
+    "youtube",
+    "yt-dlp",
+    "ffmpeg",
+    "cli",
+    "camoufox",
+    "API Development",
+    "AI / LLM Integration",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "veracite",
+   "status": "production",
+   "stats": {
+    "loc": 6761,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "spacy",
+    "openrouter",
+    "qwen3",
+    "ollama",
+    "sqlite",
+    "bm25",
+    "camembert",
+    "pytorch",
+    "transformers",
+    "click",
+    "rich"
+   ],
+   "tags": [
+    "ai",
+    "nlp",
+    "llm",
+    "fact-checking",
+    "hallucination-detection",
+    "worldbuilding",
+    "ner",
+    "nli",
+    "spacy",
+    "sqlite",
+    "openrouter",
+    "python",
+    "cli",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "projectmind",
+   "status": "active",
+   "stats": {
+    "loc": 4517,
+    "tests": 82
+   },
+   "stack": [
+    "TypeScript",
+    "Node.js",
+    "PostgreSQL",
+    "pgvector",
+    "Drizzle ORM",
+    "MCP SDK",
+    "Vitest",
+    "Ollama"
+   ],
+   "tags": [
+    "MCP",
+    "AI",
+    "agents",
+    "Claude",
+    "memory",
+    "PostgreSQL",
+    "pgvector",
+    "TypeScript",
+    "developer-tool",
+    "MCP (Model Context Protocol)",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "API Development"
+   ]
+  },
+  {
+   "id": "goldentoken",
+   "status": "active",
+   "stats": {
+    "loc": 28153,
+    "tests": 945
+   },
+   "stack": [
+    "python",
+    "mcp",
+    "fastapi",
+    "pytest",
+    "mypy",
+    "ruff",
+    "ccxt",
+    "binance api",
+    "alpaca api",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "pyarrow",
+    "duckdb",
+    "playwright",
+    "systemd"
+   ],
+   "tags": [
+    "finance",
+    "trading",
+    "algorithmic-trading",
+    "python",
+    "mcp",
+    "ai-agents",
+    "backtesting",
+    "walk-forward",
+    "risk-management",
+    "binance",
+    "fastapi",
+    "meta-labeling",
+    "MCP (Model Context Protocol)",
+    "Architecture Logicielle",
+    "Bot Development",
+    "Machine Learning"
+   ]
+  },
+  {
+   "id": "auguryale",
+   "status": "wip",
+   "stats": {
+    "loc": 10129,
+    "tests": 173
+   },
+   "stack": [
+    "Python",
+    "Claude API",
+    "Anthropic tool-use",
+    "Maigret",
+    "holehe",
+    "theHarvester",
+    "PhoneInfoga",
+    "Shodan InternetDB",
+    "pytest"
+   ],
+   "tags": [
+    "osint",
+    "security",
+    "ai-agent",
+    "llm",
+    "privacy",
+    "python",
+    "recon",
+    "self-hosted",
+    "AI / LLM Integration",
+    "Automatisation",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "sourcefinder",
+   "status": "active",
+   "stats": {
+    "loc": 12961,
+    "tests": 0
+   },
+   "stack": [
+    "Node.js",
+    "Express",
+    "JavaScript",
+    "Jest",
+    "Redis",
+    "LLM (OpenAI/Claude)"
+   ],
+   "tags": [
+    "microservice",
+    "news",
+    "scoring",
+    "anti-injection",
+    "Node.js",
+    "API",
+    "content-pipeline",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "momos",
+   "status": "active",
+   "stats": {
+    "loc": 6258,
+    "tests": 158
+   },
+   "stack": [
+    "javascript",
+    "node.js",
+    "esm",
+    "express",
+    "node:test",
+    "supertest",
+    "server-sent events",
+    "git",
+    "gitea api",
+    "systemd",
+    "nginx",
+    "claude",
+    "anthropic messages api"
+   ],
+   "tags": [
+    "code-review",
+    "ai",
+    "claude",
+    "nodejs",
+    "express",
+    "webhook",
+    "gitea",
+    "ci-cd",
+    "merge-request",
+    "cost-analysis",
+    "devtool",
+    "agent",
+    "AI / LLM Integration",
+    "Automatisation",
+    "API Development",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "project_tracker",
+   "status": "active",
+   "stats": {
+    "loc": 796,
+    "tests": 0
+   },
+   "stack": [
+    "Python",
+    "Bash",
+    "Git",
+    "Gitea API",
+    "jq"
+   ],
+   "tags": [
+    "developer-tooling",
+    "git",
+    "multi-repo",
+    "automation",
+    "bash",
+    "python",
+    "productivity",
+    "devops",
+    "Architecture Logicielle",
+    "Automatisation",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "vault_system",
+   "status": "active",
+   "stats": {
+    "loc": 492,
+    "tests": 0
+   },
+   "stack": [
+    "Python",
+    "Shell",
+    "Shufflecake",
+    "KeePassXC",
+    "VeraCrypt",
+    "Syncthing",
+    "rclone",
+    "age",
+    "Tailscale"
+   ],
+   "tags": [
+    "security",
+    "secrets",
+    "encryption",
+    "self-hosted",
+    "devops",
+    "infrastructure",
+    "tailscale",
+    "DevOps",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "ladderkeg",
+   "status": "active",
+   "stats": {
+    "loc": 8586,
+    "tests": 96
+   },
+   "stack": [
+    "flutter",
+    "dart",
+    "sing-box",
+    "vless-reality",
+    "hysteria2",
+    "vmess",
+    "cloudflare",
+    "age",
+    "globalping",
+    "c++",
+    "cmake",
+    "powershell",
+    "windows api"
+   ],
+   "tags": [
+    "vpn",
+    "networking",
+    "anti-censorship",
+    "gfw",
+    "flutter",
+    "dart",
+    "sing-box",
+    "windows",
+    "desktop",
+    "diagnostic",
+    "hysteria2",
+    "vless-reality",
+    "cli",
+    "Architecture Logicielle",
+    "DevOps",
+    "Programmation systèmes"
+   ]
+  },
+  {
+   "id": "freelance_os",
+   "status": "wip",
+   "stats": {
+    "loc": 36908,
+    "tests": 0
+   },
+   "stack": [
+    "Flutter",
+    "Dart",
+    "Node.js",
+    "TypeScript",
+    "PostgreSQL",
+    "SQLite"
+   ],
+   "tags": [
+    "productivity",
+    "freelance",
+    "dashboard",
+    "Flutter",
+    "Dart",
+    "Node.js",
+    "TypeScript",
+    "personal-tool",
+    "API Development",
+    "Architecture Logicielle",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "fractax",
+   "status": "wip",
+   "stats": {
+    "loc": 15626,
+    "tests": 76
+   },
+   "stack": [
+    "c++17",
+    "groveengine",
+    "bgfx",
+    "sdl2",
+    "opengl",
+    "cmake",
+    "ctest",
+    "nlohmann-json",
+    "json"
+   ],
+   "tags": [
+    "game",
+    "rts",
+    "siege",
+    "c++17",
+    "groveengine",
+    "bgfx",
+    "sdl2",
+    "cmake",
+    "pub-sub",
+    "simulation",
+    "data-driven",
+    "tdd",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Worldbuilding & Game Design"
+   ]
+  },
+  {
+   "id": "warfactoryracine",
+   "status": "wip",
+   "stats": {
+    "loc": 7397,
+    "tests": 0
+   },
+   "stack": [
+    "C++17",
+    "CMake",
+    "GroveEngine",
+    "hot-reload",
+    "OpenGL/GLFW",
+    "nlohmann/json",
+    "Python"
+   ],
+   "tags": [
+    "game",
+    "cpp",
+    "strategy",
+    "RTS",
+    "simulation",
+    "factory",
+    "hot-reload",
+    "world-generation",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "magistryale",
+   "status": "wip",
+   "stats": {
+    "loc": 5470,
+    "tests": 0
+   },
+   "stack": [
+    "Flutter",
+    "Dart",
+    "Go",
+    "PostgreSQL",
+    "Whisper.cpp",
+    "Claude API",
+    "Riverpod",
+    "WebSocket"
+   ],
+   "tags": [
+    "game",
+    "learning",
+    "spaced-repetition",
+    "flutter",
+    "go",
+    "llm",
+    "ai-coach",
+    "gamification",
+    "civilization",
+    "AI / LLM Integration",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "iliodys",
+   "status": "active",
+   "stats": {
+    "loc": 1918,
+    "tests": 0
+   },
+   "stack": [
+    "astro",
+    "typescript",
+    "tailwindcss",
+    "mdx",
+    "node.js",
+    "anthropic sdk",
+    "claude sonnet",
+    "bm25",
+    "css custom properties",
+    "pm2",
+    "nginx"
+   ],
+   "tags": [
+    "astro",
+    "typescript",
+    "tailwindcss",
+    "mdx",
+    "bm25",
+    "rag",
+    "claude",
+    "llm",
+    "tool use",
+    "content-generation",
+    "civilization-sim",
+    "nginx",
+    "pm2",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "luceriane_rag",
+   "status": "wip",
+   "stats": {
+    "loc": 149,
+    "tests": 0
+   },
+   "stack": [
+    "Python",
+    "FastAPI",
+    "ChromaDB",
+    "Claude API",
+    "Three.js",
+    "react-force-graph",
+    "WebGL"
+   ],
+   "tags": [
+    "rag",
+    "dependency-graph",
+    "webgl",
+    "claude",
+    "fastapi",
+    "chromadb",
+    "developer-tooling",
+    "multi-repo",
+    "AI / LLM Integration",
+    "API Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "drifterra",
+   "status": "wip",
+   "stats": {
+    "loc": 49423,
+    "tests": 184
+   },
+   "stack": [
+    "c++17",
+    "groveengine",
+    "daedalium",
+    "praxis",
+    "bgfx",
+    "sdl2",
+    "cmake",
+    "json"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "game development",
+    "simulation",
+    "game engine",
+    "pathfinding",
+    "modular architecture",
+    "utility ai",
+    "tdd",
+    "e2e testing",
+    "bgfx",
+    "Architecture Logicielle",
+    "Programmation systèmes"
+   ]
+  },
+  {
+   "id": "daos",
+   "status": "wip",
+   "stats": {
+    "loc": 27987,
+    "tests": 33
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "mingw",
+    "groveengine",
+    "bgfx",
+    "sdl2",
+    "flecs",
+    "nanosvg",
+    "json"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "game development",
+    "physics simulation",
+    "pathfinding",
+    "d-star-lite",
+    "flow field",
+    "ecs",
+    "flecs",
+    "procedural generation",
+    "data-driven",
+    "tdd",
+    "bgfx",
+    "Architecture Logicielle",
+    "Programmation systèmes"
+   ]
+  },
+  {
+   "id": "theomen",
+   "status": "active",
+   "stats": {
+    "loc": 26991,
+    "tests": 58
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "ctest",
+    "groveengine",
+    "bgfx",
+    "sdl2",
+    "nlohmann-json",
+    "miniz",
+    "python"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "procedural generation",
+    "simulation",
+    "worldgen",
+    "geology",
+    "climate modelling",
+    "data-driven",
+    "groveengine",
+    "tdd",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Worldbuilding & Game Design"
+   ]
+  },
+  {
+   "id": "lecodeurfou",
+   "status": "production",
+   "stats": {
+    "loc": 80634,
+    "tests": 1032
+   },
+   "stack": [
+    "go",
+    "node.js",
+    "express",
+    "flutter",
+    "dart",
+    "python",
+    "stripe",
+    "jwt",
+    "sqlite",
+    "docker",
+    "pm2",
+    "gitea actions"
+   ],
+   "tags": [
+    "go",
+    "node.js",
+    "flutter",
+    "python",
+    "api gateway",
+    "multi-tenant",
+    "metering",
+    "billing",
+    "stripe",
+    "jwt",
+    "ci/cd",
+    "production",
+    "Architecture Logicielle",
+    "API Development",
+    "DevOps",
+    "AI / LLM Integration"
+   ]
+  },
+  {
+   "id": "aveg",
+   "status": "R&D",
+   "stats": {
+    "loc": 355,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "pytorch",
+    "cuda",
+    "torchaudio",
+    "chatterbox-tts",
+    "qwen3-tts",
+    "indextts-2",
+    "ffmpeg",
+    "soundfile",
+    "numpy",
+    "uv",
+    "powershell"
+   ],
+   "tags": [
+    "python",
+    "tts",
+    "voix",
+    "audio",
+    "ffmpeg",
+    "pytorch",
+    "cuda",
+    "self-hosted",
+    "jeu-video",
+    "drifterra",
+    "licensing",
+    "r&d",
+    "AI / LLM Integration",
+    "Machine Learning",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "bseej",
+   "status": "active",
+   "stats": {
+    "loc": 7160,
+    "tests": 75
+   },
+   "stack": [
+    "go",
+    "python",
+    "json",
+    "jsonl",
+    "requests",
+    "openai-api",
+    "anthropic-api",
+    "openrouter",
+    "huggingface",
+    "logistic-regression",
+    "stylometry"
+   ],
+   "tags": [
+    "go",
+    "python",
+    "nlp",
+    "stylometrie",
+    "detection-de-texte-ia",
+    "regression-logistique",
+    "corpus",
+    "evaluation",
+    "cli",
+    "offline",
+    "Machine Learning",
+    "AI / LLM Integration",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "civjdr_roman",
+   "status": "production",
+   "stats": {
+    "loc": 1472,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "anthropic sdk",
+    "claude opus",
+    "claude haiku",
+    "reportlab",
+    "networkx",
+    "matplotlib",
+    "pillow",
+    "requests",
+    "python-dotenv",
+    "markdown",
+    "smtp",
+    "node.js",
+    "playwright",
+    "cron",
+    "git"
+   ],
+   "tags": [
+    "python",
+    "anthropic",
+    "claude",
+    "agents llm",
+    "tool use",
+    "reportlab",
+    "networkx",
+    "pdf",
+    "traduction",
+    "chinois",
+    "cron",
+    "AI / LLM Integration",
+    "Automatisation",
+    "Architecture Logicielle",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "daedalium",
+   "status": "active",
+   "stats": {
+    "loc": 12067,
+    "tests": 480
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "ctest",
+    "header-only",
+    "groveengine",
+    "a-star",
+    "jump-point-search",
+    "hpa-star",
+    "lpa-star",
+    "flow-field",
+    "eikonal",
+    "spatial-hash",
+    "position-based-dynamics",
+    "morton-encoding",
+    "soa"
+   ],
+   "tags": [
+    "c++",
+    "pathfinding",
+    "navigation",
+    "crowd-simulation",
+    "flow-field",
+    "game-engine",
+    "header-only",
+    "tdd",
+    "performance",
+    "steering-behaviors",
+    "collision-detection",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Worldbuilding & Game Design"
+   ]
+  },
+  {
+   "id": "eikon",
+   "status": "production",
+   "stats": {
+    "loc": 745,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "anthropic",
+    "openai",
+    "claude",
+    "gpt-image-2",
+    "dall-e-3",
+    "hatchling",
+    "pm2",
+    "nginx",
+    "cloudflare"
+   ],
+   "tags": [
+    "python",
+    "fastapi",
+    "cli",
+    "llm",
+    "claude",
+    "openai",
+    "image-generation",
+    "prompt-engineering",
+    "middleware",
+    "rest-api",
+    "rate-limiting",
+    "devops",
+    "AI / LLM Integration",
+    "API Development",
+    "Architecture Logicielle",
+    "Automatisation"
+   ]
+  },
+  {
+   "id": "emergika",
+   "status": "wip",
+   "stats": {
+    "loc": 2186,
+    "tests": 72
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "ninja",
+    "groveengine",
+    "nlohmann-json",
+    "gmvc",
+    "bgfx",
+    "sdl2",
+    "mingw",
+    "ctest"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "procedural generation",
+    "worldgen",
+    "terrain generation",
+    "noise",
+    "determinism",
+    "chunk streaming",
+    "data-driven",
+    "cmake",
+    "tdd",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Worldbuilding & Game Design"
+   ]
+  },
+  {
+   "id": "envoia",
+   "status": "production",
+   "stats": {
+    "loc": 8971,
+    "tests": 246
+   },
+   "stack": [
+    "python",
+    "openai",
+    "anthropic",
+    "claude",
+    "pyyaml",
+    "python-dotenv",
+    "pytest",
+    "ssh",
+    "tailscale",
+    "nginx",
+    "pm2",
+    "discord",
+    "html"
+   ],
+   "tags": [
+    "python",
+    "llm",
+    "agent",
+    "prompt-injection",
+    "plan-then-execute",
+    "social-media",
+    "persona",
+    "browser automation",
+    "tdd",
+    "ssh",
+    "scheduler",
+    "monitoring",
+    "AI / LLM Integration",
+    "Architecture Logicielle",
+    "Automatisation",
+    "Bot Development"
+   ]
+  },
+  {
+   "id": "etheryale_duo",
+   "status": "retired",
+   "stats": {
+    "loc": 537,
+    "tests": 0
+   },
+   "stack": [
+    "dart",
+    "http",
+    "logging",
+    "rest api",
+    "json",
+    "bearer authentication",
+    "cursor pagination",
+    "pub"
+   ],
+   "tags": [
+    "dart",
+    "client library",
+    "rest api",
+    "json",
+    "messaging",
+    "multi-agent",
+    "broker",
+    "http client",
+    "pure dart",
+    "typed errors",
+    "cursor polling",
+    "melodicode",
+    "API Development",
+    "Architecture Logicielle",
+    "AI / LLM Integration"
+   ]
+  },
+  {
+   "id": "etheryale_studio",
+   "status": "production",
+   "stats": {
+    "loc": 600,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "http.server",
+    "javascript",
+    "html",
+    "css",
+    "json",
+    "nginx",
+    "pm2",
+    "letsencrypt",
+    "cloudflare",
+    "discord webhook"
+   ],
+   "tags": [
+    "python",
+    "javascript",
+    "spec-driven",
+    "zero-dependency",
+    "human-in-the-loop",
+    "questionnaire",
+    "self-hosted",
+    "nginx",
+    "pm2",
+    "bilingual",
+    "i18n",
+    "discord",
+    "Architecture Logicielle",
+    "API Development",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "solengine",
+   "status": "wip",
+   "stats": {
+    "loc": 3652,
+    "tests": 37
+   },
+   "stack": [
+    "c++17",
+    "cmake",
+    "ninja",
+    "nlohmann-json",
+    "groveengine",
+    "json",
+    "mingw-w64"
+   ],
+   "tags": [
+    "c++",
+    "c++17",
+    "procedural generation",
+    "simulation",
+    "data-driven",
+    "astrophysics",
+    "determinism",
+    "groveengine",
+    "cmake",
+    "tdd",
+    "Architecture Logicielle",
+    "Programmation systèmes",
+    "Worldbuilding & Game Design"
+   ]
+  },
+  {
+   "id": "soliano",
+   "status": "R&D",
+   "stats": {
+    "loc": 257,
+    "tests": 0
+   },
+   "stack": [
+    "python",
+    "pytorch",
+    "cuda",
+    "demucs",
+    "basic-pitch",
+    "fmod",
+    "reaper",
+    "midi",
+    "soundfile",
+    "numpy",
+    "uv",
+    "powershell"
+   ],
+   "tags": [
+    "python",
+    "musique",
+    "audio",
+    "demucs",
+    "fmod",
+    "midi",
+    "pytorch",
+    "cuda",
+    "self-hosted",
+    "jeu-video",
+    "drifterra",
+    "pipeline",
+    "AI / LLM Integration",
+    "Machine Learning",
+    "Worldbuilding & Game Design",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "totp_vault",
+   "status": "production",
+   "stats": {
+    "loc": 9916,
+    "tests": 157
+   },
+   "stack": [
+    "python",
+    "fastapi",
+    "uvicorn",
+    "pykeepass",
+    "kdbx",
+    "pyotp",
+    "sqlite",
+    "flutter",
+    "dart",
+    "flutter_secure_storage",
+    "pytest",
+    "systemd",
+    "tailscale"
+   ],
+   "tags": [
+    "python",
+    "fastapi",
+    "flutter",
+    "sqlite",
+    "totp",
+    "2fa",
+    "keepass",
+    "self-hosted",
+    "rest-api",
+    "audit-log",
+    "rate-limiting",
+    "tailscale",
+    "systemd",
+    "Architecture Logicielle",
+    "API Development",
+    "DevOps"
+   ]
+  },
+  {
+   "id": "twitter_scraper",
+   "status": "active",
+   "stats": {
+    "loc": 5134,
+    "tests": 167
+   },
+   "stack": [
+    "python",
+    "camoufox",
+    "playwright",
+    "pytest",
+    "python-dotenv",
+    "firefox",
+    "bash",
+    "systemd",
+    "tailscale",
+    "debian",
+    "json"
+   ],
+   "tags": [
+    "python",
+    "camoufox",
+    "playwright",
+    "pytest",
+    "browser-automation",
+    "anti-detection",
+    "tdd",
+    "ast",
+    "statistiques",
+    "persona",
+    "systemd",
+    "Scraping",
+    "Automatisation",
+    "Bot Development",
+    "Architecture Logicielle"
+   ]
+  },
+  {
+   "id": "civjdr",
+   "status": "active",
+   "stats": {
+    "loc": 2992,
+    "tests": 24
+   },
+   "stack": [
+    "node.js",
+    "javascript",
+    "esm",
+    "playwright",
+    "chromium",
+    "python",
+    "pypdf",
+    "openai api",
+    "html",
+    "css",
+    "svg",
+    "markdown",
+    "discord"
+   ],
+   "tags": [
+    "worldbuilding",
+    "jeu de rôle",
+    "markdown",
+    "node.js",
+    "playwright",
+    "python",
+    "pdf",
+    "html",
+    "css",
+    "discord",
+    "openai",
+    "Worldbuilding & Game Design",
+    "AI / LLM Integration",
+    "Automatisation",
+    "Architecture Logicielle"
+   ]
+  }
+ ],
+ "skills": [
+  {
+   "name": "AI / LLM Integration",
+   "level": "expert",
+   "years": 4
+  },
+  {
+   "name": "Modernisation de systèmes Office/VBA legacy",
+   "level": "intermediate",
+   "years": 4
+  },
+  {
+   "name": "API Development",
+   "level": "expert",
+   "years": 6
+  },
+  {
+   "name": "MCP (Model Context Protocol)",
+   "level": "expert",
+   "years": 2
+  },
+  {
+   "name": "Architecture Logicielle",
+   "level": "expert",
+   "years": 10
+  },
+  {
+   "name": "C/C++",
+   "level": "expert",
+   "years": 10
+  },
+  {
+   "name": "C#",
+   "level": "advanced",
+   "years": 10
+  },
+  {
+   "name": "Automatisation",
+   "level": "advanced",
+   "years": 5
+  },
+  {
+   "name": "Python",
+   "level": "advanced",
+   "years": 3
+  },
+  {
+   "name": "Linux",
+   "level": "advanced",
+   "years": 5
+  },
+  {
+   "name": "Git",
+   "level": "advanced",
+   "years": 5
+  },
+  {
+   "name": "TypeScript",
+   "level": "advanced",
+   "years": 3
+  },
+  {
+   "name": "Bot Development",
+   "level": "advanced",
+   "years": 3
+  },
+  {
+   "name": "Scraping",
+   "level": "advanced",
+   "years": 3
+  },
+  {
+   "name": "Worldbuilding & Game Design",
+   "level": "advanced",
+   "years": 8
+  },
+  {
+   "name": "Node.js",
+   "level": "intermediate",
+   "years": 3
+  },
+  {
+   "name": "Rust",
+   "level": "intermediate",
+   "years": 1
+  },
+  {
+   "name": "Flutter / Dart",
+   "level": "intermediate",
+   "years": 1
+  },
+  {
+   "name": "DevOps",
+   "level": "intermediate",
+   "years": 3
+  },
+  {
+   "name": "SQL",
+   "level": "advanced",
+   "years": 3
+  },
+  {
+   "name": "Next.js",
+   "level": "intermediate",
+   "years": 1
+  },
+  {
+   "name": "Go",
+   "level": "advanced",
+   "years": 1
+  },
+  {
+   "name": "React",
+   "level": "intermediate",
+   "years": 2
+  },
+  {
+   "name": "Redis",
+   "level": "intermediate",
+   "years": 1
+  },
+  {
+   "name": "Docker",
+   "level": "intermediate",
+   "years": 2
+  },
+  {
+   "name": "Machine Learning",
+   "level": "intermediate",
+   "years": 2
+  }
+ ]
+}

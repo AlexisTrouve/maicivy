@@ -1,0 +1,1332 @@
+{
+  "admin": {
+    "prospects": {
+      "nav": "推荐人",
+      "title": "推荐人",
+      "sub": "业务推荐人：开通或关闭他们的访问权限，并查看他们带来的成效。",
+      "inviteName": "推荐人姓名",
+      "inviteEmail": "邮箱（选填）",
+      "invite": "生成邀请",
+      "inviteLink": "邀请链接——请转发给对方，72 小时内有效，仅限使用一次",
+      "copy": "复制",
+      "copied": "已复制",
+      "colName": "姓名",
+      "colRef": "推荐码",
+      "colStatus": "状态",
+      "colVisits": "访问量",
+      "colCVs": "已生成简历",
+      "colActions": "权限",
+      "statusActive": "已启用",
+      "statusRevoked": "已停用",
+      "statusPending": "待接受邀请",
+      "revoke": "停用",
+      "activate": "重新启用",
+      "empty": "还没有推荐人。",
+      "errorExists": "该姓名或邮箱已被占用。",
+      "errorGeneric": "出了点问题，请重试。",
+      "forbidden": "推荐人账号无法使用此工具。",
+      "dailyLimit": "今日次数已用完，请明天再试。",
+      "loginTitle": "推荐人登录",
+      "loginField": "姓名或邮箱",
+      "switchToProspect": "我是推荐人",
+      "switchToOwner": "管理员登录",
+      "inviteTitle": "欢迎，{name}",
+      "inviteHelp": "请设置你的密码（至少 10 个字符）。",
+      "invitePassword": "密码",
+      "invitePasswordConfirm": "确认密码",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "inviteSubmit": "保存密码",
+      "inviteDone": "密码已保存，现在可以登录了。",
+      "inviteGoLogin": "前往登录",
+      "inviteInvalid": "此邀请链接无效、已过期或已被使用。",
+      "passwordLength": "密码长度须为 10 到 72 个字符。"
+    },
+    "brand": "maicivy · admin",
+    "logout": "退出",
+    "outputLang": {
+      "fr": "法语",
+      "en": "英语",
+      "zh": "中文"
+    },
+    "nav": {
+      "cv": "按职位生成简历",
+      "messages": "消息",
+      "letters": "求职信",
+      "stats": "内部统计",
+      "chat": "智能体",
+      "mailbox": "邮箱",
+      "compose": "撰写"
+    },
+    "login": {
+      "password": "密码",
+      "submit": "进入",
+      "loading": "…",
+      "invalid": "密码无效",
+      "networkError": "网络错误"
+    },
+    "cv": {
+      "title": "按职位生成简历",
+      "help": "粘贴职位描述（文本或链接）→ 生成针对该职位的简历 PDF，贴合职位描述的用词。",
+      "offerPlaceholder": "在此粘贴职位描述（或链接）…",
+      "generate": "生成简历",
+      "generating": "生成中…（约30秒）",
+      "previewTitle": "预览",
+      "download": "下载 PDF",
+      "empty": "生成的简历将显示在此。",
+      "loading": "正在生成简历…"
+    },
+    "messages": {
+      "title": "平台消息",
+      "help": "粘贴一条项目需求（Malt、LinkedIn、Upwork）→ 生成一条可直接发送的应聘消息。",
+      "missionPlaceholder": "在此粘贴项目需求或招聘信息（Malt、LinkedIn、Upwork）…",
+      "tjmPlaceholder": "日薪 €",
+      "generate": "生成",
+      "generating": "生成中…",
+      "resultTitle": "消息",
+      "copy": "复制",
+      "copied": "已复制 ✓",
+      "empty": "生成的消息将显示在此。",
+      "loading": "正在撰写消息…"
+    },
+    "letters": {
+      "title": "求职信",
+      "help": "公司 + 职位描述 → 生成一组 PDF：求职信 + 反向求职信。",
+      "companyPlaceholder": "公司名称",
+      "offerPlaceholder": "职位描述（可选，建议填写）…",
+      "generate": "生成一组",
+      "generating": "生成中…",
+      "progress": "正在生成…",
+      "done": "已生成 ✓",
+      "downloadMotivation": "下载求职信（PDF）",
+      "downloadAnti": "下载反向求职信（PDF）",
+      "empty": "生成的求职信与反向求职信将显示在此。",
+      "failed": "生成失败"
+    },
+    "stats": {
+      "title": "内部统计",
+      "loading": "加载中…",
+      "error": "无法加载统计",
+      "aiTitle": "AI 成本与用量",
+      "genToday": "今日生成次数",
+      "lettersMonth": "本月求职信（{tokens} Token）",
+      "model": "模型",
+      "lettersCount": "求职信",
+      "tokens": "Token",
+      "cost": "成本（约）",
+      "noLetters": "本月暂无求职信。",
+      "aiNote": "成本为估算值，仅统计求职信（简历、消息、聊天暂未记录成本）。",
+      "securityTitle": "安全 — {count} 个可疑 IP",
+      "noSus": "当前无可疑 IP。",
+      "scoreTitle": "可疑度评分",
+      "analyticsTitle": "详细数据分析",
+      "byProfile": "按识别出的访客画像",
+      "topReferrers": "主要来源网站",
+      "noReferrers": "暂无来源网站记录。"
+    },
+    "errorPrefix": "错误",
+    "chat": {
+      "title": "智能体",
+      "help": "就你的作品集提问（项目、技能、经历、博客）——智能体会实时查询 maiProFiles。",
+      "newConversation": "新对话",
+      "placeholder": "输入消息…",
+      "send": "发送",
+      "thinking": "智能体思考中…",
+      "empty": "与智能体开始一段对话。",
+      "noConversations": "暂无对话。",
+      "deleteConversation": "删除对话"
+    },
+    "mailbox": {
+      "title": "邮箱",
+      "help": "自动从 Malt（之后还会接入其他平台）收取的邮件，收到后立即转发到固定邮箱。",
+      "platformFilterPlaceholder": "按平台筛选（如 malt）",
+      "unreadOnly": "仅未读",
+      "loading": "加载中…",
+      "loadError": "无法加载邮件",
+      "empty": "暂无收取的邮件。",
+      "noSubject": "（无主题）",
+      "forwarded": "已转发 ✓",
+      "forwardFailed": "转发失败",
+      "pageIndicator": "第 {page} / {totalPages} 页（共 {total} 封）",
+      "selectPrompt": "从列表中选择一封邮件。",
+      "markRead": "标为已读",
+      "markUnread": "标为未读",
+      "retryForward": "重试转发",
+      "retrying": "转发中…",
+      "emptyBody": "（正文为空）",
+      "blocked": "已拦截",
+      "blockedExplain": "自动转发已拦截——相关性得分低于阈值。如果你认为判断有误，请点击“强制转发”。",
+      "relevanceScore": "相关性：{score}/100",
+      "forceForward": "强制转发",
+      "viewMission": "查看项目需求",
+      "showReasoning": "显示推理过程",
+      "hideReasoning": "隐藏推理过程",
+      "translate": "翻译",
+      "translating": "翻译中…",
+      "translationFailed": "翻译失败",
+      "showOriginal": "查看原文",
+      "showTranslation": "查看译文"
+    },
+    "compose": {
+      "checklistTitle": "检查项",
+      "checklistEmpty": "撰写第一条消息后将显示检查项。",
+      "verifying": "正在检查…",
+      "rate": "日薪 {amount} €",
+      "announceLabel": "招聘信息",
+      "announcePlaceholder": "在此粘贴完整的招聘信息，无需改动。",
+      "start": "撰写消息",
+      "draftTitle": "待发送消息",
+      "copy": "复制",
+      "copied": "已复制",
+      "translationTitle": "译文（供核对）",
+      "translationPending": "核对完成后显示译文。",
+      "chatTitle": "智能体",
+      "chatPlaceholder": "请求修改…",
+      "send": "发送",
+      "thinking": "智能体正在处理…",
+      "toolCall": "智能体使用了 {name}",
+      "kickoff": "这是一则招聘信息。请用 set_draft 以法语撰写自荐消息，并用 set_rate 设定日薪。请用我的语言回复我。\n\n{announce}",
+      "checks": {
+        "remote": "已提及远程办公",
+        "no_markdown": "未使用 Markdown",
+        "signature": "签名",
+        "rate_coherence": "报价合理",
+        "length": "长度",
+        "maicivy_link": "maicivy 链接",
+        "project_link": "项目页面链接"
+      },
+      "newDraft": "新建工作台",
+      "reasoning": "推理过程",
+      "attachImage": "附加截图",
+      "removeImage": "移除截图",
+      "imageErrors": {
+        "image_type_unsupported": "不支持的格式（PNG、JPEG、GIF 或 WebP）。",
+        "image_read_failed": "无法读取图片。",
+        "image_too_large": "图片过大。",
+        "image_too_many": "单条消息中图片过多。",
+        "image_empty": "图片为空。",
+        "image_not_allowed": "此处不允许上传图片。"
+      },
+      "checksProven": "代码验证",
+      "checksJudged": "模型判断",
+      "untitled": "未命名",
+      "workshops": "工作台",
+      "workshopsEmpty": "暂无工作台。",
+      "archivedTab": "已归档",
+      "activeTab": "进行中",
+      "archivedEmpty": "没有已归档的工作台。",
+      "noDraft": "仅有招聘信息",
+      "checksShort": "{pass}/{total}",
+      "sent": "已发送",
+      "markSent": "标记为已发送",
+      "unmarkSent": "标记为未发送",
+      "rename": "重命名",
+      "renamePrompt": "工作台名称",
+      "archive": "归档",
+      "unarchive": "恢复为进行中",
+      "rowMenu": "操作",
+      "openWorkshops": "切换工作台",
+      "verifyLimit": "今日核查次数已达上限——当前清单对应的是上一版草稿。"
+    }
+  },
+  "metadata": {
+    "title": "Alexis Trouvé — AI 智能体编排者",
+    "description": "我构建在生产环境中运行的 AI 智能体系统：我的项目之山、活的方案书、作品集、简历，以及一个替我回答的智能体。",
+    "preview": {
+      "commits30d": "{count, plural, other {次提交（近 30 天）}}",
+      "activeProjects": "{count, plural, other {个活跃项目}}"
+    }
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "close": "关闭",
+    "backToHome": "返回主页",
+    "download": "下载",
+    "copy": "复制",
+    "copied": "已复制！",
+    "viewMore": "查看更多"
+  },
+  "nav": {
+    "brand": "Alexis Trouvé",
+    "brandHome": "Alexis Trouvé — 首页",
+    "home": "首页",
+    "dossierVivant": "活的方案书",
+    "portfolio": "作品集",
+    "cv": "简历",
+    "blog": "博客",
+    "chat": "聊天",
+    "gitstats": "Git 统计",
+    "analytics": "数据分析",
+    "architecture": "架构",
+    "label": "主导航",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "contact": "联系",
+    "language": "语言：{current}",
+    "languageList": "选择语言"
+  },
+  "chat": {
+    "greeting": "你好！",
+    "greetingSubtitle": "欢迎提问关于我的项目、技能或经历。",
+    "inputPlaceholder": "输入你的问题…（按 Enter 发送）",
+    "errorNetwork": "连接已断开，请检查网络后重试。",
+    "errorRateLimited": "请等待 {seconds} 秒后再发送下一条消息。",
+    "errorRateLimitedGeneric": "当前消息过多，请稍后重试。",
+    "errorServer": "服务出现问题，请稍后重试。",
+    "errorContextTooLong": "此对话已过长，请开始新的对话以继续。",
+    "errorGeneric": "抱歉，出现了问题，请重试。",
+    "askQuestion": "提问 →",
+    "questionsHeader": "问题",
+    "newSuggestions": "换一批建议",
+    "closeTip": "关闭提示",
+    "closeTab": "关闭 {label}",
+    "tabs": {
+      "projects": "项目",
+      "experience": "经历",
+      "skills": "技能",
+      "blog": "博客",
+      "default": "卡片"
+    },
+    "toolLabels": {
+      "project": "项目",
+      "projects": "项目",
+      "skills": "技能",
+      "experience": "经历",
+      "article": "文章",
+      "blog": "博客",
+      "tip": "提示",
+      "need": "已记录您的需求，用于定制简历"
+    },
+    "skillsTitle": "技术技能",
+    "domains": "领域",
+    "experiences": "工作经历",
+    "yearsExperience": "{years} 年经验",
+    "techStack": "技术栈",
+    "keyFeatures": "核心功能",
+    "viewOnGithub": "查看代码",
+    "viewDemo": "查看演示",
+    "openProjectMessage": "给我看看{name}这个项目",
+    "stopGenerating": "停止生成",
+    "remainingQuota": "今天还剩 {remaining}/{limit} 条消息",
+    "followupsHeader": "继续探索",
+    "stats": "数据统计",
+    "skills": "技能",
+    "projects": "项目",
+    "blogEmpty": "暂无已发布文章。",
+    "articles": "文章（{count}）",
+    "minRead": "{min} 分钟阅读",
+    "readArticle": "阅读文章 →",
+    "hints": [
+      {
+        "text": "Aria 是什么？",
+        "message": "跟我介绍一下 Aria 项目",
+        "category": "projets"
+      },
+      {
+        "text": "Cogesco 是什么？",
+        "message": "Cogesco 项目是做什么的？",
+        "category": "projets"
+      },
+      {
+        "text": "maicivy 怎么运作？",
+        "message": "maicivy 是如何运作的？",
+        "category": "projets"
+      },
+      {
+        "text": "最复杂的项目？",
+        "message": "你做过最复杂的项目是什么？",
+        "category": "projets"
+      },
+      {
+        "text": "Alexi 的 AI 技术栈？",
+        "message": "你有哪些 AI 相关技能？",
+        "category": "skills"
+      },
+      {
+        "text": "Go 还是 Node？",
+        "message": "新项目你会选 Go 还是 Node？",
+        "category": "skills"
+      },
+      {
+        "text": "你做移动端吗？",
+        "message": "你有做移动端开发吗？",
+        "category": "skills"
+      },
+      {
+        "text": "日薪是多少？",
+        "message": "你的日薪是多少？",
+        "category": "freelance"
+      },
+      {
+        "text": "可以接单吗？",
+        "message": "你现在有空接自由职业项目吗？",
+        "category": "freelance"
+      },
+      {
+        "text": "远程还是现场？",
+        "message": "你是远程工作还是到场工作？",
+        "category": "freelance"
+      },
+      {
+        "text": "项目中遇到过难题？",
+        "message": "你在某个项目中遇到过技术上的挑战吗？",
+        "category": "curiosite"
+      },
+      {
+        "text": "理想技术栈？",
+        "message": "你理想中的技术栈是什么？",
+        "category": "curiosite"
+      },
+      {
+        "text": "最新文章？",
+        "message": "你最近发布了哪些博客文章？",
+        "category": "blog"
+      },
+      {
+        "text": "有写过 AI 智能体吗？",
+        "message": "你有写过关于 AI 智能体的文章吗？",
+        "category": "blog"
+      },
+      {
+        "text": "这个作品集怎么做的？",
+        "message": "这个作品集是怎么搭建的？",
+        "category": "meta"
+      },
+      {
+        "text": "这个页面谁开发的？",
+        "message": "这个聊天页面是谁开发的？",
+        "category": "meta"
+      }
+    ],
+    "send": "发送",
+    "inputLabel": "你的问题",
+    "views": {
+      "label": "对话视图",
+      "questions": "问题",
+      "conversation": "对话",
+      "fiches": "卡片",
+      "sheetsCount": "卡片（{count}）",
+      "newSheet": "有新卡片打开"
+    }
+  },
+  "gitstats": {
+    "title": "Git 活动",
+    "subtitle": "所有仓库近六个月的提交：节奏、编写的行数、使用的语言，以及正在活跃的仓库。",
+    "surveyedOn": "统计于 {date}",
+    "refresh": "刷新",
+    "refreshing": "正在刷新…",
+    "unavailable": "Git 统计数据暂时不可用。",
+    "commits6mo": "六个月提交次数",
+    "linesAdded": "新增行数",
+    "linesDeleted": "删除行数",
+    "activeRepos": "活跃仓库",
+    "ledger": {
+      "gitlab": "其中 GitLab {count} 次",
+      "exactly": "精确值 {value}",
+      "reposTotal": "共 {total} 个仓库"
+    },
+    "cadence": {
+      "title": "节奏",
+      "noteDay": "六个月内每日提交次数。",
+      "noteWeek": "六个月内每周提交次数。",
+      "noteGitlab": "铜色部分来自 GitLab 上的客户项目。",
+      "figure": "{active} 天 / {total} 天",
+      "figureSub": "至少有一次提交 · 最长连续 {streak} 天",
+      "legendAll": "全部仓库",
+      "legendGitlab": "其中 GitLab（客户项目）",
+      "peakDay": "{value} 次提交 · {date}",
+      "peakWeek": "{value} 次提交 · {date} 当周",
+      "barDay": "{date}：{value} 次提交",
+      "barWeek": "{date} 当周：{value} 次提交"
+    },
+    "lines": {
+      "title": "编写的行数",
+      "note": "轴线以上为新增行数，以下为删除行数，两侧比例相同。",
+      "figure": "净增 {net}",
+      "figureSub": "+{added} · −{deleted}",
+      "legendAdded": "新增",
+      "legendDeleted": "删除",
+      "peakDay": "新增 {value} 行 · {date}",
+      "peakWeek": "新增 {value} 行 · {date} 当周",
+      "barDay": "{date}：+{added} · −{deleted}",
+      "barWeek": "{date} 当周：+{added} · −{deleted}"
+    },
+    "langs": {
+      "title": "语言",
+      "note": "按语言统计的代码行数，涵盖所有仓库自创建以来的全部代码，而不仅是近六个月。",
+      "figure": "{loc} 行",
+      "figureSub": "共 {count} 种语言",
+      "others": "其他（{count}）"
+    },
+    "repos": {
+      "title": "仓库",
+      "note": "按近三十天的提交次数排序。色带逐周显示至少有一次提交的天数。",
+      "figure": "{count} 个仓库",
+      "figureSub": "{count, plural, other {近三十天内有提交}}",
+      "colRepo": "仓库",
+      "colWeeks": "六个月",
+      "col30d": "30 天",
+      "col6mo": "6 个月",
+      "colLines": "行数",
+      "colLast": "最近提交",
+      "hot": "{count} <unit>次 · 30 天</unit>",
+      "commits6mo": "{count} <unit>次提交 · 六个月</unit>",
+      "loc": "{loc} <unit>行</unit>",
+      "activity": "六个月内 {days} 天有提交 · 当前连续 {current} 天 · 最长 {longest} 天",
+      "more": "查看其余 {count} 个活跃仓库",
+      "dormant": "{count} 个仓库六个月内无提交，未列入列表。"
+    },
+    "metaTitle": "Git 活动 · Alexis Trouvé",
+    "metaDescription": "Alexis Trouvé 近六个月的 Git 活动：提交、新增与删除的行数、活跃仓库。"
+  },
+  "cv": {
+    "devPortrait": {
+      "title": "用数字看代码",
+      "subtitle": "直接从代码仓库读取的活动数据。",
+      "loc": "代码行数",
+      "langs": "{count} 种语言",
+      "commits": "次提交",
+      "commitsSub": "最近 6 个月",
+      "repos": "活跃仓库",
+      "genreTitle": "近期常用语言",
+      "genreSub": "按语言统计的提交 — 最近 90 天与全年对比",
+      "momentumTitle": "节奏",
+      "momentumValue": "最近 30 天 {recent} 次提交",
+      "momentumRatio": "较上月 ×{ratio}",
+      "hotTitle": "最活跃的仓库",
+      "hotCommits": "{count} 次提交 · 30 天",
+      "caveat": "仅供参考的趋势：按每个仓库的主要语言统计，提交天数为聚合值（每个仓库上限约 70）。",
+      "detailLink": "查看详细的 Git 活动",
+      "trendUp": "上升",
+      "trendDown": "下降",
+      "trendFlat": "持平"
+    },
+    "title": "简历",
+    "lead": "工作经历、技能与项目，按所选方向重新排序。",
+    "profileLabel": "方向",
+    "selectTheme": "选择方向",
+    "metaTitle": "简历 — {profile} · Alexis Trouvé",
+    "metaDescription": "Alexis Trouvé 面向「{profile}」方向的简历：按相关性排序的工作经历、技能与项目。",
+    "sections": {
+      "experiences": "工作经历",
+      "skills": "技能",
+      "projects": "项目"
+    },
+    "experience": {
+      "viewDetails": "查看详情"
+    },
+    "skills": {
+      "all": "全部",
+      "filterLabel": "按类别筛选技能",
+      "legend": "大小反映技能水平及与所选方向的相关性。",
+      "badgeTitle": "{name} — 查看详情"
+    },
+    "projects": {
+      "featured": "重点项目",
+      "inProgress": "进行中",
+      "clickForDetails": "打开项目介绍",
+      "openDetails": "打开 {title} 的项目介绍",
+      "defaultCategory": "项目"
+    },
+    "export": {
+      "downloading": "正在生成 PDF…",
+      "download": "下载 PDF",
+      "error": "PDF 生成失败，请稍后再试。"
+    },
+    "themes": {
+      "ai": {
+        "name": "AI 智能体 — Technomancer",
+        "description": "投入生产的多智能体系统：编排、MCP 工具，端到端自主构建。"
+      },
+      "backend": {
+        "name": "后端",
+        "description": "API、数据库、服务。"
+      },
+      "cpp": {
+        "name": "C++",
+        "description": "底层系统、引擎、性能。"
+      },
+      "devops": {
+        "name": "DevOps",
+        "description": "基础设施、CI/CD、监控。"
+      },
+      "fullstack": {
+        "name": "全栈",
+        "description": "界面与服务，端到端。"
+      },
+      "artistique": {
+        "name": "创意",
+        "description": "创意项目、设计、可视化。"
+      }
+    },
+    "detailModal": {
+      "close": "关闭",
+      "image": "图片",
+      "prevImage": "上一张图片",
+      "nextImage": "下一张图片",
+      "goToImage": "转到图片",
+      "functional": {
+        "title": "功能介绍"
+      },
+      "technical": {
+        "title": "技术实现"
+      },
+      "technologies": "技术",
+      "skills": "技能",
+      "links": {
+        "title": "链接",
+        "github": "GitHub",
+        "demo": "在线演示",
+        "website": "网站",
+        "linkedin": "LinkedIn",
+        "other": "链接"
+      }
+    },
+    "duration": {
+      "present": "至今",
+      "year": "年",
+      "years": "年",
+      "month": "个月",
+      "months": "个月",
+      "unknownDate": "日期未知",
+      "invalidDate": "日期无效",
+      "unknownDuration": "时长未知"
+    },
+    "skillDetail": {
+      "close": "关闭",
+      "levels": {
+        "beginner": "入门",
+        "intermediate": "中级",
+        "advanced": "高级",
+        "expert": "专家"
+      },
+      "years": "{count, plural, =0 {不到一年经验} other {# 年经验}}",
+      "locLabel": "代码行数",
+      "projectsLabel": "项目",
+      "experiencesLabel": "经历",
+      "projectsTitle": "项目",
+      "experiencesTitle": "工作经历",
+      "noStats": "暂无该技能的统计数据"
+    },
+    "context": {
+      "title": "根据您告诉我的内容定制",
+      "sourceChat": "基于我们的对话",
+      "sourceDossier": "基于您的方案文档",
+      "preparing": "正在准备定制简历……在此期间仍显示标准简历。",
+      "unavailable": "暂时无法准备定制简历。以下是标准简历。",
+      "viewLabel": "当前显示的版本",
+      "showAdapted": "定制简历",
+      "showStandard": "标准简历",
+      "downloadAdapted": "下载定制版 PDF",
+      "offer": {
+        "toggle": "根据职位描述定制",
+        "label": "职位描述或项目需求",
+        "placeholder": "粘贴职位描述文本或其链接",
+        "submit": "生成定制版 PDF",
+        "submitting": "正在定制，约需 20 秒……",
+        "cancel": "取消",
+        "error": "定制失败，请稍后重试。",
+        "limit": "今日生成次数已达上限，请明天再试。"
+      }
+    }
+  },
+  "analytics": {
+    "testStats": {
+      "title": "测试与质量",
+      "allGreen": "100% 通过",
+      "total": "自动化测试",
+      "backend": "后端 (Go)",
+      "frontend": "前端 · {suites} 个测试套件",
+      "updated": "更新于 {date}"
+    },
+    "title": "网站实况",
+    "subtitle": "实时更新的公开统计：访问量、博客阅读、生成的求职信，以及点击最多的区域。",
+    "privacy": "此仪表盘公开且实时更新。数据以匿名方式收集，尊重访客隐私。",
+    "widgets": {
+      "visitors": {
+        "title": "当前访客",
+        "online": "在线",
+        "offline": "离线",
+        "realtime": "通过WebSocket实时更新",
+        "oneNow": "人正在浏览",
+        "manyNow": "人正在浏览"
+      },
+      "themes": {
+        "title": "最常查看的简历主题",
+        "views": "次浏览",
+        "update": "每30秒更新"
+      },
+      "letters": {
+        "title": "AI 求职信",
+        "total": "累计生成的求职信",
+        "noData": "暂无数据",
+        "evolution": "{period}内的变化",
+        "windows": {
+          "day": "24 小时",
+          "week": "7 天",
+          "month": "30 天"
+        }
+      },
+      "heatmap": {
+        "title": "交互热力图",
+        "low": "低",
+        "high": "高",
+        "noData": "暂无交互数据",
+        "interactions": "{count} 次交互",
+        "based": "基于 {count} 个交互点",
+        "explain": "访客点击的位置（按钮和链接，所有页面 — 近24小时）。越热代表点击越多。",
+        "unknownElement": "元素",
+        "topTitle": "主要交互"
+      },
+      "stats": {
+        "visitors": "访客",
+        "pageViews": "页面浏览",
+        "letters": "求职信",
+        "blogReads": "博客阅读",
+        "conversion": "转化率"
+      }
+    },
+    "periods": {
+      "today": "今天",
+      "last7days": "最近7天",
+      "last30days": "最近30天",
+      "all": "全部",
+      "day": "天",
+      "week": "周",
+      "month": "月",
+      "select": "选择时段",
+      "label": "时段："
+    },
+    "meta": {
+      "title": "公开统计",
+      "description": "maicivy 的公开仪表盘，实时更新：访问、阅读、生成的求职信、被点击的区域。"
+    },
+    "eyebrow": "公开仪表盘"
+  },
+  "architecture": {
+    "meta": {
+      "title": "架构 — 这个网站是怎样构建的",
+      "description": "maicivy 的分层、技术栈与安全措施：Next.js 前端、Go API，以及基于真实项目作答的 AI 智能体。"
+    },
+    "eyebrow": "架构",
+    "title": "这个网站是怎样构建的",
+    "subtitle": "maicivy 已在生产环境运行：Next.js 前端、Go API，以及根据真实项目作答的 AI 智能体。下面是它的分层、工具和安全措施。",
+    "metricsTitle": "数据一览",
+    "metricsNote": "每次提交都会重新统计测试",
+    "metrics": {
+      "goFiles": "Go 文件（后端）",
+      "reactComponents": "React 组件",
+      "backendTests": "后端测试",
+      "frontendTests": "前端测试",
+      "passingTests": "通过的测试",
+      "apiEndpoints": "API 路由",
+      "documentation": "行文档",
+      "implementationGuides": "实现指南"
+    },
+    "overview": "总览",
+    "overviewNote": "从浏览器到模型",
+    "layers": {
+      "client": "客户端",
+      "edge": "边缘与安全",
+      "backend": "后端 API",
+      "services": "服务",
+      "data": "数据与模型"
+    },
+    "nodes": {
+      "cdnWaf": "CDN · Web 应用防火墙",
+      "proxyTls": "反向代理 · TLS",
+      "frontdoor": "限流 · 过滤",
+      "middlewares": "中间件",
+      "modules": {
+        "cv": "简历",
+        "letters": "求职信",
+        "analytics": "统计",
+        "chat": "对话",
+        "blog": "博客"
+      },
+      "services": {
+        "ai": "AI",
+        "scraper": "网页采集",
+        "cvScoring": "简历评分",
+        "profileBuilder": "档案构建"
+      },
+      "orm": "经由 GORM ORM",
+      "cacheUses": "会话 · 限流 · 队列",
+      "models": "主模型 · 备用模型"
+    },
+    "stackTitle": "技术栈",
+    "stackColumns": {
+      "tool": "工具",
+      "role": "作用"
+    },
+    "stacks": {
+      "backend": {
+        "title": "后端",
+        "description": "紧凑、经过测试、响应迅速的 Go API。"
+      },
+      "frontend": {
+        "title": "前端",
+        "description": "Next.js 与 TypeScript，服务端渲染，支持五种语言。"
+      },
+      "ai": {
+        "title": "人工智能",
+        "description": "所有模型经由同一个网关，并配有备用模型。"
+      },
+      "infra": {
+        "title": "基础设施",
+        "description": "容器、数据库、监控与持续集成。"
+      }
+    },
+    "stackItems": {
+      "backend": {
+        "go": "服务端语言",
+        "fiber": "HTTP 框架",
+        "gorm": "访问 PostgreSQL",
+        "redis": "缓存、会话、限流",
+        "zerolog": "结构化 JSON 日志",
+        "chromedp": "生成 PDF",
+        "colly": "网页采集",
+        "testify": "测试"
+      },
+      "frontend": {
+        "nextjs": "React 框架（App Router）",
+        "typescript": "静态类型",
+        "tailwind": "实用类样式",
+        "shadcn": "无障碍组件（Radix）",
+        "framer": "动画",
+        "rhf": "表单",
+        "zod": "模式校验",
+        "tests": "单元测试与端到端测试"
+      },
+      "ai": {
+        "claude": "主模型",
+        "fallback": "备用模型，同一网关",
+        "scraper": "多来源企业调研"
+      },
+      "infra": {
+        "docker": "容器",
+        "postgres": "主数据库",
+        "redis": "内存缓存",
+        "nginx": "反向代理与 TLS",
+        "prometheus": "指标采集",
+        "grafana": "仪表盘",
+        "ci": "每次推送都运行测试"
+      }
+    },
+    "scraper": "多来源企业调研",
+    "scraperNote": "以一家公司为例的真实结果",
+    "scraperInput": "输入",
+    "scraperParallel": "并行来源",
+    "scraperResult": "汇总结果",
+    "scraperSources": {
+      "website": "官网",
+      "blogNews": "博客 / 新闻"
+    },
+    "features": "功能",
+    "technicalFeatures": {
+      "dynamicCV": {
+        "title": "按职位定制的简历",
+        "description": "五种主题（后端、C++、艺术、全栈、DevOps）；经历与项目按职位要求评分。",
+        "tech": [
+          "评分算法",
+          "PDF 导出",
+          "Framer Motion 动画"
+        ]
+      },
+      "aiLetters": {
+        "title": "AI 撰写的求职信",
+        "description": "一封求职信与它的“反求职信”，并行生成。",
+        "tech": [
+          "Claude API",
+          "异步任务队列",
+          "生成 PDF"
+        ]
+      },
+      "scraper": {
+        "title": "多来源采集",
+        "description": "从六个来源实时调研目标公司。",
+        "tech": [
+          "Wikipedia API",
+          "GitHub API",
+          "博客读取",
+          "DuckDuckGo",
+          "Clearbit"
+        ]
+      },
+      "analytics": {
+        "title": "实时统计",
+        "description": "公开的仪表盘，通过 WebSocket 实时更新。",
+        "tech": [
+          "WebSocket",
+          "点击热图",
+          "Redis 聚合"
+        ]
+      },
+      "accessGate": {
+        "title": "逐步开放 AI 功能",
+        "description": "访问三次后，或识别出访客身份（招聘方、技术负责人……）后开放。",
+        "tech": [
+          "身份识别",
+          "User-Agent 解析",
+          "签名 Cookie"
+        ]
+      },
+      "rateLimiting": {
+        "title": "AI 限流",
+        "description": "每天 5 次生成，间隔 2 分钟，成本可追踪。",
+        "tech": [
+          "Redis 滑动窗口",
+          "Token 计数",
+          "成本追踪"
+        ]
+      }
+    },
+    "security": "安全",
+    "securityItems": {
+      "injection": {
+        "title": "SQL 注入",
+        "description": "通过 GORM 使用参数化查询"
+      },
+      "xss": {
+        "title": "脚本注入（XSS）",
+        "description": "用 bluemonday 清洗输入"
+      },
+      "rateLimit": {
+        "title": "限流",
+        "description": "Redis 中的滑动窗口"
+      },
+      "headers": {
+        "title": "安全响应头",
+        "description": "CSP、X-Frame-Options、HSTS"
+      },
+      "gdpr": {
+        "title": "GDPR",
+        "description": "IP 地址经 SHA-256 哈希，不保存个人数据"
+      },
+      "cookies": {
+        "title": "Cookie",
+        "description": "HttpOnly、Secure、SameSite"
+      }
+    },
+    "codeExample": "代码节选：并行采集",
+    "codeExampleNote": "services/scraper.go（简化版）",
+    "sourceCode": "代码是公开的",
+    "sourceCodeDesc": "完整仓库——代码、测试和文档——都可以在 GitHub 上阅读。",
+    "viewOnGithub": "在 GitHub 上查看",
+    "backToCV": "查看简历"
+  },
+  "errors": {
+    "generic": "此页面无法显示",
+    "tryAgain": "我们这边出了问题。请重试；如果再次出现，请回到首页重新开始。",
+    "notFound": "找不到页面",
+    "serverError": "服务器错误",
+    "retry": "重试",
+    "notFoundEyebrow": "错误 404",
+    "notFoundHint": "地址可能已更改，或者页面已不存在。作品集和简历都还在。",
+    "errorEyebrow": "错误",
+    "goPortfolio": "查看作品集",
+    "goCv": "查看简历"
+  },
+  "validation": {
+    "minLength": "至少需要 {min} 个字符",
+    "maxLength": "不能超过 {max} 个字符",
+    "invalidChars": "检测到无效字符",
+    "required": "此字段为必填项",
+    "invalidEmail": "电子邮件地址无效",
+    "invalidUrl": "URL 无效"
+  },
+  "footer": {
+    "explore": "探索",
+    "workshop": "幕后",
+    "contact": "联系",
+    "email": "给 Alexis 写信",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "legal": "法律信息",
+    "legalNotice": "法律声明",
+    "privacy": "隐私政策",
+    "legalDisclaimer": "本网站使用AI生成内容。会话数据是临时的，不与第三方共享。",
+    "rights": "© {year} Alexis Trouvé。版权所有。"
+  },
+  "legal": {
+    "title": "法律声明",
+    "editor": {
+      "title": "网站发布者",
+      "text": "本网站由常驻法国的独立开发者 Alexis Trouvé 发布，是个人作品集兼技术演示。"
+    },
+    "hosting": {
+      "title": "托管",
+      "text": "本网站托管于位于法国的虚拟专用服务器（VPS），域名通过 Cloudflare 管理。"
+    },
+    "ip": {
+      "title": "知识产权",
+      "text": "除另有说明外，本网站全部内容（源代码、文字、设计）均归 Alexis Trouvé 所有。源代码作为演示在 GitHub 上公开。"
+    },
+    "ai": {
+      "title": "AI生成内容",
+      "text": "本网站部分功能使用人工智能（Anthropic 的 Claude）生成内容：求职信、个性化消息及聊天机器人回复。这些内容按需生成，不会永久保存。"
+    },
+    "liability": {
+      "title": "责任限制",
+      "text": "AI 生成的内容仅供参考，发布者不对其使用方式承担责任。本网站信息按现状提供，不保证完整或准确。"
+    },
+    "eyebrow": "法律信息"
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "collection": {
+      "title": "收集的数据",
+      "text": "本网站仅收集 AI 功能运行所必需的匿名会话数据（会话 Cookie）。无需注册，不索取也不存储任何个人数据。"
+    },
+    "cookies": {
+      "title": "Cookie",
+      "text": "本网站使用一个会话 Cookie（maicivy_session）来识别您的会话，并对 AI 功能进行限流。该 Cookie 为网站运行所必需，无需征得同意。不使用任何跟踪或广告 Cookie。"
+    },
+    "ai": {
+      "title": "AI处理",
+      "text": "您提交的文本（职位描述、公司名称）会发送至 Anthropic API（Claude）以生成内容。这些数据依照 Anthropic 的隐私政策处理，不会用于训练其模型。"
+    },
+    "retention": {
+      "title": "保留期限",
+      "text": "会话会自动过期。生成的求职信会临时保存以便查看。分析数据（访问量、页面浏览量）经过汇总和匿名化处理。"
+    },
+    "rights": {
+      "title": "您的权利",
+      "text": "根据 GDPR（《通用数据保护条例》），您享有访问、更正和删除数据的权利。由于本网站不收集可识别身份的个人数据，这些权利主要适用于会话数据。"
+    },
+    "contact": {
+      "title": "联系",
+      "text": "如对数据保护有任何疑问，可通过网站页脚中的链接联系发布者。"
+    },
+    "eyebrow": "个人数据"
+  },
+  "portfolio": {
+    "meta": {
+      "title": "作品集 — 已交付项目",
+      "description": "已交付项目精选：它们做什么、如何构建、规模几何。"
+    },
+    "title": "作品集",
+    "subtitle": "已交付项目精选 — 它们做什么、如何构建、规模几何。",
+    "projectCount": "共 {count} 个项目",
+    "viewProject": "查看项目",
+    "back": "返回作品集",
+    "pitch": "它能做什么",
+    "technical": "如何构建",
+    "figures": "关键数据",
+    "stack": "技术栈",
+    "links": "链接",
+    "gallery": "图库",
+    "demo": "视频演示",
+    "unavailable": "作品集暂时无法访问。",
+    "notFound": "该项目不在精选之列。",
+    "status": {
+      "production": "生产环境",
+      "active": "活跃中",
+      "wip": "进行中",
+      "R&D": "研发"
+    },
+    "linkLabels": {
+      "github": "GitHub",
+      "repo": "代码仓库",
+      "demo": "演示",
+      "site": "网站",
+      "docs": "文档"
+    },
+    "eyebrow": "已交付的项目"
+  },
+  "blog": {
+    "meta": {
+      "title": "博客 — 开发日志",
+      "description": "根据我的提交记录撰写的文章：我在构建什么、哪里出了问题、我如何修复。"
+    },
+    "title": "博客",
+    "eyebrow": "开发手记",
+    "subtitle": "根据我的提交记录撰写：我构建的智能体与系统、生产环境中出了什么问题，以及我如何修复。",
+    "filterTitle": "按主题筛选",
+    "all": "全部",
+    "themes": {
+      "tech": "技术",
+      "games": "游戏"
+    },
+    "count": "{count, plural, =0 {暂无文章} other {# 篇文章}}",
+    "clearFilter": "清除筛选",
+    "emptyTitle": "暂无文章",
+    "emptyText": "文章会根据提交记录自动撰写。",
+    "unavailable": "博客暂时无法访问，请稍后再试。",
+    "rss": "RSS 订阅",
+    "readingTime": "{minutes} 分钟",
+    "pagination": {
+      "label": "博客分页",
+      "prev": "上一页",
+      "next": "下一页",
+      "page": "第 {page} 页",
+      "current": "第 {page} 页，共 {total} 页"
+    },
+    "post": {
+      "back": "返回博客",
+      "readTime": "{minutes} 分钟阅读",
+      "generatedFrom": "根据以下提交生成",
+      "closeImage": "关闭图片",
+      "openImage": "放大封面图片",
+      "tags": "文章主题",
+      "notFound": "未找到文章"
+    },
+    "follow": {
+      "title": "通过邮件订阅",
+      "intro": "新文章发布时通知你。可选择感兴趣的主题（不勾选 = 全部）。",
+      "emailPlaceholder": "you@email.com",
+      "subscribe": "订阅",
+      "sending": "发送中…",
+      "emailLabel": "邮箱地址",
+      "topicsLabel": "要关注的主题",
+      "success": "订阅成功。你将收到所选主题的新文章。",
+      "error": "出错了，请重试（邮箱地址是否有效？）。",
+      "discord": "加入 Discord",
+      "topics": {
+        "Drifterra": "Drifterra（游戏）",
+        "tech": "开发 / 技术",
+        "veille": "技术观察"
+      }
+    }
+  },
+  "montagne": {
+    "voice": {
+      "title": "我构建在生产环境中运行的 AI 智能体系统。",
+      "tagline": "Agent Orchestrator — Technomancer",
+      "cv": "简历 PDF",
+      "chat": "和我的智能体对话"
+    },
+    "meta": {
+      "title": "山 — 全部项目相互关联",
+      "description": "Alexis Trouvé 的全部项目汇成一座山：从底层基础设施到游戏与应用，每条连线都表示“谁帮助构建了谁”。"
+    },
+    "strata": {
+      "foundations": "基础",
+      "tooling": "工具",
+      "engines": "引擎",
+      "works": "作品"
+    },
+    "strataHint": {
+      "foundations": "基础设施、网络、安全",
+      "tooling": "工具、智能体、自动化",
+      "engines": "作品运行于其上",
+      "works": "游戏、应用、产品"
+    },
+    "list": {
+      "title": "全部项目，从山脚到山顶",
+      "intro": "每条连线表示“帮助构建”：由项目数据推导而来，从不手工添加。",
+      "count": "{count} 个项目",
+      "builds": "帮助构建：",
+      "builtWith": "构建基于：",
+      "openPortfolio": "项目页面"
+    },
+    "status": {
+      "production": "已上线",
+      "active": "活跃",
+      "wip": "进行中",
+      "R&D": "研发",
+      "retired": "已停用"
+    },
+    "stage": {
+      "label": "项目立体山景",
+      "loading": "山峰正在升起…",
+      "hint": "拖动旋转 · 滚轮或双指缩放 · 点击项目",
+      "overview": "全景",
+      "goTo": "前往：{stratum}",
+      "unavailable": "项目之山暂时无法显示，请稍后再试。"
+    },
+    "flower": {
+      "close": "关闭",
+      "openPortfolio": "查看项目页面",
+      "visuals": "项目图片",
+      "video": "视频演示",
+      "openImage": "打开图片"
+    },
+    "peak": {
+      "title": "项目之山",
+      "summit": "山顶的作品",
+      "mountain": "所有项目，从作品到基础"
+    },
+    "network": {
+      "open": "网络视图",
+      "title": "网络视图——立体的山",
+      "close": "关闭网络视图"
+    },
+    "proofs": {
+      "label": "作品证据",
+      "builtGames": "基于 {name} 构建的游戏",
+      "openProject": "查看项目",
+      "video": "视频演示",
+      "stages": {
+        "global": "{project} 生成整个星球：全球地图，局部地图随后由它派生。",
+        "local": "{project} 以这张全球地图为起点，派生出局部地形。"
+      },
+      "site": {
+        "title": "证据就是这个网站本身：点按页面即可打开",
+        "pages": {
+          "blog": "博客",
+          "gitstats": "Git 统计",
+          "chat": "与我的智能体对话",
+          "cv": "简历"
+        }
+      }
+    },
+    "art": {
+      "backdrop": "插图：星空下一座深色的山，山脊镶着金边，耸立在金色云海之上",
+      "covers": {
+        "grove_engine": "插图：一座金色的机械站，以光束连接六边形地图、岛上村落、一艘飞船和一块水晶",
+        "melodicode": "插图：一位指挥家的背影，指挥着数十块发光的屏幕，金线将它们与他的手相连",
+        "theomen": "插图：金色光束从一颗行星射向一片细致的地域，那里有森林、河流和城市",
+        "maicivy": "插图：一本打开的书，发光的书页从中升起——一篇文章、一张图表、一段对话、一份简历"
+      }
+    }
+  },
+  "dossierVivant": {
+    "footer": {
+      "lead": "活的方案书只是一扇门：这里是 Alexis 的其他作品。",
+      "label": "了解更多",
+      "cv": "简历（PDF）",
+      "portfolio": "作品集",
+      "montagne": "项目之山",
+      "contact": "给 Alexis 写信"
+    },
+    "meta": {
+      "title": "活的方案书 — 一支智能体团队在工作",
+      "description": "一个需求成为 Alexis Trouvé 项目之山上的一块图块；一支智能体团队并行处理，并撰写一份附有实测证据的设计方案书。"
+    },
+    "unavailable": "活的方案书暂时无法使用，请稍后再试。",
+    "bar": {
+      "caption": "回放演示，未调用 AI",
+      "pause": "暂停",
+      "play": "播放",
+      "replay": "重播",
+      "demo": "观看演示",
+      "progress": "流程进度"
+    },
+    "hero": {
+      "prompt": "描述您的项目。一支智能体团队会把它变成一份设计方案书。",
+      "whoLabel": "您的姓名和职位",
+      "launch": "启动团队"
+    },
+    "mountain": {
+      "label": "示意图：Alexis 的项目之山及其关联",
+      "kept": "入选项目"
+    },
+    "team": {
+      "label": "智能体团队与方案书",
+      "thread": "编排者的消息",
+      "between": "{from} → {to}",
+      "tokens": "词元",
+      "usd": "$",
+      "role": {
+        "orchestrator": "协调者",
+        "subAgent": "子智能体"
+      },
+      "status": {
+        "waiting": "等待中",
+        "working": "工作中",
+        "done": "已完成"
+      },
+      "topics": {
+        "plan": "计划",
+        "check": "核查"
+      },
+      "agents": {
+        "orchestrator": {
+          "name": "编排者",
+          "short": "编排者"
+        },
+        "reader": {
+          "name": "需求阅读者",
+          "short": "阅读者"
+        },
+        "researcher": {
+          "name": "证据搜寻者",
+          "short": "搜寻者"
+        },
+        "architect": {
+          "name": "架构师",
+          "short": "架构师"
+        },
+        "diagrammer": {
+          "name": "架构图绘制员",
+          "short": "绘图员"
+        },
+        "writer": {
+          "name": "撰写者",
+          "short": "撰写者"
+        }
+      }
+    },
+    "dossier": {
+      "title": "设计方案书",
+      "for": "致 {name}，{affiliation}",
+      "prepared": "由{count}个智能体用时 {time} 完成，成本 {cost} 美元。",
+      "state": {
+        "drafting": "撰写中",
+        "reviewing": "编排者审阅中",
+        "ready": "已就绪"
+      },
+      "download": "下载方案书",
+      "section": {
+        "writing": "撰写中",
+        "waitingFor": {
+          "reader": "等待阅读者",
+          "researcher": "等待搜寻者",
+          "architect": "等待架构师",
+          "writer": "等待撰写者",
+          "previous": "等待其余部分"
+        }
+      },
+      "proofs": {
+        "project": "项目",
+        "status": "状态",
+        "lines": "代码行",
+        "tests": "测试",
+        "demo": "演示",
+        "video": "视频",
+        "site": "网站",
+        "none": "无公开演示",
+        "also": "同样入选：{names}。"
+      },
+      "skills": {
+        "title": "所用技能",
+        "lead": "根据作为证据的项目自动关联：这些项目所运用的 Alexis 个人技能，以及它们共同使用的技术。",
+        "skill": "技能",
+        "level": "水平",
+        "source": "见于",
+        "need": "需求中提及",
+        "technologies": "多个证据项目共用的技术",
+        "loading": "正在关联技能…",
+        "failed": "技能暂时无法获取。",
+        "levels": {
+          "expert": "专家",
+          "advanced": "高级",
+          "intermediate": "中级",
+          "beginner": "入门"
+        }
+      },
+      "contact": "联系 Alexis",
+      "contactSubject": "设计方案书 {organisation}",
+      "pdf": {
+        "busy": "正在生成 PDF…",
+        "failed": "PDF 暂不可用，请重试",
+        "expired": "方案书已过期（保留 24 小时）：请重新运行团队",
+        "replayNote": "回放示例：预先录制的场景，未调用 AI。项目数据取自真实项目档案。",
+        "filename": "设计方案书 {organisation}"
+      }
+    },
+    "live": {
+      "caption": "实时团队 · {model}",
+      "captionIdle": "实时智能体团队，处理您的需求",
+      "captionPending": "实时团队，正在启动",
+      "failed": {
+        "model": "已停止：某个智能体返回了无法使用的结果",
+        "upstream": "已停止：AI 服务或数据没有响应",
+        "invalid": "请填写至少 20 个字符的需求，以及“姓名，职位 @ 机构”",
+        "network": "方案交付前连接中断"
+      }
+    }
+  }
+}

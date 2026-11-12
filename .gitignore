@@ -1,0 +1,135 @@
+# ============================================================================
+# MAICIVY - Git Ignore
+# ============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker override spécifique à l'environnement (chaque machine a le sien).
+# Voir docker-compose.override.yml.example. Sur VPS142 : frontend en image pré-buildée.
+docker-compose.override.yml
+docker-compose.override.yml.bak-pregit
+.env.bak-pregit
+
+# Docker volumes data
+postgres-data/
+redis-data/
+
+# Backend (Go)
+backend/backend
+backend/*.exe
+backend/*.test
+backend/*.out
+backend/tmp/
+backend/vendor/
+*.swp
+*.swo
+
+# Frontend (Next.js)
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/node_modules/
+frontend/.DS_Store
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+*.coverprofile
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+# Résidus d'édition & de merge. POURQUOI : `testing_helpers.go.bak`, `validations.ts.bak` et
+# `validations.patch` avaient été COMMITÉS (un .gitignore n'agit pas sur un fichier déjà tracké,
+# ils survivaient donc à `*.bak`) — retirés le 2026-07-29. On élargit pour couvrir toute la famille :
+# .orig/.rej = artefacts de merge/`git apply` ratés, .patch/.diff = patchs jetables appliqués puis
+# oubliés. Un patch qu'on veut vraiment versionner reste possible via `git add -f`.
+*.orig
+*.rej
+*.patch
+*.diff
+
+# Build artifacts
+dist/
+/output/
+# Binaires Go compilés (outils migrate/seed) — ne JAMAIS committer (23 Mo de cruft retirés du repo)
+backend/migrate
+backend/seed
+# Exécutables Windows, PARTOUT (pas seulement backend/ : `backend/*.exe` laissait passer la racine).
+# POURQUOI : 303 Mo de binaires `go build` traînaient hors index (backend.exe, main.exe, main2.exe,
+# main2.exe~, cmd.exe, onetime_backfill.exe) — un seul `git add -f` ou un .gitignore assoupli les
+# poussait vers le miroir GitHub public. Le `~` est déjà couvert par `*~` (section IDE).
+*.exe
+# Sous-dossier parasite créé par un `go build -o docs/...` lancé depuis backend/ au lieu de la racine :
+# recrée un `backend/backend/docs/api/openapi.yaml` doublon de `backend/docs/api/openapi.yaml`.
+backend/backend/
+build/
+*.tar.gz
+*.zip
+
+# Secrets & Keys
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# Database dumps (but allow migrations)
+*.dump
+!backend/migrations/*.sql
+
+# Redis dumps
+dump.rdb
+appendonly.aof
+
+# Development files (not for public repo)
+CLAUDE.md
+.claude*
+tmpclaude-*
+
+# Internal sync documentation (local only, never commit)
+AUTO_SYNC_PLAN.txt
+GIT_WORKFLOW.md
+START_HERE.md
+SYNC_README.md
+TEST_SYNC.md
+auto-sync.sh
+dry-run-test.sh
+sync-to-github*.ps1
+sync-to-github*.sh
+
+# Artefacts locaux & notes hors-projet — ne JAMAIS committer (le repo a un miroir public).
+# .melodicode/ = cache de l'IDE Melodicode. handoffclean57.md = note d'infra VPS57 sensible
+# (mentionne une attaque/migration) : protège d'un `git add .` accidentel qui fuiterait en public.
+.melodicode/
+handoffclean57.md

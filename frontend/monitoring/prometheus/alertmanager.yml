@@ -1,0 +1,69 @@
+# Alertmanager Configuration (Optionnel)
+# Pour envoyer des alertes via Slack, Email, PagerDuty, etc.
+
+global:
+  resolve_timeout: 5m
+
+# Templates pour les notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route principale
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+
+# Receivers (destinations des alertes)
+receivers:
+  # Default receiver (fallback)
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  # Alertes critiques → Slack + Email
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#alerts-critical'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'admin@maicivy.com'
+        from: 'alertmanager@maicivy.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'YOUR_EMAIL'
+        auth_password: 'YOUR_APP_PASSWORD'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+
+  # Alertes warning → Slack seulement
+  - name: 'warning-alerts'
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#alerts-warning'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+# Inhibition rules (éviter spam)
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']

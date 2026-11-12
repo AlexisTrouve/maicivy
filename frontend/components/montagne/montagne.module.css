@@ -1,0 +1,336 @@
+/*
+ * montagne.module.css — la mise en page de la montagne à plat (MontagnePeak).
+ *
+ * QUOI : les positions et tailles sont calculées côté serveur pour TROIS géométries
+ * (lib/montagne/pyramid.ts › GEOMETRIES) et posées en variables CSS sur chaque élément :
+ * --x0/--y0 (téléphone), --x1/--y1 (≥ 768 px), --x2/--y2 (≥ 1280 px). Ce fichier choisit la
+ * géométrie par media query. Les seuils DOIVENT rester ceux de GEOMETRIES.
+ * POURQUOI des variables et pas trois arbres DOM : une seule tuile par projet dans la page —
+ * un seul focus clavier, une seule entrée pour le lecteur d'écran, un seul testid par projet.
+ */
+
+/* --- Ciel : nuit presque noire, poussière d'étoiles discrète (points fixes, aucun hasard). --- */
+.sky {
+  background-color: #04060b;
+  background-image:
+    radial-gradient(1px 1px at 23px 41px, rgba(239, 233, 220, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 97px 160px, rgba(239, 233, 220, 0.35), transparent 60%),
+    radial-gradient(1.5px 1.5px at 171px 83px, rgba(239, 233, 220, 0.45), transparent 60%),
+    radial-gradient(1px 1px at 211px 217px, rgba(239, 233, 220, 0.3), transparent 60%),
+    radial-gradient(1px 1px at 51px 251px, rgba(236, 216, 164, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 137px 19px, rgba(239, 233, 220, 0.25), transparent 60%),
+    radial-gradient(1.5px 1.5px at 251px 131px, rgba(239, 233, 220, 0.3), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30, 41, 66, 0.55), transparent 70%);
+  background-size:
+    263px 263px,
+    263px 263px,
+    263px 263px,
+    263px 263px,
+    263px 263px,
+    263px 263px,
+    263px 263px,
+    100% 100%;
+}
+
+/* --- Conteneur de la montagne : taille de la géométrie active, centré. --- */
+.mountain {
+  position: relative;
+  margin-inline: auto;
+  width: var(--w0);
+  height: var(--h0);
+  /* Hauteur active, lue par .backdrop pour cadrer l'illustration. */
+  --h: var(--h0);
+  --tile: var(--tile0);
+  --cw: var(--cw0);
+  --ch: var(--ch0);
+  --fs: var(--fs0);
+  --label: var(--label0);
+  --peak: var(--peak0);
+  /* Illustration de fond, cadrage portrait (fond-mobile) : hauteur relative de la pointe peinte
+     et rapport largeur / hauteur. Mesurés sur le fichier (pointe à 425 px sur 1536). */
+  --art-apex: 0.277;
+  --art-ratio: 0.6667;
+  /* Cadrage de l'illustration, partagé par .backdrop et .foothills (détail du calcul : voir
+     .backdrop plus bas). Posé ici et pas sur .backdrop : le prolongement (.foothills) en dépend
+     aussi. Chaque media query ne change que les mesures (--h, --peak, --art-*) : ces formules,
+     calculées sur ce même élément, suivent seules. */
+  --art-fit: calc((var(--h) - var(--peak)) / (1 - var(--art-apex)));
+  --art-h: min(var(--art-fit), calc(150vw / var(--art-ratio)));
+  /* La pointe un peu SOUS les cartes : sa lueur se voit entre elles et la première tuile. */
+  --art-drop: 18px;
+  /* Haut de l'illustration, dans le repère de la montagne. */
+  --art-top: calc(var(--peak) + var(--art-drop) - var(--art-apex) * var(--art-h));
+}
+
+/* Élément posé : coin haut-gauche de la géométrie active. */
+.placed {
+  position: absolute;
+  left: var(--x0);
+  top: var(--y0);
+}
+
+/* SVG et repères propres à une géométrie : seul celui de la géométrie active s'affiche. */
+.g1,
+.g2 {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mountain {
+    width: var(--w1);
+    height: var(--h1);
+    /* Hauteur active, lue par .backdrop pour cadrer l'illustration. */
+    --h: var(--h1);
+    --tile: var(--tile1);
+    --cw: var(--cw1);
+    --ch: var(--ch1);
+    --fs: var(--fs1);
+    --label: var(--label1);
+    --peak: var(--peak1);
+    /* Cadrage paysage (fond-desktop) : pointe à 318 px sur 1024. */
+    --art-apex: 0.31;
+    --art-ratio: 1.5;
+  }
+  .placed {
+    left: var(--x1);
+    top: var(--y1);
+  }
+  .g0 {
+    display: none;
+  }
+  .g1 {
+    display: block;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mountain {
+    width: var(--w2);
+    height: var(--h2);
+    /* Hauteur active, lue par .backdrop pour cadrer l'illustration. */
+    --h: var(--h2);
+    --tile: var(--tile2);
+    --cw: var(--cw2);
+    --ch: var(--ch2);
+    --fs: var(--fs2);
+    --label: var(--label2);
+    --peak: var(--peak2);
+  }
+  .placed {
+    left: var(--x2);
+    top: var(--y2);
+  }
+  .g1 {
+    display: none;
+  }
+  .g2 {
+    display: block;
+  }
+}
+
+/* --- Tuile : carré (cible tactile ≥ 44 px sur téléphone), nom court dessous. --- */
+.tile {
+  width: var(--tile);
+  height: var(--tile);
+}
+
+/* Nom sous la tuile : centré sur elle, plus large qu'elle (la cellule), deux lignes au plus. */
+.tileName {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  width: var(--label);
+  transform: translateX(-50%);
+  font-size: var(--fs);
+  line-height: 1.2;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* Coupure aux frontières de mot (<wbr> posés par wordBreaks.ts) ; un mot encore trop long se
+     coupe en dernier recours, et le « … » du line-clamp borne à deux lignes. */
+  overflow-wrap: break-word;
+  hyphens: manual;
+  /* Halo de nuit : un filet doré qui passe derrière un nom ne le rend pas illisible. */
+  text-shadow:
+    0 0 3px #04060b,
+    0 0 6px #04060b,
+    0 1px 2px #04060b;
+}
+
+/* --- Filets « sert à construire » (MontagnePeak › MountainLinks, allumage : useLinkHighlight).
+   QUOI : tous les liens réels sont dessinés, mais DISCRETS au repos — un fil d'or sans halo ;
+   le projet survolé ou focalisé allume les siens (trait plein + halo), et les autres reculent
+   encore pendant ce temps.
+   POURQUOI : en v4 chaque lien était un trait plein à 0,75 avec halo ; la vingtaine de liens de
+   GroveEngine faisait un éventail qui brouillait la composition (la maquette AC-2 garde la
+   montagne lisible). Retirer ou fusionner des liens aurait menti sur le graphe ; les atténuer
+   garde la vérité ET la lisibilité, et le survol répond à la question « qu'a-t-il construit ? ».
+   Le seuil de repos (≤ 0,3) est verrouillé par montagne.spec.ts. --- */
+.link {
+  fill: none;
+  stroke: #d9b45f;
+  stroke-width: 1;
+  stroke-opacity: 0.2;
+  transition:
+    stroke-opacity 0.2s ease,
+    stroke-width 0.2s ease;
+}
+.link[data-lit] {
+  stroke-opacity: 0.95;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 2px rgba(217, 180, 95, 0.8));
+}
+/* Un projet est actif : les filets qui ne sont pas les siens s'effacent presque. */
+[data-link-focus] .link:not([data-lit]) {
+  stroke-opacity: 0.07;
+}
+.linkEnd {
+  fill: #f0d590;
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+.linkEnd[data-lit] {
+  opacity: 1;
+}
+[data-link-focus] .linkEnd:not([data-lit]) {
+  opacity: 0.12;
+}
+
+/* --- Carte du sommet. --- */
+.card {
+  width: var(--cw);
+  height: var(--ch);
+}
+
+/* --- Carte du sommet : double filet d'or (cadre, puis filet intérieur), comme la maquette AC-2.
+   Le filet intérieur est un pseudo-élément PEINT APRÈS la couverture : il passe par-dessus
+   l'illustration au lieu d'être caché dessous (un box-shadow inset le serait). --- */
+.summitCard {
+  position: relative;
+  box-shadow:
+    0 22px 44px -18px rgba(0, 0, 0, 0.95),
+    0 0 36px -12px rgba(217, 180, 95, 0.5);
+}
+.summitCard::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(217, 180, 95, 0.4);
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* --- Illustration de fond (MontagneBackdrop).
+   QUOI : la montagne peinte, sa POINTE posée juste sous les cartes (--peak + --art-drop), son
+   PIED au bas du dernier rang (--h) quand c'est possible.
+   POURQUOI ce calcul et pas « cover » sur la page : la hauteur de la montagne varie avec le nombre
+   de projets et la géométrie ; un cadrage fixe poserait la pointe n'importe où (derrière le titre,
+   au milieu des tuiles).
+   COMMENT :
+    - hauteur « ajustée » H telle que (1 − apex) · H = h − peak : le pied peint tombe au bas du
+      dernier rang ; largeur = H × rapport ; décalage vers le haut = apex · H ;
+    - MAIS zoom plafonné à 1,5 × la largeur de l'écran. Sur téléphone la montagne des tuiles est
+      haute et étroite (6 tuiles × 14 rangs) : ajustée, l'image serait agrandie ~3× et l'écran ne
+      montrerait que la face sombre de la roche — ni arêtes dorées, ni mer de nuages (mesuré sur
+      les captures v4). Plafonnée, toute la pointe tient à l'écran et les derniers rangs (les
+      fondations) s'enfoncent dans la nuit, sous la brume ;
+    - z-index −1 dans le contexte d'empilement de la page (`isolate`, page.tsx) — derrière la
+      voix, les cartes et les tuiles, devant le fond de nuit. Plus large que l'écran : la section
+      (overflow-x: clip) la rogne sur les côtés, jamais de défilement horizontal. --- */
+.backdrop {
+  /* --art-fit, --art-h, --art-drop, --art-top : posés sur .mountain (partagés avec .foothills). */
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: var(--art-top);
+  width: calc(var(--art-h) * var(--art-ratio));
+  height: var(--art-h);
+  transform: translateX(-50%);
+  pointer-events: none;
+  /* Fondu de l'IMAGE elle-même (masque), pas un dégradé peint par-dessus : le ciel de la page
+     derrière n'est pas d'une couleur unie (halo bleu nuit de .sky), un dégradé vers une couleur
+     fixe y laissait un bord net (mesuré sur les captures v4). Haut : le titre se lit sur la nuit ;
+     bas : les fondations s'enfoncent dans la nuit sous la brume ; côtés : un écran plus large que
+     l'illustration n'en voit pas le bord. */
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  mask-composite: intersect;
+}
+.backdropImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* --- Prolongement de la montagne (MontagneBackdrop › .foothills).
+   QUOI : sous l'illustration, une roche sombre et chaude traversée de brume dorée, jusqu'au bas
+   du dernier rang — le pied de la montagne dans la mer de nuages, comme le bas de l'illustration.
+   POURQUOI : le zoom de l'illustration est plafonné (sinon un téléphone ne verrait que la face
+   noire de la roche) et son pied est fondu dans la nuit par le masque. Sur téléphone, la montagne
+   des tuiles est bien plus haute que l'illustration : en v4 la moitié basse des rangs reposait
+   sur la nuit nue (mesuré : R − B ≈ −14 derrière le dernier rang). Même sur desktop, le dernier
+   rang tombait dans le fondu (R − B ≈ −4).
+   COMMENT :
+    - commence à 62 % de la hauteur de l'illustration (dans son fondu bas, de 70 à 100 %) et entre
+      en fondu sur 28 % de cette hauteur : les deux calques se relaient sans couture. Il commence
+      donc toujours bien sous la pointe, jamais par-dessus ;
+    - s'arrête 60 px sous le dernier rang, fondu dans la nuit sur 160 px (la liste suit) ;
+    - AUCUNE image ajoutée : roche = dégradés ; brume = bruit fractal SVG (feTurbulence) en
+      data URI, teinté or, qui se répète sans couture (stitchTiles) ; bancs de brume latéraux
+      alternés gauche / droite tous les 720 px ; une lueur au pied ;
+    - derrière l'illustration (placé avant elle dans le DOM, même z-index) : dans la zone de
+      relais, la peinture garde le dessus. --- */
+.foothills {
+  --foot-top: calc(var(--art-top) + 0.62 * var(--art-h));
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: var(--foot-top);
+  width: 100vw;
+  height: max(0px, calc(var(--h) + 60px - var(--foot-top)));
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005 0.01' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.86 0 0 0 0 0.66 0 0 0 0 0.33 1.5 0 0 0 -0.7'/%3E%3C/filter%3E%3Crect width='560' height='560' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 55% 220px at 0% 200px, rgba(217, 170, 90, 0.3), transparent 70%),
+    radial-gradient(ellipse 55% 220px at 100% 560px, rgba(217, 170, 90, 0.3), transparent 70%),
+    radial-gradient(ellipse 90% 240px at 50% 100%, rgba(217, 170, 90, 0.28), transparent 75%),
+    linear-gradient(to right, rgba(20, 16, 10, 0.55), rgba(24, 19, 12, 0.92) 30%, rgba(24, 19, 12, 0.92) 70%, rgba(20, 16, 10, 0.55));
+  background-size:
+    560px 560px,
+    100% 720px,
+    100% 720px,
+    100% 100%,
+    100% 100%;
+  background-repeat: repeat, repeat-y, repeat-y, no-repeat, no-repeat;
+  background-position: center top;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0, #000 calc(0.28 * var(--art-h)), #000 calc(100% - 160px), transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 calc(0.28 * var(--art-h)), #000 calc(100% - 160px), transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Voile : la roche un peu assombrie, pour que les noms des tuiles se lisent aussi sur la brume
+   dorée. Les fondus de bord, eux, sont dans le masque de .backdrop. */
+.backdropVeil {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 11, 0.22);
+}
+
+/* --- Serif de la voix et des œuvres (lib/montagne/fonts.ts). Le chinois retombe sur la serif
+   du système, jamais sur une grotesque. --- */
+.serif {
+  font-family: var(--font-montagne-serif), 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+}

@@ -1,0 +1,325 @@
+import { render, screen, waitFor, act } from '@testing-library/react';
+import RealtimeVisitors from '../RealtimeVisitors';
+
+// Mock lucide-react
+jest.mock('lucide-react', () => ({
+  Activity: () => <div data-testid="activity-icon">Activity Icon</div>,
+}));
+
+// Mock WebSocket
+class MockWebSocket {
+  url: string;
+  onopen: (() => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((error: Event) => void) | null = null;
+  onclose: (() => void) | null = null;
+  readyState: number = WebSocket.CONNECTING;
+
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+
+  constructor(url: string) {
+    this.url = url;
+    // Simulate connection opening
+    setTimeout(() => {
+      this.readyState = WebSocket.OPEN;
+      if (this.onopen) this.onopen();
+    }, 50);
+  }
+
+  send(data: string) {
+    // Mock send
+  }
+
+  close() {
+    this.readyState = WebSocket.CLOSED;
+    if (this.onclose) this.onclose();
+  }
+
+  // Helper to simulate receiving message
+  simulateMessage(data: any) {
+    if (this.onmessage) {
+      const event = new MessageEvent('message', {
+        data: JSON.stringify(data),
+      });
+      this.onmessage(event);
+    }
+  }
+}
+
+let mockWebSocket: MockWebSocket | null = null;
+
+describe('RealtimeVisitors', () => {
+  beforeEach(() => {
+    // Mock WebSocket
+    global.WebSocket = jest.fn((url: string) => {
+      mockWebSocket = new MockWebSocket(url);
+      return mockWebSocket as any;
+    }) as any;
+
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    mockWebSocket = null;
+  });
+
+  it('should render component with initial state', () => {
+    render(<RealtimeVisitors />);
+
+    expect(screen.getByText(/Visiteurs Actuels/i)).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
+  it('should show disconnected status initially', () => {
+    render(<RealtimeVisitors />);
+
+    expect(screen.getByText('Déconnecté')).toBeInTheDocument();
+  });
+
+  it('should connect to WebSocket on mount', async () => {
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('En ligne')).toBeInTheDocument();
+    });
+  });
+
+  it('should update visitor count when receiving WebSocket message', async () => {
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('En ligne')).toBeInTheDocument();
+    });
+
+    // Simulate WebSocket message — backend format: { type, data: { current_visitors } }
+    act(() => {
+      if (mockWebSocket) {
+        mockWebSocket.simulateMessage({
+          type: 'heartbeat',
+          data: { current_visitors: 5, timestamp: Date.now() },
+        });
+      }
+    });
+
+    // Allow time for count animation
+    act(() => {
+      jest.advanceTimersByTime(1100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('5')).toBeInTheDocument();
+    });
+  });
+
+  it('should handle multiple WebSocket messages', async () => {
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('En ligne')).toBeInTheDocument();
+    });
+
+    // First message — backend format: { type, data: { current_visitors } }
+    act(() => {
+      if (mockWebSocket) {
+        mockWebSocket.simulateMessage({
+          type: 'heartbeat',
+          data: { current_visitors: 3, timestamp: Date.now() },
+        });
+      }
+    });
+    act(() => {
+      jest.advanceTimersByTime(1100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('3')).toBeInTheDocument();
+    });
+
+    // Second message
+    act(() => {
+      if (mockWebSocket) {
+        mockWebSocket.simulateMessage({
+          type: 'initial_stats',
+          data: { current_visitors: 7, timestamp: Date.now() },
+        });
+      }
+    });
+    act(() => {
+      jest.advanceTimersByTime(1100);
+    });
+
+    await waitFor(() => {
+      const sevenElements = screen.getAllByText('7');
+      expect(sevenElements.length).toBeGreaterThanOrEqual(1);
+    }, { timeout: 2000 });
+  });
+
+  it('should handle WebSocket disconnection', async () => {
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('En ligne')).toBeInTheDocument();
+    });
+
+    // Simulate disconnection
+    act(() => {
+      if (mockWebSocket && mockWebSocket.onclose) {
+        mockWebSocket.onclose();
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Déconnecté')).toBeInTheDocument();
+    });
+  });
+
+  it('should show correct singular/plural text for visitor count', async () => {
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    // 0 visitors — "personne" and "en ce moment" are in separate text nodes inside <p>
+    expect(screen.getByText((_content, element) => {
+      return element?.tagName === 'P' && (element?.textContent ?? '').includes('personne') && (element?.textContent ?? '').includes('en ce moment');
+    })).toBeInTheDocument();
+
+    // 1 visitor — backend format: { type, data: { current_visitors } }
+    act(() => {
+      if (mockWebSocket) {
+        mockWebSocket.simulateMessage({
+          type: 'heartbeat',
+          data: { current_visitors: 1, timestamp: Date.now() },
+        });
+      }
+      jest.advanceTimersByTime(1100);
+    });
+
+    await waitFor(() => {
+      const p = screen.getByText((_content, element) => {
+        return element?.tagName === 'P' && (element?.textContent ?? '').includes('personne') && (element?.textContent ?? '').includes('en ce moment');
+      });
+      expect(p).toBeInTheDocument();
+    });
+
+    // Multiple visitors
+    act(() => {
+      if (mockWebSocket) {
+        mockWebSocket.simulateMessage({
+          type: 'heartbeat',
+          data: { current_visitors: 5, timestamp: Date.now() },
+        });
+      }
+      jest.advanceTimersByTime(1100);
+    });
+
+    await waitFor(() => {
+      const p = screen.getByText((_content, element) => {
+        return element?.tagName === 'P' && (element?.textContent ?? '').includes('personnes') && (element?.textContent ?? '').includes('en ce moment');
+      });
+      expect(p).toBeInTheDocument();
+    });
+  });
+
+  it('should render connection status indicator', async () => {
+    const { container } = render(<RealtimeVisitors />);
+
+    // Initially disconnected (état porté par data-state + glyphe ✕, la couleur ne fait que doubler)
+    let statusDot = container.querySelector('[data-testid="ws-status-dot"][data-state="offline"]');
+    expect(statusDot).toBeInTheDocument();
+
+    // After connection (online, glyphe ✓)
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      statusDot = container.querySelector('[data-testid="ws-status-dot"][data-state="online"]');
+      expect(statusDot).toBeInTheDocument();
+    });
+  });
+
+  it('should render Activity icon', () => {
+    render(<RealtimeVisitors />);
+
+    // Since we mocked Activity component, check for the mocked element
+    expect(screen.getByTestId('activity-icon')).toBeInTheDocument();
+  });
+
+  it('should display realtime update message', () => {
+    render(<RealtimeVisitors />);
+
+    expect(
+      screen.getByText(/Mise à jour en temps réel via WebSocket/i)
+    ).toBeInTheDocument();
+  });
+
+  it('should handle invalid JSON message gracefully', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('En ligne')).toBeInTheDocument();
+    });
+
+    // Send invalid JSON
+    act(() => {
+      if (mockWebSocket && mockWebSocket.onmessage) {
+        const event = new MessageEvent('message', {
+          data: 'invalid json',
+        });
+        mockWebSocket.onmessage(event);
+      }
+    });
+
+    // Should still show previous count (0)
+    expect(screen.getByText('0')).toBeInTheDocument();
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should cleanup WebSocket on unmount', async () => {
+    const { unmount } = render(<RealtimeVisitors />);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(mockWebSocket?.readyState).toBe(WebSocket.OPEN);
+    });
+
+    const closeSpy = jest.spyOn(mockWebSocket!, 'close');
+
+    unmount();
+
+    expect(closeSpy).toHaveBeenCalled();
+  });
+});

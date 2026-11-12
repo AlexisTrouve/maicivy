@@ -1,0 +1,520 @@
+{
+	"info": {
+		"_postman_id": "maicivy-api-collection",
+		"name": "maicivy API",
+		"description": "Complete API collection for maicivy - CV interactif intelligent avec IA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "maicivy"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check (Shallow)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check (Deep)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/deep",
+							"host": ["{{base_url}}"],
+							"path": ["health", "deep"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CV",
+			"item": [
+				{
+					"name": "Get Adaptive CV",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cv?theme=backend",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "cv"],
+							"query": [
+								{
+									"key": "theme",
+									"value": "backend",
+									"description": "CV theme (backend, frontend, fullstack, cpp, artistique, devops)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get CV Themes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cv/themes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "cv", "themes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Experiences",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/experiences",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "experiences"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Skills",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/skills",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "skills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Export CV as PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/pdf"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cv/export?theme=backend&format=pdf",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "cv", "export"],
+							"query": [
+								{
+									"key": "theme",
+									"value": "backend"
+								},
+								{
+									"key": "format",
+									"value": "pdf"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Letters",
+			"item": [
+				{
+					"name": "Generate Letters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.environment.set('job_id', jsonData.job_id);",
+									"    console.log('Job ID:', jsonData.job_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"company_name\": \"Google\",\n    \"job_title\": \"Backend Engineer\",\n    \"theme\": \"backend\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/generate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "generate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/jobs/{{job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "jobs", "{{job_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Letter by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/{{letter_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "{{letter_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Letter PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/pdf"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/{{letter_id}}/pdf",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "{{letter_id}}", "pdf"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Letter Pair",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/pair?company=Google",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "pair"],
+							"query": [
+								{
+									"key": "company",
+									"value": "Google"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Letter History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/history?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "history"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Access Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/access-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "access-status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Rate Limit Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/letters/rate-limit-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "letters", "rate-limit-status"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Analytics",
+			"item": [
+				{
+					"name": "Get Realtime Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/realtime",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "realtime"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Aggregated Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/stats?period=day",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "stats"],
+							"query": [
+								{
+									"key": "period",
+									"value": "day",
+									"description": "day, week, or month"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Top Themes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/themes?limit=5",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "themes"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Letters Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/letters?period=day",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "letters"],
+							"query": [
+								{
+									"key": "period",
+									"value": "day"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Timeline",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/timeline?limit=50&offset=0",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "timeline"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Heatmap Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/heatmap?page_url=/cv&hours=24",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "heatmap"],
+							"query": [
+								{
+									"key": "page_url",
+									"value": "/cv"
+								},
+								{
+									"key": "hours",
+									"value": "24"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Track Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_type\": \"button_click\",\n    \"event_data\": {\n        \"button\": \"cta\",\n        \"x\": 450,\n        \"y\": 200\n    },\n    \"page_url\": \"/cv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/event",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "event"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GitHub",
+			"item": [
+				{
+					"name": "Trigger GitHub Sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/github/sync",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "github", "sync"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get GitHub Sync Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/github/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "github", "status"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Ensure session cookie is sent",
+					"console.log('Request to:', pm.request.url.toString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Log response status",
+					"console.log('Response status:', pm.response.code);",
+					"",
+					"// Test status code is successful",
+					"pm.test('Status code is 2xx or 3xx', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "job_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "letter_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

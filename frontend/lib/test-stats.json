@@ -1,0 +1,13 @@
+{
+  "backend": {
+    "tests": 742,
+    "files": 149
+  },
+  "frontend": {
+    "tests": 957,
+    "suites": 87
+  },
+  "total": 1699,
+  "allGreen": true,
+  "generatedAt": "2026-11-11"
+}

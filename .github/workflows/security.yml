@@ -1,0 +1,62 @@
+# Scan de sécurité public (GitHub) — vulnérabilités des dépendances et secrets.
+#
+# Même raison que ci.yml pour le dossier `.github-public/` : la synchro le pose dans
+# `.github/workflows/` de la branche publique seulement.
+#
+# Ce qui est vérifié, et pourquoi c'est bloquant :
+#   - govulncheck : vulnérabilités Go ATTEIGNABLES depuis notre code (pas un simple inventaire) ;
+#   - npm audit (dépendances de production, high+) : ce qui part réellement dans l'image ;
+#   - gitleaks (arbre courant) : aucun secret dans ce qui est publié.
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    name: Go vulnerabilities (govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: govulncheck
+        working-directory: backend
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  npm-audit:
+    name: npm audit (production, high+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: npm audit
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+  gitleaks:
+    name: Secrets (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # CLI épinglée plutôt que l'action (qui exige une licence pour un compte d'organisation).
+      # `dir` scanne l'arbre publié — mesuré le 11/11 : 0 fuite, et un canari AWS/GitHub est bien
+      # détecté (la règle n'est donc pas muette).
+      - name: gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz | tar xz gitleaks
+          ./gitleaks dir . --redact --no-banner -v

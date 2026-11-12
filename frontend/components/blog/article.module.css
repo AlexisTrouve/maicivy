@@ -1,0 +1,274 @@
+/*
+ * article.module.css — la feuille de lecture d'un article du blog.
+ *
+ * QUOI : la typographie du HTML rendu côté Go (goldmark + GFM + chroma, services/blog_generator.go) :
+ * paragraphes, titres, listes, citations, code, images, tableaux, filets.
+ * POURQUOI un module et pas `prose` : le HTML vient d'ailleurs et porte ses propres styles en ligne
+ * (chroma, thème « github ») pensés pour un fond BLANC. Il faut les neutraliser précisément, ce que
+ * les modificateurs de @tailwindcss/typography ne savent pas dire. L'esprit est celui de la feuille
+ * du dossier vivant : serif pour les titres, sans-serif pour le corps, filets fins, or en signal.
+ * COMMENT : toute couleur vient du thème — variables de globals.css (`hsl(var(--…))`) ou palette
+ * `gold` de tailwind.config (`theme()`). Seule exception, commentée : les teintes de la coloration
+ * syntaxique, couleurs PORTEUSES D'INFORMATION, accordées à la nuit.
+ */
+
+.article {
+  /* Mesure de lecture : la largeur vient de la colonne de BlogPostView (38rem ≈ 65–72 caractères de
+     prose à 18 px d'Inter — `ch`, largeur du « 0 », la surestimerait de ~20 %). Le corps reste en
+     sans-serif (règle du site), la serif est réservée aux titres. */
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: hsl(var(--foreground) / 0.88);
+  overflow-wrap: break-word;
+  /* Pas de césure automatique : la langue du contenu (souvent l'anglais) n'est pas celle de la page
+     (<html lang> = locale de l'interface) — le navigateur coupait l'anglais au dictionnaire français. */
+  hyphens: manual;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+@media (min-width: 768px) {
+  .article {
+    font-size: 1.125rem;
+  }
+}
+
+/* Rythme vertical : un seul pas entre blocs, la respiration vient des titres. */
+.article > * + * {
+  margin-top: 1.25em;
+}
+
+.article p {
+  text-wrap: pretty;
+}
+
+/* Titres : la serif de la montagne (var(--font-heading), posée sur .site-public). Cormorant a un
+   petit œil : on la compose plus grande que ne le serait une grotesque. Graisse 500/600 seulement
+   (les seules chargées par lib/montagne/fonts.ts — pas de gras synthétique). */
+.article h2,
+.article h3,
+.article h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-synthesis: none;
+  color: hsl(var(--foreground));
+  text-wrap: balance;
+  line-height: 1.15;
+  scroll-margin-top: 6rem;
+}
+.article h2 {
+  margin-top: 2.4em;
+  font-size: 1.85em;
+}
+.article h3 {
+  margin-top: 2em;
+  font-size: 1.45em;
+}
+.article h4 {
+  margin-top: 1.8em;
+  font-size: 1.2em;
+}
+.article :is(h2, h3, h4) + * {
+  margin-top: 0.6em;
+}
+
+.article strong {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* Liens : ivoire souligné, le soulignement s'allume au survol. Pas d'or (texte courant). */
+.article a {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--muted-foreground) / 0.6);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 120ms ease;
+}
+.article a:hover {
+  text-decoration-color: hsl(var(--foreground));
+}
+.article a:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Listes : puces discrètes, numéros en chiffres tabulaires. */
+.article ul,
+.article ol {
+  padding-left: 1.4em;
+}
+.article ul {
+  list-style: disc;
+}
+.article ol {
+  list-style: decimal;
+}
+.article li + li {
+  margin-top: 0.5em;
+}
+.article li::marker {
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Citation : un filet d'or à gauche — le seul or de la feuille, un signal, jamais un aplat. Le texte
+   passe en serif italique, plus grand : c'est la phrase qu'on retient. */
+.article blockquote {
+  margin-block: 2em;
+  padding-left: 1.25em;
+  border-left: 2px solid theme('colors.gold.DEFAULT');
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 1.3em;
+  line-height: 1.45;
+  color: hsl(var(--foreground));
+}
+.article blockquote > * + * {
+  margin-top: 0.75em;
+}
+
+/* Code en ligne : un creux dans la page, pas une pastille de couleur. */
+.article :not(pre) > code {
+  padding: 0.12em 0.38em;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  background: hsl(var(--card));
+  font-family: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  font-size: 0.86em;
+  color: hsl(var(--foreground));
+}
+
+/* Bloc de code. chroma pose `style="background-color:#fff"` EN LIGNE sur <pre> : `!important` est le
+   seul moyen de primer sur un style en ligne. Le bloc déborde légèrement la mesure sur grand écran
+   (une ligne de code n'est pas une ligne de prose) et défile horizontalement s'il le faut. */
+.article pre {
+  margin-block: 1.75em;
+  padding: 1em 1.15em;
+  overflow-x: auto;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card)) !important;
+  font-family: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  font-size: 0.82em;
+  line-height: 1.6;
+  color: hsl(var(--foreground) / 0.9);
+  tab-size: 2;
+  scrollbar-width: thin;
+}
+.article pre code {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.article pre:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/*
+ * Coloration syntaxique — EXCEPTION À LA RÈGLE DES COULEURS EN DUR (information, comme la série d'un
+ * graphe). chroma (thème « github ») écrit ses couleurs en ligne pour un fond blanc : #000 (mots-clés)
+ * serait invisible sur la nuit. On les remplace par des teintes désaturées, toutes ≥ 7:1 sur
+ * hsl(var(--card)) — jamais de bleu (retiré du site), jamais d'or (signal).
+ * Repli d'abord : toute couleur inconnue de chroma devient l'ivoire du corps (lisible par défaut).
+ */
+.article pre span[style*='color'] {
+  color: hsl(var(--foreground) / 0.9) !important;
+}
+/* Commentaires (#998, #999, #aaa, #888) : en retrait, italique conservé par chroma. */
+.article pre span[style*='color:#998'],
+.article pre span[style*='color:#999'],
+.article pre span[style*='color:#aaa'],
+.article pre span[style*='color:#888'] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+/* Mots-clés (#000 gras) : ivoire plein, le gras de chroma les distingue. Les sélecteurs ci-dessous
+   LISENT les couleurs écrites par chroma (correspondance de texte) : ils n'en appliquent aucune. */
+.article pre span[style*='color:#000;'] {
+  color: hsl(var(--foreground)) !important;
+}
+/* Types et intégrés (#458, #445588, #0086b3, #008080) : sauge. */
+.article pre span[style*='color:#458'],
+.article pre span[style*='color:#445588'],
+.article pre span[style*='color:#0086b3'],
+.article pre span[style*='color:#008080'] {
+  color: oklch(82% 0.06 150) !important;
+}
+/* Chaînes (#d14, #dd1144) : sable. */
+.article pre span[style*='color:#d14'],
+.article pre span[style*='color:#dd1144'] {
+  color: oklch(83% 0.07 70) !important;
+}
+/* Nombres (#099, #009999) : lichen. */
+.article pre span[style*='color:#099'],
+.article pre span[style*='color:#009999'] {
+  color: oklch(84% 0.06 185) !important;
+}
+/* Fonctions, erreurs (#900, #990000, #a61717, #990073, #800080) : bruyère. */
+.article pre span[style*='color:#900'],
+.article pre span[style*='color:#990000'],
+.article pre span[style*='color:#a61717'],
+.article pre span[style*='color:#990073'],
+.article pre span[style*='color:#800080'] {
+  color: oklch(80% 0.07 15) !important;
+}
+
+/* Images : goldmark les place seules dans un <p>. Le paragraphe devient une figure — plus d'air
+   au-dessus et au-dessous, l'image pleine mesure, posée sur la surface des cartes (les SVG de
+   schéma ont un fond nuit qui s'y fond). */
+.article p:has(> img:only-child) {
+  margin-block: 2em;
+}
+.article img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+}
+
+/* Tableaux (GFM) : la grammaire des tableaux de preuve du dossier vivant — en-tête discret, filets
+   entre les lignes, pas de grille ni d'aplats. Défilement horizontal sur téléphone. */
+.article table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  line-height: 1.5;
+}
+.article th {
+  padding: 0 1em 0.6em 0;
+  text-align: left;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border));
+}
+.article td {
+  padding: 0.6em 1em 0.6em 0;
+  vertical-align: top;
+  border-bottom: 1px solid hsl(var(--border));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Filet de section : court et centré, comme une respiration. */
+.article hr {
+  width: 4rem;
+  margin: 3em auto;
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.article del {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Repli sans HTML (ancien article en texte brut) : on garde les retours à la ligne. */
+.plain {
+  white-space: pre-wrap;
+}

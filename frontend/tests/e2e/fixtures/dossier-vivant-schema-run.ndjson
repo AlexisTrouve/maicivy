@@ -1,0 +1,173 @@
+{"receivedMs":12,"event":{"type":"run.started","visitor":{"name":"Claire Dubois","affiliation":"associée chez Cabinet Lumen","organisation":"Cabinet Lumen","initials":"CD","need":"Notre cabinet comptable reçoit 300 pièces justificatives par jour : factures, relevés, notes de frais. Nous voulons des agents IA qui les lisent, les rangent dans le bon dossier client, signalent les anomalies et préparent la saisie — un collaborateur valide avant tout envoi."},"agents":[{"id":"orchestrator","model":"claude-haiku-5-5"},{"id":"reader","model":"claude-haiku-5-5"},{"id":"researcher","model":"claude-haiku-5-5"},{"id":"architect","model":"claude-haiku-5-5"},{"id":"diagrammer","model":"claude-sonnet-5-5"},{"id":"writer","model":"claude-haiku-5-5"}]}}
+{"receivedMs":12,"event":{"type":"agent.status","agent":"orchestrator","status":"working","activity":"lit la demande"}}
+{"receivedMs":12,"event":{"type":"message","from":"visitor","to":"orchestrator","text":"« Notre cabinet comptable reçoit 300 pièces justificatives pa… »"}}
+{"receivedMs":7413,"event":{"type":"usage","agent":"orchestrator","inputTokens":648,"outputTokens":909,"costUsd":0.0005193}}
+{"receivedMs":7413,"event":{"type":"agent.status","agent":"orchestrator","status":"working","activity":"répartit le travail"}}
+{"receivedMs":7413,"event":{"type":"message","from":"orchestrator","to":"orchestrator","text":"Besoin, projets prouvants, architecture et rédaction en parallèle","topic":"plan"}}
+{"receivedMs":7745,"event":{"type":"message","from":"orchestrator","to":"reader","text":"Reformuler le besoin et lister les questions ouvertes du client"}}
+{"receivedMs":8095,"event":{"type":"message","from":"orchestrator","to":"researcher","text":"Repérer les projets d'Alexis prouvant la capacité à réaliser cela"}}
+{"receivedMs":8457,"event":{"type":"message","from":"orchestrator","to":"architect","text":"Concevoir le pipeline : ingestion, classement, anomalies, validation"}}
+{"receivedMs":8797,"event":{"type":"message","from":"orchestrator","to":"writer","text":"Assembler le dossier de proposition en français, formel et concret"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"orchestrator","status":"working","activity":"attend les retours"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"reader","status":"working","activity":"lit la demande"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"architect","status":"working","activity":"lit des architectures"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"ouvre le dossier"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"researcher","status":"working","activity":"lit l’index"}}
+{"receivedMs":8797,"event":{"type":"tool.call","agent":"reader","call":"read_request(\"cabinet-lumen\")","focus":{"kind":"visitor"}}}
+{"receivedMs":8797,"event":{"type":"tool.call","agent":"architect","call":"search_architectures(need)","focus":{"kind":"visitor"}}}
+{"receivedMs":8797,"event":{"type":"tool.call","agent":"researcher","call":"get_projects_index()","focus":{"kind":"visitor"}}}
+{"receivedMs":8797,"event":{"type":"agent.log","agent":"researcher","kind":"note","text":"75 projets indexés"}}
+{"receivedMs":8797,"event":{"type":"agent.status","agent":"researcher","status":"working","activity":"filtre les projets"}}
+{"receivedMs":8797,"event":{"type":"tool.call","agent":"researcher","call":"filter_projects(need)","focus":{"kind":"visitor"}}}
+{"receivedMs":8797,"event":{"type":"tool.call","agent":"writer","call":"create_dossier(\"Cabinet Lumen\")","focus":{"kind":"dossier"}}}
+{"receivedMs":8822,"event":{"type":"dossier.opened","sections":[{"id":"need","title":"Le besoin, reformulé","waitingFor":"reader"},{"id":"architecture","title":"L’architecture proposée","waitingFor":"architect"},{"id":"proofs","title":"Les projets qui le prouvent","waitingFor":"researcher"},{"id":"contribution","title":"Ce qu’Alexis apporte","waitingFor":"researcher"},{"id":"next","title":"Prochaine étape","waitingFor":"previous"}]}}
+{"receivedMs":8822,"event":{"type":"agent.status","agent":"writer","status":"waiting","activity":"attend le besoin"}}
+{"receivedMs":8822,"event":{"type":"agent.log","agent":"writer","kind":"note","text":"Plan du dossier : cinq sections"}}
+{"receivedMs":15545,"event":{"type":"usage","agent":"reader","inputTokens":616,"outputTokens":851,"costUsd":0.00048709999999999997}}
+{"receivedMs":15545,"event":{"type":"agent.log","agent":"reader","kind":"note","text":"Volume : environ 300 pièces justificatives par jour au cabinet."}}
+{"receivedMs":15827,"event":{"type":"usage","agent":"researcher","inputTokens":5196,"outputTokens":714,"costUsd":0.0008766000000000001}}
+{"receivedMs":15827,"event":{"type":"index.filtered","agent":"researcher","total":75,"candidates":["veracite","grimorium_rag_screenwriting","envoia","etheryale_studio","civjdr_roman","feed_generator"]}}
+{"receivedMs":15827,"event":{"type":"agent.log","agent":"researcher","kind":"note","text":"6 candidats"}}
+{"receivedMs":15827,"event":{"type":"agent.status","agent":"researcher","status":"working","activity":"lit les fiches"}}
+{"receivedMs":15827,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"veracite\")","focus":{"kind":"project","projectId":"veracite"}}}
+{"receivedMs":15881,"event":{"type":"agent.log","agent":"reader","kind":"note","text":"Types de pièces : factures, relevés et notes de frais."}}
+{"receivedMs":16230,"event":{"type":"agent.log","agent":"reader","kind":"note","text":"Un collaborateur valide avant tout envoi de la saisie."}}
+{"receivedMs":16532,"event":{"type":"usage","agent":"architect","inputTokens":5149,"outputTokens":384,"costUsd":0.0007069}}
+{"receivedMs":16532,"event":{"type":"tool.call","agent":"architect","call":"get_project(\"envoia\")","focus":{"kind":"project","projectId":"envoia"}}}
+{"receivedMs":16598,"event":{"type":"agent.status","agent":"reader","status":"working","activity":"relève ce qui manque"}}
+{"receivedMs":16598,"event":{"type":"agent.log","agent":"reader","kind":"question","text":"Quel logiciel comptable reçoit la saisie préparée ?"}}
+{"receivedMs":16928,"event":{"type":"agent.log","agent":"reader","kind":"question","text":"Quelles anomalies signaler, et selon quelles règles ?"}}
+{"receivedMs":17283,"event":{"type":"agent.log","agent":"reader","kind":"question","text":"Comment les pièces arrivent-elles, et sous quel format ?"}}
+{"receivedMs":17639,"event":{"type":"tool.call","agent":"reader","call":"send(\"orchestrator\", need)","focus":{"kind":"visitor"}}}
+{"receivedMs":17639,"event":{"type":"agent.status","agent":"reader","status":"done"}}
+{"receivedMs":17639,"event":{"type":"agent.log","agent":"reader","kind":"done","text":"Besoin reformulé, envoyé"}}
+{"receivedMs":17639,"event":{"type":"message","from":"reader","to":"orchestrator","text":"Tri, contrôle d'anomalies et saisie préparée, validation humaine."}}
+{"receivedMs":17639,"event":{"type":"message","from":"orchestrator","to":"writer","text":"le besoin est prêt, première section."}}
+{"receivedMs":17639,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"écrit le besoin"}}
+{"receivedMs":17639,"event":{"type":"tool.call","agent":"writer","call":"write_section(1, need)","focus":{"kind":"dossier"}}}
+{"receivedMs":17639,"event":{"type":"dossier.section","section":"need","status":"writing"}}
+{"receivedMs":23027,"event":{"type":"usage","agent":"architect","inputTokens":6944,"outputTokens":1202,"costUsd":0.0012954}}
+{"receivedMs":23027,"event":{"type":"project.verdict","agent":"architect","projectId":"envoia","verdict":"keep","note":"EnvoIA : Le contenu lu ne dicte jamais l'action"}}
+{"receivedMs":23027,"event":{"type":"link.traced","from":"visitor","to":"envoia"}}
+{"receivedMs":23027,"event":{"type":"tool.call","agent":"architect","call":"get_project(\"etheryale_studio\")","focus":{"kind":"project","projectId":"etheryale_studio"}}}
+{"receivedMs":24377,"event":{"type":"usage","agent":"writer","inputTokens":681,"outputTokens":948,"costUsd":0.0005421}}
+{"receivedMs":24377,"event":{"type":"dossier.block","section":"need","block":{"type":"lead","text":"Le cabinet traite environ 300 pièces justificatives par jour, classées et saisies à la main."}}}
+{"receivedMs":25395,"event":{"type":"usage","agent":"researcher","inputTokens":6753,"outputTokens":1618,"costUsd":0.0014843}}
+{"receivedMs":25395,"event":{"type":"project.verdict","agent":"researcher","projectId":"veracite","verdict":"keep","note":"Veracite : Extraction LLM, contrôle déterministe, arbitrage humain"}}
+{"receivedMs":25395,"event":{"type":"link.traced","from":"visitor","to":"veracite"}}
+{"receivedMs":25395,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"grimorium_rag_screenwriting\")","focus":{"kind":"project","projectId":"grimorium_rag_screenwriting"}}}
+{"receivedMs":25913,"event":{"type":"dossier.block","section":"need","block":{"type":"item","text":"Aucune saisie n'est transmise sans validation préalable d'un collaborateur."}}}
+{"receivedMs":26261,"event":{"type":"dossier.block","section":"need","block":{"type":"item","text":"Chaque pièce est rangée dans le bon dossier client, avec une trace de son traitement."}}}
+{"receivedMs":26639,"event":{"type":"dossier.block","section":"need","block":{"type":"item","text":"Les anomalies sont signalées dès la lecture, avant la préparation de la saisie."}}}
+{"receivedMs":26964,"event":{"type":"dossier.section","section":"need","status":"done"}}
+{"receivedMs":26964,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Section 1 écrite"}}
+{"receivedMs":26964,"event":{"type":"agent.status","agent":"writer","status":"waiting","activity":"attend l’architecture"}}
+{"receivedMs":27208,"event":{"type":"usage","agent":"architect","inputTokens":8712,"outputTokens":1640,"costUsd":0.0016912}}
+{"receivedMs":27208,"event":{"type":"project.verdict","agent":"architect","projectId":"etheryale_studio","verdict":"keep","note":"Etheryale Studio : Specs JSON déclaratives et brouillons côté serveur"}}
+{"receivedMs":27208,"event":{"type":"link.traced","from":"visitor","to":"etheryale_studio"}}
+{"receivedMs":27208,"event":{"type":"tool.call","agent":"architect","call":"get_project(\"civjdr_roman\")","focus":{"kind":"project","projectId":"civjdr_roman"}}}
+{"receivedMs":31636,"event":{"type":"usage","agent":"architect","inputTokens":10560,"outputTokens":2067,"costUsd":0.0020894999999999998}}
+{"receivedMs":31636,"event":{"type":"project.verdict","agent":"architect","projectId":"civjdr_roman","verdict":"keep","note":"CivJDR Roman : Garanties en Python déterministe, pas dans les prompts"}}
+{"receivedMs":31636,"event":{"type":"link.traced","from":"visitor","to":"civjdr_roman"}}
+{"receivedMs":31636,"event":{"type":"agent.status","agent":"architect","status":"working","activity":"conçoit la chaîne"}}
+{"receivedMs":31636,"event":{"type":"tool.call","agent":"architect","call":"design_pipeline(need, lessons)","focus":{"kind":"visitor"}}}
+{"receivedMs":32195,"event":{"type":"usage","agent":"researcher","inputTokens":8676,"outputTokens":2608,"costUsd":0.0021716}}
+{"receivedMs":32195,"event":{"type":"project.verdict","agent":"researcher","projectId":"grimorium_rag_screenwriting","verdict":"keep","note":"Grimorium : Ingestion PDF + OCR + extraction LLM, domaine éloigné"}}
+{"receivedMs":32195,"event":{"type":"link.traced","from":"visitor","to":"grimorium_rag_screenwriting"}}
+{"receivedMs":32195,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"envoia\")","focus":{"kind":"project","projectId":"envoia"}}}
+{"receivedMs":39525,"event":{"type":"usage","agent":"architect","inputTokens":10810,"outputTokens":3221,"costUsd":0.0026915}}
+{"receivedMs":39525,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Chaîne en 5 étapes, 2 embranchements"}}
+{"receivedMs":39525,"event":{"type":"agent.status","agent":"architect","status":"working","activity":"pose les garde-fous"}}
+{"receivedMs":39880,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Contenu lu jamais exécuté comme instruction, à l'extraction"}}
+{"receivedMs":40225,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Contrôles de montants et de rattachement en Python, hors prompt"}}
+{"receivedMs":40577,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Aucun envoi de saisie sans validation humaine explicite"}}
+{"receivedMs":40577,"event":{"type":"agent.status","agent":"architect","status":"working","activity":"confie le schéma au Dessinateur"}}
+{"receivedMs":40577,"event":{"type":"tool.call","agent":"architect","call":"draw_schema(5 stages, 3 guardrails)","focus":{"kind":"visitor"}}}
+{"receivedMs":40577,"event":{"type":"message","from":"architect","to":"diagrammer","text":"dessine la chaîne : 5 étapes, 3 garde-fous."}}
+{"receivedMs":40577,"event":{"type":"agent.status","agent":"architect","status":"waiting","activity":"attend le schéma"}}
+{"receivedMs":40577,"event":{"type":"agent.status","agent":"diagrammer","status":"working","activity":"lit la commande de l’Architecte"}}
+{"receivedMs":40577,"event":{"type":"tool.call","agent":"diagrammer","call":"draft_schema(need, design)","focus":{"kind":"dossier"}}}
+{"receivedMs":42706,"event":{"type":"usage","agent":"researcher","inputTokens":10052,"outputTokens":3625,"costUsd":0.0028177000000000002}}
+{"receivedMs":42706,"event":{"type":"project.verdict","agent":"researcher","projectId":"envoia","verdict":"keep","note":"EnvoIA : Garde-fous face à un contenu non fiable ; autre domaine"}}
+{"receivedMs":42706,"event":{"type":"link.traced","from":"visitor","to":"envoia"}}
+{"receivedMs":42706,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"etheryale_studio\")","focus":{"kind":"project","projectId":"etheryale_studio"}}}
+{"receivedMs":48311,"event":{"type":"usage","agent":"diagrammer","inputTokens":752,"outputTokens":645,"costUsd":0.011930999999999999}}
+{"receivedMs":48311,"event":{"type":"agent.status","agent":"diagrammer","status":"working","activity":"contrôle la grille"}}
+{"receivedMs":48311,"event":{"type":"tool.call","agent":"diagrammer","call":"check_grid(nodes, edges)","focus":{"kind":"dossier"}}}
+{"receivedMs":48652,"event":{"type":"usage","agent":"researcher","inputTokens":11401,"outputTokens":4579,"costUsd":0.0034296}}
+{"receivedMs":48652,"event":{"type":"project.verdict","agent":"researcher","projectId":"etheryale_studio","verdict":"keep","note":"Etheryale Studio : Revue humaine de brouillons générés, hors comptabilité"}}
+{"receivedMs":48652,"event":{"type":"link.traced","from":"visitor","to":"etheryale_studio"}}
+{"receivedMs":48652,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"civjdr_roman\")","focus":{"kind":"project","projectId":"civjdr_roman"}}}
+{"receivedMs":48660,"event":{"type":"agent.log","agent":"diagrammer","kind":"note","text":"Le modèle lit seulement : les contrôles et le brouillon sont en code."}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"diagrammer","kind":"note","text":"Aucun envoi sans validation du collaborateur ; les anomalies lui remontent."}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"diagrammer","kind":"note","text":"Schéma : 6 étapes, 6 liens"}}
+{"receivedMs":49013,"event":{"type":"agent.status","agent":"diagrammer","status":"done"}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"diagrammer","kind":"done","text":"Schéma remis à l’Architecte"}}
+{"receivedMs":49013,"event":{"type":"message","from":"diagrammer","to":"architect","text":"5 étapes plus file de revue ; garde-fous 1-3 placés ; rejet renvoie au brouillon."}}
+{"receivedMs":49013,"event":{"type":"agent.status","agent":"architect","status":"working","activity":"vérifie le besoin"}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Chaîne : Pièces reçues, Lecture pièce, Dossier client, Brouillon saisie, Valida…"}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"architect","kind":"note","text":"Extraction, rattachement et validation humaine couvrent le besoin"}}
+{"receivedMs":49013,"event":{"type":"tool.call","agent":"architect","call":"send(\"orchestrator\", architecture)","focus":{"kind":"visitor"}}}
+{"receivedMs":49013,"event":{"type":"agent.status","agent":"architect","status":"done"}}
+{"receivedMs":49013,"event":{"type":"agent.log","agent":"architect","kind":"done","text":"Architecture envoyée"}}
+{"receivedMs":49013,"event":{"type":"message","from":"architect","to":"orchestrator","text":"Cinq étapes : le modèle lit, le code contrôle, un humain valide l'envoi."}}
+{"receivedMs":49013,"event":{"type":"message","from":"orchestrator","to":"writer","text":"l’architecture est prête."}}
+{"receivedMs":49013,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"écrit l’architecture"}}
+{"receivedMs":49013,"event":{"type":"tool.call","agent":"writer","call":"write_section(2, architecture)","focus":{"kind":"dossier"}}}
+{"receivedMs":49013,"event":{"type":"dossier.section","section":"architecture","status":"writing"}}
+{"receivedMs":49013,"event":{"type":"dossier.block","section":"architecture","block":{"type":"pipeline","nodes":[{"id":"pieces","title":"Pièces reçues","subtitle":"Code, 300/jour","col":0,"row":0},{"id":"lecture","title":"Lecture pièce","subtitle":"Modèle, JSON","col":1,"row":0},{"id":"controle","title":"Dossier client","subtitle":"Code Python","col":2,"row":0},{"id":"brouillon","title":"Brouillon saisie","subtitle":"Code, non envoyé","col":3,"row":0},{"id":"validation","title":"Validation","subtitle":"Collaborateur","col":4,"row":0,"human":true},{"id":"revue","title":"File de revue","subtitle":"Collaborateur","col":2,"row":1,"human":true}],"edges":[{"from":"pieces","to":"lecture"},{"from":"lecture","to":"controle","step":1},{"from":"controle","to":"brouillon","step":2},{"from":"brouillon","to":"validation","step":3},{"from":"controle","to":"revue","dashed":true},{"from":"validation","to":"brouillon","dashed":true}],"journal":"Pièce, champs lus, contrôles, motif de rejet, validation","label":"Les pièces sont lues par un modèle, rattachées et contrôlées par code, mises en brouillon de saisie, puis validées par un collaborateur. Les anomalies vont en file de revue."}}}
+{"receivedMs":49370,"event":{"type":"dossier.block","section":"architecture","block":{"type":"item","text":"Contenu lu jamais exécuté comme instruction, à l'extraction"}}}
+{"receivedMs":49734,"event":{"type":"dossier.block","section":"architecture","block":{"type":"item","text":"Contrôles de montants et de rattachement en Python, hors prompt"}}}
+{"receivedMs":50069,"event":{"type":"dossier.block","section":"architecture","block":{"type":"item","text":"Aucun envoi de saisie sans validation humaine explicite"}}}
+{"receivedMs":50413,"event":{"type":"dossier.section","section":"architecture","status":"done"}}
+{"receivedMs":50413,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Section 2 écrite"}}
+{"receivedMs":50413,"event":{"type":"agent.status","agent":"writer","status":"waiting","activity":"attend les preuves"}}
+{"receivedMs":57168,"event":{"type":"usage","agent":"researcher","inputTokens":12830,"outputTokens":5803,"costUsd":0.0041845}}
+{"receivedMs":57168,"event":{"type":"project.verdict","agent":"researcher","projectId":"civjdr_roman","verdict":"keep","note":"CivJDR Roman : Orchestration transposable, domaine narratif éloigné"}}
+{"receivedMs":57168,"event":{"type":"link.traced","from":"visitor","to":"civjdr_roman"}}
+{"receivedMs":57168,"event":{"type":"tool.call","agent":"researcher","call":"get_project(\"feed_generator\")","focus":{"kind":"project","projectId":"feed_generator"}}}
+{"receivedMs":63214,"event":{"type":"usage","agent":"researcher","inputTokens":14768,"outputTokens":6526,"costUsd":0.0047398}}
+{"receivedMs":63214,"event":{"type":"project.verdict","agent":"researcher","projectId":"feed_generator","verdict":"keep","note":"Feed Generator : Vision utile, mais hors domaine comptable"}}
+{"receivedMs":63214,"event":{"type":"link.traced","from":"visitor","to":"feed_generator"}}
+{"receivedMs":63214,"event":{"type":"agent.status","agent":"researcher","status":"working","activity":"classe les preuves"}}
+{"receivedMs":63214,"event":{"type":"tool.call","agent":"researcher","call":"rank(kept)","focus":{"kind":"visitor"}}}
+{"receivedMs":63214,"event":{"type":"agent.log","agent":"researcher","kind":"note","text":"4 preuves principales sur 6 retenues"}}
+{"receivedMs":63214,"event":{"type":"tool.call","agent":"researcher","call":"send(\"orchestrator\", proofs)","focus":{"kind":"visitor"}}}
+{"receivedMs":63214,"event":{"type":"agent.status","agent":"researcher","status":"done"}}
+{"receivedMs":63214,"event":{"type":"agent.log","agent":"researcher","kind":"done","text":"Preuves envoyées"}}
+{"receivedMs":63214,"event":{"type":"message","from":"researcher","to":"orchestrator","text":"6 projets retenus, 4 en preuve."}}
+{"receivedMs":63214,"event":{"type":"message","from":"orchestrator","to":"writer","text":"les preuves sont prêtes, chiffres des fiches."}}
+{"receivedMs":63214,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"écrit les preuves"}}
+{"receivedMs":63214,"event":{"type":"tool.call","agent":"writer","call":"write_section(3, proofs)","focus":{"kind":"dossier"}}}
+{"receivedMs":63214,"event":{"type":"dossier.section","section":"proofs","status":"writing"}}
+{"receivedMs":63214,"event":{"type":"dossier.block","section":"proofs","block":{"type":"proof","projectId":"envoia","why":"Pipeline LLM lisant du contenu non fiable, validé sans LLM avant action, en production."}}}
+{"receivedMs":63571,"event":{"type":"dossier.block","section":"proofs","block":{"type":"proof","projectId":"veracite","why":"Un LLM extrait les éléments d'un texte, une base SQLite tranche, l'auteur arbitre."}}}
+{"receivedMs":63953,"event":{"type":"dossier.block","section":"proofs","block":{"type":"proof","projectId":"etheryale_studio","why":"Console de validation humaine de brouillons machine, avec envoi explicite après relecture."}}}
+{"receivedMs":64282,"event":{"type":"dossier.block","section":"proofs","block":{"type":"proof","projectId":"feed_generator","why":"Analyse d'images par GPT-4 Vision en données structurées, pipeline typé testé."}}}
+{"receivedMs":64630,"event":{"type":"dossier.block","section":"proofs","block":{"type":"also","projectIds":["grimorium_rag_screenwriting","civjdr_roman"]}}}
+{"receivedMs":64976,"event":{"type":"dossier.section","section":"proofs","status":"done"}}
+{"receivedMs":64976,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Section 3 écrite"}}
+{"receivedMs":64976,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"écrit l’apport"}}
+{"receivedMs":64976,"event":{"type":"tool.call","agent":"writer","call":"write_section(4, contribution)","focus":{"kind":"dossier"}}}
+{"receivedMs":64976,"event":{"type":"dossier.section","section":"contribution","status":"writing"}}
+{"receivedMs":70793,"event":{"type":"usage","agent":"writer","inputTokens":7279,"outputTokens":1830,"costUsd":0.0016428999999999999}}
+{"receivedMs":70793,"event":{"type":"dossier.block","section":"contribution","block":{"type":"item","text":"EnvoIA : validation déterministe avant toute action, sans passage par le LLM"}}}
+{"receivedMs":71146,"event":{"type":"dossier.block","section":"contribution","block":{"type":"item","text":"Veracite : le LLM extrait, une base SQLite tranche, l'auteur arbitre"}}}
+{"receivedMs":71500,"event":{"type":"dossier.block","section":"contribution","block":{"type":"item","text":"Etheryale Studio : revue humaine, envoi seulement après relecture explicite"}}}
+{"receivedMs":71846,"event":{"type":"dossier.section","section":"contribution","status":"done"}}
+{"receivedMs":71846,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Section 4 écrite"}}
+{"receivedMs":71846,"event":{"type":"agent.status","agent":"writer","status":"working","activity":"écrit la suite"}}
+{"receivedMs":71846,"event":{"type":"tool.call","agent":"writer","call":"write_section(5, next)","focus":{"kind":"dossier"}}}
+{"receivedMs":71846,"event":{"type":"dossier.section","section":"next","status":"writing"}}
+{"receivedMs":71846,"event":{"type":"dossier.block","section":"next","block":{"type":"paragraph","text":"Un appel pour trancher les trois questions ouvertes (logiciel comptable, règles d'anomalies, formats des pièces), puis Alexis construit un premier prototype sur un lot de pièces."}}}
+{"receivedMs":73444,"event":{"type":"dossier.block","section":"next","block":{"type":"contact"}}}
+{"receivedMs":73794,"event":{"type":"dossier.section","section":"next","status":"done"}}
+{"receivedMs":73794,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Section 5 écrite"}}
+{"receivedMs":73794,"event":{"type":"agent.status","agent":"writer","status":"done"}}
+{"receivedMs":73794,"event":{"type":"agent.log","agent":"writer","kind":"done","text":"Dossier rédigé"}}
+{"receivedMs":73794,"event":{"type":"agent.status","agent":"orchestrator","status":"working","activity":"vérifie le dossier"}}
+{"receivedMs":73794,"event":{"type":"message","from":"orchestrator","to":"orchestrator","text":"chaque preuve contre sa fiche.","topic":"check"}}
+{"receivedMs":74149,"event":{"type":"message","from":"orchestrator","to":"orchestrator","text":"4 preuves, chiffres lus sur les fiches.","topic":"check"}}
+{"receivedMs":74149,"event":{"type":"agent.status","agent":"orchestrator","status":"done","activity":"dossier remis"}}
+{"receivedMs":74149,"event":{"type":"message","from":"orchestrator","to":"visitor","text":"votre dossier de conception est prêt."}}
+{"receivedMs":74149,"event":{"type":"run.completed"}}

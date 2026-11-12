@@ -1,0 +1,30 @@
+# ============================================
+# Front-door : reverse-proxy + checkpoint anti-abus (sus-rate-limit + signature de path).
+# Binaire Go PUR (pas de Chrome, pas de CGO) → image légère, démarrage rapide.
+# ============================================
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+# CGO désactivé : le front-door n'a aucune dépendance CGO (pas de sqlite) → binaire statique.
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o maicivy-frontdoor ./cmd/frontdoor
+
+# ============================================
+# Runtime minimal (alpine + ca-certificates + curl pour le healthcheck).
+# ============================================
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates curl && adduser -D -u 1000 app
+WORKDIR /app
+COPY --from=builder /app/maicivy-frontdoor .
+USER app
+
+EXPOSE 8090
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8090/__frontdoor/health || exit 1
+
+CMD ["./maicivy-frontdoor"]

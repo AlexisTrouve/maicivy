@@ -1,0 +1,202 @@
+{
+ "de": {
+  "title": "Konzeptdossier",
+  "for": "Für {name}, {affiliation}",
+  "prepared": "Erstellt in {time} von {count} Agenten, für {cost} $.",
+  "labels": {
+   "project": "Projekt",
+   "status": "Status",
+   "lines": "Zeilen",
+   "tests": "Tests",
+   "demo": "Demo",
+   "video": "Video",
+   "site": "die Website",
+   "none": "keine öffentliche",
+   "also": "Ebenfalls ausgewählt: {names}.",
+   "contact": "Alexis schreiben",
+   "replayNote": "Wiedergegebenes Beispiel: ein aufgezeichnetes Szenario, ohne KI-Aufruf. Die Projektzahlen stammen aus den echten Projektdaten.",
+   "statuses": {
+    "R&D": "F&E",
+    "active": "Aktiv",
+    "production": "In Produktion",
+    "retired": "Eingestellt",
+    "wip": "In Arbeit"
+   },
+   "skills": {
+    "title": "Eingesetzte Kompetenzen",
+    "lead": "Automatisch den als Beleg genannten Projekten zugeordnet: die Kompetenzen aus Alexis’ Profil, die diese Projekte einsetzen, und die Technologien, die sie teilen.",
+    "skill": "Kompetenz",
+    "level": "Niveau",
+    "source": "Belegt in",
+    "need": "im Bedarf genannt",
+    "technologies": "Technologien mehrerer Belege",
+    "levels": {
+     "advanced": "fortgeschritten",
+     "beginner": "Einsteiger",
+     "expert": "Experte",
+     "intermediate": "mittel"
+    }
+   }
+  }
+ },
+ "en": {
+  "title": "Design dossier",
+  "for": "For {name}, {affiliation}",
+  "prepared": "Prepared in {time} by {count} agents, for ${cost}.",
+  "labels": {
+   "project": "Project",
+   "status": "Status",
+   "lines": "Lines",
+   "tests": "Tests",
+   "demo": "Demo",
+   "video": "video",
+   "site": "the site",
+   "none": "none public",
+   "also": "Also selected: {names}.",
+   "contact": "Write to Alexis",
+   "replayNote": "Replayed example: a recorded scenario, no AI call. Project figures come from their real records.",
+   "statuses": {
+    "R&D": "R&D",
+    "active": "Active",
+    "production": "In production",
+    "retired": "Retired",
+    "wip": "In progress"
+   },
+   "skills": {
+    "title": "Skills involved",
+    "lead": "Matched automatically to the projects cited as proof: the skills from Alexis’s profile that these projects put to work, and the technologies they share.",
+    "skill": "Skill",
+    "level": "Level",
+    "source": "Seen in",
+    "need": "named in the need",
+    "technologies": "Technologies shared by several proofs",
+    "levels": {
+     "advanced": "advanced",
+     "beginner": "beginner",
+     "expert": "expert",
+     "intermediate": "intermediate"
+    }
+   }
+  }
+ },
+ "fr": {
+  "title": "Dossier de conception",
+  "for": "Pour {name}, {affiliation}",
+  "prepared": "Préparé en {time} par {count} agents, pour {cost} $.",
+  "labels": {
+   "project": "Projet",
+   "status": "Statut",
+   "lines": "Lignes",
+   "tests": "Tests",
+   "demo": "Démo",
+   "video": "vidéo",
+   "site": "le site",
+   "none": "aucune publique",
+   "also": "Aussi retenus : {names}.",
+   "contact": "Écrire à Alexis",
+   "replayNote": "Exemple rejoué : un scénario enregistré, sans appel IA. Les chiffres des projets sont ceux de leurs fiches réelles.",
+   "statuses": {
+    "R&D": "R&D",
+    "active": "Actif",
+    "production": "En production",
+    "retired": "Retiré",
+    "wip": "En cours"
+   },
+   "skills": {
+    "title": "Compétences mobilisées",
+    "lead": "Associées automatiquement aux projets cités en preuve : les compétences du profil d’Alexis que ces projets mettent en œuvre, et les technologies qu’ils partagent.",
+    "skill": "Compétence",
+    "level": "Niveau",
+    "source": "Vue dans",
+    "need": "nommée dans le besoin",
+    "technologies": "Technologies communes à plusieurs preuves",
+    "levels": {
+     "advanced": "avancé",
+     "beginner": "débutant",
+     "expert": "expert",
+     "intermediate": "intermédiaire"
+    }
+   }
+  }
+ },
+ "it": {
+  "title": "Dossier di progettazione",
+  "for": "Per {name}, {affiliation}",
+  "prepared": "Preparato in {time} da {count} agenti, per {cost} $.",
+  "labels": {
+   "project": "Progetto",
+   "status": "Stato",
+   "lines": "Righe",
+   "tests": "Test",
+   "demo": "Demo",
+   "video": "video",
+   "site": "il sito",
+   "none": "nessuna pubblica",
+   "also": "Selezionati anche: {names}.",
+   "contact": "Scrivi ad Alexis",
+   "replayNote": "Esempio riprodotto: uno scenario registrato, senza chiamate IA. I numeri dei progetti vengono dalle loro schede reali.",
+   "statuses": {
+    "R&D": "R&S",
+    "active": "Attivo",
+    "production": "In produzione",
+    "retired": "Ritirato",
+    "wip": "In corso"
+   },
+   "skills": {
+    "title": "Competenze impiegate",
+    "lead": "Associate automaticamente ai progetti citati come prova: le competenze del profilo di Alexis che questi progetti mettono in opera, e le tecnologie che condividono.",
+    "skill": "Competenza",
+    "level": "Livello",
+    "source": "Vista in",
+    "need": "citata nel bisogno",
+    "technologies": "Tecnologie comuni a più prove",
+    "levels": {
+     "advanced": "avanzato",
+     "beginner": "principiante",
+     "expert": "esperto",
+     "intermediate": "intermedio"
+    }
+   }
+  }
+ },
+ "zh": {
+  "title": "设计方案书",
+  "for": "致 {name}，{affiliation}",
+  "prepared": "由{count}个智能体用时 {time} 完成，成本 {cost} 美元。",
+  "labels": {
+   "project": "项目",
+   "status": "状态",
+   "lines": "代码行",
+   "tests": "测试",
+   "demo": "演示",
+   "video": "视频",
+   "site": "网站",
+   "none": "无公开演示",
+   "also": "同样入选：{names}。",
+   "contact": "联系 Alexis",
+   "replayNote": "回放示例：预先录制的场景，未调用 AI。项目数据取自真实项目档案。",
+   "statuses": {
+    "R&D": "研发",
+    "active": "活跃",
+    "production": "已上线",
+    "retired": "已停用",
+    "wip": "进行中"
+   },
+   "skills": {
+    "title": "所用技能",
+    "lead": "根据作为证据的项目自动关联：这些项目所运用的 Alexis 个人技能，以及它们共同使用的技术。",
+    "skill": "技能",
+    "level": "水平",
+    "source": "见于",
+    "need": "需求中提及",
+    "technologies": "多个证据项目共用的技术",
+    "levels": {
+     "advanced": "高级",
+     "beginner": "入门",
+     "expert": "专家",
+     "intermediate": "中级"
+    }
+   }
+  }
+ }
+}

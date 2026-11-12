@@ -1,0 +1,14 @@
+#!/bin/sh
+# Hook pre-commit — régénère frontend/lib/test-stats.json (compteur statique instantané) dès qu'un
+# fichier de test est ajouté/modifié dans le commit, puis le stage. Plus de maintenance manuelle du
+# badge "Tests & Qualité" du site (qui dérivait : 167 affiché vs 170 réels avant ça).
+#
+# Installation (une fois par clone) :  git config core.hooksPath .githooks
+#
+# Ne tourne QUE si des fichiers de test sont stagés → commits sans test = instantané (skip).
+# `|| exit 0` : une erreur du script ne doit jamais bloquer un commit.
+if git diff --cached --name-only --diff-filter=ACM | grep -qE '_test\.go$|\.test\.tsx?$'; then
+  node frontend/scripts/gen-test-stats.mjs >/dev/null 2>&1 || exit 0
+  git add frontend/lib/test-stats.json
+fi
+exit 0

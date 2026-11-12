@@ -1,0 +1,6 @@
+# Commits de reformatage pur a ignorer dans git blame.
+# Usage local : git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub applique ce fichier automatiquement.)
+
+# chore: normalize Go line endings + gofmt (CRLF -> LF sur tout le depot)
+8ea188555c73c9d64036138fd4635a57d94cc2d4

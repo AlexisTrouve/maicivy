@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}" class="d-n">
+<head>
+<meta charset="UTF-8">
+<title>{{.Title}}</title>
+<!--
+  dossier_pdf_template.html — le dossier de conception, mis en page pour l'impression A4.
+  Rendu par DossierPDFService (dossier_pdf.go), imprimé par le Chromium headless du CV.
+
+  PAGINATION MESURÉE (le script en bas de page). Le dossier n'est pas laissé à la pagination native
+  de Chromium : un dossier de 1,1 page finissait sur une page 2 de trois lignes (run réel du
+  2026-11). Le document est une suite plate d'UNITÉS insécables (`.u` : titre, paragraphe, puce,
+  schéma, ligne de tableau…) ; le script les range dans des pages A4 de taille fixe en mesurant
+  chaque unité dans le DOM, puis mesure le remplissage de la dernière page. Sous `FILL` (75 %), il ajuste,
+  dans cet ordre :
+    1. la RÉSERVE : des lignes de compétences tenues cachées (`.reserve`), dévoilées une à une ;
+    2. l'aération : des niveaux de densité plus amples (`d-a1`…`d-a4`) — le contenu des pages
+       précédentes descend, la dernière se remplit ;
+    3. le resserrement : des niveaux plus denses (`d-c1`, `d-c2`) — le dossier perd une page.
+  Chaque essai qui ajouterait une page est rejeté. Le résultat (pages, remplissage, niveau) est
+  écrit dans `data-layout` sur <html> : c'est ce que mesure le test (dossier_pdf_layout_test.go),
+  avec la position réelle du dernier texte dans le PDF imprimé.
+  Règles de coupure, tenues par le script : un titre de section ne reste jamais seul en bas de page
+  (`.keep` part avec l'unité suivante), un tableau ne commence pas par une ligne seule en bas de
+  page (sa première ligne est `.keep`), l'en-tête d'un tableau se répète sur la page où il continue.
+  Sans script, `#flow` s'imprime tel quel (pagination native) : rien ne se perd.
+
+  Papier blanc : Chromium ne peint pas le fond du document dans les marges de @page — une teinte
+  y dessinerait un cadre. L'or (#8a6a1f, foncé pour le papier) reste un SIGNAL : le filet sous
+  l'en-tête, les chevrons des puces, les monogrammes, les pastilles du schéma et la marque « cité
+  dans le besoin » des compétences — jamais un aplat.
+  Polices : celles installées dans l'image du backend (Dockerfile : DejaVu, Noto, WenQuanYi). La
+  WenQuanYi passe AVANT Noto CJK : Noto CJK est en CFF, que Chromium convertit en Type3 — texte
+  chinois non extractible (même règle que le CV, TestPoliceCJK_TrueTypeAvantNoto).
+-->
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  /* Densités : `d-n` est la mise en page de référence ; le script choisit la classe. */
+  html { --fs: 10pt; --lh: 1.5; --h2: 14pt; --sec: 16px; --blk: 6px; --li: 3px; --row: 7px; }
+  html.d-c2 { --fs: 9pt; --lh: 1.36; --h2: 12.5pt; --sec: 9px; --blk: 3px; --li: 1px; --row: 4px; }
+  html.d-c1 { --fs: 9.5pt; --lh: 1.42; --h2: 13pt; --sec: 12px; --blk: 4px; --li: 2px; --row: 5px; }
+  html.d-a1 { --fs: 10pt; --lh: 1.55; --h2: 14pt; --sec: 22px; --blk: 8px; --li: 4px; --row: 8px; }
+  html.d-a2 { --fs: 10.25pt; --lh: 1.6; --h2: 14.5pt; --sec: 28px; --blk: 10px; --li: 5px; --row: 9px; }
+  html.d-a3 { --fs: 10.5pt; --lh: 1.65; --h2: 15pt; --sec: 34px; --blk: 12px; --li: 6px; --row: 10px; }
+  html.d-a4 { --fs: 10.75pt; --lh: 1.7; --h2: 15.5pt; --sec: 40px; --blk: 14px; --li: 7px; --row: 11px; }
+
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  body {
+    font-family: 'DejaVu Sans', 'Noto Sans', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'Segoe UI', Arial, sans-serif;
+    font-size: var(--fs);
+    line-height: var(--lh);
+    color: #2f3542;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .serif { font-family: 'DejaVu Serif', 'Noto Serif', 'WenQuanYi Micro Hei', 'Noto Serif CJK SC', Georgia, serif; }
+  a { color: #1f2430; text-decoration: underline; text-underline-offset: 0.15em; }
+
+  /* Une page : A4 moins un souffle (une hauteur EXACTE de 297 mm fait déborder l'arrondi sur une
+     page blanche), marges de 16 mm portées par le padding. */
+  #flow { padding: 16mm; }
+  .page { width: 210mm; height: 296.5mm; padding: 16mm; overflow: hidden; break-after: page; page-break-after: always; }
+  .page:last-child { break-after: auto; page-break-after: auto; }
+  .pg-body { height: 100%; }
+  .pg-body > .u:first-child { margin-top: 0; }
+
+  /* Unités : l'espacement est porté par le HAUT de chaque unité (jamais par le bas), pour que la
+     première d'une page se colle à la marge et que la mesure du bas soit le bas du texte. */
+  .u { margin: var(--blk) 0 0; }
+  header.u { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-bottom: 10px; border-bottom: 1.2pt solid #8a6a1f; }
+  header h1 { margin: 0 0 4px; font-size: 22pt; font-weight: 600; line-height: 1.15; color: #1f2430; }
+  header .sub { margin: 0; color: #5a6070; font-size: 9.5pt; line-height: 1.5; }
+  header .who { text-align: right; font-size: 9pt; line-height: 1.5; color: #5a6070; white-space: nowrap; }
+  header .who b { display: block; font-size: 10.5pt; color: #1f2430; }
+  .replay { font-size: 8.5pt; font-style: italic; color: #5a6070; }
+
+  h2.u { margin-top: var(--sec); font-size: var(--h2); line-height: 1.25; font-weight: 600; color: #1f2430; }
+  p.u { margin-bottom: 0; }
+  p.lead { color: #1f2430; font-size: calc(var(--fs) + 0.5pt); }
+  .li { position: relative; padding-left: 16px; }
+  .li + .li { margin-top: var(--li); }
+  .li::before { content: '›'; position: absolute; left: 2px; top: -1px; color: #8a6a1f; font-weight: 700; }
+  .also { color: #5a6070; font-size: 9pt; }
+
+  figure.diagram { margin-left: 0; margin-right: 0; }
+  figure.diagram svg { display: block; max-width: 100%; height: auto; }
+  .dg-box { fill: #f4f2ec; stroke: #a9adb7; stroke-width: 1; }
+  .dg-box.human { stroke: #2f3542; }
+  .dg-t { fill: #1f2430; font-size: 13.5px; font-weight: 600; }
+  .dg-s { fill: #5a6070; font-size: 12px; }
+  .dg-edge { fill: none; stroke: #2f3542; stroke-width: 1.2; }
+  .dg-edge.dashed { stroke-dasharray: 4 4; }
+  .dg-head { fill: #2f3542; }
+  .dg-ring { fill: #ffffff; stroke: #8a6a1f; stroke-width: 1; }
+  .dg-n { fill: #8a6a1f; font-size: 11.5px; font-weight: 700; }
+
+  /* Tableaux en lignes indépendantes (une ligne = une unité) : colonnes de largeur FIXE, pour
+     qu'une ligne seule sur sa page garde l'alignement de son en-tête répété. */
+  .grid { display: grid; column-gap: 8px; align-items: start; }
+  .proofs { grid-template-columns: minmax(0, 1fr) 96px 58px 46px 100px; }
+  .skills { grid-template-columns: minmax(0, 1fr) 100px minmax(0, 1.25fr); }
+  .thead { font-weight: 600; font-size: 8.5pt; line-height: 1.4; color: #5a6070; padding-bottom: 5px; border-bottom: 1px solid #a9adb7; }
+  /* Lignes alignées sur la première ligne de texte : les colonnes en petit corps (preuves d'une
+     compétence) ne flottent pas au-dessus du nom. */
+  .row { margin-top: 0; padding: var(--row) 0; border-bottom: 1px solid #d4d6dc; font-size: 9.5pt; align-items: baseline; }
+  .num { text-align: right; white-space: nowrap; color: #1f2430; }
+  .thead .num { color: #5a6070; }
+  .proj { display: flex; gap: 8px; align-items: flex-start; }
+  .mono { flex: none; width: 30px; height: 26px; display: flex; align-items: center; justify-content: center; border: 1px solid #8a6a1f; border-radius: 5px; color: #7a5c17; font-weight: 600; font-size: 9pt; }
+  /* Icône du dépôt du projet : MÊME boîte que le monogramme (30 × 26), pour que la mise en page
+     mesurée (dossier_pdf_layout_test.go) ne dépende pas de la présence d'une icône. */
+  .icon { flex: none; width: 30px; height: 26px; object-fit: contain; }
+  .proj b, .skill b { display: block; color: #1f2430; }
+  .why, .src { display: block; color: #5a6070; font-size: 8.5pt; line-height: 1.4; }
+  .none { color: #5a6070; }
+  .need { display: block; color: #5a6070; font-size: 8pt; line-height: 1.4; }
+  .need::before { content: '◆ '; color: #8a6a1f; }
+  .techs b.t { display: block; font-size: 8.5pt; font-weight: 600; color: #5a6070; margin-bottom: 3px; }
+  .tgrid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; row-gap: 2px; font-size: 9pt; line-height: 1.4; }
+  .tgrid span b { color: #1f2430; font-weight: 600; }
+  .tgrid span i { font-style: normal; color: #5a6070; }
+
+  .contact { margin-top: calc(var(--blk) + 6px); padding: 10px 12px; border: 1px solid #a9adb7; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+  .contact b { color: #1f2430; font-size: 10.5pt; }
+</style>
+</head>
+<body>
+<div id="flow">
+<header class="u">
+  <div>
+    <h1 class="serif">{{.Title}}</h1>
+    {{range .Subtitle}}<p class="sub">{{.}}</p>{{end}}
+  </div>
+  <div class="who">
+    <b>{{.Author}}</b>
+    <a href="{{.MailTo}}">{{.Email}}</a><br>
+    <a href="{{.Site}}">{{.SiteLabel}}</a>
+  </div>
+</header>
+{{if .ReplayNote}}<p class="u replay">{{.ReplayNote}}</p>{{end}}
+{{$labels := .Labels}}{{$root := .}}
+{{range .Sections}}
+<h2 class="u keep serif" data-section="{{.ID}}">{{.Title}}</h2>
+{{range .Groups}}
+  {{if eq .Kind "lead"}}<p class="u lead">{{.Text}}</p>
+  {{else if eq .Kind "paragraph"}}<p class="u">{{.Text}}</p>
+  {{else if eq .Kind "items"}}{{range .Items}}<div class="u li">{{.}}</div>{{end}}
+  {{else if eq .Kind "also"}}<p class="u also">{{.Text}}</p>
+  {{else if eq .Kind "diagram"}}{{with .Diagram}}
+  <figure class="u diagram">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="{{.ViewBox}}" width="{{.PxW}}" height="{{.PxH}}" role="img" aria-label="{{.Label}}">
+      {{range .Edges}}<path class="dg-edge{{if .Dashed}} dashed{{end}}" d="{{.D}}"/><path class="dg-head" d="{{.Head}}"/>{{end}}
+      {{$boxH := .BoxH}}
+      {{range .Boxes}}
+      <rect class="dg-box{{if .Human}} human{{end}}" x="{{.X}}" y="{{.Y}}" width="{{.W}}" height="{{$boxH}}" rx="6"/>
+      <text class="dg-t" x="{{.CX}}" y="{{.TitleY}}" text-anchor="middle">{{.Title}}</text>
+      <text class="dg-s" x="{{.CX}}" y="{{.SubY}}" text-anchor="middle">{{.Subtitle}}</text>
+      {{end}}
+      <rect class="dg-box" x="0" y="{{.JournalY}}" width="{{.JournalW}}" height="{{.JournalH}}" rx="5"/>
+      <text class="dg-s" x="{{.JournalCX}}" y="{{.JournalTextY}}" text-anchor="middle">{{.Journal}}</text>
+      {{range .Steps}}<circle class="dg-ring" cx="{{.X}}" cy="{{.Y}}" r="8"/><text class="dg-n" x="{{.X}}" y="{{.TextY}}" text-anchor="middle">{{.N}}</text>{{end}}
+    </svg>
+  </figure>{{end}}
+  {{else if eq .Kind "proofs"}}
+  <div class="u keep thead grid proofs" data-thead="proofs"><span>{{$labels.Project}}</span><span>{{$labels.Status}}</span><span class="num">{{$labels.Lines}}</span><span class="num">{{$labels.Tests}}</span><span>{{$labels.Demo}}</span></div>
+  {{range $i, $p := .Proofs}}{{with $p}}
+  <div class="u row grid proofs{{if eq $i 0}} keep{{end}}" data-row="proofs">
+    <div class="proj">{{if .Icon}}<img class="icon" src="{{.Icon}}" alt="">{{else if .Monogram}}<span class="mono serif">{{.Monogram}}</span>{{end}}<div><b>{{.Name}}</b><span class="why">{{.Why}}</span></div></div>
+    <span>{{.Status}}</span>
+    <span class="num">{{.Loc}}</span>
+    <span class="num">{{.Tests}}</span>
+    <span>{{if .DemoURL}}<a href="{{.DemoURL}}">{{.DemoLabel}}</a>{{else}}<span class="none">{{$labels.None}}</span>{{end}}</span>
+  </div>
+  {{end}}{{end}}
+  {{else if eq .Kind "skills"}}{{with .Skills}}
+  <p class="u keep">{{$labels.Skills.Lead}}</p>
+  <div class="u keep thead grid skills" data-thead="skills"><span>{{$labels.Skills.Skill}}</span><span>{{$labels.Skills.Level}}</span><span>{{$labels.Skills.Source}}</span></div>
+  {{range $i, $r := .Rows}}{{with $r}}
+  <div class="u row grid skills{{if eq $i 0}} keep{{end}}{{if .Reserve}} reserve{{end}}" data-row="skills"{{if .Reserve}} hidden{{end}}>
+    <div class="skill"><b>{{.Name}}</b>{{if .Need}}<span class="need">{{$labels.Skills.Need}}</span>{{end}}</div>
+    <span>{{.Level}}</span>
+    <span class="src">{{.Sources}}</span>
+  </div>
+  {{end}}{{end}}
+  {{if .Techs}}
+  <div class="u techs"><b class="t">{{$labels.Skills.Technologies}}</b><div class="tgrid">{{range .Techs}}<span><b>{{.Name}}</b> <i>· {{.Sources}}</i></span>{{end}}</div></div>
+  {{end}}{{end}}
+  {{else if eq .Kind "contact"}}
+  <div class="u contact"><b>{{$labels.Contact}}</b><a href="{{$root.MailTo}}">{{$root.Email}}</a><a href="{{$root.Site}}">{{$root.SiteLabel}}</a></div>
+  {{end}}
+{{end}}
+{{end}}
+</div>
+<div id="pages"></div>
+<script>
+(function () {
+  'use strict';
+  // Objectif : la dernière page porte 75 % de sa hauteur utile (ou le dossier tient sur une page).
+  // Le PLANCHER garanti, vérifié par le test sur PDF imprimé, est 60 % : sous l'objectif, le script
+  // garde l'essai le plus rempli.
+  var FILL = 0.75;
+  // Marge de sûreté (px) : le texte peut se poser au demi-pixel près autrement à l'impression.
+  var SAFETY = 6;
+  // Densités, de la plus serrée à la plus aérée ; `d-n` (indice 2) est la référence.
+  var LEVELS = ['d-c2', 'd-c1', 'd-n', 'd-a1', 'd-a2', 'd-a3', 'd-a4'];
+  var NORMAL = 2;
+  var html = document.documentElement;
+  var flow = document.getElementById('flow');
+  var pagesRoot = document.getElementById('pages');
+  var units = Array.prototype.slice.call(flow.children);
+  var reserve = units.filter(function (u) { return u.classList.contains('reserve'); });
+
+  function newPage() {
+    var page = document.createElement('div');
+    page.className = 'page';
+    var body = document.createElement('div');
+    body.className = 'pg-body';
+    page.appendChild(body);
+    pagesRoot.appendChild(page);
+    return body;
+  }
+
+  // Bas du contenu d'une page, depuis le haut de sa zone utile (px).
+  function bottom(body) {
+    var last = body.lastElementChild;
+    return last ? last.getBoundingClientRect().bottom - body.getBoundingClientRect().top : 0;
+  }
+
+  // Range toutes les unités visibles dans des pages ; rend { pages, fill }.
+  function layout() {
+    pagesRoot.innerHTML = '';
+    var body = newPage();
+    var H = body.clientHeight;
+    var count = 1;
+    var thead = null; // en-tête du tableau en cours (à répéter si ses lignes changent de page)
+    units.forEach(function (u) {
+      if (u.hidden) return;
+      body.appendChild(u);
+      if (bottom(body) > H - SAFETY && body.children.length > 1) {
+        // L'unité ne tient pas : elle part sur une nouvelle page, avec les unités `.keep` qui la
+        // précèdent (un titre ne reste jamais seul en bas de page) — sans vider la page.
+        var carry = [u];
+        var prev = u.previousElementSibling;
+        while (prev && prev.classList.contains('keep') && prev !== body.firstElementChild) {
+          carry.unshift(prev);
+          prev = prev.previousElementSibling;
+        }
+        body = newPage();
+        count++;
+        if (u.dataset.row && carry[0] === u && thead) {
+          var copy = thead.cloneNode(true);
+          copy.classList.remove('keep');
+          body.appendChild(copy);
+        }
+        carry.forEach(function (c) { body.appendChild(c); });
+      }
+      if (u.dataset.thead) thead = u;
+      else if (!u.dataset.row) thead = null;
+    });
+    return { pages: count, fill: bottom(body) / H };
+  }
+
+  function ok(r) { return r.pages === 1 || r.fill >= FILL; }
+
+  // Remplit à partir de la densité `start` : réserve d'abord, puis aération, sans jamais ajouter
+  // de page. Rend le meilleur état atteint (et le laisse appliqué au DOM).
+  function fillFrom(start) {
+    reserve.forEach(function (u) { u.hidden = true; });
+    var level = start;
+    html.className = LEVELS[level];
+    var r = layout();
+    for (var k = 0; k < reserve.length && !(r.fill >= FILL); k++) {
+      reserve[k].hidden = false;
+      var t = layout();
+      if (t.pages > r.pages) { reserve[k].hidden = true; r = layout(); break; }
+      r = t;
+    }
+    while (!(r.fill >= FILL) && level + 1 < LEVELS.length) {
+      html.className = LEVELS[level + 1];
+      var a = layout();
+      if (a.pages > r.pages) { html.className = LEVELS[level]; r = layout(); break; }
+      level++;
+      r = a;
+    }
+    r.level = LEVELS[level];
+    r.reserve = reserve.filter(function (u) { return !u.hidden; }).length;
+    return r;
+  }
+
+  function run() {
+    var r = fillFrom(NORMAL);
+    var best = { r: r, start: NORMAL };
+    // Toujours trop vide : on resserre pour perdre la page creuse (c1, puis c2).
+    for (var lv = NORMAL - 1; !ok(best.r) && lv >= 0; lv--) {
+      html.className = LEVELS[lv];
+      var c = layout();
+      if (c.pages < r.pages) {
+        var f = fillFrom(lv);
+        if (ok(f) || f.fill > best.r.fill) best = { r: f, start: lv };
+      }
+    }
+    // Le DOM porte le dernier essai : on réapplique le meilleur (fillFrom est déterministe).
+    r = fillFrom(best.start);
+    flow.style.display = 'none';
+    html.setAttribute('data-layout', JSON.stringify(r));
+  }
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(run);
+})();
+</script>
+</body>
+</html>

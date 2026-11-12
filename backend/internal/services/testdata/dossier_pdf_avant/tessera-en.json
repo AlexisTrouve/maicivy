@@ -1,0 +1,260 @@
+{
+ "lang": "en",
+ "title": "Design dossier",
+ "subtitle": [
+  "For Inès Morel, CTO chez Tessera.",
+  "Prepared in 0:37 by 5 agents, for $0.096."
+ ],
+ "sections": [
+  {
+   "id": "need",
+   "title": "Le besoin, reformulé",
+   "blocks": [
+    {
+     "type": "lead",
+     "text": "Traiter 1 400 tickets par jour à six, sans perdre la main sur les cas sensibles."
+    },
+    {
+     "type": "item",
+     "text": "Une réponse automatique seulement si une source de votre base la justifie."
+    },
+    {
+     "type": "item",
+     "text": "Un passage à un humain sur règle explicite, ticket et contexte joints."
+    },
+    {
+     "type": "item",
+     "text": "Une trace lisible de chaque décision."
+    }
+   ]
+  },
+  {
+   "id": "architecture",
+   "title": "L’architecture proposée",
+   "blocks": [
+    {
+     "type": "diagram",
+     "diagram": {
+      "label": "Chaîne proposée : ticket, trieur, répondeur, contrôle, envoi, avec une file humaine et un journal des décisions",
+      "journal": "Journal des décisions, une ligne par ticket",
+      "width": 476,
+      "height": 148,
+      "margin": 2,
+      "scale": 1,
+      "journalY": 124,
+      "journalH": 24,
+      "boxH": 40,
+      "boxes": [
+       {
+        "x": 0,
+        "y": 36,
+        "w": 72,
+        "title": "Ticket",
+        "subtitle": "entrant",
+        "human": false
+       },
+       {
+        "x": 104,
+        "y": 36,
+        "w": 99,
+        "title": "Trieur",
+        "subtitle": "modèle léger",
+        "human": false
+       },
+       {
+        "x": 235,
+        "y": 0,
+        "w": 121,
+        "title": "Répondeur",
+        "subtitle": "cite la base",
+        "human": false
+       },
+       {
+        "x": 388,
+        "y": 0,
+        "w": 88,
+        "title": "Contrôle",
+        "subtitle": "sans LLM",
+        "human": false
+       },
+       {
+        "x": 235,
+        "y": 72,
+        "w": 121,
+        "title": "File humaine",
+        "subtitle": "brief joint",
+        "human": true
+       }
+      ],
+      "edges": [
+       {
+        "d": "M72,56H98",
+        "head": "M104,56l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M203,50C219,50 219,20 229,20",
+        "head": "M235,20l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M203,62C219,62 219,92 229,92",
+        "head": "M235,92l-6,-3.5v7z",
+        "dashed": true
+       },
+       {
+        "d": "M356,20H382",
+        "head": "M388,20l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M432,40V92H362",
+        "head": "M356,92l6,-3.5v7z",
+        "dashed": true
+       }
+      ],
+      "steps": [
+       {
+        "n": 1,
+        "x": 88,
+        "y": 56
+       },
+       {
+        "n": 3,
+        "x": 219,
+        "y": 77
+       },
+       {
+        "n": 2,
+        "x": 432,
+        "y": 66
+       }
+      ]
+     }
+    },
+    {
+     "type": "item",
+     "text": "Le ticket est cité, jamais exécuté."
+    },
+    {
+     "type": "item",
+     "text": "Un contrôle sans LLM avant tout envoi."
+    },
+    {
+     "type": "item",
+     "text": "Un modèle plus fort seulement si le trieur doute."
+    }
+   ]
+  },
+  {
+   "id": "proofs",
+   "title": "Les projets qui le prouvent",
+   "blocks": [
+    {
+     "type": "proof",
+     "projectId": "melodicode",
+     "why": "Un coordinateur délègue à des agents isolés ; l’humain décide.",
+     "demo": {
+      "kind": "video",
+      "url": "https://maiprofiles.etheryale.com/portfolio-images/melodicode-demo.mp4"
+     }
+    },
+    {
+     "type": "proof",
+     "projectId": "openclaw_platform",
+     "why": "SaaS d’agents : le client valide les actions sensibles."
+    },
+    {
+     "type": "proof",
+     "projectId": "envoia",
+     "why": "Un contenu externe ne peut pas infléchir l’action."
+    },
+    {
+     "type": "proof",
+     "projectId": "maicivy",
+     "why": "Ce site : sept outils d’administration à agents.",
+     "demo": {
+      "kind": "site",
+      "url": "https://maicivy.etheryale.com/en"
+     }
+    },
+    {
+     "type": "also",
+     "projectIds": [
+      "momos",
+      "claude_orchestrator",
+      "civjdr_roman",
+      "demiurgos_game_master",
+      "anthropic_vendor_proxy"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "contribution",
+   "title": "Ce qu’Alexis apporte",
+   "blocks": [
+    {
+     "type": "item",
+     "text": "L’architecture et sa mise en production, de bout en bout."
+    },
+    {
+     "type": "item",
+     "text": "Des garde-fous écrits en code et testés comme le reste."
+    },
+    {
+     "type": "item",
+     "text": "Un coût par ticket mesuré, tenu par des paliers de modèles."
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Prochaine étape",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "text": "Un appel de 30 minutes pour trancher l’outil de ticketing, les catégories sensibles et les langues. Puis un prototype sur un échantillon de vos tickets."
+    },
+    {
+     "type": "contact"
+    }
+   ]
+  }
+ ],
+ "labels": {
+  "project": "Project",
+  "status": "Status",
+  "lines": "Lines",
+  "tests": "Tests",
+  "demo": "Demo",
+  "video": "video",
+  "site": "the site",
+  "none": "none public",
+  "also": "Also selected: {names}.",
+  "contact": "Write to Alexis",
+  "replayNote": "Replayed example: a recorded scenario, no AI call. Project figures come from their real records.",
+  "statuses": {
+   "production": "In production",
+   "active": "Active",
+   "wip": "In progress",
+   "R&D": "R&D",
+   "retired": "Retired"
+  },
+  "skills": {
+   "title": "Skills involved",
+   "lead": "Matched automatically to the projects cited as proof: the skills from Alexis’s profile that these projects put to work, and the technologies they share.",
+   "skill": "Skill",
+   "level": "Level",
+   "source": "Seen in",
+   "need": "named in the need",
+   "technologies": "Technologies shared by several proofs",
+   "levels": {
+    "expert": "expert",
+    "advanced": "advanced",
+    "intermediate": "intermediate",
+    "beginner": "beginner"
+   }
+  }
+ }
+}

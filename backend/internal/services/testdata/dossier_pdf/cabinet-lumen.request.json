@@ -1,0 +1,262 @@
+{
+ "lang": "fr",
+ "title": "Dossier de conception",
+ "subtitle": [
+  "Pour Claire Dubois, associée chez Cabinet Lumen.",
+  "Préparé en 1:14 par 6 agents, pour 0,022 $."
+ ],
+ "sections": [
+  {
+   "id": "need",
+   "title": "Le besoin, reformulé",
+   "blocks": [
+    {
+     "type": "lead",
+     "text": "Le cabinet traite environ 300 pièces justificatives par jour, classées et saisies à la main."
+    },
+    {
+     "type": "item",
+     "text": "Aucune saisie n'est transmise sans validation préalable d'un collaborateur."
+    },
+    {
+     "type": "item",
+     "text": "Chaque pièce est rangée dans le bon dossier client, avec une trace de son traitement."
+    },
+    {
+     "type": "item",
+     "text": "Les anomalies sont signalées dès la lecture, avant la préparation de la saisie."
+    }
+   ]
+  },
+  {
+   "id": "architecture",
+   "title": "L’architecture proposée",
+   "blocks": [
+    {
+     "type": "diagram",
+     "diagram": {
+      "label": "Les pièces sont lues par un modèle, rattachées et contrôlées par code, mises en brouillon de saisie, puis validées par un collaborateur. Les anomalies vont en file de revue.",
+      "journal": "Pièce, champs lus, contrôles, motif de rejet, validation",
+      "width": 783,
+      "height": 144,
+      "margin": 2,
+      "scale": 0.8538754764930114,
+      "journalY": 120,
+      "journalH": 24,
+      "boxH": 40,
+      "boxes": [
+       {
+        "x": 0,
+        "y": 16,
+        "w": 129,
+        "title": "Pièces reçues",
+        "subtitle": "Code, 300/jour",
+        "human": false
+       },
+       {
+        "x": 161,
+        "y": 16,
+        "w": 129,
+        "title": "Lecture pièce",
+        "subtitle": "Modèle, JSON",
+        "human": false
+       },
+       {
+        "x": 322,
+        "y": 16,
+        "w": 137,
+        "title": "Dossier client",
+        "subtitle": "Code Python",
+        "human": false
+       },
+       {
+        "x": 491,
+        "y": 16,
+        "w": 154,
+        "title": "Brouillon saisie",
+        "subtitle": "Code, non envoyé",
+        "human": false
+       },
+       {
+        "x": 677,
+        "y": 16,
+        "w": 106,
+        "title": "Validation",
+        "subtitle": "Collaborateur",
+        "human": true
+       },
+       {
+        "x": 322,
+        "y": 68,
+        "w": 137,
+        "title": "File de revue",
+        "subtitle": "Collaborateur",
+        "human": true
+       }
+      ],
+      "edges": [
+       {
+        "d": "M129,36H155",
+        "head": "M161,36l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M290,36H316",
+        "head": "M322,36l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M390.5,56V62",
+        "head": "M390.5,68l-3.5,-6h7z",
+        "dashed": true
+       },
+       {
+        "d": "M459,36H485",
+        "head": "M491,36l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M645,36H671",
+        "head": "M677,36l-6,-3.5v7z",
+        "dashed": false
+       },
+       {
+        "d": "M730,16V0H568V10",
+        "head": "M568,16l-3.5,-6h7z",
+        "dashed": true
+       }
+      ],
+      "steps": [
+       {
+        "n": 1,
+        "x": 306,
+        "y": 36
+       },
+       {
+        "n": 2,
+        "x": 475,
+        "y": 36
+       },
+       {
+        "n": 3,
+        "x": 661,
+        "y": 36
+       }
+      ]
+     }
+    },
+    {
+     "type": "item",
+     "text": "Contenu lu jamais exécuté comme instruction, à l'extraction"
+    },
+    {
+     "type": "item",
+     "text": "Contrôles de montants et de rattachement en Python, hors prompt"
+    },
+    {
+     "type": "item",
+     "text": "Aucun envoi de saisie sans validation humaine explicite"
+    }
+   ]
+  },
+  {
+   "id": "proofs",
+   "title": "Les projets qui le prouvent",
+   "blocks": [
+    {
+     "type": "proof",
+     "projectId": "envoia",
+     "why": "Pipeline LLM lisant du contenu non fiable, validé sans LLM avant action, en production."
+    },
+    {
+     "type": "proof",
+     "projectId": "veracite",
+     "why": "Un LLM extrait les éléments d'un texte, une base SQLite tranche, l'auteur arbitre."
+    },
+    {
+     "type": "proof",
+     "projectId": "etheryale_studio",
+     "why": "Console de validation humaine de brouillons machine, avec envoi explicite après relecture."
+    },
+    {
+     "type": "proof",
+     "projectId": "feed_generator",
+     "why": "Analyse d'images par GPT-4 Vision en données structurées, pipeline typé testé."
+    },
+    {
+     "type": "also",
+     "projectIds": [
+      "grimorium_rag_screenwriting",
+      "civjdr_roman"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "contribution",
+   "title": "Ce qu’Alexis apporte",
+   "blocks": [
+    {
+     "type": "item",
+     "text": "EnvoIA : validation déterministe avant toute action, sans passage par le LLM"
+    },
+    {
+     "type": "item",
+     "text": "Veracite : le LLM extrait, une base SQLite tranche, l'auteur arbitre"
+    },
+    {
+     "type": "item",
+     "text": "Etheryale Studio : revue humaine, envoi seulement après relecture explicite"
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Prochaine étape",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "text": "Un appel pour trancher les trois questions ouvertes (logiciel comptable, règles d'anomalies, formats des pièces), puis Alexis construit un premier prototype sur un lot de pièces."
+    },
+    {
+     "type": "contact"
+    }
+   ]
+  }
+ ],
+ "labels": {
+  "project": "Projet",
+  "status": "Statut",
+  "lines": "Lignes",
+  "tests": "Tests",
+  "demo": "Démo",
+  "video": "vidéo",
+  "site": "le site",
+  "none": "aucune publique",
+  "also": "Aussi retenus : {names}.",
+  "contact": "Écrire à Alexis",
+  "replayNote": "Exemple rejoué : un scénario enregistré, sans appel IA. Les chiffres des projets sont ceux de leurs fiches réelles.",
+  "statuses": {
+   "production": "En production",
+   "active": "Actif",
+   "wip": "En cours",
+   "R&D": "R&D",
+   "retired": "Retiré"
+  },
+  "skills": {
+   "title": "Compétences mobilisées",
+   "lead": "Associées automatiquement aux projets cités en preuve : les compétences du profil d’Alexis que ces projets mettent en œuvre, et les technologies qu’ils partagent.",
+   "skill": "Compétence",
+   "level": "Niveau",
+   "source": "Vue dans",
+   "need": "nommée dans le besoin",
+   "technologies": "Technologies communes à plusieurs preuves",
+   "levels": {
+    "expert": "expert",
+    "advanced": "avancé",
+    "intermediate": "intermédiaire",
+    "beginner": "débutant"
+   }
+  }
+ }
+}

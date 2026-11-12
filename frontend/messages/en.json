@@ -1,0 +1,1332 @@
+{
+  "admin": {
+    "prospects": {
+      "nav": "Referrers",
+      "title": "Referrers",
+      "sub": "Business referrers: open or close their access, and see what they bring in.",
+      "inviteName": "Referrer name",
+      "inviteEmail": "Email (optional)",
+      "invite": "Create invitation",
+      "inviteLink": "Invitation link — share it, valid 72 h, single use",
+      "copy": "Copy",
+      "copied": "Copied",
+      "colName": "Name",
+      "colRef": "Code",
+      "colStatus": "Status",
+      "colVisits": "Visits",
+      "colCVs": "CVs generated",
+      "colActions": "Access",
+      "statusActive": "Active",
+      "statusRevoked": "Revoked",
+      "statusPending": "Invitation pending",
+      "revoke": "Revoke",
+      "activate": "Reactivate",
+      "empty": "No referrers yet.",
+      "errorExists": "This name or email is already in use.",
+      "errorGeneric": "Something went wrong, please try again.",
+      "forbidden": "This tool is not available to referrer accounts.",
+      "dailyLimit": "Daily limit reached — try again tomorrow.",
+      "loginTitle": "Referrer access",
+      "loginField": "Name or email",
+      "switchToProspect": "I'm a referrer",
+      "switchToOwner": "Owner access",
+      "inviteTitle": "Welcome, {name}",
+      "inviteHelp": "Choose your password (at least 10 characters).",
+      "invitePassword": "Password",
+      "invitePasswordConfirm": "Confirm password",
+      "passwordMismatch": "The two passwords do not match.",
+      "inviteSubmit": "Save password",
+      "inviteDone": "Password saved: you can now sign in.",
+      "inviteGoLogin": "Go to sign-in",
+      "inviteInvalid": "This invitation link is invalid, expired or already used.",
+      "passwordLength": "The password must be 10 to 72 characters long."
+    },
+    "brand": "maicivy · admin",
+    "logout": "Log out",
+    "outputLang": {
+      "fr": "French",
+      "en": "English",
+      "zh": "Chinese"
+    },
+    "nav": {
+      "cv": "CV from offer",
+      "messages": "Messages",
+      "letters": "Cover letters",
+      "stats": "Private stats",
+      "chat": "Agent",
+      "mailbox": "Mailbox",
+      "compose": "Compose"
+    },
+    "login": {
+      "password": "Password",
+      "submit": "Enter",
+      "loading": "…",
+      "invalid": "Invalid password",
+      "networkError": "Network error"
+    },
+    "cv": {
+      "title": "CV from offer",
+      "help": "Paste a job offer (text or URL) → a tailored CV is generated as a PDF, aligned with the wording of the offer.",
+      "offerPlaceholder": "Paste the job offer text here (or a URL)…",
+      "generate": "Generate CV",
+      "generating": "Generating… (~30s)",
+      "previewTitle": "Preview",
+      "download": "Download PDF",
+      "empty": "The generated CV will appear here.",
+      "loading": "Generating the CV…"
+    },
+    "messages": {
+      "title": "Platform message",
+      "help": "Paste a gig (Malt, LinkedIn, Upwork) → a ready-to-send application message is generated.",
+      "missionPlaceholder": "Paste the gig / listing here (Malt, LinkedIn, Upwork)…",
+      "tjmPlaceholder": "Day rate €",
+      "generate": "Generate",
+      "generating": "Generating…",
+      "resultTitle": "Message",
+      "copy": "Copy",
+      "copied": "Copied ✓",
+      "empty": "The generated message will appear here.",
+      "loading": "Writing the message…"
+    },
+    "letters": {
+      "title": "Cover letters",
+      "help": "Company + offer → a pair of letters (motivation + anti-motivation) is generated as PDFs.",
+      "companyPlaceholder": "Company name",
+      "offerPlaceholder": "Offer text (optional but recommended)…",
+      "generate": "Generate the pair",
+      "generating": "Generating…",
+      "progress": "Generating…",
+      "done": "Pair generated ✓",
+      "downloadMotivation": "Download — Motivation (PDF)",
+      "downloadAnti": "Download — Anti-motivation (PDF)",
+      "empty": "The motivation / anti-motivation pair will appear here.",
+      "failed": "Generation failed"
+    },
+    "stats": {
+      "title": "Private stats",
+      "loading": "Loading…",
+      "error": "Couldn't load stats",
+      "aiTitle": "AI cost & usage",
+      "genToday": "generations today",
+      "lettersMonth": "letters this month ({tokens} tokens)",
+      "model": "Model",
+      "lettersCount": "Letters",
+      "tokens": "Tokens",
+      "cost": "Cost ~",
+      "noLetters": "No letters this month.",
+      "aiNote": "Estimated cost, letters only (CV / messages / chat don't persist their cost yet).",
+      "securityTitle": "Security — {count} suspicious IP(s)",
+      "noSus": "No suspicious IP right now.",
+      "scoreTitle": "Suspicion score",
+      "analyticsTitle": "Detailed analytics",
+      "byProfile": "By detected profile",
+      "topReferrers": "Top referrers",
+      "noReferrers": "No referrer recorded."
+    },
+    "chat": {
+      "title": "Agent",
+      "help": "Ask about your portfolio (projects, skills, experience, blog) — the agent queries maiProFiles live.",
+      "newConversation": "New conversation",
+      "placeholder": "Type your message…",
+      "send": "Send",
+      "thinking": "The agent is thinking…",
+      "empty": "Start a conversation with the agent.",
+      "noConversations": "No conversations.",
+      "deleteConversation": "Delete conversation"
+    },
+    "mailbox": {
+      "title": "Mailbox",
+      "help": "Mails automatically captured from Malt (and soon other platforms), forwarded to a fixed address as soon as they arrive.",
+      "platformFilterPlaceholder": "Filter by platform (e.g. malt)",
+      "unreadOnly": "Unread only",
+      "loading": "Loading…",
+      "loadError": "Couldn't load mails",
+      "empty": "No mail captured yet.",
+      "noSubject": "(no subject)",
+      "forwarded": "Forwarded ✓",
+      "forwardFailed": "Forward failed",
+      "pageIndicator": "Page {page} / {totalPages} ({total})",
+      "selectPrompt": "Select a mail from the list.",
+      "markRead": "Mark read",
+      "markUnread": "Mark unread",
+      "retryForward": "Retry forward",
+      "retrying": "Forwarding…",
+      "emptyBody": "(empty body)",
+      "blocked": "Blocked",
+      "blockedExplain": "Automatic forward blocked — score below the relevance threshold. Use \"Force send\" if you think this is a mistake.",
+      "relevanceScore": "Relevance: {score}/100",
+      "forceForward": "Force send",
+      "viewMission": "View mission",
+      "showReasoning": "Show reasoning",
+      "hideReasoning": "Hide reasoning",
+      "translate": "Translate",
+      "translating": "Translating…",
+      "translationFailed": "Translation failed",
+      "showOriginal": "Show original",
+      "showTranslation": "Show translation"
+    },
+    "errorPrefix": "Error",
+    "compose": {
+      "checklistTitle": "Checks",
+      "checklistEmpty": "Checks will appear once the first message is written.",
+      "verifying": "Checking…",
+      "rate": "Rate {amount} €",
+      "announceLabel": "Job posting",
+      "announcePlaceholder": "Paste the full posting here, as is.",
+      "start": "Write the message",
+      "draftTitle": "Message to send",
+      "copy": "Copy",
+      "copied": "Copied",
+      "translationTitle": "Translation (for checking)",
+      "translationPending": "The translation will appear after checking.",
+      "chatTitle": "Agent",
+      "chatPlaceholder": "Ask for a change…",
+      "send": "Send",
+      "thinking": "The agent is working…",
+      "toolCall": "The agent used {name}",
+      "kickoff": "Here is a job posting. Write the outreach message in French using set_draft, and set the daily rate using set_rate. Reply to me in my language.\n\n{announce}",
+      "checks": {
+        "remote": "Remote mentioned",
+        "no_markdown": "No markdown",
+        "signature": "Signature",
+        "rate_coherence": "Rate consistent",
+        "length": "Length",
+        "maicivy_link": "maicivy link",
+        "project_link": "Project page link"
+      },
+      "newDraft": "New draft",
+      "reasoning": "Reasoning",
+      "attachImage": "Attach a screenshot",
+      "removeImage": "Remove screenshot",
+      "imageErrors": {
+        "image_type_unsupported": "Unsupported format (PNG, JPEG, GIF or WebP).",
+        "image_read_failed": "Could not read the image.",
+        "image_too_large": "Image too large.",
+        "image_too_many": "Too many images in one message.",
+        "image_empty": "Empty image.",
+        "image_not_allowed": "Images are not allowed here."
+      },
+      "checksProven": "Verified",
+      "checksJudged": "Judged",
+      "untitled": "Untitled",
+      "workshops": "Workshops",
+      "workshopsEmpty": "No workshop yet.",
+      "archivedTab": "Archived",
+      "activeTab": "Active",
+      "archivedEmpty": "No archived workshop.",
+      "noDraft": "Posting only",
+      "checksShort": "{pass}/{total}",
+      "sent": "Sent",
+      "markSent": "Mark as sent",
+      "unmarkSent": "Mark as not sent",
+      "rename": "Rename",
+      "renamePrompt": "Workshop name",
+      "archive": "Archive",
+      "unarchive": "Make active",
+      "rowMenu": "Actions",
+      "openWorkshops": "Switch workshop",
+      "verifyLimit": "Daily verification limit reached — this checklist belongs to the previous draft."
+    }
+  },
+  "metadata": {
+    "title": "Alexis Trouvé — AI agent orchestrator",
+    "description": "I build AI agent systems that run in production: the mountain of my projects, a living dossier, the portfolio, the CV and an agent that answers for me.",
+    "preview": {
+      "commits30d": "{count, plural, one {commit in 30 days} other {commits in 30 days}}",
+      "activeProjects": "{count, plural, one {active project} other {active projects}}"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "close": "Close",
+    "backToHome": "Back to Home",
+    "download": "Download",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "viewMore": "View more"
+  },
+  "nav": {
+    "brand": "Alexis Trouvé",
+    "brandHome": "Alexis Trouvé — home",
+    "home": "Home",
+    "dossierVivant": "Living dossier",
+    "portfolio": "Portfolio",
+    "cv": "CV",
+    "blog": "Blog",
+    "chat": "Chat",
+    "gitstats": "Git Stats",
+    "analytics": "Analytics",
+    "architecture": "Architecture",
+    "label": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "contact": "Contact",
+    "language": "Language: {current}",
+    "languageList": "Choose a language"
+  },
+  "chat": {
+    "greeting": "Hello!",
+    "greetingSubtitle": "Ask me about my projects, skills, or experience.",
+    "inputPlaceholder": "Ask your question... (Enter to send)",
+    "errorNetwork": "Connection lost. Check your network and try again.",
+    "errorRateLimited": "Please wait {seconds}s before your next message.",
+    "errorRateLimitedGeneric": "Too many messages right now. Try again shortly.",
+    "errorServer": "The service ran into a problem. Please try again in a moment.",
+    "errorContextTooLong": "This conversation got too long. Start a new conversation to continue.",
+    "errorGeneric": "Sorry, something went wrong. Please try again.",
+    "askQuestion": "Ask a question →",
+    "questionsHeader": "Questions",
+    "newSuggestions": "New suggestions",
+    "closeTip": "Close this tip",
+    "closeTab": "Close {label}",
+    "tabs": {
+      "projects": "Projects",
+      "experience": "Experience",
+      "skills": "Skills",
+      "blog": "Blog",
+      "default": "Card"
+    },
+    "toolLabels": {
+      "project": "project",
+      "projects": "projects",
+      "skills": "skills",
+      "experience": "experience",
+      "article": "article",
+      "blog": "blog",
+      "tip": "tip",
+      "need": "need noted for your CV"
+    },
+    "skillsTitle": "Technical skills",
+    "domains": "Domains",
+    "experiences": "Experience",
+    "yearsExperience": "{years} years of experience",
+    "techStack": "Tech stack",
+    "keyFeatures": "Key features",
+    "viewOnGithub": "View code",
+    "viewDemo": "View demo",
+    "openProjectMessage": "Show me the {name} project",
+    "stopGenerating": "Stop generating",
+    "remainingQuota": "{remaining}/{limit} messages today",
+    "followupsHeader": "Keep exploring",
+    "stats": "Stats",
+    "skills": "Skills",
+    "projects": "Projects",
+    "blogEmpty": "No articles published yet.",
+    "articles": "Articles ({count})",
+    "minRead": "{min} min read",
+    "readArticle": "Read the article →",
+    "hints": [
+      {
+        "text": "What is Aria?",
+        "message": "Tell me about the Aria project",
+        "category": "projets"
+      },
+      {
+        "text": "What's Cogesco?",
+        "message": "What is the Cogesco project?",
+        "category": "projets"
+      },
+      {
+        "text": "How does maicivy work?",
+        "message": "How does maicivy work?",
+        "category": "projets"
+      },
+      {
+        "text": "Most complex project?",
+        "message": "What's your most complex project?",
+        "category": "projets"
+      },
+      {
+        "text": "Alexi's AI stack?",
+        "message": "What are your AI skills?",
+        "category": "skills"
+      },
+      {
+        "text": "Go or Node?",
+        "message": "Would you have chosen Go or Node for a new project?",
+        "category": "skills"
+      },
+      {
+        "text": "Do you do mobile?",
+        "message": "Do you do mobile development?",
+        "category": "skills"
+      },
+      {
+        "text": "Day rate?",
+        "message": "What's your day rate?",
+        "category": "freelance"
+      },
+      {
+        "text": "Available for a gig?",
+        "message": "Are you available for a freelance assignment?",
+        "category": "freelance"
+      },
+      {
+        "text": "Remote or on-site?",
+        "message": "Do you work remote or on-site?",
+        "category": "freelance"
+      },
+      {
+        "text": "Struggled on a project?",
+        "message": "Have you had technical struggles on a project?",
+        "category": "curiosite"
+      },
+      {
+        "text": "Ideal stack?",
+        "message": "What's your ideal stack?",
+        "category": "curiosite"
+      },
+      {
+        "text": "Latest articles?",
+        "message": "What are your latest blog articles?",
+        "category": "blog"
+      },
+      {
+        "text": "Article on AI agents?",
+        "message": "Have you written about AI agents?",
+        "category": "blog"
+      },
+      {
+        "text": "How is this portfolio built?",
+        "message": "How was this portfolio built?",
+        "category": "meta"
+      },
+      {
+        "text": "Who coded this page?",
+        "message": "Who developed this chat page?",
+        "category": "meta"
+      }
+    ],
+    "send": "Send",
+    "inputLabel": "Your question",
+    "views": {
+      "label": "Chat view",
+      "questions": "Questions",
+      "conversation": "Conversation",
+      "fiches": "Cards",
+      "sheetsCount": "Cards ({count})",
+      "newSheet": "new card opened"
+    }
+  },
+  "gitstats": {
+    "title": "Git activity",
+    "subtitle": "Six months of commits across every repository: the pace, the lines written, the languages and the repositories on the move.",
+    "surveyedOn": "Recorded on {date}",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "unavailable": "Git statistics are unavailable right now.",
+    "commits6mo": "Commits in six months",
+    "linesAdded": "Lines added",
+    "linesDeleted": "Lines removed",
+    "activeRepos": "Active repositories",
+    "ledger": {
+      "gitlab": "including {count} on GitLab",
+      "exactly": "{value} exactly",
+      "reposTotal": "out of {total} in all"
+    },
+    "cadence": {
+      "title": "Pace",
+      "noteDay": "Commits per day, six months.",
+      "noteWeek": "Commits per week, six months.",
+      "noteGitlab": "The copper share comes from the client project on GitLab.",
+      "figure": "{active, plural, one {# day} other {# days}} out of {total}",
+      "figureSub": "with at least one commit · best run {streak, plural, one {# day} other {# days}} in a row",
+      "legendAll": "All repositories",
+      "legendGitlab": "of which GitLab (client project)",
+      "peakDay": "{value} commits · {date}",
+      "peakWeek": "{value} commits · week of {date}",
+      "barDay": "{value} commits on {date}",
+      "barWeek": "{value} commits in the week of {date}"
+    },
+    "lines": {
+      "title": "Lines written",
+      "note": "Above the axis, lines added; below it, lines removed. Same scale on both sides.",
+      "figure": "{net} net",
+      "figureSub": "+{added} · −{deleted}",
+      "legendAdded": "Added",
+      "legendDeleted": "Removed",
+      "peakDay": "{value} lines added · {date}",
+      "peakWeek": "{value} lines added · week of {date}",
+      "barDay": "{date}: +{added} · −{deleted}",
+      "barWeek": "Week of {date}: +{added} · −{deleted}"
+    },
+    "langs": {
+      "title": "Languages",
+      "note": "Lines of code per language, across every repository since it was created, not only over six months.",
+      "figure": "{loc} lines",
+      "figureSub": "in {count, plural, one {# language} other {# languages}}",
+      "others": "Others ({count})"
+    },
+    "repos": {
+      "title": "Repositories",
+      "note": "Ranked by commits over the last thirty days. The strip shows, week by week, how many days had at least one commit.",
+      "figure": "{count, plural, one {# repository} other {# repositories}}",
+      "figureSub": "{count, plural, other {received a commit in the last thirty days}}",
+      "colRepo": "Repository",
+      "colWeeks": "Six months",
+      "col30d": "30 days",
+      "col6mo": "6 months",
+      "colLines": "Lines",
+      "colLast": "Last commit",
+      "hot": "{count} <unit>in 30 d</unit>",
+      "commits6mo": "{count} <unit>commits in six months</unit>",
+      "loc": "{loc} <unit>lines</unit>",
+      "activity": "{days, plural, one {# day} other {# days}} with a commit in six months · current run {current} d · best {longest} d",
+      "more": "Show {count, plural, one {the other active repository} other {the # other active repositories}}",
+      "dormant": "{count, plural, one {# repository with no commit in six months stays off the list.} other {# repositories with no commit in six months stay off the list.}}"
+    },
+    "metaTitle": "Git activity · Alexis Trouvé",
+    "metaDescription": "Six months of Alexis Trouvé's Git activity: commits, lines added and removed, active repositories."
+  },
+  "cv": {
+    "devPortrait": {
+      "title": "The code, in numbers",
+      "subtitle": "Activity read straight from the repositories.",
+      "loc": "lines of code",
+      "langs": "{count} languages",
+      "commits": "commits",
+      "commitsSub": "last 6 months",
+      "repos": "active repositories",
+      "genreTitle": "Current languages",
+      "genreSub": "Commits by language — last 90 days, compared with the year",
+      "momentumTitle": "Pace",
+      "momentumValue": "{recent} commits in the last 30 days",
+      "momentumRatio": "×{ratio} compared with the previous month",
+      "hotTitle": "Most active repositories",
+      "hotCommits": "{count} commits · 30d",
+      "caveat": "Indicative trends: each repository's dominant language, aggregated commit days (capped at ~70 per repository).",
+      "detailLink": "See the detailed Git activity",
+      "trendUp": "rising",
+      "trendDown": "falling",
+      "trendFlat": "steady"
+    },
+    "title": "Curriculum vitae",
+    "lead": "Experience, skills and projects, re-ranked for the selected profile.",
+    "profileLabel": "Profile",
+    "selectTheme": "Choose a profile",
+    "metaTitle": "CV — {profile} · Alexis Trouvé",
+    "metaDescription": "Alexis Trouvé's CV for the {profile} profile: experience, skills and projects ranked by relevance.",
+    "sections": {
+      "experiences": "Experience",
+      "skills": "Skills",
+      "projects": "Projects"
+    },
+    "experience": {
+      "viewDetails": "View details"
+    },
+    "skills": {
+      "all": "All",
+      "filterLabel": "Filter skills by category",
+      "legend": "Size reflects the level and the relevance to the selected profile.",
+      "badgeTitle": "{name} — view details"
+    },
+    "projects": {
+      "featured": "Featured project",
+      "inProgress": "In progress",
+      "clickForDetails": "Open the project sheet",
+      "openDetails": "Open the sheet for {title}",
+      "defaultCategory": "Project"
+    },
+    "export": {
+      "downloading": "Preparing the PDF…",
+      "download": "Download the PDF",
+      "error": "The PDF could not be generated. Please try again in a moment."
+    },
+    "themes": {
+      "ai": {
+        "name": "AI agents — Technomancer",
+        "description": "Multi-agent systems in production: orchestration, MCP tools, built end to end."
+      },
+      "backend": {
+        "name": "Backend",
+        "description": "APIs, databases, services."
+      },
+      "cpp": {
+        "name": "C++",
+        "description": "Low-level systems, engines, performance."
+      },
+      "devops": {
+        "name": "DevOps",
+        "description": "Infrastructure, CI/CD, monitoring."
+      },
+      "fullstack": {
+        "name": "Full-stack",
+        "description": "Interfaces and services, end to end."
+      },
+      "artistique": {
+        "name": "Creative work",
+        "description": "Creative projects, design, visualisation."
+      }
+    },
+    "detailModal": {
+      "close": "Close",
+      "image": "Image",
+      "prevImage": "Previous image",
+      "nextImage": "Next image",
+      "goToImage": "Go to image",
+      "functional": {
+        "title": "What it does"
+      },
+      "technical": {
+        "title": "How it's built"
+      },
+      "technologies": "Technologies",
+      "skills": "Skills",
+      "links": {
+        "title": "Links",
+        "github": "GitHub",
+        "demo": "Live demo",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "other": "Link"
+      }
+    },
+    "duration": {
+      "present": "Present",
+      "year": "year",
+      "years": "years",
+      "month": "month",
+      "months": "months",
+      "unknownDate": "Unknown date",
+      "invalidDate": "Invalid date",
+      "unknownDuration": "Unknown duration"
+    },
+    "skillDetail": {
+      "close": "Close",
+      "levels": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert"
+      },
+      "years": "{count, plural, =0 {less than a year of experience} one {# year of experience} other {# years of experience}}",
+      "locLabel": "lines of code",
+      "projectsLabel": "projects",
+      "experiencesLabel": "experiences",
+      "projectsTitle": "Projects",
+      "experiencesTitle": "Experience",
+      "noStats": "No stats yet for this skill"
+    },
+    "context": {
+      "title": "Tailored to what you told me",
+      "sourceChat": "Based on our conversation",
+      "sourceDossier": "Based on your dossier",
+      "preparing": "Preparing the tailored CV… the standard CV stays on screen meanwhile.",
+      "unavailable": "The tailored CV could not be prepared for now. Here is the standard CV.",
+      "viewLabel": "Version shown",
+      "showAdapted": "Tailored CV",
+      "showStandard": "Standard CV",
+      "downloadAdapted": "Download the tailored PDF",
+      "offer": {
+        "toggle": "Tailor it to a job offer",
+        "label": "Job offer or assignment",
+        "placeholder": "Paste the offer text, or its link",
+        "submit": "Generate the tailored PDF",
+        "submitting": "Tailoring, about 20 seconds…",
+        "cancel": "Cancel",
+        "error": "Tailoring failed. Please try again in a moment.",
+        "limit": "Daily generation limit reached. Please try again tomorrow."
+      }
+    }
+  },
+  "analytics": {
+    "testStats": {
+      "title": "Tests & Quality",
+      "allGreen": "100% passing",
+      "total": "automated tests",
+      "backend": "backend (Go)",
+      "frontend": "frontend · {suites} suites",
+      "updated": "updated {date}"
+    },
+    "title": "The site, live",
+    "subtitle": "Public statistics, updated in real time: visits, blog reads, generated letters and the most clicked areas.",
+    "privacy": "This dashboard is public and updated in real-time. Data is collected anonymously in respect of visitor privacy.",
+    "widgets": {
+      "visitors": {
+        "title": "Current visitors",
+        "online": "Online",
+        "offline": "Disconnected",
+        "realtime": "Real-time updates via WebSocket",
+        "oneNow": "person right now",
+        "manyNow": "people right now"
+      },
+      "themes": {
+        "title": "Most viewed CV themes",
+        "views": "views",
+        "update": "Updates every 30 seconds"
+      },
+      "letters": {
+        "title": "AI Letters",
+        "total": "letters generated in total",
+        "noData": "No data available",
+        "evolution": "Evolution over {period}",
+        "windows": {
+          "day": "24 hours",
+          "week": "7 days",
+          "month": "30 days"
+        }
+      },
+      "heatmap": {
+        "title": "Interaction Heatmap",
+        "low": "Low",
+        "high": "High",
+        "noData": "No interaction data available",
+        "interactions": "{count} interactions",
+        "based": "Based on {count} interaction points",
+        "explain": "Where visitors click (buttons & links, all pages — last 24h). Hotter = more clicks.",
+        "unknownElement": "Element",
+        "topTitle": "Top interactions"
+      },
+      "stats": {
+        "visitors": "Visitors",
+        "pageViews": "Page Views",
+        "letters": "Letters",
+        "blogReads": "Blog reads",
+        "conversion": "Conversion"
+      }
+    },
+    "periods": {
+      "today": "Today",
+      "last7days": "Last 7 days",
+      "last30days": "Last 30 days",
+      "all": "All",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "select": "Select a period",
+      "label": "Period:"
+    },
+    "meta": {
+      "title": "Public statistics",
+      "description": "maicivy's public dashboard, updated in real time: visits, reads, generated letters, clicked areas."
+    },
+    "eyebrow": "Public dashboard"
+  },
+  "architecture": {
+    "meta": {
+      "title": "Architecture — how this site is built",
+      "description": "The layers, stack and safeguards behind maicivy: a Next.js front end, a Go API, AI agents wired to real projects."
+    },
+    "eyebrow": "Architecture",
+    "title": "How this site is built",
+    "subtitle": "maicivy runs in production: a Next.js front end, a Go API, AI agents that answer from real projects. Here are its layers, its tools and its safeguards.",
+    "metricsTitle": "By the numbers",
+    "metricsNote": "Tests recounted on every commit",
+    "metrics": {
+      "goFiles": "Go files (backend)",
+      "reactComponents": "React components",
+      "backendTests": "backend tests",
+      "frontendTests": "frontend tests",
+      "passingTests": "passing tests",
+      "apiEndpoints": "API routes",
+      "documentation": "lines of documentation",
+      "implementationGuides": "implementation guides"
+    },
+    "overview": "Overview",
+    "overviewNote": "From the browser to the models",
+    "layers": {
+      "client": "Client",
+      "edge": "Edge & security",
+      "backend": "Backend API",
+      "services": "Services",
+      "data": "Data & models"
+    },
+    "nodes": {
+      "cdnWaf": "CDN · web application firewall",
+      "proxyTls": "reverse proxy · TLS",
+      "frontdoor": "rate limiting · filtering",
+      "middlewares": "Middlewares",
+      "modules": {
+        "cv": "CV",
+        "letters": "Letters",
+        "analytics": "Analytics",
+        "chat": "Chat",
+        "blog": "Blog"
+      },
+      "services": {
+        "ai": "AI",
+        "scraper": "Web collection",
+        "cvScoring": "CV scoring",
+        "profileBuilder": "Profile builder"
+      },
+      "orm": "through the GORM ORM",
+      "cacheUses": "sessions · limits · queues",
+      "models": "primary model · fallback"
+    },
+    "stackTitle": "The stack",
+    "stackColumns": {
+      "tool": "Tool",
+      "role": "Role"
+    },
+    "stacks": {
+      "backend": {
+        "title": "Backend",
+        "description": "A compact, tested Go API that answers fast."
+      },
+      "frontend": {
+        "title": "Frontend",
+        "description": "Next.js and TypeScript, server-rendered, five languages."
+      },
+      "ai": {
+        "title": "Artificial intelligence",
+        "description": "Models behind a single gateway, with a fallback."
+      },
+      "infra": {
+        "title": "Infrastructure",
+        "description": "Containers, databases, monitoring and continuous integration."
+      }
+    },
+    "stackItems": {
+      "backend": {
+        "go": "Server language",
+        "fiber": "HTTP framework",
+        "gorm": "PostgreSQL access",
+        "redis": "Cache, sessions, rate limits",
+        "zerolog": "Structured JSON logs",
+        "chromedp": "PDF generation",
+        "colly": "Web collection",
+        "testify": "Tests"
+      },
+      "frontend": {
+        "nextjs": "React framework (App Router)",
+        "typescript": "Static typing",
+        "tailwind": "Utility styles",
+        "shadcn": "Accessible components (Radix)",
+        "framer": "Animations",
+        "rhf": "Forms",
+        "zod": "Schema validation",
+        "tests": "Unit and end-to-end tests"
+      },
+      "ai": {
+        "claude": "Primary model",
+        "fallback": "Fallback model, same gateway",
+        "scraper": "Multi-source company research"
+      },
+      "infra": {
+        "docker": "Containers",
+        "postgres": "Primary database",
+        "redis": "In-memory cache",
+        "nginx": "Reverse proxy and TLS",
+        "prometheus": "Metrics collection",
+        "grafana": "Dashboards",
+        "ci": "Tests on every push"
+      }
+    },
+    "scraper": "Multi-source company research",
+    "scraperNote": "A real example for one company",
+    "scraperInput": "Input",
+    "scraperParallel": "Sources in parallel",
+    "scraperResult": "Merged result",
+    "scraperSources": {
+      "website": "Website",
+      "blogNews": "Blog / news"
+    },
+    "features": "Features",
+    "technicalFeatures": {
+      "dynamicCV": {
+        "title": "A CV fitted to the job offer",
+        "description": "Five themes (backend, C++, artistic, full-stack, DevOps); experience and projects are scored against the offer.",
+        "tech": [
+          "Scoring algorithm",
+          "PDF export",
+          "Framer Motion animations"
+        ]
+      },
+      "aiLetters": {
+        "title": "AI-written letters",
+        "description": "A cover letter and its anti-letter, generated in parallel.",
+        "tech": [
+          "Claude API",
+          "Async job queue",
+          "PDF generation"
+        ]
+      },
+      "scraper": {
+        "title": "Multi-source collection",
+        "description": "Live research on the target company, from six sources.",
+        "tech": [
+          "Wikipedia API",
+          "GitHub API",
+          "Blog reading",
+          "DuckDuckGo",
+          "Clearbit"
+        ]
+      },
+      "analytics": {
+        "title": "Real-time analytics",
+        "description": "A public dashboard, updated live over WebSocket.",
+        "tech": [
+          "WebSocket",
+          "Click map",
+          "Redis aggregates"
+        ]
+      },
+      "accessGate": {
+        "title": "Progressive access to AI",
+        "description": "Unlocked after three visits or when a profile is detected (recruiter, CTO…).",
+        "tech": [
+          "Profile detection",
+          "User-Agent parsing",
+          "Signed cookie"
+        ]
+      },
+      "rateLimiting": {
+        "title": "AI rate limits",
+        "description": "5 generations a day, 2 minutes apart, costs tracked.",
+        "tech": [
+          "Redis sliding window",
+          "Token counting",
+          "Cost tracking"
+        ]
+      }
+    },
+    "security": "Security",
+    "securityItems": {
+      "injection": {
+        "title": "SQL injection",
+        "description": "Parameterised queries through GORM"
+      },
+      "xss": {
+        "title": "Script injection (XSS)",
+        "description": "Input sanitised with bluemonday"
+      },
+      "rateLimit": {
+        "title": "Rate limiting",
+        "description": "Sliding window in Redis"
+      },
+      "headers": {
+        "title": "Security headers",
+        "description": "CSP, X-Frame-Options, HSTS"
+      },
+      "gdpr": {
+        "title": "GDPR",
+        "description": "IP addresses hashed (SHA-256), no personal data"
+      },
+      "cookies": {
+        "title": "Cookies",
+        "description": "HttpOnly, Secure, SameSite"
+      }
+    },
+    "codeExample": "Excerpt: collecting in parallel",
+    "codeExampleNote": "services/scraper.go, simplified",
+    "sourceCode": "The code is public",
+    "sourceCodeDesc": "The whole repository — code, tests and documentation — can be read on GitHub.",
+    "viewOnGithub": "View on GitHub",
+    "backToCV": "See the CV"
+  },
+  "errors": {
+    "generic": "This page couldn’t be displayed",
+    "tryAgain": "Something went wrong on our side. Try again; if it happens again, start over from the home page.",
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "retry": "Retry",
+    "notFoundEyebrow": "Error 404",
+    "notFoundHint": "The address may have changed, or the page no longer exists. The portfolio and the CV are still here.",
+    "errorEyebrow": "Error",
+    "goPortfolio": "See the portfolio",
+    "goCv": "See the CV"
+  },
+  "validation": {
+    "minLength": "Must contain at least {min} characters",
+    "maxLength": "Cannot exceed {max} characters",
+    "invalidChars": "Invalid characters detected",
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidUrl": "Invalid URL"
+  },
+  "footer": {
+    "explore": "Explore",
+    "workshop": "Behind the scenes",
+    "contact": "Contact",
+    "email": "Email Alexis",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "legal": "Legal",
+    "legalNotice": "Legal notice",
+    "privacy": "Privacy policy",
+    "legalDisclaimer": "This site uses AI to generate content. Session data is temporary and is not shared with third parties.",
+    "rights": "© {year} Alexis Trouvé. All rights reserved."
+  },
+  "legal": {
+    "title": "Legal notice",
+    "editor": {
+      "title": "Site editor",
+      "text": "This site is published by Alexis Trouvé, an independent developer based in France. It serves as a personal portfolio and technical demonstration."
+    },
+    "hosting": {
+      "title": "Hosting",
+      "text": "This site is hosted on a virtual private server (VPS) located in France. The domain name is managed through Cloudflare."
+    },
+    "ip": {
+      "title": "Intellectual property",
+      "text": "All content on this site (source code, text, design) is the property of Alexis Trouvé, unless otherwise stated. The source code is publicly available on GitHub for demonstration purposes."
+    },
+    "ai": {
+      "title": "AI-generated content",
+      "text": "Some features of this site use artificial intelligence (Claude, Anthropic) to generate content: cover letters, personalized messages, and chatbot responses. This content is generated on demand and is not permanently stored."
+    },
+    "liability": {
+      "title": "Limitation of liability",
+      "text": "AI-generated content is provided for informational purposes only. The publisher cannot be held responsible for its use. Information presented on this site is provided as-is, without guarantee of completeness or accuracy."
+    },
+    "eyebrow": "Legal information"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "collection": {
+      "title": "Data collected",
+      "text": "This site only collects anonymous session data (session cookie) necessary for AI features to function. No registration is required. No personal data is requested or stored."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "text": "A session cookie (maicivy_session) is used to identify your session and manage rate limiting for AI features. This cookie is strictly necessary for the site to function and does not require consent. No tracking or advertising cookies are used."
+    },
+    "ai": {
+      "title": "AI processing",
+      "text": "Text you submit (job offers, company names) is sent to the Anthropic API (Claude) to generate content. This data is processed in accordance with Anthropic's privacy policy and is not used to train their models."
+    },
+    "retention": {
+      "title": "Data retention",
+      "text": "Sessions expire automatically. Generated letters are temporarily retained for consultation. Analytics data (visits, page views) is aggregated and anonymized."
+    },
+    "rights": {
+      "title": "Your rights",
+      "text": "Under GDPR, you have the right to access, rectify, and delete your data. Since this site does not collect personally identifiable data, these rights primarily apply to session data."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "For any questions regarding the protection of your data, you can contact the publisher through the links available in the site footer."
+    },
+    "eyebrow": "Personal data"
+  },
+  "portfolio": {
+    "meta": {
+      "title": "Portfolio — shipped projects",
+      "description": "A selection of shipped projects: what they do, how they are built, and what they weigh."
+    },
+    "title": "Portfolio",
+    "subtitle": "A selection of shipped projects — what they do, how they are built, and what they weigh.",
+    "projectCount": "{count} projects",
+    "viewProject": "View project",
+    "back": "Back to portfolio",
+    "pitch": "What it does",
+    "technical": "How it is built",
+    "figures": "Numbers",
+    "stack": "Stack",
+    "links": "Links",
+    "gallery": "Gallery",
+    "demo": "Video demo",
+    "unavailable": "The portfolio is temporarily unavailable.",
+    "notFound": "This project is not part of the selection.",
+    "status": {
+      "production": "In production",
+      "active": "Active",
+      "wip": "In progress",
+      "R&D": "R&D"
+    },
+    "linkLabels": {
+      "github": "GitHub",
+      "repo": "Repository",
+      "demo": "Demo",
+      "site": "Website",
+      "docs": "Docs"
+    },
+    "eyebrow": "Shipped projects"
+  },
+  "blog": {
+    "meta": {
+      "title": "Blog — development log",
+      "description": "Articles written from my commits: what I build, what breaks, how I fix it."
+    },
+    "title": "Blog",
+    "eyebrow": "Logbook",
+    "subtitle": "Written from my commits: the agents and systems I build, what breaks in production, and how I fix it.",
+    "filterTitle": "Filter by theme",
+    "all": "All",
+    "themes": {
+      "tech": "Tech",
+      "games": "Games"
+    },
+    "count": "{count, plural, =0 {No articles} one {# article} other {# articles}}",
+    "clearFilter": "Clear filter",
+    "emptyTitle": "No articles yet",
+    "emptyText": "Articles are written automatically from commits.",
+    "unavailable": "The blog is temporarily unavailable. Please try again in a moment.",
+    "rss": "RSS feed",
+    "readingTime": "{minutes} min",
+    "pagination": {
+      "label": "Blog pages",
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {page}",
+      "current": "Page {page} of {total}"
+    },
+    "post": {
+      "back": "Back to blog",
+      "readTime": "{minutes} min read",
+      "generatedFrom": "Generated from these commits",
+      "closeImage": "Close image",
+      "openImage": "Enlarge the cover image",
+      "tags": "Article topics",
+      "notFound": "Article not found"
+    },
+    "follow": {
+      "title": "Follow by email",
+      "intro": "Get new posts. Pick your topics (none checked = everything).",
+      "emailPlaceholder": "you@email.com",
+      "subscribe": "Subscribe",
+      "sending": "Sending…",
+      "emailLabel": "Email address",
+      "topicsLabel": "Topics to follow",
+      "success": "You're in. You'll get the new posts you picked.",
+      "error": "Oops, try again (valid email?).",
+      "discord": "Join the Discord",
+      "topics": {
+        "Drifterra": "Drifterra (the game)",
+        "tech": "Dev / tech",
+        "veille": "Tech watch"
+      }
+    }
+  },
+  "montagne": {
+    "voice": {
+      "title": "I build AI agent systems that run in production.",
+      "tagline": "Agent Orchestrator — Technomancer",
+      "cv": "CV (PDF)",
+      "chat": "Talk to my agent"
+    },
+    "meta": {
+      "title": "The mountain — every project, connected",
+      "description": "All of Alexis Trouvé's projects in a single relief: from infrastructure foundations up to games and applications, every link says what helps build what."
+    },
+    "strata": {
+      "foundations": "Foundations",
+      "tooling": "Tooling",
+      "engines": "Engines",
+      "works": "Works"
+    },
+    "strataHint": {
+      "foundations": "Infrastructure, networking, security",
+      "tooling": "Tools, agents, automation",
+      "engines": "What the works run on",
+      "works": "Games, applications, products"
+    },
+    "list": {
+      "title": "Every project, from base to summit",
+      "intro": "Each link reads \"helps build\": it is derived from the project data, never added by hand.",
+      "count": "{count} projects",
+      "builds": "Helps build:",
+      "builtWith": "Built with:",
+      "openPortfolio": "Project page"
+    },
+    "status": {
+      "production": "In production",
+      "active": "Active",
+      "wip": "In progress",
+      "R&D": "R&D",
+      "retired": "Retired"
+    },
+    "stage": {
+      "label": "3D mountain of projects",
+      "loading": "The mountain is rising…",
+      "hint": "Drag to rotate · scroll or pinch to zoom · click a project",
+      "overview": "Overview",
+      "goTo": "Go to: {stratum}",
+      "unavailable": "The mountain is temporarily unavailable. Please try again in a moment."
+    },
+    "flower": {
+      "close": "Close",
+      "openPortfolio": "View the project page",
+      "visuals": "Project visuals",
+      "video": "Video demo",
+      "openImage": "Open image"
+    },
+    "peak": {
+      "title": "The project mountain",
+      "summit": "Works at the summit",
+      "mountain": "Every project, from works down to foundations"
+    },
+    "network": {
+      "open": "Network view",
+      "title": "Network view — the mountain in relief",
+      "close": "Close the network view"
+    },
+    "proofs": {
+      "label": "The proof",
+      "builtGames": "Games built on {name}",
+      "openProject": "See the project",
+      "video": "Video demo",
+      "stages": {
+        "global": "{project} generates the whole planet: the global map, from which the local maps are then derived.",
+        "local": "{project} starts from that global map and derives the local terrain from it."
+      },
+      "site": {
+        "title": "The proof is this very site: tap a page to open it",
+        "pages": {
+          "blog": "The blog",
+          "gitstats": "Git statistics",
+          "chat": "Chat with my agent",
+          "cv": "The CV"
+        }
+      }
+    },
+    "art": {
+      "backdrop": "Illustration: a dark mountain under a starry sky, its ridges edged in gold, above a sea of golden clouds",
+      "covers": {
+        "grove_engine": "Illustration: a golden mechanical station linked by beams of light to a hexagonal map, an island village, a ship and a crystal",
+        "melodicode": "Illustration: a conductor seen from behind directs dozens of glowing screens tied to his hand by golden threads",
+        "theomen": "Illustration: golden beams run from a planet to a detailed region, with its forests, rivers and cities",
+        "maicivy": "Illustration: an open book from which glowing pages rise — an article, a chart, a conversation, a CV"
+      }
+    }
+  },
+  "dossierVivant": {
+    "footer": {
+      "lead": "The living dossier is just one door: here is the rest of Alexis’s work.",
+      "label": "Go further",
+      "cv": "CV (PDF)",
+      "portfolio": "Portfolio",
+      "montagne": "The project mountain",
+      "contact": "Email Alexis"
+    },
+    "meta": {
+      "title": "Living dossier — a team of agents at work",
+      "description": "A need becomes a tile on Alexis Trouvé's mountain of projects; a team of agents works on it in parallel and writes a design dossier, backed by measured proof."
+    },
+    "unavailable": "The living dossier is temporarily unavailable. Please try again in a moment.",
+    "bar": {
+      "caption": "Replayed demonstration, no AI call",
+      "pause": "Pause",
+      "play": "Play",
+      "replay": "Replay",
+      "demo": "Watch the demo",
+      "progress": "Progress of the run"
+    },
+    "hero": {
+      "prompt": "Describe your project. A team of agents turns it into a design dossier.",
+      "whoLabel": "Your name and role",
+      "launch": "Start the team"
+    },
+    "mountain": {
+      "label": "Diagram: the mountain of Alexis's projects and their links",
+      "kept": "Selected projects"
+    },
+    "team": {
+      "label": "The agent team and the dossier",
+      "thread": "Orchestrator messages",
+      "between": "{from} → {to}",
+      "tokens": "tokens",
+      "usd": "$",
+      "role": {
+        "orchestrator": "coordinator",
+        "subAgent": "sub-agent"
+      },
+      "status": {
+        "waiting": "waiting",
+        "working": "working",
+        "done": "done"
+      },
+      "topics": {
+        "plan": "Plan",
+        "check": "Check"
+      },
+      "agents": {
+        "orchestrator": {
+          "name": "Orchestrator",
+          "short": "Orchestrator"
+        },
+        "reader": {
+          "name": "Need reader",
+          "short": "Reader"
+        },
+        "researcher": {
+          "name": "Proof researcher",
+          "short": "Researcher"
+        },
+        "architect": {
+          "name": "Architect",
+          "short": "Architect"
+        },
+        "diagrammer": {
+          "name": "Diagram drafter",
+          "short": "Drafter"
+        },
+        "writer": {
+          "name": "Writer",
+          "short": "Writer"
+        }
+      }
+    },
+    "dossier": {
+      "title": "Design dossier",
+      "for": "For {name}, {affiliation}",
+      "prepared": "Prepared in {time} by {count} agents, for ${cost}.",
+      "state": {
+        "drafting": "being written",
+        "reviewing": "reviewed by the orchestrator",
+        "ready": "ready"
+      },
+      "download": "Download the dossier",
+      "section": {
+        "writing": "being written",
+        "waitingFor": {
+          "reader": "waiting for the Reader",
+          "researcher": "waiting for the Researcher",
+          "architect": "waiting for the Architect",
+          "writer": "waiting for the Writer",
+          "previous": "waiting for the rest"
+        }
+      },
+      "proofs": {
+        "project": "Project",
+        "status": "Status",
+        "lines": "Lines",
+        "tests": "Tests",
+        "demo": "Demo",
+        "video": "video",
+        "site": "the site",
+        "none": "none public",
+        "also": "Also selected: {names}."
+      },
+      "skills": {
+        "title": "Skills involved",
+        "lead": "Matched automatically to the projects cited as proof: the skills from Alexis’s profile that these projects put to work, and the technologies they share.",
+        "skill": "Skill",
+        "level": "Level",
+        "source": "Seen in",
+        "need": "named in the need",
+        "technologies": "Technologies shared by several proofs",
+        "loading": "Matching skills…",
+        "failed": "Skills unavailable right now.",
+        "levels": {
+          "expert": "expert",
+          "advanced": "advanced",
+          "intermediate": "intermediate",
+          "beginner": "beginner"
+        }
+      },
+      "contact": "Write to Alexis",
+      "contactSubject": "Design dossier {organisation}",
+      "pdf": {
+        "busy": "Preparing the PDF…",
+        "failed": "PDF unavailable, try again",
+        "expired": "Dossier expired (kept 24 h): run the team again",
+        "replayNote": "Replayed example: a recorded scenario, no AI call. Project figures come from their real records.",
+        "filename": "design dossier {organisation}"
+      }
+    },
+    "live": {
+      "caption": "Live team · {model}",
+      "captionIdle": "Live agent team, on your own brief",
+      "captionPending": "Live team, starting",
+      "failed": {
+        "model": "Stopped: an agent returned an unusable answer",
+        "upstream": "Stopped: the AI service or the data did not respond",
+        "invalid": "Write a need of at least 20 characters, and “Name, role at organisation”",
+        "network": "Connection lost before the dossier was delivered"
+      }
+    }
+  }
+}

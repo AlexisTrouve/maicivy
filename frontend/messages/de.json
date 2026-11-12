@@ -1,0 +1,1332 @@
+{
+  "admin": {
+    "prospects": {
+      "nav": "Vermittler",
+      "title": "Vermittler",
+      "sub": "Geschäftsvermittler: Zugang öffnen oder schließen und sehen, was sie einbringen.",
+      "inviteName": "Name des Vermittlers",
+      "inviteEmail": "E-Mail (optional)",
+      "invite": "Einladung erstellen",
+      "inviteLink": "Einladungslink — weitergeben, 72 Std. gültig, nur einmal verwendbar",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "colName": "Name",
+      "colRef": "Code",
+      "colStatus": "Status",
+      "colVisits": "Besuche",
+      "colCVs": "Erstellte Lebensläufe",
+      "colActions": "Zugang",
+      "statusActive": "Aktiv",
+      "statusRevoked": "Gesperrt",
+      "statusPending": "Einladung ausstehend",
+      "revoke": "Sperren",
+      "activate": "Reaktivieren",
+      "empty": "Noch keine Vermittler.",
+      "errorExists": "Dieser Name oder diese E-Mail ist bereits vergeben.",
+      "errorGeneric": "Ein Fehler ist aufgetreten, bitte erneut versuchen.",
+      "forbidden": "Dieses Werkzeug ist für Vermittler-Konten nicht verfügbar.",
+      "dailyLimit": "Tageslimit erreicht — morgen erneut versuchen.",
+      "loginTitle": "Vermittler-Zugang",
+      "loginField": "Name oder E-Mail",
+      "switchToProspect": "Ich bin Vermittler",
+      "switchToOwner": "Inhaber-Zugang",
+      "inviteTitle": "Willkommen, {name}",
+      "inviteHelp": "Wähle dein Passwort (mindestens 10 Zeichen).",
+      "invitePassword": "Passwort",
+      "invitePasswordConfirm": "Passwort bestätigen",
+      "passwordMismatch": "Die beiden Passwörter stimmen nicht überein.",
+      "inviteSubmit": "Passwort speichern",
+      "inviteDone": "Passwort gespeichert: du kannst dich jetzt anmelden.",
+      "inviteGoLogin": "Zur Anmeldung",
+      "inviteInvalid": "Dieser Einladungslink ist ungültig, abgelaufen oder bereits verwendet.",
+      "passwordLength": "Das Passwort muss 10 bis 72 Zeichen lang sein."
+    },
+    "brand": "maicivy · admin",
+    "logout": "Abmelden",
+    "outputLang": {
+      "fr": "Französisch",
+      "en": "Englisch",
+      "zh": "Chinesisch"
+    },
+    "nav": {
+      "cv": "CV aus Angebot",
+      "messages": "Nachrichten",
+      "letters": "Anschreiben",
+      "stats": "Private Stats",
+      "chat": "Agent",
+      "mailbox": "Postfach",
+      "compose": "Verfassen"
+    },
+    "login": {
+      "password": "Passwort",
+      "submit": "Eintreten",
+      "loading": "…",
+      "invalid": "Ungültiges Passwort",
+      "networkError": "Netzwerkfehler"
+    },
+    "cv": {
+      "title": "CV aus Angebot",
+      "help": "Stellenangebot einfügen (Text oder URL) → ein angepasster Lebenslauf wird als PDF erzeugt, abgestimmt auf die Formulierungen der Anzeige.",
+      "offerPlaceholder": "Stellenangebot hier einfügen (oder eine URL)…",
+      "generate": "CV erzeugen",
+      "generating": "Erzeugung… (~30s)",
+      "previewTitle": "Vorschau",
+      "download": "PDF herunterladen",
+      "empty": "Der erzeugte Lebenslauf erscheint hier.",
+      "loading": "Lebenslauf wird erzeugt…"
+    },
+    "messages": {
+      "title": "Plattform-Nachricht",
+      "help": "Auftrag einfügen (Malt, LinkedIn, Upwork) → eine versandfertige Bewerbungsnachricht wird erzeugt.",
+      "missionPlaceholder": "Auftrag / Anzeige hier einfügen (Malt, LinkedIn, Upwork)…",
+      "tjmPlaceholder": "Tagessatz €",
+      "generate": "Erzeugen",
+      "generating": "Erzeugung…",
+      "resultTitle": "Nachricht",
+      "copy": "Kopieren",
+      "copied": "Kopiert ✓",
+      "empty": "Die erzeugte Nachricht erscheint hier.",
+      "loading": "Nachricht wird geschrieben…"
+    },
+    "letters": {
+      "title": "Anschreiben",
+      "help": "Unternehmen + Angebot → ein Paar Anschreiben (Motivation + Anti-Motivation) wird als PDF erzeugt.",
+      "companyPlaceholder": "Firmenname",
+      "offerPlaceholder": "Angebotstext (optional, empfohlen)…",
+      "generate": "Paar erzeugen",
+      "generating": "Erzeugung…",
+      "progress": "Erzeugung…",
+      "done": "Paar erzeugt ✓",
+      "downloadMotivation": "Download — Motivation (PDF)",
+      "downloadAnti": "Download — Anti-Motivation (PDF)",
+      "empty": "Das Motivation / Anti-Motivation-Paar erscheint hier.",
+      "failed": "Erzeugung fehlgeschlagen"
+    },
+    "stats": {
+      "title": "Private Stats",
+      "loading": "Laden…",
+      "error": "Stats konnten nicht geladen werden",
+      "aiTitle": "KI-Kosten & Nutzung",
+      "genToday": "Generierungen heute",
+      "lettersMonth": "Anschreiben diesen Monat ({tokens} Tokens)",
+      "model": "Modell",
+      "lettersCount": "Anschreiben",
+      "tokens": "Tokens",
+      "cost": "Kosten ~",
+      "noLetters": "Keine Anschreiben diesen Monat.",
+      "aiNote": "Geschätzte Kosten, nur Anschreiben (CV / Nachrichten / Chat speichern ihre Kosten noch nicht).",
+      "securityTitle": "Sicherheit — {count} verdächtige IP(s)",
+      "noSus": "Gerade keine verdächtige IP.",
+      "scoreTitle": "Verdachtswert",
+      "analyticsTitle": "Detaillierte Analytics",
+      "byProfile": "Nach erkanntem Profil",
+      "topReferrers": "Top-Referrer",
+      "noReferrers": "Kein Referrer erfasst."
+    },
+    "chat": {
+      "title": "Agent",
+      "help": "Frag zu deinem Portfolio (Projekte, Skills, Erfahrung, Blog) — der Agent fragt maiProFiles live ab.",
+      "newConversation": "Neue Unterhaltung",
+      "placeholder": "Nachricht schreiben…",
+      "send": "Senden",
+      "thinking": "Der Agent denkt nach…",
+      "empty": "Starte eine Unterhaltung mit dem Agenten.",
+      "noConversations": "Keine Unterhaltungen.",
+      "deleteConversation": "Unterhaltung löschen"
+    },
+    "mailbox": {
+      "title": "Postfach",
+      "help": "Mails, die automatisch von Malt (und bald anderen Plattformen) erfasst und sofort an eine feste Adresse weitergeleitet werden.",
+      "platformFilterPlaceholder": "Nach Plattform filtern (z. B. malt)",
+      "unreadOnly": "Nur ungelesen",
+      "loading": "Laden…",
+      "loadError": "Mails konnten nicht geladen werden",
+      "empty": "Noch keine Mails erfasst.",
+      "noSubject": "(kein Betreff)",
+      "forwarded": "Weitergeleitet ✓",
+      "forwardFailed": "Weiterleitung fehlgeschlagen",
+      "pageIndicator": "Seite {page} / {totalPages} ({total})",
+      "selectPrompt": "Wähle eine Mail aus der Liste.",
+      "markRead": "Als gelesen markieren",
+      "markUnread": "Als ungelesen markieren",
+      "retryForward": "Weiterleitung erneut versuchen",
+      "retrying": "Weiterleitung…",
+      "emptyBody": "(leerer Inhalt)",
+      "blocked": "Blockiert",
+      "blockedExplain": "Automatische Weiterleitung blockiert — Score unter dem Relevanz-Schwellenwert. Nutze „Trotzdem senden“, wenn du denkst, das ist ein Fehler.",
+      "relevanceScore": "Relevanz: {score}/100",
+      "forceForward": "Trotzdem senden",
+      "viewMission": "Mission ansehen",
+      "showReasoning": "Begründung anzeigen",
+      "hideReasoning": "Begründung ausblenden",
+      "translate": "Übersetzen",
+      "translating": "Übersetzung…",
+      "translationFailed": "Übersetzung fehlgeschlagen",
+      "showOriginal": "Original anzeigen",
+      "showTranslation": "Übersetzung anzeigen"
+    },
+    "errorPrefix": "Fehler",
+    "compose": {
+      "checklistTitle": "Prüfungen",
+      "checklistEmpty": "Die Prüfungen erscheinen, sobald die erste Nachricht verfasst ist.",
+      "verifying": "Prüfung läuft…",
+      "rate": "Tagessatz {amount} €",
+      "announceLabel": "Stellenanzeige",
+      "announcePlaceholder": "Füge hier die vollständige Anzeige ein, unverändert.",
+      "start": "Nachricht verfassen",
+      "draftTitle": "Zu sendende Nachricht",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "translationTitle": "Übersetzung (Kontrolle)",
+      "translationPending": "Die Übersetzung erscheint nach der Prüfung.",
+      "chatTitle": "Agent",
+      "chatPlaceholder": "Bitte um eine Änderung…",
+      "send": "Senden",
+      "thinking": "Der Agent arbeitet…",
+      "toolCall": "Der Agent hat {name} verwendet",
+      "kickoff": "Hier ist eine Stellenanzeige. Verfasse die Akquise-Nachricht auf Französisch mit set_draft und lege den Tagessatz mit set_rate fest. Antworte mir in meiner Sprache.\n\n{announce}",
+      "checks": {
+        "remote": "Remote erwähnt",
+        "no_markdown": "Kein Markdown",
+        "signature": "Signatur",
+        "rate_coherence": "Tagessatz stimmig",
+        "length": "Länge",
+        "maicivy_link": "maicivy-Link",
+        "project_link": "Link zur Projektseite"
+      },
+      "newDraft": "Neuer Entwurf",
+      "reasoning": "Denkprozess",
+      "attachImage": "Screenshot anhängen",
+      "removeImage": "Screenshot entfernen",
+      "imageErrors": {
+        "image_type_unsupported": "Format nicht unterstützt (PNG, JPEG, GIF oder WebP).",
+        "image_read_failed": "Bild konnte nicht gelesen werden.",
+        "image_too_large": "Bild zu groß.",
+        "image_too_many": "Zu viele Bilder in einer Nachricht.",
+        "image_empty": "Leeres Bild.",
+        "image_not_allowed": "Bilder sind hier nicht erlaubt."
+      },
+      "checksProven": "Geprüft",
+      "checksJudged": "Bewertet",
+      "untitled": "Ohne Titel",
+      "workshops": "Arbeitsmappen",
+      "workshopsEmpty": "Noch keine Arbeitsmappe.",
+      "archivedTab": "Archiviert",
+      "activeTab": "Aktiv",
+      "archivedEmpty": "Keine archivierte Arbeitsmappe.",
+      "noDraft": "Nur Anzeige",
+      "checksShort": "{pass}/{total}",
+      "sent": "Gesendet",
+      "markSent": "Als gesendet markieren",
+      "unmarkSent": "Als nicht gesendet markieren",
+      "rename": "Umbenennen",
+      "renamePrompt": "Name der Arbeitsmappe",
+      "archive": "Archivieren",
+      "unarchive": "Aktiv setzen",
+      "rowMenu": "Aktionen",
+      "openWorkshops": "Arbeitsmappe wechseln",
+      "verifyLimit": "Tägliches Prüflimit erreicht – diese Checkliste gehört zum vorherigen Entwurf."
+    }
+  },
+  "metadata": {
+    "title": "Alexis Trouvé — Orchestrator für KI-Agenten",
+    "description": "Ich baue KI-Agentensysteme, die in Produktion laufen: der Berg meiner Projekte, ein lebendes Dossier, das Portfolio, der Lebenslauf und ein Agent, der für mich antwortet.",
+    "preview": {
+      "commits30d": "{count, plural, one {Commit in 30 Tagen} other {Commits in 30 Tagen}}",
+      "activeProjects": "{count, plural, one {aktives Projekt} other {aktive Projekte}}"
+    }
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "retry": "Erneut versuchen",
+    "close": "Schließen",
+    "backToHome": "Zurück zur Startseite",
+    "download": "Herunterladen",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "viewMore": "Mehr anzeigen"
+  },
+  "nav": {
+    "brand": "Alexis Trouvé",
+    "brandHome": "Alexis Trouvé — Startseite",
+    "home": "Startseite",
+    "dossierVivant": "Lebendes Dossier",
+    "portfolio": "Portfolio",
+    "cv": "Lebenslauf",
+    "blog": "Blog",
+    "chat": "Chat",
+    "gitstats": "Git Stats",
+    "analytics": "Analytics",
+    "architecture": "Architektur",
+    "label": "Hauptnavigation",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "contact": "Kontakt",
+    "language": "Sprache: {current}",
+    "languageList": "Sprache wählen"
+  },
+  "chat": {
+    "greeting": "Hallo!",
+    "greetingSubtitle": "Frag mich zu meinen Projekten, Skills oder meiner Erfahrung.",
+    "inputPlaceholder": "Stell deine Frage... (Enter zum Senden)",
+    "errorNetwork": "Verbindung verloren. Prüfe deine Verbindung und versuche es erneut.",
+    "errorRateLimited": "Bitte warte {seconds}s bis zur nächsten Nachricht.",
+    "errorRateLimitedGeneric": "Gerade zu viele Nachrichten. Versuche es gleich noch einmal.",
+    "errorServer": "Der Dienst hatte ein Problem. Bitte versuche es gleich noch einmal.",
+    "errorContextTooLong": "Diese Unterhaltung ist zu lang geworden. Starte eine neue Unterhaltung, um fortzufahren.",
+    "errorGeneric": "Entschuldigung, etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "askQuestion": "Frage stellen →",
+    "questionsHeader": "Fragen",
+    "newSuggestions": "Neue Vorschläge",
+    "closeTip": "Diesen Hinweis schließen",
+    "closeTab": "{label} schließen",
+    "tabs": {
+      "projects": "Projekte",
+      "experience": "Erfahrung",
+      "skills": "Skills",
+      "blog": "Blog",
+      "default": "Karte"
+    },
+    "toolLabels": {
+      "project": "projekt",
+      "projects": "projekte",
+      "skills": "skills",
+      "experience": "erfahrung",
+      "article": "artikel",
+      "blog": "blog",
+      "tip": "tipp",
+      "need": "Bedarf für Ihren Lebenslauf notiert"
+    },
+    "skillsTitle": "Technische Skills",
+    "domains": "Bereiche",
+    "experiences": "Erfahrung",
+    "yearsExperience": "{years} Jahre Erfahrung",
+    "techStack": "Tech-Stack",
+    "keyFeatures": "Hauptfunktionen",
+    "viewOnGithub": "Code ansehen",
+    "viewDemo": "Demo ansehen",
+    "openProjectMessage": "Zeig mir das Projekt {name}",
+    "stopGenerating": "Generierung stoppen",
+    "remainingQuota": "{remaining}/{limit} Nachrichten heute",
+    "followupsHeader": "Weiter erkunden",
+    "stats": "Stats",
+    "skills": "Skills",
+    "projects": "Projekte",
+    "blogEmpty": "Noch keine Artikel veröffentlicht.",
+    "articles": "Artikel ({count})",
+    "minRead": "{min} Min. Lesezeit",
+    "readArticle": "Artikel lesen →",
+    "hints": [
+      {
+        "text": "Was ist Aria?",
+        "message": "Erzähl mir vom Aria-Projekt",
+        "category": "projets"
+      },
+      {
+        "text": "Was ist Cogesco?",
+        "message": "Was ist das Cogesco-Projekt?",
+        "category": "projets"
+      },
+      {
+        "text": "Wie funktioniert maicivy?",
+        "message": "Wie funktioniert maicivy?",
+        "category": "projets"
+      },
+      {
+        "text": "Dein komplexestes Projekt?",
+        "message": "Was ist dein komplexestes Projekt?",
+        "category": "projets"
+      },
+      {
+        "text": "Alexis KI-Stack?",
+        "message": "Was sind deine KI-Skills?",
+        "category": "skills"
+      },
+      {
+        "text": "Go oder Node?",
+        "message": "Würdest du für ein neues Projekt Go oder Node wählen?",
+        "category": "skills"
+      },
+      {
+        "text": "Machst du auch Mobile?",
+        "message": "Machst du auch Mobile-Entwicklung?",
+        "category": "skills"
+      },
+      {
+        "text": "Dein Tagessatz?",
+        "message": "Was ist dein Tagessatz?",
+        "category": "freelance"
+      },
+      {
+        "text": "Verfügbar für eine Mission?",
+        "message": "Bist du für einen Freelance-Auftrag verfügbar?",
+        "category": "freelance"
+      },
+      {
+        "text": "Remote oder vor Ort?",
+        "message": "Arbeitest du remote oder vor Ort?",
+        "category": "freelance"
+      },
+      {
+        "text": "Mal richtig gekämpft bei einem Projekt?",
+        "message": "Hattest du mal technische Schwierigkeiten bei einem Projekt?",
+        "category": "curiosite"
+      },
+      {
+        "text": "Dein idealer Stack?",
+        "message": "Was ist dein idealer Stack?",
+        "category": "curiosite"
+      },
+      {
+        "text": "Neueste Artikel?",
+        "message": "Was sind deine neuesten Blog-Artikel?",
+        "category": "blog"
+      },
+      {
+        "text": "Artikel über KI-Agenten?",
+        "message": "Hast du über KI-Agenten geschrieben?",
+        "category": "blog"
+      },
+      {
+        "text": "Wie ist dieses Portfolio gebaut?",
+        "message": "Wie wurde dieses Portfolio gebaut?",
+        "category": "meta"
+      },
+      {
+        "text": "Wer hat diese Seite gebaut?",
+        "message": "Wer hat diese Chat-Seite entwickelt?",
+        "category": "meta"
+      }
+    ],
+    "send": "Senden",
+    "inputLabel": "Ihre Frage",
+    "views": {
+      "label": "Chat-Ansicht",
+      "questions": "Fragen",
+      "conversation": "Gespräch",
+      "fiches": "Karten",
+      "sheetsCount": "Karten ({count})",
+      "newSheet": "neue Karte geöffnet"
+    }
+  },
+  "gitstats": {
+    "title": "Git-Aktivität",
+    "subtitle": "Sechs Monate Commits über alle Repositories: das Tempo, die geschriebenen Zeilen, die Sprachen und die Repositories in Bewegung.",
+    "surveyedOn": "Stand: {date}",
+    "refresh": "Aktualisieren",
+    "refreshing": "Wird aktualisiert…",
+    "unavailable": "Die Git-Statistiken sind gerade nicht verfügbar.",
+    "commits6mo": "Commits in sechs Monaten",
+    "linesAdded": "Hinzugefügte Zeilen",
+    "linesDeleted": "Entfernte Zeilen",
+    "activeRepos": "Aktive Repositories",
+    "ledger": {
+      "gitlab": "davon {count} auf GitLab",
+      "exactly": "genau {value}",
+      "reposTotal": "von {total} insgesamt"
+    },
+    "cadence": {
+      "title": "Rhythmus",
+      "noteDay": "Commits pro Tag, sechs Monate.",
+      "noteWeek": "Commits pro Woche, sechs Monate.",
+      "noteGitlab": "Der kupferfarbene Anteil stammt aus dem Kundenprojekt auf GitLab.",
+      "figure": "{active, plural, one {# Tag} other {# Tage}} von {total}",
+      "figureSub": "mit mindestens einem Commit · Rekord {streak, plural, one {# Tag} other {# Tage}} am Stück",
+      "legendAll": "Alle Repositories",
+      "legendGitlab": "davon GitLab (Kundenprojekt)",
+      "peakDay": "{value} Commits · {date}",
+      "peakWeek": "{value} Commits · Woche vom {date}",
+      "barDay": "{value} Commits am {date}",
+      "barWeek": "{value} Commits in der Woche vom {date}"
+    },
+    "lines": {
+      "title": "Geschriebene Zeilen",
+      "note": "Über der Achse die hinzugefügten Zeilen, darunter die entfernten. Gleicher Maßstab auf beiden Seiten.",
+      "figure": "{net} netto",
+      "figureSub": "+{added} · −{deleted}",
+      "legendAdded": "Hinzugefügt",
+      "legendDeleted": "Entfernt",
+      "peakDay": "{value} hinzugefügte Zeilen · {date}",
+      "peakWeek": "{value} hinzugefügte Zeilen · Woche vom {date}",
+      "barDay": "{date}: +{added} · −{deleted}",
+      "barWeek": "Woche vom {date}: +{added} · −{deleted}"
+    },
+    "langs": {
+      "title": "Sprachen",
+      "note": "Codezeilen pro Sprache, über alle Repositories seit ihrer Entstehung, nicht nur über sechs Monate.",
+      "figure": "{loc} Zeilen",
+      "figureSub": "in {count, plural, one {# Sprache} other {# Sprachen}}",
+      "others": "Weitere ({count})"
+    },
+    "repos": {
+      "title": "Repositories",
+      "note": "Sortiert nach Commits der letzten dreißig Tage. Der Streifen zeigt Woche für Woche die Zahl der Tage mit mindestens einem Commit.",
+      "figure": "{count, plural, one {# Repository} other {# Repositories}}",
+      "figureSub": "{count, plural, one {hat in den letzten dreißig Tagen einen Commit erhalten} other {haben in den letzten dreißig Tagen einen Commit erhalten}}",
+      "colRepo": "Repository",
+      "colWeeks": "Sechs Monate",
+      "col30d": "30 Tage",
+      "col6mo": "6 Monate",
+      "colLines": "Zeilen",
+      "colLast": "Letzter Commit",
+      "hot": "{count} <unit>in 30 T.</unit>",
+      "commits6mo": "{count} <unit>Commits in sechs Monaten</unit>",
+      "loc": "{loc} <unit>Zeilen</unit>",
+      "activity": "{days, plural, one {# Tag} other {# Tage}} mit Commit in sechs Monaten · laufende Serie {current} T. · Rekord {longest} T.",
+      "more": "{count, plural, one {Das andere aktive Repository anzeigen} other {Die # anderen aktiven Repositories anzeigen}}",
+      "dormant": "{count, plural, one {# Repository ohne Commit seit sechs Monaten bleibt außerhalb der Liste.} other {# Repositories ohne Commit seit sechs Monaten bleiben außerhalb der Liste.}}"
+    },
+    "metaTitle": "Git-Aktivität · Alexis Trouvé",
+    "metaDescription": "Sechs Monate Git-Aktivität von Alexis Trouvé: Commits, hinzugefügte und entfernte Zeilen, aktive Repositories."
+  },
+  "cv": {
+    "devPortrait": {
+      "title": "Der Code in Zahlen",
+      "subtitle": "Aktivität, direkt aus den Repositories gelesen.",
+      "loc": "Codezeilen",
+      "langs": "{count} Sprachen",
+      "commits": "Commits",
+      "commitsSub": "letzte 6 Monate",
+      "repos": "aktive Repositories",
+      "genreTitle": "Aktuelle Sprachen",
+      "genreSub": "Commits nach Sprache — letzte 90 Tage im Vergleich zum Jahr",
+      "momentumTitle": "Tempo",
+      "momentumValue": "{recent} Commits in den letzten 30 Tagen",
+      "momentumRatio": "×{ratio} gegenüber dem Vormonat",
+      "hotTitle": "Aktivste Repositories",
+      "hotCommits": "{count} Commits · 30 T.",
+      "caveat": "Richtwerte: dominante Sprache jedes Repositorys, aggregierte Commit-Tage (begrenzt auf ~70 pro Repository).",
+      "detailLink": "Detaillierte Git-Aktivität ansehen",
+      "trendUp": "steigend",
+      "trendDown": "fallend",
+      "trendFlat": "stabil"
+    },
+    "title": "Lebenslauf",
+    "lead": "Erfahrung, Kenntnisse und Projekte, neu geordnet nach dem gewählten Profil.",
+    "profileLabel": "Profil",
+    "selectTheme": "Profil wählen",
+    "metaTitle": "Lebenslauf — {profile} · Alexis Trouvé",
+    "metaDescription": "Der Lebenslauf von Alexis Trouvé für das Profil {profile}: Erfahrung, Kenntnisse und Projekte nach Relevanz geordnet.",
+    "sections": {
+      "experiences": "Berufserfahrung",
+      "skills": "Kenntnisse",
+      "projects": "Projekte"
+    },
+    "experience": {
+      "viewDetails": "Details ansehen"
+    },
+    "skills": {
+      "all": "Alle",
+      "filterLabel": "Kenntnisse nach Kategorie filtern",
+      "legend": "Die Größe spiegelt das Niveau und die Relevanz für das gewählte Profil wider.",
+      "badgeTitle": "{name} — Details ansehen"
+    },
+    "projects": {
+      "featured": "Hervorgehobenes Projekt",
+      "inProgress": "In Arbeit",
+      "clickForDetails": "Projektblatt öffnen",
+      "openDetails": "Projektblatt von {title} öffnen",
+      "defaultCategory": "Projekt"
+    },
+    "export": {
+      "downloading": "PDF wird erstellt…",
+      "download": "PDF herunterladen",
+      "error": "Das PDF konnte nicht erstellt werden. Bitte gleich noch einmal versuchen."
+    },
+    "themes": {
+      "ai": {
+        "name": "KI-Agenten — Technomancer",
+        "description": "Multi-Agenten-Systeme im Produktivbetrieb: Orchestrierung, MCP-Werkzeuge, durchgängig selbst gebaut."
+      },
+      "backend": {
+        "name": "Backend",
+        "description": "APIs, Datenbanken, Dienste."
+      },
+      "cpp": {
+        "name": "C++",
+        "description": "Systemnahe Software, Engines, Performance."
+      },
+      "devops": {
+        "name": "DevOps",
+        "description": "Infrastruktur, CI/CD, Monitoring."
+      },
+      "fullstack": {
+        "name": "Full-Stack",
+        "description": "Oberflächen und Dienste, durchgängig."
+      },
+      "artistique": {
+        "name": "Kreativ",
+        "description": "Kreative Projekte, Design, Visualisierung."
+      }
+    },
+    "detailModal": {
+      "close": "Schließen",
+      "image": "Bild",
+      "prevImage": "Vorheriges Bild",
+      "nextImage": "Nächstes Bild",
+      "goToImage": "Zu Bild",
+      "functional": {
+        "title": "Was es macht"
+      },
+      "technical": {
+        "title": "Wie es gebaut ist"
+      },
+      "technologies": "Technologien",
+      "skills": "Kenntnisse",
+      "links": {
+        "title": "Links",
+        "github": "GitHub",
+        "demo": "Online-Demo",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "other": "Link"
+      }
+    },
+    "duration": {
+      "present": "Heute",
+      "year": "Jahr",
+      "years": "Jahre",
+      "month": "Monat",
+      "months": "Monate",
+      "unknownDate": "Datum unbekannt",
+      "invalidDate": "Ungültiges Datum",
+      "unknownDuration": "Dauer unbekannt"
+    },
+    "skillDetail": {
+      "close": "Schließen",
+      "levels": {
+        "beginner": "Anfänger",
+        "intermediate": "Mittel",
+        "advanced": "Fortgeschritten",
+        "expert": "Experte"
+      },
+      "years": "{count, plural, =0 {weniger als ein Jahr Erfahrung} one {# Jahr Erfahrung} other {# Jahre Erfahrung}}",
+      "locLabel": "Codezeilen",
+      "projectsLabel": "Projekte",
+      "experiencesLabel": "Erfahrungen",
+      "projectsTitle": "Projekte",
+      "experiencesTitle": "Erfahrung",
+      "noStats": "Noch keine Statistiken für diese Fähigkeit"
+    },
+    "context": {
+      "title": "Angepasst an das, was Sie mir gesagt haben",
+      "sourceChat": "Aus unserem Gespräch",
+      "sourceDossier": "Aus Ihrem Dossier",
+      "preparing": "Der angepasste Lebenslauf wird vorbereitet… bis dahin bleibt der Standard-Lebenslauf sichtbar.",
+      "unavailable": "Der angepasste Lebenslauf konnte vorerst nicht erstellt werden. Hier ist der Standard-Lebenslauf.",
+      "viewLabel": "Angezeigte Version",
+      "showAdapted": "Angepasster Lebenslauf",
+      "showStandard": "Standard-Lebenslauf",
+      "downloadAdapted": "Angepasstes PDF herunterladen",
+      "offer": {
+        "toggle": "An eine Stellenanzeige anpassen",
+        "label": "Stellenanzeige oder Auftrag",
+        "placeholder": "Text der Anzeige oder ihren Link einfügen",
+        "submit": "Angepasstes PDF erstellen",
+        "submitting": "Wird angepasst, etwa 20 Sekunden…",
+        "cancel": "Abbrechen",
+        "error": "Die Anpassung ist fehlgeschlagen. Bitte gleich noch einmal versuchen.",
+        "limit": "Tageslimit für Generierungen erreicht. Bitte morgen erneut versuchen."
+      }
+    }
+  },
+  "analytics": {
+    "testStats": {
+      "title": "Tests & Qualität",
+      "allGreen": "100% grün",
+      "total": "automatisierte Tests",
+      "backend": "Backend (Go)",
+      "frontend": "Frontend · {suites} Suites",
+      "updated": "Stand {date}"
+    },
+    "title": "Die Website, live",
+    "subtitle": "Öffentliche Statistiken in Echtzeit: Besuche, Blog-Lektüren, erzeugte Briefe und die meistgeklickten Bereiche.",
+    "privacy": "Dieses Dashboard ist öffentlich und wird in Echtzeit aktualisiert. Die Daten werden anonym erfasst.",
+    "widgets": {
+      "visitors": {
+        "title": "Aktuelle Besucher",
+        "online": "Online",
+        "offline": "Offline",
+        "realtime": "Echtzeit-Aktualisierung via WebSocket",
+        "oneNow": "Person ist gerade hier",
+        "manyNow": "Personen sind gerade hier"
+      },
+      "themes": {
+        "title": "Meistgesehene Lebenslauf-Themen",
+        "views": "Aufrufe",
+        "update": "Aktualisierung alle 30 Sekunden"
+      },
+      "letters": {
+        "title": "KI-Anschreiben",
+        "total": "insgesamt generierte Anschreiben",
+        "noData": "Keine Daten verfügbar",
+        "evolution": "Entwicklung über {period}",
+        "windows": {
+          "day": "24 Stunden",
+          "week": "7 Tage",
+          "month": "30 Tage"
+        }
+      },
+      "heatmap": {
+        "title": "Interaktions-Heatmap",
+        "low": "Niedrig",
+        "high": "Hoch",
+        "noData": "Keine Interaktionsdaten verfügbar",
+        "interactions": "{count} Interaktionen",
+        "based": "Basierend auf {count} Interaktionspunkten",
+        "explain": "Wo Besucher klicken (Buttons & Links, alle Seiten — 24 h). Heißer = mehr Klicks.",
+        "unknownElement": "Element",
+        "topTitle": "Top-Interaktionen"
+      },
+      "stats": {
+        "visitors": "Besucher",
+        "pageViews": "Seitenaufrufe",
+        "letters": "Anschreiben",
+        "blogReads": "Blog-Aufrufe",
+        "conversion": "Conversion"
+      }
+    },
+    "periods": {
+      "today": "Heute",
+      "last7days": "Letzte 7 Tage",
+      "last30days": "Letzte 30 Tage",
+      "all": "Gesamt",
+      "day": "Tag",
+      "week": "Woche",
+      "month": "Monat",
+      "select": "Zeitraum auswählen",
+      "label": "Zeitraum:"
+    },
+    "meta": {
+      "title": "Öffentliche Statistiken",
+      "description": "Das öffentliche Dashboard von maicivy, in Echtzeit aktualisiert: Besuche, Lektüren, erzeugte Briefe, geklickte Bereiche."
+    },
+    "eyebrow": "Öffentliches Dashboard"
+  },
+  "architecture": {
+    "meta": {
+      "title": "Architektur — wie diese Website gebaut ist",
+      "description": "Schichten, Stack und Schutzmechanismen von maicivy: ein Next.js-Frontend, eine Go-API, KI-Agenten auf Basis echter Projekte."
+    },
+    "eyebrow": "Architektur",
+    "title": "Wie diese Website gebaut ist",
+    "subtitle": "maicivy läuft in Produktion: ein Next.js-Frontend, eine Go-API, KI-Agenten, die aus echten Projekten antworten. Hier sind ihre Schichten, Werkzeuge und Schutzmechanismen.",
+    "metricsTitle": "In Zahlen",
+    "metricsNote": "Tests bei jedem Commit neu gezählt",
+    "metrics": {
+      "goFiles": "Go-Dateien (Backend)",
+      "reactComponents": "React-Komponenten",
+      "backendTests": "Backend-Tests",
+      "frontendTests": "Frontend-Tests",
+      "passingTests": "grüne Tests",
+      "apiEndpoints": "API-Routen",
+      "documentation": "Zeilen Dokumentation",
+      "implementationGuides": "Implementierungsleitfäden"
+    },
+    "overview": "Überblick",
+    "overviewNote": "Vom Browser bis zu den Modellen",
+    "layers": {
+      "client": "Client",
+      "edge": "Edge & Sicherheit",
+      "backend": "Backend-API",
+      "services": "Dienste",
+      "data": "Daten & Modelle"
+    },
+    "nodes": {
+      "cdnWaf": "CDN · Web-Application-Firewall",
+      "proxyTls": "Reverse Proxy · TLS",
+      "frontdoor": "Ratenbegrenzung · Filterung",
+      "middlewares": "Middlewares",
+      "modules": {
+        "cv": "Lebenslauf",
+        "letters": "Briefe",
+        "analytics": "Statistiken",
+        "chat": "Chat",
+        "blog": "Blog"
+      },
+      "services": {
+        "ai": "KI",
+        "scraper": "Web-Erfassung",
+        "cvScoring": "Lebenslauf-Bewertung",
+        "profileBuilder": "Profilaufbau"
+      },
+      "orm": "über das ORM GORM",
+      "cacheUses": "Sitzungen · Limits · Warteschlangen",
+      "models": "Hauptmodell · Ausweichmodell"
+    },
+    "stackTitle": "Der Stack",
+    "stackColumns": {
+      "tool": "Werkzeug",
+      "role": "Rolle"
+    },
+    "stacks": {
+      "backend": {
+        "title": "Backend",
+        "description": "Eine kompakte, getestete Go-API, die schnell antwortet."
+      },
+      "frontend": {
+        "title": "Frontend",
+        "description": "Next.js und TypeScript, serverseitig gerendert, fünf Sprachen."
+      },
+      "ai": {
+        "title": "Künstliche Intelligenz",
+        "description": "Modelle hinter einem einzigen Gateway, mit Ausweichmodell."
+      },
+      "infra": {
+        "title": "Infrastruktur",
+        "description": "Container, Datenbanken, Monitoring und Continuous Integration."
+      }
+    },
+    "stackItems": {
+      "backend": {
+        "go": "Serversprache",
+        "fiber": "HTTP-Framework",
+        "gorm": "Zugriff auf PostgreSQL",
+        "redis": "Cache, Sitzungen, Ratenlimits",
+        "zerolog": "Strukturierte JSON-Logs",
+        "chromedp": "PDF-Erzeugung",
+        "colly": "Web-Erfassung",
+        "testify": "Tests"
+      },
+      "frontend": {
+        "nextjs": "React-Framework (App Router)",
+        "typescript": "Statische Typisierung",
+        "tailwind": "Utility-Styles",
+        "shadcn": "Barrierearme Komponenten (Radix)",
+        "framer": "Animationen",
+        "rhf": "Formulare",
+        "zod": "Schemavalidierung",
+        "tests": "Unit- und End-to-End-Tests"
+      },
+      "ai": {
+        "claude": "Hauptmodell",
+        "fallback": "Ausweichmodell, gleiches Gateway",
+        "scraper": "Firmenrecherche aus mehreren Quellen"
+      },
+      "infra": {
+        "docker": "Container",
+        "postgres": "Hauptdatenbank",
+        "redis": "In-Memory-Cache",
+        "nginx": "Reverse Proxy und TLS",
+        "prometheus": "Metrikerfassung",
+        "grafana": "Dashboards",
+        "ci": "Tests bei jedem Push"
+      }
+    },
+    "scraper": "Firmenrecherche aus mehreren Quellen",
+    "scraperNote": "Ein echtes Beispiel für ein Unternehmen",
+    "scraperInput": "Eingabe",
+    "scraperParallel": "Quellen parallel",
+    "scraperResult": "Zusammengeführtes Ergebnis",
+    "scraperSources": {
+      "website": "Website",
+      "blogNews": "Blog / News"
+    },
+    "features": "Funktionen",
+    "technicalFeatures": {
+      "dynamicCV": {
+        "title": "Ein Lebenslauf passend zur Stelle",
+        "description": "Fünf Themen (Backend, C++, künstlerisch, Full-Stack, DevOps); Erfahrungen und Projekte werden an der Stelle gemessen.",
+        "tech": [
+          "Bewertungsalgorithmus",
+          "PDF-Export",
+          "Framer-Motion-Animationen"
+        ]
+      },
+      "aiLetters": {
+        "title": "KI-geschriebene Briefe",
+        "description": "Ein Anschreiben und sein Anti-Brief, parallel erzeugt.",
+        "tech": [
+          "Claude-API",
+          "Asynchrone Job-Warteschlange",
+          "PDF-Erzeugung"
+        ]
+      },
+      "scraper": {
+        "title": "Erfassung aus mehreren Quellen",
+        "description": "Live-Recherche zum Zielunternehmen aus sechs Quellen.",
+        "tech": [
+          "Wikipedia-API",
+          "GitHub-API",
+          "Blog-Auswertung",
+          "DuckDuckGo",
+          "Clearbit"
+        ]
+      },
+      "analytics": {
+        "title": "Statistiken in Echtzeit",
+        "description": "Ein öffentliches Dashboard, live per WebSocket aktualisiert.",
+        "tech": [
+          "WebSocket",
+          "Klickkarte",
+          "Redis-Aggregate"
+        ]
+      },
+      "accessGate": {
+        "title": "Schrittweiser Zugang zur KI",
+        "description": "Freigeschaltet nach drei Besuchen oder bei erkanntem Profil (Recruiting, CTO…).",
+        "tech": [
+          "Profilerkennung",
+          "User-Agent-Auswertung",
+          "Signiertes Cookie"
+        ]
+      },
+      "rateLimiting": {
+        "title": "KI-Ratenlimits",
+        "description": "5 Generierungen pro Tag, 2 Minuten Abstand, Kosten erfasst.",
+        "tech": [
+          "Gleitendes Fenster in Redis",
+          "Token-Zählung",
+          "Kostenerfassung"
+        ]
+      }
+    },
+    "security": "Sicherheit",
+    "securityItems": {
+      "injection": {
+        "title": "SQL-Injection",
+        "description": "Parametrisierte Abfragen über GORM"
+      },
+      "xss": {
+        "title": "Skript-Injection (XSS)",
+        "description": "Eingaben mit bluemonday bereinigt"
+      },
+      "rateLimit": {
+        "title": "Ratenbegrenzung",
+        "description": "Gleitendes Fenster in Redis"
+      },
+      "headers": {
+        "title": "Sicherheits-Header",
+        "description": "CSP, X-Frame-Options, HSTS"
+      },
+      "gdpr": {
+        "title": "DSGVO",
+        "description": "IP-Adressen gehasht (SHA-256), keine personenbezogenen Daten"
+      },
+      "cookies": {
+        "title": "Cookies",
+        "description": "HttpOnly, Secure, SameSite"
+      }
+    },
+    "codeExample": "Auszug: parallele Erfassung",
+    "codeExampleNote": "services/scraper.go, vereinfacht",
+    "sourceCode": "Der Code ist öffentlich",
+    "sourceCodeDesc": "Das ganze Repository — Code, Tests und Dokumentation — ist auf GitHub lesbar.",
+    "viewOnGithub": "Auf GitHub ansehen",
+    "backToCV": "Zum Lebenslauf"
+  },
+  "errors": {
+    "generic": "Diese Seite konnte nicht angezeigt werden",
+    "tryAgain": "Bei uns ist ein Fehler aufgetreten. Versuchen Sie es erneut; tritt er wieder auf, beginnen Sie auf der Startseite neu.",
+    "notFound": "Seite nicht gefunden",
+    "serverError": "Serverfehler",
+    "retry": "Erneut versuchen",
+    "notFoundEyebrow": "Fehler 404",
+    "notFoundHint": "Die Adresse hat sich vielleicht geändert, oder die Seite existiert nicht mehr. Portfolio und Lebenslauf sind weiterhin da.",
+    "errorEyebrow": "Fehler",
+    "goPortfolio": "Zum Portfolio",
+    "goCv": "Zum Lebenslauf"
+  },
+  "validation": {
+    "minLength": "Muss mindestens {min} Zeichen enthalten",
+    "maxLength": "Darf {max} Zeichen nicht überschreiten",
+    "invalidChars": "Ungültige Zeichen erkannt",
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidUrl": "Ungültige URL"
+  },
+  "footer": {
+    "explore": "Entdecken",
+    "workshop": "Hinter den Kulissen",
+    "contact": "Kontakt",
+    "email": "Alexis schreiben",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "legal": "Rechtliches",
+    "legalNotice": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "legalDisclaimer": "Diese Website verwendet KI zur Inhaltsgenerierung. Sitzungsdaten sind temporär und werden nicht an Dritte weitergegeben.",
+    "rights": "© {year} Alexis Trouvé. Alle Rechte vorbehalten."
+  },
+  "legal": {
+    "title": "Impressum",
+    "editor": {
+      "title": "Betreiber der Website",
+      "text": "Diese Website wird betrieben von Alexis Trouvé, freiberuflicher Entwickler mit Sitz in Frankreich. Es handelt sich um ein persönliches Portfolio und eine technische Demonstration."
+    },
+    "hosting": {
+      "title": "Hosting",
+      "text": "Diese Website wird auf einem VPS in Frankreich gehostet, die Domain wird über Cloudflare verwaltet."
+    },
+    "ip": {
+      "title": "Geistiges Eigentum",
+      "text": "Alle Inhalte dieser Website (Quellcode, Texte, Design) sind Eigentum von Alexis Trouvé. Der Quellcode ist auf GitHub öffentlich verfügbar."
+    },
+    "ai": {
+      "title": "KI-generierte Inhalte",
+      "text": "Bestimmte Funktionen nutzen KI (Claude, Anthropic) zur Inhaltsgenerierung: Anschreiben, personalisierte Nachrichten und Chatbot-Antworten."
+    },
+    "liability": {
+      "title": "Haftungsbeschränkung",
+      "text": "KI-generierte Inhalte dienen ausschließlich zu Informationszwecken. Der Betreiber übernimmt keine Haftung für deren Verwendung."
+    },
+    "eyebrow": "Rechtliche Hinweise"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "collection": {
+      "title": "Erhobene Daten",
+      "text": "Diese Website erhebt ausschließlich anonyme Sitzungsdaten (Session-Cookie), die für den Betrieb der KI-Funktionen erforderlich sind. Es ist keine Registrierung erforderlich."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "text": "Ein Sitzungs-Cookie (maicivy_session) wird verwendet, um Ihre Sitzung zu identifizieren und das Rate Limiting der KI-Funktionen zu verwalten. Dieser Cookie ist technisch notwendig."
+    },
+    "ai": {
+      "title": "KI-Verarbeitung",
+      "text": "Eingegebene Texte (Stellenangebote, Unternehmensnamen) werden zur Inhaltsgenerierung an die Anthropic API (Claude) übermittelt, gemäß der Datenschutzrichtlinie von Anthropic."
+    },
+    "retention": {
+      "title": "Speicherdauer",
+      "text": "Sitzungen laufen automatisch ab. Analysedaten (Besuche, Seitenaufrufe) werden aggregiert und anonymisiert."
+    },
+    "rights": {
+      "title": "Ihre Rechte",
+      "text": "Gemäß DSGVO haben Sie das Recht auf Auskunft, Berichtigung und Löschung Ihrer Daten. Da diese Website keine identifizierenden personenbezogenen Daten erhebt, beziehen sich diese Rechte hauptsächlich auf Sitzungsdaten."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "text": "Bei Fragen zum Datenschutz wenden Sie sich über die Links in der Fußzeile an den Betreiber."
+    },
+    "eyebrow": "Personenbezogene Daten"
+  },
+  "portfolio": {
+    "meta": {
+      "title": "Portfolio — ausgelieferte Projekte",
+      "description": "Eine Auswahl ausgelieferter Projekte: was sie leisten, wie sie gebaut sind und was sie wiegen."
+    },
+    "title": "Portfolio",
+    "subtitle": "Eine Auswahl ausgelieferter Projekte — was sie leisten, wie sie gebaut sind und was sie wiegen.",
+    "projectCount": "{count} Projekte",
+    "viewProject": "Projekt ansehen",
+    "back": "Zurück zum Portfolio",
+    "pitch": "Was es leistet",
+    "technical": "Wie es gebaut ist",
+    "figures": "Zahlen",
+    "stack": "Stack",
+    "links": "Links",
+    "gallery": "Galerie",
+    "demo": "Video-Demo",
+    "unavailable": "Das Portfolio ist vorübergehend nicht verfügbar.",
+    "notFound": "Dieses Projekt gehört nicht zur Auswahl.",
+    "status": {
+      "production": "In Produktion",
+      "active": "Aktiv",
+      "wip": "In Arbeit",
+      "R&D": "F&E"
+    },
+    "linkLabels": {
+      "github": "GitHub",
+      "repo": "Repository",
+      "demo": "Demo",
+      "site": "Website",
+      "docs": "Doku"
+    },
+    "eyebrow": "Ausgelieferte Projekte"
+  },
+  "blog": {
+    "meta": {
+      "title": "Blog — Entwicklungstagebuch",
+      "description": "Artikel aus meinen Commits: was ich baue, was kaputtgeht und wie ich es repariere."
+    },
+    "title": "Blog",
+    "eyebrow": "Logbuch",
+    "subtitle": "Aus meinen Commits geschrieben: die Agenten und Systeme, die ich baue, was in der Produktion kaputtgeht und wie ich es repariere.",
+    "filterTitle": "Nach Thema filtern",
+    "all": "Alle",
+    "themes": {
+      "tech": "Tech",
+      "games": "Spiele"
+    },
+    "count": "{count, plural, =0 {Keine Artikel} one {# Artikel} other {# Artikel}}",
+    "clearFilter": "Filter entfernen",
+    "emptyTitle": "Noch keine Artikel",
+    "emptyText": "Die Artikel werden automatisch aus den Commits geschrieben.",
+    "unavailable": "Der Blog ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich noch einmal.",
+    "rss": "RSS-Feed",
+    "readingTime": "{minutes} Min.",
+    "pagination": {
+      "label": "Blogseiten",
+      "prev": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {page}",
+      "current": "Seite {page} von {total}"
+    },
+    "post": {
+      "back": "Zurück zum Blog",
+      "readTime": "{minutes} Min. Lesezeit",
+      "generatedFrom": "Aus diesen Commits generiert",
+      "closeImage": "Bild schließen",
+      "openImage": "Titelbild vergrößern",
+      "tags": "Themen des Artikels",
+      "notFound": "Artikel nicht gefunden"
+    },
+    "follow": {
+      "title": "Per E-Mail folgen",
+      "intro": "Erhalte neue Artikel. Wähle deine Themen (nichts ausgewählt = alles).",
+      "emailPlaceholder": "du@email.com",
+      "subscribe": "Abonnieren",
+      "sending": "Wird gesendet…",
+      "emailLabel": "E-Mail-Adresse",
+      "topicsLabel": "Themen zum Folgen",
+      "success": "Angemeldet. Du erhältst die neuen Artikel zu deinen Themen.",
+      "error": "Hoppla, versuch es noch einmal (gültige E-Mail?).",
+      "discord": "Dem Discord beitreten",
+      "topics": {
+        "Drifterra": "Drifterra (das Spiel)",
+        "tech": "Dev / Tech",
+        "veille": "Tech-Radar"
+      }
+    }
+  },
+  "montagne": {
+    "voice": {
+      "title": "Ich baue KI-Agentensysteme, die in Produktion laufen.",
+      "tagline": "Agent Orchestrator — Technomancer",
+      "cv": "Lebenslauf (PDF)",
+      "chat": "Mit meinem Agenten sprechen"
+    },
+    "meta": {
+      "title": "Der Berg — alle Projekte, verbunden",
+      "description": "Alle Projekte von Alexis Trouvé in einem Relief: von den Infrastruktur-Fundamenten bis zu Spielen und Anwendungen. Jede Verbindung zeigt, was wozu beiträgt."
+    },
+    "strata": {
+      "foundations": "Fundamente",
+      "tooling": "Werkzeuge",
+      "engines": "Engines",
+      "works": "Werke"
+    },
+    "strataHint": {
+      "foundations": "Infrastruktur, Netzwerk, Sicherheit",
+      "tooling": "Werkzeuge, Agenten, Automatisierung",
+      "engines": "Worauf die Werke laufen",
+      "works": "Spiele, Anwendungen, Produkte"
+    },
+    "list": {
+      "title": "Alle Projekte, vom Fuß bis zum Gipfel",
+      "intro": "Jede Verbindung bedeutet „hilft zu bauen“: Sie wird aus den Projektdaten abgeleitet, nie von Hand hinzugefügt.",
+      "count": "{count} Projekte",
+      "builds": "Hilft zu bauen:",
+      "builtWith": "Gebaut mit:",
+      "openPortfolio": "Projektseite"
+    },
+    "status": {
+      "production": "In Produktion",
+      "active": "Aktiv",
+      "wip": "In Arbeit",
+      "R&D": "F&E",
+      "retired": "Eingestellt"
+    },
+    "stage": {
+      "label": "3D-Berg der Projekte",
+      "loading": "Der Berg erhebt sich…",
+      "hint": "Ziehen zum Drehen · Scrollen oder Zwei-Finger-Geste zum Zoomen · Projekt anklicken",
+      "overview": "Gesamtansicht",
+      "goTo": "Gehe zu: {stratum}",
+      "unavailable": "Der Berg ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich noch einmal."
+    },
+    "flower": {
+      "close": "Schließen",
+      "openPortfolio": "Projektseite ansehen",
+      "visuals": "Projektbilder",
+      "video": "Video-Demo",
+      "openImage": "Bild öffnen"
+    },
+    "peak": {
+      "title": "Der Projektberg",
+      "summit": "Die Werke am Gipfel",
+      "mountain": "Alle Projekte, von den Werken bis zu den Fundamenten"
+    },
+    "network": {
+      "open": "Netzwerkansicht",
+      "title": "Netzwerkansicht — der Berg im Relief",
+      "close": "Netzwerkansicht schließen"
+    },
+    "proofs": {
+      "label": "Die Belege",
+      "builtGames": "Spiele, gebaut auf {name}",
+      "openProject": "Projekt ansehen",
+      "video": "Videodemo",
+      "stages": {
+        "global": "{project} erzeugt den ganzen Planeten: die globale Karte, aus der danach die lokalen Karten abgeleitet werden.",
+        "local": "{project} geht von dieser globalen Karte aus und leitet daraus das lokale Gelände ab."
+      },
+      "site": {
+        "title": "Der Beleg ist diese Website selbst: Tippe auf eine Seite, um sie zu öffnen",
+        "pages": {
+          "blog": "Der Blog",
+          "gitstats": "Git-Statistiken",
+          "chat": "Chat mit meinem Agenten",
+          "cv": "Der Lebenslauf"
+        }
+      }
+    },
+    "art": {
+      "backdrop": "Illustration: ein dunkler Berg unter einem Sternenhimmel, seine Grate goldgesäumt, über einem Meer aus goldenen Wolken",
+      "covers": {
+        "grove_engine": "Illustration: eine goldene mechanische Station, durch Lichtstrahlen mit einer Sechseckkarte, einem Inseldorf, einem Raumschiff und einem Kristall verbunden",
+        "melodicode": "Illustration: ein Dirigent, von hinten gesehen, lenkt Dutzende leuchtender Bildschirme, die durch goldene Fäden mit seiner Hand verbunden sind",
+        "theomen": "Illustration: goldene Strahlen führen von einem Planeten zu einer detaillierten Region mit Wäldern, Flüssen und Städten",
+        "maicivy": "Illustration: ein aufgeschlagenes Buch, aus dem leuchtende Seiten aufsteigen — ein Artikel, ein Diagramm, ein Gespräch, ein Lebenslauf"
+      }
+    }
+  },
+  "dossierVivant": {
+    "footer": {
+      "lead": "Das lebende Dossier ist nur eine Tür: Hier ist der Rest von Alexis’ Arbeit.",
+      "label": "Weiterlesen",
+      "cv": "Lebenslauf (PDF)",
+      "portfolio": "Portfolio",
+      "montagne": "Der Projektberg",
+      "contact": "Alexis schreiben"
+    },
+    "meta": {
+      "title": "Lebendes Dossier — ein Agententeam bei der Arbeit",
+      "description": "Ein Bedarf wird zu einer Kachel auf Alexis Trouvés Projektberg; ein Team von Agenten bearbeitet ihn parallel und schreibt ein Konzeptdossier mit belegten Zahlen."
+    },
+    "unavailable": "Das lebende Dossier ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich noch einmal.",
+    "bar": {
+      "caption": "Abgespielte Vorführung, ohne KI-Aufruf",
+      "pause": "Pause",
+      "play": "Abspielen",
+      "replay": "Erneut abspielen",
+      "demo": "Demo ansehen",
+      "progress": "Fortschritt des Ablaufs"
+    },
+    "hero": {
+      "prompt": "Beschreiben Sie Ihr Projekt. Ein Team von Agenten macht daraus ein Konzeptdossier.",
+      "whoLabel": "Ihr Name und Ihre Rolle",
+      "launch": "Team starten"
+    },
+    "mountain": {
+      "label": "Diagramm: der Berg von Alexis' Projekten und ihre Verbindungen",
+      "kept": "Ausgewählte Projekte"
+    },
+    "team": {
+      "label": "Das Agententeam und das Dossier",
+      "thread": "Nachrichten des Orchestrators",
+      "between": "{from} → {to}",
+      "tokens": "Tokens",
+      "usd": "$",
+      "role": {
+        "orchestrator": "Koordinator",
+        "subAgent": "Unteragent"
+      },
+      "status": {
+        "waiting": "wartet",
+        "working": "arbeitet",
+        "done": "fertig"
+      },
+      "topics": {
+        "plan": "Plan",
+        "check": "Prüfung"
+      },
+      "agents": {
+        "orchestrator": {
+          "name": "Orchestrator",
+          "short": "Orchestrator"
+        },
+        "reader": {
+          "name": "Bedarfsleser",
+          "short": "Leser"
+        },
+        "researcher": {
+          "name": "Belegsucher",
+          "short": "Sucher"
+        },
+        "architect": {
+          "name": "Architekt",
+          "short": "Architekt"
+        },
+        "diagrammer": {
+          "name": "Schemazeichner",
+          "short": "Zeichner"
+        },
+        "writer": {
+          "name": "Redakteur",
+          "short": "Redakteur"
+        }
+      }
+    },
+    "dossier": {
+      "title": "Konzeptdossier",
+      "for": "Für {name}, {affiliation}",
+      "prepared": "Erstellt in {time} von {count} Agenten, für {cost} $.",
+      "state": {
+        "drafting": "wird geschrieben",
+        "reviewing": "vom Orchestrator geprüft",
+        "ready": "fertig"
+      },
+      "download": "Dossier herunterladen",
+      "section": {
+        "writing": "wird geschrieben",
+        "waitingFor": {
+          "reader": "wartet auf den Leser",
+          "researcher": "wartet auf den Sucher",
+          "architect": "wartet auf den Architekten",
+          "writer": "wartet auf den Redakteur",
+          "previous": "wartet auf den Rest"
+        }
+      },
+      "proofs": {
+        "project": "Projekt",
+        "status": "Status",
+        "lines": "Zeilen",
+        "tests": "Tests",
+        "demo": "Demo",
+        "video": "Video",
+        "site": "die Website",
+        "none": "keine öffentliche",
+        "also": "Ebenfalls ausgewählt: {names}."
+      },
+      "skills": {
+        "title": "Eingesetzte Kompetenzen",
+        "lead": "Automatisch den als Beleg genannten Projekten zugeordnet: die Kompetenzen aus Alexis’ Profil, die diese Projekte einsetzen, und die Technologien, die sie teilen.",
+        "skill": "Kompetenz",
+        "level": "Niveau",
+        "source": "Belegt in",
+        "need": "im Bedarf genannt",
+        "technologies": "Technologien mehrerer Belege",
+        "loading": "Kompetenzen werden zugeordnet…",
+        "failed": "Kompetenzen derzeit nicht verfügbar.",
+        "levels": {
+          "expert": "Experte",
+          "advanced": "fortgeschritten",
+          "intermediate": "mittel",
+          "beginner": "Einsteiger"
+        }
+      },
+      "contact": "Alexis schreiben",
+      "contactSubject": "Konzeptdossier {organisation}",
+      "pdf": {
+        "busy": "PDF wird erstellt…",
+        "failed": "PDF nicht verfügbar, erneut versuchen",
+        "expired": "Dossier abgelaufen (24 Std. gespeichert): Team neu starten",
+        "replayNote": "Wiedergegebenes Beispiel: ein aufgezeichnetes Szenario, ohne KI-Aufruf. Die Projektzahlen stammen aus den echten Projektdaten.",
+        "filename": "Konzeptdossier {organisation}"
+      }
+    },
+    "live": {
+      "caption": "Team live · {model}",
+      "captionIdle": "Live-Agententeam, für Ihren Bedarf",
+      "captionPending": "Team live, startet",
+      "failed": {
+        "model": "Gestoppt: ein Agent lieferte eine unbrauchbare Antwort",
+        "upstream": "Gestoppt: KI-Dienst oder Daten antworteten nicht",
+        "invalid": "Bedarf mit mindestens 20 Zeichen und „Name, Rolle bei Organisation“ angeben",
+        "network": "Verbindung vor Übergabe des Dossiers verloren"
+      }
+    }
+  }
+}

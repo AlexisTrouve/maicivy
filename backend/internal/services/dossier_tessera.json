@@ -1,0 +1,197 @@
+{
+ "visitor": {
+  "name": "Inès Morel",
+  "affiliation": "CTO chez Tessera",
+  "organisation": "Tessera"
+ },
+ "agents": 5,
+ "elapsedSeconds": 37.599999999999994,
+ "costUsd": 0.09573999999999999,
+ "sections": [
+  {
+   "id": "need",
+   "title": "Le besoin, reformulé",
+   "blocks": [
+    {
+     "type": "lead",
+     "text": "Traiter 1 400 tickets par jour à six, sans perdre la main sur les cas sensibles."
+    },
+    {
+     "type": "item",
+     "text": "Une réponse automatique seulement si une source de votre base la justifie."
+    },
+    {
+     "type": "item",
+     "text": "Un passage à un humain sur règle explicite, ticket et contexte joints."
+    },
+    {
+     "type": "item",
+     "text": "Une trace lisible de chaque décision."
+    }
+   ]
+  },
+  {
+   "id": "architecture",
+   "title": "L’architecture proposée",
+   "blocks": [
+    {
+     "type": "pipeline",
+     "nodes": [
+      {
+       "id": "ticket",
+       "title": "Ticket",
+       "subtitle": "entrant",
+       "col": 0,
+       "row": 1
+      },
+      {
+       "id": "triage",
+       "title": "Trieur",
+       "subtitle": "modèle léger",
+       "col": 1,
+       "row": 1
+      },
+      {
+       "id": "answer",
+       "title": "Répondeur",
+       "subtitle": "cite la base",
+       "col": 2,
+       "row": 0
+      },
+      {
+       "id": "check",
+       "title": "Contrôle",
+       "subtitle": "sans LLM",
+       "col": 3,
+       "row": 0
+      },
+      {
+       "id": "human",
+       "title": "File humaine",
+       "subtitle": "brief joint",
+       "col": 2,
+       "row": 2,
+       "human": true
+      }
+     ],
+     "edges": [
+      {
+       "from": "ticket",
+       "to": "triage",
+       "step": 1
+      },
+      {
+       "from": "triage",
+       "to": "answer"
+      },
+      {
+       "from": "answer",
+       "to": "check"
+      },
+      {
+       "from": "triage",
+       "to": "human",
+       "dashed": true,
+       "step": 3
+      },
+      {
+       "from": "check",
+       "to": "human",
+       "dashed": true,
+       "step": 2
+      }
+     ],
+     "journal": "Journal des décisions, une ligne par ticket",
+     "label": "Chaîne proposée : ticket, trieur, répondeur, contrôle, envoi, avec une file humaine et un journal des décisions"
+    },
+    {
+     "type": "item",
+     "text": "Le ticket est cité, jamais exécuté."
+    },
+    {
+     "type": "item",
+     "text": "Un contrôle sans LLM avant tout envoi."
+    },
+    {
+     "type": "item",
+     "text": "Un modèle plus fort seulement si le trieur doute."
+    }
+   ]
+  },
+  {
+   "id": "proofs",
+   "title": "Les projets qui le prouvent",
+   "blocks": [
+    {
+     "type": "proof",
+     "projectId": "melodicode",
+     "why": "Un coordinateur délègue à des agents isolés ; l’humain décide.",
+     "demo": {
+      "kind": "video",
+      "url": "{melodicode-video}"
+     }
+    },
+    {
+     "type": "proof",
+     "projectId": "openclaw_platform",
+     "why": "SaaS d’agents : le client valide les actions sensibles."
+    },
+    {
+     "type": "proof",
+     "projectId": "envoia",
+     "why": "Un contenu externe ne peut pas infléchir l’action."
+    },
+    {
+     "type": "proof",
+     "projectId": "maicivy",
+     "why": "Ce site : sept outils d’administration à agents.",
+     "demo": {
+      "kind": "site",
+      "url": "/{locale}"
+     }
+    },
+    {
+     "type": "also",
+     "projectIds": [
+      "momos",
+      "claude_orchestrator",
+      "civjdr_roman",
+      "demiurgos_game_master",
+      "anthropic_vendor_proxy"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "contribution",
+   "title": "Ce qu’Alexis apporte",
+   "blocks": [
+    {
+     "type": "item",
+     "text": "L’architecture et sa mise en production, de bout en bout."
+    },
+    {
+     "type": "item",
+     "text": "Des garde-fous écrits en code et testés comme le reste."
+    },
+    {
+     "type": "item",
+     "text": "Un coût par ticket mesuré, tenu par des paliers de modèles."
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Prochaine étape",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "text": "Un appel de 30 minutes pour trancher l’outil de ticketing, les catégories sensibles et les langues. Puis un prototype sur un échantillon de vos tickets."
+    },
+    {
+     "type": "contact"
+    }
+   ]
+  }
+ ]
+}

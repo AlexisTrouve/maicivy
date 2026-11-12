@@ -1,0 +1,243 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permet déclenchement manuel
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/maicivy
+
+jobs:
+  # ============================================
+  # JOB 1: Build & Push Docker Images
+  # ============================================
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      backend-tag: ${{ steps.meta-backend.outputs.tags }}
+      frontend-tag: ${{ steps.meta-frontend.outputs.tags }}
+      nginx-tag: ${{ steps.meta-nginx.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ============================================
+      # Backend Image
+      # ============================================
+      - name: Extract metadata (Backend)
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      # ============================================
+      # Frontend Image
+      # ============================================
+      - name: Extract metadata (Frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      # ============================================
+      # Nginx Image
+      # ============================================
+      - name: Extract metadata (Nginx)
+        id: meta-nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Nginx
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker/nginx
+          file: ./docker/nginx/Dockerfile
+          push: true
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # JOB 2: Deploy to VPS
+  # ============================================
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: production
+      url: https://maicivy.yourdomain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment script
+        run: |
+          cat > deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          # Variables
+          DEPLOY_DIR="/opt/maicivy"
+          REGISTRY="${{ env.REGISTRY }}"
+          IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
+          COMMIT_SHA="${{ github.sha }}"
+
+          # Colors for output
+          GREEN='\033[0;32m'
+          RED='\033[0;31m'
+          NC='\033[0m' # No Color
+
+          echo -e "${GREEN}[1/6] Navigating to deployment directory...${NC}"
+          cd $DEPLOY_DIR
+
+          echo -e "${GREEN}[2/6] Logging into GitHub Container Registry...${NC}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
+
+          echo -e "${GREEN}[3/6] Pulling latest images...${NC}"
+          docker pull ${REGISTRY}/${IMAGE_PREFIX}-backend:latest
+          docker pull ${REGISTRY}/${IMAGE_PREFIX}-frontend:latest
+          docker pull ${REGISTRY}/${IMAGE_PREFIX}-nginx:latest
+
+          echo -e "${GREEN}[4/6] Backing up current deployment...${NC}"
+          docker-compose ps -q > .last_deployment || true
+
+          echo -e "${GREEN}[5/6] Deploying new version (rolling update)...${NC}"
+          docker-compose up -d --no-deps --build
+
+          echo -e "${GREEN}[6/6] Waiting for services to be healthy...${NC}"
+          sleep 10
+
+          # Health check
+          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Deployment successful! Backend is healthy.${NC}"
+
+            # Cleanup old images
+            docker image prune -af --filter "until=24h"
+
+            exit 0
+          else
+            echo -e "${RED}❌ Health check failed! Rolling back...${NC}"
+
+            # Rollback
+            if [ -f .last_deployment ]; then
+              docker-compose up -d $(cat .last_deployment)
+              echo -e "${RED}Rollback completed.${NC}"
+            fi
+
+            exit 1
+          fi
+          EOF
+
+          chmod +x deploy.sh
+
+      - name: Execute deployment
+        run: |
+          scp -i ~/.ssh/deploy_key deploy.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'bash /tmp/deploy.sh'
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          rm -f deploy.sh
+
+      - name: Notify success
+        if: success()
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#00FF00"
+          message: |
+            ✅ **Deployment Successful**
+
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+            **Message:** ${{ github.event.head_commit.message }}
+
+            🚀 Live at: https://maicivy.yourdomain.com
+
+      - name: Notify failure
+        if: failure()
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#FF0000"
+          message: |
+            ❌ **Deployment Failed**
+
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+
+            Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
