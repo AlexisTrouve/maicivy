@@ -78,7 +78,7 @@ The application services run as containers under Docker Compose and bind to loca
 | Layer | Technologies |
 |-------|--------------|
 | Front end | Next.js 15, React 19, TypeScript 5, Tailwind CSS, shadcn/ui, Framer Motion, three.js, Recharts, next-intl |
-| Back end | Go 1.24, Fiber, GORM, go-redis, Anthropic Go SDK, chromedp, zerolog |
+| Back end | Go 1.26, Fiber, GORM, go-redis, Anthropic Go SDK, chromedp, zerolog |
 | Data | PostgreSQL 16, Redis 7 |
 | AI | Anthropic-compatible gateway with primary and fallback models, tool use, SSE streaming |
 | Infrastructure | Docker Compose, nginx, Cloudflare, Prometheus, Grafana |
@@ -86,7 +86,7 @@ The application services run as containers under Docker Compose and bind to loca
 
 ## Quick start
 
-Requirements: Docker with Docker Compose. For local development without containers: Go 1.24 and Node.js 20.
+Requirements: Docker with Docker Compose. For local development without containers: Go 1.26 and Node.js 20.
 
 ```bash
 git clone https://github.com/AlexisTrouve/maicivy.git
